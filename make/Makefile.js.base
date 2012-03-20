@@ -1,0 +1,109 @@
+# Nothing in me concerns you. You're probably looking for Makefile.js, which
+# provides the public interface to my contents.
+
+include $(MAKEDIR)/Makefile.common
+
+##################################################
+# optional configuration
+
+RELEASE_FLAGS :=
+DEBUG_FLAGS := -DDEBUG
+BUILD_FLAGS := $(DEBUG_FLAGS)
+
+M4 := m4
+M4FLAGS = -P $(BUILD_FLAGS)
+
+# Change the path to the YUI Compressor as necessary:
+YUIC := java -jar $(HOME)/local/bin/yuicompressor-2.4.2.jar --type js
+
+GZIP := gzip
+
+##################################################
+# self configuration (do not touch)
+
+$(SOURCES) :
+	@echo $@
+
+# Headers hold m4 macros, so they are dependencies for all objects
+OBJECTS := $(addprefix $(OBJDIR)/,$(SOURCES))
+SOURCES := $(addprefix $(SRCDIR)/,$(SOURCES))
+
+#get_obj_path = $(shell echo "$(1)" | sed -e 's|[^/]*.js||')
+get_obj_path = $(1)
+my_dir = "blah"
+
+# To comply with POSIX, apparently, GNU make expands function calls when the
+# rule is read, not when it is matched, so this had to be moved to secondary
+# expansion.
+#$(OBJECTS) : $(OBJDIR)/% : $(HEADERS) $(SRCDIR)/% | $(OBJDIR)/$(dir %)
+
+$(sort $(dir $(OBJECTS))) :
+	mkdir -p $@
+
+##################################################
+# targets
+
+.PHONY : all debug release plus syntax doc
+
+all : debug
+#	@$(call watch,SOURCES)
+#	@$(call watch,OBJECTS)
+
+debug : BUILD_FLAGS := $(DEBUG_FLAGS)
+debug : $(MAIN)
+
+release : BUILD_FLAGS := $(RELEASE_FLAGS)
+release : COMPILER := $(YUIC)
+# If you do not have the YUI Compressor installed:
+#release : COMPILER := cat
+release : $(MAIN).gz
+
+$(MAIN) : $(OBJECTS)
+	cat $^ > $@
+
+$(MAIN).gz : clean-obj $(OBJECTS)
+	cat $(wordlist 2,$(words $^),$^) > /tmp/$@.raw
+	$(COMPILER) /tmp/$@.raw > /tmp/$@.yuic
+	$(GZIP) -c /tmp/$@.yuic > $@
+	-rm -rf $(OBJDIR)
+
+plus : $(MAINPLUS)
+
+$(MAINPLUS) : $(MAIN)
+	cat $(THIRD_PARTY_SOURCES) $^ > /tmp/$@
+	$(COMPILER) /tmp/$@ | $(COMPRESSOR) > $@
+
+syntax : $(OBJECTS)
+	cat $^ > /tmp/$@
+	$(YUIC) /tmp/$@ > /dev/null
+
+doc : clean-doc
+	nodejsdoc -d=$(DOCDIR) $(SOURCES)
+
+##################################################
+# cleaning
+
+.PHONY : clean clean-obj clean-exe clean-doc
+
+clean : clean-obj clean-exe clean-doc
+
+clean-obj :
+	-rm -rf $(OBJDIR)
+
+clean-exe :
+	-rm -f $(MAIN)
+	-rm -f $(MAIN).gz
+
+clean-doc :
+	-rm -rf $(DOCDIR)
+
+##################################################
+# self configuration (do not touch)
+
+.SECONDEXPANSION:
+
+# Have to replace default rule because of separate build directory.
+# Unnecessary if make created the directory when writing a file.
+$(OBJECTS) : $(OBJDIR)/% : $(HEADERS) $(SRCDIR)/% | $$(@D)/
+	$(M4) $(M4FLAGS) $^ > $@
+

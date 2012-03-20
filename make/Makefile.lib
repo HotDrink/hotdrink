@@ -1,0 +1,70 @@
+# Makefile for the main HotDrink library.
+
+include $(MAKEDIR)/Makefile.common
+include $(MAKEDIR)/Makefile.js
+
+##################################################
+# mandatory configuration
+
+TITLE := hotdrink
+
+##################################################
+# optional configuration
+
+MAIN := $(TITLE).js
+MAINPLUS := $(TITLE)-plus.js
+
+SRCDIR := lib
+SOURCES := \
+	utility/debug.js \
+	utility/stdlib.js \
+	utility/namespace.js \
+	utility/publisher.js \
+	concept/model/behavior.js \
+	concept/model/value.js \
+	concept/bindings/ast.js \
+	concept/bindings/behavior.js \
+	concept/bindings/builder.js \
+	concept/bindings/controller.js \
+	model/model.js \
+	model/solver/solver.js \
+	model/solver/helpers.js \
+	model/solver/model.js \
+	model/solver/quickplan.js \
+	model/runtime/evaluator.js \
+	model/runtime/runtime.js \
+  model/factory/solver.js \
+  model/factory/factory.js \
+  model/factory/internal.js \
+  model/factory/variable.js \
+  model/factory/constraint.js \
+  model/factory/model.js \
+	model/behavior/precondition.js \
+	model/behavior/enablement.js \
+	bindings/common.js \
+	bindings/behavior/value.js \
+	bindings/behavior/enablement.js \
+	bindings/html/common.js \
+	bindings/html/checkbox.js \
+	bindings/html/checkboxGroup.js \
+	bindings/html/radioGroup.js \
+	bindings/html/selectOne.js \
+	bindings/html/selectMany.js \
+	bindings/html/text.js \
+	bindings/html/number.js \
+	bindings/html/command.js \
+	bindings/html/attr.js \
+	bindings/html/html.js \
+	bindings/controller.js \
+	driver.js
+
+HEADERS := \
+  lib/utility/debug.m4.js
+
+OBJDIR := build
+
+THIRD_PARTY_SOURCES := \
+	test/prototype.js
+
+DOCDIR := doc
+

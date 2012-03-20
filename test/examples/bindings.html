@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+  <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="../js/hotdrink.js"></script>
+  <title>Default Binders | HotDrink Test Suite</title>
+  <script type="text/javascript">
+    var Model = function () {
+      this.cbox = hd.variable(false);
+
+      this.many = hd.variable([]);
+      this.one = hd.variable();
+
+      this.num = hd.variable(3.14);
+
+      this.color = hd.variable("color: green");
+
+      this.name = hd.variable("World");
+      this.hello = hd.computed(function () {
+        return "Hello, " + this.name() + "!";
+      });
+
+      this.ok = hd.command(function () {
+        /* Access the other guys just so they'll be relevant. */
+        ["cbox", "many", "one", "num", "color"].forEach(function (v) {
+          this[v]();
+        }, this);
+        /* The real action. */
+        return hd.fn(alert)(this.hello());
+      });
+    };
+
+    var model = hd.model(new Model());
+
+    $(document).ready(function () {
+      hotdrink.bind(model);
+    });
+  </script>
+</head>
+<body>
+  <p>
+  <input type="checkbox" name="cbox" id="cbox" data-bind="checkbox: cbox" />
+  <label for="cbox">I am checked.</label>
+  (<span data-bind="label: cbox"></span>)
+  </p>
+
+  <p>
+  <input type="checkbox" name="many" value="a" id="a" data-bind="checkboxGroup: many" />
+  <label for="a">a</label>
+  <input type="checkbox" name="many" value="b" id="b" />
+  <label for="b">b</label>
+  <input type="checkbox" name="many" value="c" id="c" />
+  <label for="c">c</label>
+  =
+  <select id="smany" multiple="true" size="2" data-bind="selectMany: many">
+    <option value="a">a</option>
+    <option value="b">b</option>
+    <option value="c">c</option>
+  </select>
+  =
+  <span data-bind="label: many"></span>
+  </p>
+
+  <p>
+  <input type="radio" name="one" value="x" id="x" data-bind="radioGroup: one" />
+  <label for="x">x</label>
+  <input type="radio" name="one" value="y" id="y" />
+  <label for="y">y</label>
+  <input type="radio" name="one" value="z" id="z" />
+  <label for="z">z</label>
+  =
+  <select id="sone" size="2" data-bind="selectOne: one">
+    <option value="x">x</option>
+    <option value="y">y</option>
+    <option value="z">z</option>
+  </select>
+  =
+  <select id="dropdown" data-bind="selectOne: one">
+    <option value="">Choose one...</option>
+    <option value="x">x</option>
+    <option value="y">y</option>
+    <option value="z">z</option>
+  </select>
+  =
+  <span id="onelbl" data-bind="label: one"></span>
+  </p>
+
+  <p>
+  <input type="text" id="num" data-bind="number: num" />
+  =
+  <span id="numlbl" data-bind="label: num"></span>
+  </p>
+
+  <p>
+  <label for="name">Who are you?</label>
+  <input type="text" id="name" data-bind="text: { value: name, debounce: 1000 }" /><br />
+  <input type="text" id="color" data-bind="text: color" /><br />
+  <span id="hellolbl" data-bind="label: hello, attr: { style: color }"></span></br />
+  <button id="ok" data-bind="command: ok">Ok</button>
+  </p>
+</body>
+</html>
+

@@ -11,9 +11,6 @@ TITLE := hotdrink-test
 ##################################################
 # optional configuration
 
-MAIN := $(TITLE).js
-MAINPLUS := $(TITLE)-plus.js
-
 SRCDIR := test/qunit
 SOURCES := \
 	common/hello_world.js \
@@ -27,10 +24,4 @@ SOURCES := \
 	model/enablement.js
 
 HEADERS := \
-
-OBJDIR := build
-
-THIRD_PARTY_SOURCES := \
-
-DOCDIR := doc
 

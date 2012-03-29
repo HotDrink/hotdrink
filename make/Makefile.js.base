@@ -21,16 +21,14 @@ GZIP := gzip
 ##################################################
 # self configuration (do not touch)
 
-$(SOURCES) :
-	@echo $@
+MAIN := $(TITLE).js
+
+DOCDIR := $(BUILDDIR)/doc-$(TITLE)
+OBJDIR := $(BUILDDIR)/objects-$(TITLE)
 
 # Headers hold m4 macros, so they are dependencies for all objects
 OBJECTS := $(addprefix $(OBJDIR)/,$(SOURCES))
 SOURCES := $(addprefix $(SRCDIR)/,$(SOURCES))
-
-#get_obj_path = $(shell echo "$(1)" | sed -e 's|[^/]*.js||')
-get_obj_path = $(1)
-my_dir = "blah"
 
 # To comply with POSIX, apparently, GNU make expands function calls when the
 # rule is read, not when it is matched, so this had to be moved to secondary
@@ -43,7 +41,7 @@ $(sort $(dir $(OBJECTS))) :
 ##################################################
 # targets
 
-.PHONY : all debug release plus syntax doc
+.PHONY : all debug release doc
 
 all : debug
 #	@$(call watch,SOURCES)
@@ -67,18 +65,8 @@ $(MAIN).gz : clean-obj $(OBJECTS)
 	$(GZIP) -c /tmp/$@.yuic > $@
 	-rm -rf $(OBJDIR)
 
-plus : $(MAINPLUS)
-
-$(MAINPLUS) : $(MAIN)
-	cat $(THIRD_PARTY_SOURCES) $^ > /tmp/$@
-	$(COMPILER) /tmp/$@ | $(COMPRESSOR) > $@
-
-syntax : $(OBJECTS)
-	cat $^ > /tmp/$@
-	$(YUIC) /tmp/$@ > /dev/null
-
 doc : clean-doc
-	nodejsdoc -d=$(DOCDIR) $(SOURCES)
+	jfdoc -d=$(DOCDIR) $(SOURCES)
 
 ##################################################
 # cleaning

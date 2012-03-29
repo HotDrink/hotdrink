@@ -10,14 +10,10 @@
 ##################################################
 # automatic configuration
 
-export MAIN
-export MAINPLUS
+export TITLE
 export SRCDIR
-export HEADERS
 export SOURCES
-export THIRD_PARTY_SOURCES
-export OBJDIR
-export DOCDIR
+export HEADERS
 
 ##################################################
 # targets
@@ -26,8 +22,6 @@ DEFERRED_TARGETS := \
 	all \
 	debug \
 	release \
-	plus \
-	syntax \
 	doc \
 	clean \
 	clean-obj \

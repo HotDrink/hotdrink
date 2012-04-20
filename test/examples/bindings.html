@@ -7,6 +7,13 @@
   <script type="text/javascript" src="../js/hotdrink.js"></script>
   <title>Default Binders | HotDrink Test Suite</title>
   <script type="text/javascript">
+    function validColor(color) {
+      if (color.match(/^\#[a-zA-Z0-9]{6}$/))
+        return true;
+      else
+        return 'Color must be in #xxxxxx format';
+    }
+
     var Model = function () {
       this.cbox = hd.variable(false);
 
@@ -15,7 +22,11 @@
 
       this.num = hd.variable(3.14);
 
-      this.color = hd.variable("color: green");
+      this.color = hd.variable("#009900");
+
+      this.style = hd.computed(function () {
+        return "color: " + this.color();
+      });
 
       this.name = hd.variable("World");
       this.hello = hd.computed(function () {
@@ -24,7 +35,7 @@
 
       this.ok = hd.command(function () {
         /* Access the other guys just so they'll be relevant. */
-        ["cbox", "many", "one", "num", "color"].forEach(function (v) {
+        ["cbox", "many", "one", "num", "style"].forEach(function (v) {
           this[v]();
         }, this);
         /* The real action. */
@@ -38,6 +49,9 @@
       hotdrink.bind(model);
     });
   </script>
+  <style type="text/css">
+    .error { font-size: 80%; color: red }
+  </style>
 </head>
 <body>
   <p>
@@ -88,16 +102,18 @@
   </p>
 
   <p>
-  <input type="text" id="num" data-bind="number: num" />
+  <input type="text" id="num" data-bind="number: {value: num, id: 'num'}" />
   =
-  <span id="numlbl" data-bind="label: num"></span>
+  <span id="numlbl" data-bind="label: num"></span><br />
+  <span class="error" id="numerr" data-bind="error: 'num'"></span>
   </p>
 
   <p>
   <label for="name">Who are you?</label>
-  <input type="text" id="name" data-bind="text: { value: name, debounce: 1000 }" /><br />
-  <input type="text" id="color" data-bind="text: color" /><br />
-  <span id="hellolbl" data-bind="label: hello, attr: { style: color }"></span></br />
+  <input type="text" id="name" data-bind="text: name" /><br />
+  <input type="text" id="color" data-bind="text: { value: color, debounce: 1000, validate: validColor, id: 'color' } " />
+  <span class="error" data-bind="error: 'color'"></span><br />
+  <span id="hellolbl" data-bind="label: hello, attr: { value: {style: style} }"></span></br />
   <button id="ok" data-bind="command: ok">Ok</button>
   </p>
 </body>

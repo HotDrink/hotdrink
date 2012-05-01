@@ -22,7 +22,11 @@
 
       this.num = hd.variable(3.14);
 
+      this.numBind = hd.binding(this.num);
+
       this.color = hd.variable("#009900");
+
+      this.colorBind = hd.binding({value: this.color, debounce: 1000, validate: validColor});
 
       this.style = hd.computed(function () {
         return "color: " + this.color();
@@ -102,17 +106,17 @@
   </p>
 
   <p>
-  <input type="text" id="num" data-bind="number: {value: num, id: 'num'}" />
+  <input type="text" id="num" data-bind="number: numBind" />
   =
   <span id="numlbl" data-bind="label: num"></span><br />
-  <span class="error" id="numerr" data-bind="error: 'num'"></span>
+  <span class="error" id="numerr" data-bind="error: {value: numBind}">&nbsp;</span>
   </p>
 
   <p>
   <label for="name">Who are you?</label>
   <input type="text" id="name" data-bind="text: name" /><br />
-  <input type="text" id="color" data-bind="text: { value: color, debounce: 1000, validate: validColor, id: 'color' } " />
-  <span class="error" data-bind="error: 'color'"></span><br />
+  <input type="text" id="color" data-bind="text: colorBind" />
+  <span class="error" data-bind="error: {value: colorBind}"></span><br />
   <span id="hellolbl" data-bind="label: hello, attr: { value: {style: style} }"></span></br />
   <button id="ok" data-bind="command: ok">Ok</button>
   </p>

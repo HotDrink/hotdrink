@@ -24,6 +24,7 @@ SOURCES := \
   concept/bindings/builder.js \
   concept/bindings/controller.js \
   model/model.js \
+  model/proxy.js \
   model/solver/solver.js \
   model/solver/helpers.js \
   model/solver/model.js \

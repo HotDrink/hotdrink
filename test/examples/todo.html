@@ -8,15 +8,22 @@
   <title>Default Binders | HotDrink Test Suite</title>
   <script type="text/javascript">
     var Model = function () {
+      this.next = hd.variable();
+
       this.items = hd.list([
         "mow the lawn",
         "buy milk",
         "brush teeth"
       ]);
 
-      this.add = (function () {
-        this.items.push("play video games");
-      }).bind(this);
+      this.remove = function () {
+        this.items.pop();
+      };
+
+      this.add = function () {
+        this.items.push(this.next());
+        this.next("");
+      };
     };
 
     var model = hd.model(new Model());
@@ -27,9 +34,11 @@
   </script>
 </head>
 <body>
+  <input placeholder="What needs to be done?" type="text" data-bind="text: next" />
   <button data-bind="command: add">Add</button>
+  <button data-bind="command: remove">Remove</button>
   <ul data-bind="foreach: items">
-    <li data-bind="label: $this">placeholder text</li>
+    <li data-bind="label: $this"></li>
   </ul>
 </body>
 </html>

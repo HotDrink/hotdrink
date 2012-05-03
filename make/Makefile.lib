@@ -52,6 +52,7 @@ SOURCES := \
   bindings/html/number.js \
   bindings/html/command.js \
   bindings/html/attr.js \
+  bindings/html/foreach.js \
   bindings/html/html.js \
   bindings/controller.js \
   driver.js

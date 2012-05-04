@@ -14,7 +14,7 @@
         return {error : 'Color must be in #xxxxxx format'};
     }
 
-    function convertDate(datestr) {
+    function stringToDate(datestr) {
       var milliseconds = Date.parse(datestr);
       if (isNaN(milliseconds))
         return {error : 'Invalid date format'};
@@ -22,7 +22,7 @@
         return {value : new Date(milliseconds)};
     }
 
-    function convertDateBack(date) {
+    function dateToString(date) {
       return {value : date.toLocaleDateString()};
     }
 
@@ -61,9 +61,9 @@
 
       this.bday = hd.variable(new Date());
       this.bdayBind = hd.binding({value: this.bday,
-                                  convert: convertDate,
+                                  toModel: stringToDate,
                                   validate: validBirthday,
-                                  convertBack: convertDateBack,
+                                  toView: dateToString,
                                   debounce: 1000});
 
 

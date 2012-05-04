@@ -1,0 +1,46 @@
+
+<script type="text/javascript">
+
+function dateToString (d) { return {value: $.datepicker.formatDate('mm/dd/yy', d)}; }
+function stringToDate (s) {
+  var d= Date.parse(s);
+  if (isNaN(d))
+    return {error: "Invalid date format"};
+  else
+    return {value: new Date(d)};
+}
+
+function add_days(d, n) {
+  var d2 = new Date(d.getTime());
+  d2.setDate(d.getDate() + n);
+  return d2;
+}
+
+function remove_days(d, n) {
+  var d2 = new Date(d.getTime());
+  d2.setDate(d.getDate() - n);
+  return d2;
+}
+
+// 1 day in milliseconds
+var one_day=1000*60*60*24;
+
+function day_difference(d1, d2) {
+  // Calculate the difference in milliseconds
+  var difference_ms = d2.getTime() - d1.getTime();
+    
+  // Convert back to days and return
+  return Math.round(difference_ms / one_day).toString(); 
+}
+
+// Associate datepicker with the check_in and check_out fiels,
+// and trigger a keyup event when a date is picked
+$(function() { 
+  $( "#check_in" ).datepicker({
+      onSelect: function() { $(this).keyup(); }
+  });
+  $( "#check_out" ).datepicker({
+      onSelect: function() { $(this).keyup(); }
+  });
+});
+</script>

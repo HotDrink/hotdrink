@@ -9,9 +9,29 @@
   <script type="text/javascript">
     function validColor(color) {
       if (color.match(/^\#[a-zA-Z0-9]{6}$/))
-        return true;
+        return {};
       else
-        return 'Color must be in #xxxxxx format';
+        return {error : 'Color must be in #xxxxxx format'};
+    }
+
+    function convertDate(datestr) {
+      var milliseconds = Date.parse(datestr);
+      if (isNaN(milliseconds))
+        return {error : 'Invalid date format'};
+      else
+        return {value : new Date(milliseconds)};
+    }
+
+    function convertDateBack(date) {
+      return {value : date.toLocaleDateString()};
+    }
+
+    var today = new Date();
+    function validBirthday(date) {
+      if (date.getTime() < today.getTime())
+        return {};
+      else
+        return {error : 'Must already be born!'}
     }
 
     var Model = function () {
@@ -26,7 +46,9 @@
 
       this.color = hd.variable("#009900");
 
-      this.colorBind = hd.binding({value: this.color, debounce: 1000, validate: validColor});
+      this.colorBind = hd.binding({value: this.color,
+                                   debounce: 1000,
+                                   validate: validColor});
 
       this.style = hd.computed(function () {
         return "color: " + this.color();
@@ -36,6 +58,14 @@
       this.hello = hd.computed(function () {
         return "Hello, " + this.name() + "!";
       });
+
+      this.bday = hd.variable(new Date());
+      this.bdayBind = hd.binding({value: this.bday,
+                                  convert: convertDate,
+                                  validate: validBirthday,
+                                  convertBack: convertDateBack,
+                                  debounce: 1000});
+
 
       this.ok = hd.command(function () {
         /* Access the other guys just so they'll be relevant. */
@@ -119,6 +149,12 @@
   <span class="error" data-bind="error: {value: colorBind}"></span><br />
   <span id="hellolbl" data-bind="label: hello, attr: { value: {style: style} }"></span></br />
   <button id="ok" data-bind="command: ok">Ok</button>
+  </p>
+
+  <p>
+    <label for="bday">When is your birthday?</label>
+    <input type="text" id="bday" data-bind="text: bdayBind" size="40" /><br />
+    <span class="error" data-bind="error: {value: bdayBind}">&nbsp;</span>
   </p>
 </body>
 </html>

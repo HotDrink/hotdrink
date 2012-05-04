@@ -21,7 +21,8 @@
       };
 
       this.add = function add() {
-        this.items.push(this.next());
+        var next = this.next().trim();
+        if (next) this.items.push(next);
         this.next("");
       };
     };

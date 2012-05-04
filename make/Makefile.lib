@@ -54,6 +54,7 @@ SOURCES := \
   bindings/html/click.js \
   bindings/html/submit.js \
   bindings/html/attr.js \
+  bindings/html/css.js \
   bindings/html/foreach.js \
   bindings/html/html.js \
   bindings/controller.js \

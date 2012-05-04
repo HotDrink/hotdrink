@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-	<title>Template • TodoMVC</title>
+	<title>HotDrink • TodoMVC</title>
 	<link rel="stylesheet" href="assets/base.css">
 	<!--[if IE]>
 	<script src="assets/ie.js"></script>
@@ -22,37 +22,28 @@
 		</header>
 		<!-- This section should be hidden by default and shown when there are todos -->
 		<section id="main">
-			<input id="toggle-all" type="checkbox">
+			<input id="toggle-all" type="checkbox" data-bind="checkbox: isAllComplete">
 			<label for="toggle-all">Mark all as complete</label>
 			<ul id="todo-list" data-bind="foreach: items">
 				<!-- These are here just to show the structure of the list items -->
 				<!-- List items should get the class `editing` when editing and `completed` when marked as completed -->
-        <li data-bind="css: { completed: hd.computed(function () { return !isPending(); }) }">
+        <li data-bind="css: { completed: isComplete }">
 					<div class="view">
-						<input class="toggle" type="checkbox" checked data-bind="checkbox: isPending">
+						<input class="toggle" type="checkbox" data-bind="checkbox: isComplete">
 						<label data-bind="label: description"></label>
             <button class="destroy" data-bind="click: function () { $parent.remove($this); }"></button>
 					</div>
-					<input class="edit" value="Create a TodoMVC template">
+          <input class="edit" data-bind="text: description">
 				</li>
 			</ul>
 		</section>
 		<!-- This footer should hidden by default and shown when there are todos -->
 		<footer id="footer">
 			<!-- This should be `0 items left` by default -->
-			<span id="todo-count"><strong data-bind="label: numPending">1</strong> item left</span>
-			<!-- Remove this if you don't implement routing -->
-			<ul id="filters">
-				<li>
-					<a class="selected" href="#/">All</a>
-				</li>
-				<li>
-					<a href="#/active">Active</a>
-				</li>
-				<li>
-					<a href="#/completed">Completed</a>
-				</li>
-			</ul>
+      <span id="todo-count">
+        <strong data-bind="label: numPending">1</strong>
+        <span data-bind="label: numPendingUnits">item</span> left
+      </span>
       <button id="clear-completed" data-bind="click: prune">
         Clear completed (<span data-bind="label: numComplete">1</span>)
       </button>

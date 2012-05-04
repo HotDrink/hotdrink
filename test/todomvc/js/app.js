@@ -13,18 +13,16 @@ var Model = function Model() {
     hd.model(new Item("brush teeth"))
   ]);
 
-  this.isAllComplete = hd.variable(false);
-
-  /* We want a multi-way constraint between `isAllComplete` and the
-   * `isComplete` of every item in `items`. */
-  this.sink = hd.variable();
-  hd.constraint()
-    .method(this.isAllComplete, function () {
-      return this.items().every(function (item) {
-        return item.isComplete();
-      });
-    })
-    .method(this.sink, function () {});
+  this.isAllComplete = hd.computed(function () {
+    return this.items().length &&
+    this.items().every(function (item) {
+      return item.isComplete();
+    });
+  }, function (value) {
+    this.items().forEach(function (item) {
+      item.isComplete(value);
+    });
+  });
 
   this.numComplete = hd.computed(function () {
     return this.items().reduce(function (count, item) {

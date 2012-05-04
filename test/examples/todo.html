@@ -16,11 +16,11 @@
         "brush teeth"
       ]);
 
-      this.remove = function () {
-        this.items.pop();
+      this.remove = function remove(item) {
+        this.items.remove(item);
       };
 
-      this.add = function () {
+      this.add = function add() {
         this.items.push(this.next());
         this.next("");
       };
@@ -34,11 +34,15 @@
   </script>
 </head>
 <body>
-  <input placeholder="What needs to be done?" type="text" data-bind="text: next" />
-  <button data-bind="command: add">Add</button>
-  <button data-bind="command: remove">Remove</button>
+  <form data-bind="submit: add">
+    <input placeholder="What needs to be done?" type="text" data-bind="text: next" />
+  </form>
   <ul data-bind="foreach: items">
-    <li data-bind="label: $this"></li>
+    <li>
+      <a href="#"
+        data-bind="click: function () { $parent.remove($this); }">X</a>
+      <span data-bind="label: $this"></span>
+    </li>
   </ul>
 </body>
 </html>

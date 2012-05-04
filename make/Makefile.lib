@@ -51,6 +51,8 @@ SOURCES := \
   bindings/html/text.js \
   bindings/html/number.js \
   bindings/html/command.js \
+  bindings/html/click.js \
+  bindings/html/submit.js \
   bindings/html/attr.js \
   bindings/html/foreach.js \
   bindings/html/html.js \

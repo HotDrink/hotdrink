@@ -68,7 +68,7 @@
     hd.update();
     strictEqual(model.relative_height(), 105,
       "copy old value in self-loop");
-    strictEqual(model.relative_height.getMore().dependsOnSelf, true,
+    strictEqual(model.relative_height.unwrap().dependsOnSelf, true,
       "correctly marked dependsOnSelf");
 
     model.relative_height(100);
@@ -78,7 +78,7 @@
       "preservation of more recently edited value");
     strictEqual(model.relative_width(), 100,
       "overwrite less recently edited value");
-    strictEqual(model.relative_height.getMore().dependsOnSelf, false,
+    strictEqual(model.relative_height.unwrap().dependsOnSelf, false,
       "correctly marked dependsOnSelf");
 
   });

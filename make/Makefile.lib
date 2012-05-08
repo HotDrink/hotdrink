@@ -24,6 +24,7 @@ SOURCES := \
   concept/bindings/builder.js \
   concept/bindings/controller.js \
   model/model.js \
+  model/proxy.js \
   model/solver/solver.js \
   model/solver/helpers.js \
   model/solver/model.js \
@@ -50,8 +51,12 @@ SOURCES := \
   bindings/html/text.js \
   bindings/html/number.js \
   bindings/html/command.js \
+  bindings/html/click.js \
+  bindings/html/submit.js \
   bindings/html/attr.js \
   bindings/html/error.js \
+  bindings/html/css.js \
+  bindings/html/foreach.js \
   bindings/html/html.js \
   bindings/controller.js \
   driver.js

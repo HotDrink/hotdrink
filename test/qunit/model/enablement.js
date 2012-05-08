@@ -1,7 +1,7 @@
 (function () {
 
   var getCanBeDisabled = function (model, v) {
-    return model[v].getMore().canBeDisabled;
+    return model[v].unwrap().canBeDisabled;
   };
 
   module("enablement");

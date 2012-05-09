@@ -39,7 +39,8 @@ SOURCES := \
   model/factory/model.js \
   model/behavior/precondition.js \
   model/behavior/enablement.js \
-  bindings/common.js \
+  driver.js \
+  bindings/controller.js \
   bindings/behavior/value.js \
   bindings/behavior/enablement.js \
   bindings/html/common.js \
@@ -51,14 +52,10 @@ SOURCES := \
   bindings/html/text.js \
   bindings/html/number.js \
   bindings/html/command.js \
-  bindings/html/click.js \
   bindings/html/submit.js \
   bindings/html/attr.js \
   bindings/html/css.js \
   bindings/html/foreach.js \
-  bindings/html/html.js \
-  bindings/controller.js \
-  driver.js
 
 HEADERS := \
   lib/utility/debug.m4.js

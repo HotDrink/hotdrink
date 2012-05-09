@@ -1,6 +1,7 @@
 .DS_Store
 .*.swp
 hotdrink.js
+hotdrink.js.gz
 hotdrink-test.js
 build
 doc

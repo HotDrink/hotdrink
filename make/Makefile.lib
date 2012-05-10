@@ -25,9 +25,9 @@ SOURCES := \
   model/runtime/evaluator.js \
   model/runtime/runtime.js \
   model/proxy.js \
-  model/factory/solver.js \
   model/factory/factory.js \
   model/factory/internal.js \
+  model/factory/solver.js \
   model/factory/variable.js \
   model/factory/constraint.js \
   model/factory/model.js \

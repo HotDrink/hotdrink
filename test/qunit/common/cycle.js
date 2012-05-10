@@ -62,7 +62,7 @@
     }
   };
 
-  namespace.open("hottest").cycle = cycle;
+  hottest.cycle = cycle;
 
 }());
 

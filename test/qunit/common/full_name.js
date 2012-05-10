@@ -14,7 +14,7 @@
     }
   };
 
-  namespace.open("hottest").full_name = full_name;
+  hottest.full_name = full_name;
 
 }());
 

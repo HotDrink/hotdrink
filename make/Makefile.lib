@@ -15,31 +15,24 @@ SRCDIR := lib
 SOURCES := \
   utility/debug.js \
   utility/stdlib.js \
-  utility/namespace.js \
   utility/publisher.js \
-  concept/model/behavior.js \
-  concept/model/value.js \
-  concept/bindings/ast.js \
-  concept/bindings/behavior.js \
-  concept/bindings/builder.js \
-  concept/bindings/controller.js \
+  hd.js \
   model/model.js \
-  model/proxy.js \
   model/solver/solver.js \
   model/solver/helpers.js \
   model/solver/model.js \
   model/solver/quickplan.js \
   model/runtime/evaluator.js \
   model/runtime/runtime.js \
-  model/factory/solver.js \
+  model/proxy.js \
   model/factory/factory.js \
   model/factory/internal.js \
+  model/factory/solver.js \
   model/factory/variable.js \
   model/factory/constraint.js \
   model/factory/model.js \
   model/behavior/precondition.js \
   model/behavior/enablement.js \
-  driver.js \
   bindings/controller.js \
   bindings/behavior/value.js \
   bindings/behavior/enablement.js \

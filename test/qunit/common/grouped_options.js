@@ -27,7 +27,7 @@
     }
   };
 
-  namespace.open("hottest").grouped_options = grouped_options;
+  hottest.grouped_options = grouped_options;
 
 }());
 

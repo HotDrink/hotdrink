@@ -29,7 +29,7 @@
     }
   };
 
-  namespace.open("hottest").save_image = save_image;
+  hottest.save_image = save_image;
 
 }());
 

@@ -11,7 +11,7 @@
     }
   };
 
-  namespace.open("hottest").hello_world = hello_world;
+  hottest.hello_world = hello_world;
 
 }());
 

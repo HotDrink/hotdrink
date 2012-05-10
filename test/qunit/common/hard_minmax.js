@@ -34,7 +34,7 @@ var max = function (a, b) { return (a < b) ? (b) : (a); };
     }
   };
 
-  namespace.open("hottest").enforced_minmax = enforced_minmax;
+  hottest.enforced_minmax = enforced_minmax;
 
 }());
 

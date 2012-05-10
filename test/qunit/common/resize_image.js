@@ -52,7 +52,7 @@
     }
   };
 
-  namespace.open("hottest").resize_image = resize_image;
+  hottest.resize_image = resize_image;
 
 }());
 

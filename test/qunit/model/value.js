@@ -2,18 +2,18 @@
 
   module("value propagation");
 
-  test("hello_world", function () {
+  test("helloWorld", function () {
     expect(1);
 
-    var model = hottest.hello_world.getModel();
+    var model = new hottest.helloWorld.Model();
     strictEqual(model.text(), "Hello, World!",
       "[issue 2] constant method gets executed");
   });
 
-  test("full_name", function () {
+  test("fullName", function () {
     expect(2);
 
-    var model = hottest.full_name.getModel();
+    var model = new hottest.fullName.Model();
     strictEqual(model.fullName(), "John Smith",
       "computed variable is initialized");
 
@@ -26,7 +26,7 @@
   test("cycle", function () {
       expect(4);
 
-      var model = hottest.cycle.getModel();
+      var model = new hottest.cycle.Model();
  
       model.bb(1);
       model.cc(1);
@@ -44,49 +44,49 @@
         "did not write dd");
   });
 
-  test("resize_image", function () {
+  test("resizeImage", function () {
     expect(11);
 
-    var model = hottest.resize_image.getModel();
-    strictEqual(model.initial_width(), 2100,
-      "initialized initial_width");
-    strictEqual(model.absolute_height(), 1500,
-      "initialized absolute_height");
-    strictEqual(model.preserve_ratio(), true,
-      "initialized preserve_ratio");
-    strictEqual(model.relative_width(), 100,
-      "initialized relative_width");
+    var model = new hottest.resizeImage.Model();
+    strictEqual(model.initialWidth(), 2100,
+      "initialized initialWidth");
+    strictEqual(model.absoluteHeight(), 1500,
+      "initialized absoluteHeight");
+    strictEqual(model.preserveRatio(), true,
+      "initialized preserveRatio");
+    strictEqual(model.relativeWidth(), 100,
+      "initialized relativeWidth");
 
-    model.relative_width(105);
+    model.relativeWidth(105);
     hd.update();
-    strictEqual(model.relative_height(), 105,
-      "calculate relative_height from relative_width");
-    strictEqual(model.absolute_height(), 1575,
-      "calculate absolute_height from relative_width");
+    strictEqual(model.relativeHeight(), 105,
+      "calculate relativeHeight from relativeWidth");
+    strictEqual(model.absoluteHeight(), 1575,
+      "calculate absoluteHeight from relativeWidth");
 
-    model.preserve_ratio(false);
+    model.preserveRatio(false);
     hd.update();
-    strictEqual(model.relative_height(), 105,
+    strictEqual(model.relativeHeight(), 105,
       "copy old value in self-loop");
-    strictEqual(model.relative_height.unwrap().dependsOnSelf, true,
+    strictEqual(model.relativeHeight.unwrap().dependsOnSelf, true,
       "correctly marked dependsOnSelf");
 
-    model.relative_height(100);
-    model.preserve_ratio(true);
+    model.relativeHeight(100);
+    model.preserveRatio(true);
     hd.update();
-    strictEqual(model.relative_height(), 100,
+    strictEqual(model.relativeHeight(), 100,
       "preservation of more recently edited value");
-    strictEqual(model.relative_width(), 100,
+    strictEqual(model.relativeWidth(), 100,
       "overwrite less recently edited value");
-    strictEqual(model.relative_height.unwrap().dependsOnSelf, false,
+    strictEqual(model.relativeHeight.unwrap().dependsOnSelf, false,
       "correctly marked dependsOnSelf");
 
   });
 
-  test("enforced_minmax", function () {
+  test("enforcedMinmax", function () {
     expect(6);
 
-    var model = hottest.enforced_minmax.getModel();
+    var model = new hottest.enforcedMinmax.Model();
     model.min(110);
     hd.update();
     strictEqual(model.value(), 110,
@@ -113,10 +113,10 @@
       "[issue 3] value bounces back below max");
   });
 
-  test("grouped_options", function () {
+  test("groupedOptions", function () {
     expect(5);
 
-    var model = hottest.grouped_options.getModel();
+    var model = new hottest.groupedOptions.Model();
     strictEqual(model.all(), false,
       "initialized all");
 

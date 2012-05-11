@@ -24,7 +24,9 @@ SOURCES := \
   model/solver/quickplan.js \
   model/runtime/evaluator.js \
   model/runtime/runtime.js \
-  model/proxy.js \
+  model/proxies/common.js \
+  model/proxies/scalar.js \
+  model/proxies/array.js \
   model/factory/factory.js \
   model/factory/internal.js \
   model/factory/solver.js \

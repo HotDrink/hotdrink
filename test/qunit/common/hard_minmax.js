@@ -3,7 +3,7 @@ var max = function (a, b) { return (a < b) ? (b) : (a); };
 
 (function () {
 
-  var Model = function () {
+  var Model = hd.model(function Model() {
     this.value = hd.variable(50);
     this.min = hd.variable(0);
     this.max = hd.variable(100);
@@ -26,15 +26,11 @@ var max = function (a, b) { return (a < b) ? (b) : (a); };
 
     hd.precondition(this.result, function () { this.min() >= 0; });
 
-  };
+  });
 
-  var enforced_minmax = {
-    getModel : function () {
-      return hd.model(new Model());
-    }
+  hottest.enforcedMinmax = {
+    Model: Model
   };
-
-  hottest.enforced_minmax = enforced_minmax;
 
 }());
 

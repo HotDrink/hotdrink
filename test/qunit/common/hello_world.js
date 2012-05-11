@@ -1,17 +1,13 @@
 (function () {
 
-  var Model = function () {
+  var Model = hd.model(function Model() {
     this.text = hd.computed(function () { return "Hello, World!"; });
     this.result = hd.command(function () { return this.text(); });
-  };
+  });
 
-  var hello_world = {
-    getModel : function () {
-      return hd.model(new Model());
-    }
+  hottest.helloWorld = {
+    Model: Model
   };
-
-  hottest.hello_world = hello_world;
 
 }());
 

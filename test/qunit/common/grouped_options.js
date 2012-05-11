@@ -1,6 +1,6 @@
 (function () {
 
-  var Model = function () {
+  var Model = hd.model(function Model() {
     this.all = hd.variable(false);
     this.a = hd.variable();
     this.b = hd.variable();
@@ -19,15 +19,11 @@
     this.result = hd.command(function () {
       return { a : this.a(), b : this.b(), c : this.c() };
     });
-  };
+  });
 
-  var grouped_options = {
-    getModel : function () {
-      return hd.model(new Model());
-    }
+  hottest.groupedOptions = {
+    Model: Model
   };
-
-  hottest.grouped_options = grouped_options;
 
 }());
 

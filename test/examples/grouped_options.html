@@ -7,7 +7,7 @@
   <script type="text/javascript" src="../js/hotdrink.js"></script>
   <title>Grouped Options | HotDrink Demo</title>
   <script type="text/javascript">
-    var Model = function () {
+    var Model = hd.model(function Model() {
       this.all = hd.variable(false);
       this.a = hd.variable();
       this.b = hd.variable();
@@ -26,12 +26,12 @@
       this.result = hd.command(function () {
         return JSON.stringify({ a : this.a(), b : this.b(), c : this.c() });
       });
-    };
+    });
 
-    var model = hd.model(new Model());
+    var model = new Model;
 
     $(document).ready(function () {
-      hotdrink.bind(model);
+      hd.bind(model);
     });
   </script>
 </head>

@@ -7,7 +7,7 @@
   <script type="text/javascript" src="../js/hotdrink.js"></script>
   <title>Default Binders | HotDrink Test Suite</title>
   <script type="text/javascript">
-    var Model = function () {
+    var Model = hd.model(function Model() {
       this.cbox = hd.variable(false);
 
       this.many = hd.variable([]);
@@ -30,9 +30,9 @@
         /* The real action. */
         return hd.fn(alert)(this.hello());
       });
-    };
+    });
 
-    var model = hd.model(new Model());
+    var model = new Model;
 
     $(document).ready(function () {
       hd.bind(model);

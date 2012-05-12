@@ -1,16 +1,16 @@
-var Item = function Item(description) {
+var Item = hd.model(function Item(description) {
   this.description = hd.variable(description || "");
   this.isComplete = hd.variable(false);
-};
+});
 
-var Model = function Model() {
+var Model = hd.model(function Model() {
 
   this.next = hd.variable("");
 
   this.items = hd.list([
-    hd.model(new Item("mow the lawn")),
-    hd.model(new Item("buy milk")),
-    hd.model(new Item("brush teeth"))
+    new Item("mow the lawn"),
+    new Item("buy milk"),
+    new Item("brush teeth")
   ]);
 
   this.isAllComplete = hd.computed(function () {
@@ -44,17 +44,17 @@ var Model = function Model() {
 
   this.add = function add() {
     var next = this.next().trim();
-    if (next) this.items.push(hd.model(new Item(next)));
+    if (next) this.items.push(new Item(next));
     this.next("");
   };
 
   this.prune = function prune() {
-    this.items(this.items().filter(function (item) { return !item.isComplete(); }));
+    this.items.filter(function (item) { return !item.isComplete(); });
   };
 
-};
+});
 
-var model = hd.model(new Model());
+var model = new Model();
 
-hotdrink.bind(model);
+hd.bind(model);
 

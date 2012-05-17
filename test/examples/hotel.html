@@ -1,0 +1,114 @@
+<html>
+  <head>
+    <title>Hotel Reservation Example</title>
+    <style type="text/css">
+      body { padding: 1em; }
+
+      fieldset {
+        padding: 1em;
+        font: 80%/1 sans-serif;
+        border: 1px solid blue;
+        width: 300px;
+      }
+
+      label {
+        float:left;
+        margin-right:0.5em;
+        padding-top:0.4em;
+        text-align:right;
+        font-weight:bold;
+        width:25%;
+      }
+
+      input { width:70%; }
+
+      legend {
+        padding: 0.2em 0.5em;
+        border:1px solid blue;
+        color:blue;
+        font-size:90%;
+        text-align:right;
+      }
+
+      div {
+        white-space: nowrap;
+        margin-top: 0.3em;
+      }
+
+      button {
+        float: right;
+        margin-right: 3%;
+      }
+    </style>
+    <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/hotdrink.js"></script>
+    <script type="text/javascript">
+      var nights = hd.variable(3);
+      var checkIn = hd.variable(new Date().setHours(12, 0, 0, 0));
+      var checkOut = hd.variable();
+
+      var day = 1000 * 60 * 60 * 24;  // 1 day in ms
+
+      hd.constraint()
+        .method(checkIn, function () {
+          return checkOut() - day * nights(); })
+        .method(checkOut, function () {
+          return checkIn() + day * nights(); })
+        .method(nights, function () {
+          return Math.round((checkOut() - this.checkIn()) / day); });
+
+      var viewModel = {
+        nights: nights,
+        checkIn: checkIn,
+        checkOut: checkOut
+      };
+
+      var reserve = function reserve(checkIn, checkOut) {
+        alert("Reserved from " + dateToString(checkIn).value
+              + " to " + dateToString(checkOut).value);
+      }
+
+      viewModel.reserve = hd.command(function() {
+        return hd.fn(reserve)(checkIn(), checkOut());
+      })
+    
+      $(document).ready(function () {
+        hotdrink.bind(viewModel);
+      });
+
+      function dateToString(m) {
+        var d = new Date(m);
+        return {value: (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear()};
+      }
+
+      function stringToDate(s) {
+        var m= Date.parse(s);
+        if (isNaN(m))
+          return {error: "Invalid date format"};
+        else
+          return {value: m};
+      }
+    </script>
+  </head>
+  <body>
+    <fieldset>
+      <legend>Select dates</legend>
+      <div>
+        <label>Check in</label>
+        <input type="text" data-bind="text: {value: checkIn, toModel: stringToDate, toView: dateToString}"/>
+      </div>
+      <div>
+        <label>Check out</label>
+        <input type="text" data-bind="text: {value: checkOut, toModel: stringToDate, toView: dateToString}"/>
+      </div>
+      <div>
+        <label>Nights</label>
+        <input type="text" data-bind="number: {value: nights}"/>
+      </div>
+      <div>
+        <button data-bind="command: reserve">Reserve a room</button>
+      </div>
+    </fieldset>
+  </body>
+</html>

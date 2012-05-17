@@ -7,6 +7,33 @@
   <script type="text/javascript" src="../js/hotdrink.js"></script>
   <title>Default Binders | HotDrink Test Suite</title>
   <script type="text/javascript">
+    function validColor(color) {
+      if (color.match(/^\#[a-zA-Z0-9]{6}$/))
+        return {};
+      else
+        return {error : 'Color must be in #xxxxxx format'};
+    }
+
+    function stringToDate(datestr) {
+      var milliseconds = Date.parse(datestr);
+      if (isNaN(milliseconds))
+        return {error : 'Invalid date format'};
+      else
+        return {value : new Date(milliseconds)};
+    }
+
+    function dateToString(date) {
+      return {value : date.toLocaleDateString()};
+    }
+
+    var today = new Date();
+    function validBirthday(date) {
+      if (date.getTime() < today.getTime())
+        return {};
+      else
+        return {error : 'Must already be born!'}
+    }
+
     var Model = function () {
       this.cbox = hd.variable(false);
 
@@ -15,16 +42,34 @@
 
       this.num = hd.variable(3.14);
 
-      this.color = hd.variable("color: green");
+      this.numBind = hd.binding(this.num);
+
+      this.color = hd.variable("#009900");
+
+      this.colorBind = hd.binding({value: this.color,
+                                   debounce: 1000,
+                                   validate: validColor});
+
+      this.style = hd.computed(function () {
+        return "color: " + this.color();
+      });
 
       this.name = hd.variable("World");
       this.hello = hd.computed(function () {
         return "Hello, " + this.name() + "!";
       });
 
+      this.bday = hd.variable(new Date());
+      this.bdayBind = hd.binding({value: this.bday,
+                                  toModel: stringToDate,
+                                  validate: validBirthday,
+                                  toView: dateToString,
+                                  debounce: 1000});
+
+
       this.ok = hd.command(function () {
         /* Access the other guys just so they'll be relevant. */
-        ["cbox", "many", "one", "num", "color"].forEach(function (v) {
+        ["cbox", "many", "one", "num", "style"].forEach(function (v) {
           this[v]();
         }, this);
         /* The real action. */
@@ -38,6 +83,9 @@
       hotdrink.bind(model);
     });
   </script>
+  <style type="text/css">
+    .error { font-size: 80%; color: red }
+  </style>
 </head>
 <body>
   <p>
@@ -88,17 +136,25 @@
   </p>
 
   <p>
-  <input type="text" id="num" data-bind="number: num" />
+  <input type="text" id="num" data-bind="number: numBind" />
   =
-  <span id="numlbl" data-bind="label: num"></span>
+  <span id="numlbl" data-bind="label: num"></span><br />
+  <span class="error" id="numerr" data-bind="error: {value: numBind}">&nbsp;</span>
   </p>
 
   <p>
   <label for="name">Who are you?</label>
-  <input type="text" id="name" data-bind="text: { value: name, debounce: 1000 }" /><br />
-  <input type="text" id="color" data-bind="text: color" /><br />
-  <span id="hellolbl" data-bind="label: hello, attr: { style: color }"></span></br />
+  <input type="text" id="name" data-bind="text: name" /><br />
+  <input type="text" id="color" data-bind="text: colorBind" />
+  <span class="error" data-bind="error: {value: colorBind}"></span><br />
+  <span id="hellolbl" data-bind="label: hello, attr: { value: {style: style} }"></span></br />
   <button id="ok" data-bind="command: ok">Ok</button>
+  </p>
+
+  <p>
+    <label for="bday">When is your birthday?</label>
+    <input type="text" id="bday" data-bind="text: bdayBind" size="40" /><br />
+    <span class="error" data-bind="error: {value: bdayBind}">&nbsp;</span>
   </p>
 </body>
 </html>

@@ -15,7 +15,7 @@
 
       this.num = hd.variable(3.14);
 
-      this.color = hd.variable("color: green");
+      this.color = hd.variable("green");
 
       this.name = hd.variable("World");
       this.hello = hd.computed(function () {
@@ -43,7 +43,7 @@
   <p>
   <input type="checkbox" name="cbox" id="cbox" data-bind="checkbox: cbox" />
   <label for="cbox">I am checked.</label>
-  (<span data-bind="label: cbox"></span>)
+  (<span data-bind="text: cbox"></span>)
   </p>
 
   <p>
@@ -60,7 +60,7 @@
     <option value="c">c</option>
   </select>
   =
-  <span data-bind="label: many"></span>
+  <span data-bind="text: many"></span>
   </p>
 
   <p>
@@ -84,20 +84,20 @@
     <option value="z">z</option>
   </select>
   =
-  <span id="onelbl" data-bind="label: one"></span>
+  <span id="onelbl" data-bind="text: one"></span>
   </p>
 
   <p>
   <input type="text" id="num" data-bind="number: num" />
   =
-  <span id="numlbl" data-bind="label: num"></span>
+  <span id="numlbl" data-bind="text: num"></span>
   </p>
 
   <p>
   <label for="name">Who are you?</label>
-  <input type="text" id="name" data-bind="text: { value: name, debounce: 1000 }" /><br />
-  <input type="text" id="color" data-bind="text: color" /><br />
-  <span id="hellolbl" data-bind="label: hello, attr: { style: color }"></span></br />
+  <input type="text" id="name" data-bind="textbox: { value: name, debounce: 1000 }" /><br />
+  <input type="text" id="color" data-bind="textbox: color" /><br />
+  <span id="hellolbl" data-bind="text: hello, style: { color: color }"></span></br />
   <button id="ok" data-bind="command: ok">Ok</button>
   </p>
 </body>

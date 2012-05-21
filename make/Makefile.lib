@@ -54,6 +54,7 @@ SOURCES := \
   bindings/binders/value/textbox.js \
   bindings/binders/event/event.js \
   bindings/binders/event/click.js \
+  bindings/binders/event/dblclick.js \
   bindings/binders/event/submit.js \
   bindings/binders/dom/foreach.js \
 

@@ -1,6 +1,7 @@
 var Item = hd.model(function Item(description) {
   this.description = hd.variable(description || "");
   this.isComplete = hd.variable(false);
+  this.isEditing = hd.variable(false);
 });
 
 var Model = hd.model(function Model() {
@@ -44,6 +45,20 @@ var Model = hd.model(function Model() {
 
   this.remove = function remove(item) {
     this.items.remove(item);
+  };
+
+  this.startEditing = function startEditing(item) {
+    item.isEditing(true);
+  };
+
+  this.finishEditing = function finishEditing(item) {
+    item.isEditing(false);
+    var desc = item.description().trim();
+    if (desc) {
+      item.description(desc);
+    } else {
+      this.remove(item);
+    }
   };
 
   this.add = function add() {

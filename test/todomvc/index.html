@@ -21,7 +21,7 @@
       </form>
 		</header>
 		<!-- This section should be hidden by default and shown when there are todos -->
-		<section id="main">
+		<section id="main" data-bind="visible: hasItems">
 			<input id="toggle-all" type="checkbox" data-bind="checkbox: isAllComplete">
 			<label for="toggle-all">Mark all as complete</label>
 			<ul id="todo-list" data-bind="foreach: items">
@@ -38,7 +38,7 @@
 			</ul>
 		</section>
 		<!-- This footer should hidden by default and shown when there are todos -->
-		<footer id="footer">
+		<footer id="footer" data-bind="visible: hasItems">
 			<!-- This should be `0 items left` by default -->
       <span id="todo-count">
         <strong data-bind="text: numPending">1</strong>

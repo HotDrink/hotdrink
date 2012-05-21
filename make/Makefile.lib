@@ -57,6 +57,7 @@ SOURCES := \
   bindings/binders/event/dblclick.js \
   bindings/binders/event/submit.js \
   bindings/binders/dom/foreach.js \
+  bindings/binders/dom/if.js \
 
 HEADERS := \
   lib/utility/debug.m4.js

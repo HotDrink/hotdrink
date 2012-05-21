@@ -13,6 +13,10 @@ var Model = hd.model(function Model() {
     new Item("brush teeth")
   ]);
 
+  this.hasItems = hd.computed(function () {
+    return this.items().length;
+  });
+
   this.isAllComplete = hd.computed(function () {
     return this.items().length &&
     this.items().every(function (item) {

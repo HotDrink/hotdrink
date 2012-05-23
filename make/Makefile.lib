@@ -52,6 +52,8 @@ SOURCES := \
   bindings/binders/value/selectMany.js \
   bindings/binders/value/number.js \
   bindings/binders/value/textbox.js \
+  bindings/binders/value/betterTextbox.js \
+  bindings/binders/value/focused.js \
   bindings/binders/event/event.js \
   bindings/binders/event/click.js \
   bindings/binders/event/dblclick.js \

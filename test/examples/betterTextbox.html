@@ -28,18 +28,26 @@
 
       var viewModel = {
         focus: function () { tbox.focus(); },
-        focused: hd.variable(false)
+        focused: hd.variable(false),
+        name: hd.variable("hello world")
       };
       hd.bind(viewModel);
+
+      hd.binders["btb"](btb, {
+        value: viewModel.name,
+        editing: viewModel.focused
+      });
 
     });
   </script>
 </head>
 <body>
   <p>
-  <input type="text" id="name" data-bind="focused: focused" value="hello world" />
+  <input type="text" id="name" />
   <button data-bind="click: focus">Focus</button>
   focused = <span data-bind="text: focused"></span>
+  </p>
+  <p data-bind="text: name">
   </p>
   <p id="log"></p>
 </body>

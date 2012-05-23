@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+  <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="../js/hotdrink.js"></script>
+  <title>A Better Textbox | HotDrink Test Suite</title>
+  <script type="text/javascript">
+    $(document).ready(function () {
+
+      var log = $("#log");
+
+      var tbox = $("#name");
+      var btb = new hd.BetterTextbox(tbox);
+      btb.onStartEditing(function () {
+        console.log("starting");
+        log.append("<p>starting</p>");
+      });
+      btb.onEdit(function () {
+        console.log("edit");
+        log.append("<p>edit</p>");
+      });
+      btb.onFinishEditing(function () {
+        console.log("finish");
+        log.append("<p>finish</p>");
+      });
+
+      var viewModel = {
+        focus: function () { tbox.focus(); }
+      };
+      hd.bind(viewModel);
+
+    });
+  </script>
+</head>
+<body>
+  <p>
+  <input type="text" id="name" value="hello world" />
+  <button data-bind="click: focus">Focus</button>
+  </p>
+  <p id="log"></p>
+</body>
+</html>
+

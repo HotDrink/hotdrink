@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+  <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="../js/hotdrink.js"></script>
+  <title>A Better Textbox | HotDrink Test Suite</title>
+  <script type="text/javascript">
+    $(document).ready(function () {
+
+      var viewModel = {
+        edit: function () { viewModel.editing(true); },
+        editing: hd.variable(false),
+        value: hd.variable("hello world")
+      };
+      hd.bind(viewModel);
+
+    });
+  </script>
+</head>
+<body>
+  <p>
+  <input type="text" data-bind="btb: { value: value, editing: editing }" />
+  <button data-bind="click: edit">Edit</button>
+  editing = <span data-bind="text: editing"></span>
+  </p>
+  <p data-bind="text: value">
+  </p>
+</body>
+</html>
+

@@ -27,7 +27,8 @@
       });
 
       var viewModel = {
-        focus: function () { tbox.focus(); }
+        focus: function () { tbox.focus(); },
+        focused: hd.variable(false)
       };
       hd.bind(viewModel);
 
@@ -36,8 +37,9 @@
 </head>
 <body>
   <p>
-  <input type="text" id="name" value="hello world" />
+  <input type="text" id="name" data-bind="focused: focused" value="hello world" />
   <button data-bind="click: focus">Focus</button>
+  focused = <span data-bind="text: focused"></span>
   </p>
   <p id="log"></p>
 </body>

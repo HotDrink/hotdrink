@@ -52,7 +52,6 @@ var Model = hd.model(function Model() {
   };
 
   this.finishEditing = function finishEditing(item) {
-    item.isEditing(false);
     var desc = item.description().trim();
     if (desc) {
       item.description(desc);

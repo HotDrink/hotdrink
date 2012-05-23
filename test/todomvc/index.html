@@ -33,7 +33,8 @@
 						<label data-bind="text: description"></label>
             <button class="destroy" data-bind="click: $parent.remove.bind($parent)"></button>
 					</div>
-          <input class="edit" data-bind="textbox: description, event: { blur: $parent.finishEditing.bind($parent) }">
+          <input class="edit"
+            data-bind="btb: { value: description, editing: isEditing, blur: $parent.finishEditing.bind($parent) }">
 				</li>
 			</ul>
 		</section>

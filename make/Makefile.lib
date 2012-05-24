@@ -38,19 +38,28 @@ SOURCES := \
   bindings/controller.js \
   bindings/behavior/value.js \
   bindings/behavior/enablement.js \
-  bindings/html/common.js \
-  bindings/html/checkbox.js \
-  bindings/html/checkboxGroup.js \
-  bindings/html/radioGroup.js \
-  bindings/html/selectOne.js \
-  bindings/html/selectMany.js \
-  bindings/html/text.js \
-  bindings/html/number.js \
-  bindings/html/command.js \
-  bindings/html/submit.js \
-  bindings/html/attr.js \
-  bindings/html/css.js \
-  bindings/html/foreach.js \
+  bindings/binders/html/attr.js \
+  bindings/binders/html/text.js \
+  bindings/binders/html/html.js \
+  bindings/binders/html/style.js \
+  bindings/binders/html/css.js \
+  bindings/binders/html/visible.js \
+  bindings/binders/value/common.js \
+  bindings/binders/value/checkbox.js \
+  bindings/binders/value/checkboxGroup.js \
+  bindings/binders/value/radioGroup.js \
+  bindings/binders/value/selectOne.js \
+  bindings/binders/value/selectMany.js \
+  bindings/binders/value/number.js \
+  bindings/binders/value/textbox.js \
+  bindings/binders/value/betterTextbox.js \
+  bindings/binders/value/focused.js \
+  bindings/binders/event/event.js \
+  bindings/binders/event/click.js \
+  bindings/binders/event/dblclick.js \
+  bindings/binders/event/submit.js \
+  bindings/binders/dom/foreach.js \
+  bindings/binders/dom/if.js \
 
 HEADERS := \
   lib/utility/debug.m4.js

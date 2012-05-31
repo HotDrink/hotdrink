@@ -34,6 +34,10 @@ var Model = hd.model(function Model() {
       return item.isComplete() ? count + 1 : count;
     }, 0);
   });
+  
+  this.hasAnyCompleted = hd.computed(function () {
+    return (this.numComplete() > 0);
+  });
 
   this.numPending = hd.computed(function () {
     return this.items().length - this.numComplete();

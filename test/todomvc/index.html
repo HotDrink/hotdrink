@@ -45,7 +45,7 @@
         <strong data-bind="text: numPending">1</strong>
         <span data-bind="text: numPendingUnits">item</span> left
       </span>
-      <span data-bind="if: hasAnyCompleted">
+      <span data-bind="if: numComplete">
       <button id="clear-completed" data-bind="click: prune">
         Clear completed (<span data-bind="text: numComplete">1</span>)
       </button>

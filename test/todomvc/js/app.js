@@ -8,25 +8,10 @@ var Model = hd.model(function Model() {
 
   this.next = hd.variable("");
 
-  this.items = hd.list([
-    new Item("mow the lawn"),
-    new Item("buy milk"),
-    new Item("brush teeth")
-  ]);
+  this.items = hd.list([]);
 
   this.hasItems = hd.computed(function () {
     return this.items().length;
-  });
-
-  this.isAllComplete = hd.computed(function () {
-    return this.items().length &&
-    this.items().every(function (item) {
-      return item.isComplete();
-    });
-  }, function (value) {
-    this.items().forEach(function (item) {
-      item.isComplete(value);
-    });
   });
 
   this.numComplete = hd.computed(function () {
@@ -41,6 +26,14 @@ var Model = hd.model(function Model() {
 
   this.numPendingUnits = hd.computed(function () {
     return (this.numPending() === 1) ? "item" : "items";
+  });
+
+  this.isAllComplete = hd.computed(function () {
+    return !this.numPending();
+  }, function (value) {
+    this.items().forEach(function (item) {
+      item.isComplete(value);
+    });
   });
 
   this.remove = function remove(item) {
@@ -72,7 +65,5 @@ var Model = hd.model(function Model() {
 
 });
 
-var model = new Model();
-
-hd.bind(model);
+hd.bind(new Model);
 

@@ -40,11 +40,9 @@
         <strong data-bind="text: numPending">0</strong>
         <span data-bind="text: numPendingUnits">items</span> left
       </span>
-      <span data-bind="if: numComplete">
-      <button id="clear-completed" data-bind="click: prune">
+      <button id="clear-completed" data-bind="click: prune, visible: numComplete">
         Clear completed (<span data-bind="text: numComplete">0</span>)
       </button>
-      </span>
 		</footer>
 	</section>
 	<footer id="info">

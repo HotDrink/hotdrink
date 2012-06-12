@@ -60,6 +60,7 @@ SOURCES := \
   bindings/binders/event/submit.js \
   bindings/binders/dom/foreach.js \
   bindings/binders/dom/if.js \
+  utility/json.js \
 
 HEADERS := \
   lib/utility/debug.m4.js

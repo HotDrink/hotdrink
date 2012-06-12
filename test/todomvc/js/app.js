@@ -1,14 +1,17 @@
-var Item = hd.model(function Item(description) {
+var Item = hd.model(function Item(description, isComplete) {
   this.description = hd.variable(description || "");
-  this.isComplete = hd.variable(false);
+  this.isComplete = hd.variable(!!isComplete);
   this.isEditing = hd.variable(false);
 });
 
-var Model = hd.model(function Model() {
+var Model = hd.model(function Model(items) {
+  if (!Array.isArray(items)) items = [];
 
   this.next = hd.variable("");
 
-  this.items = hd.list([]);
+  this.items = hd.list(items.map(function (item) {
+    return new Item(item.description, item.isComplete);
+  }));
 
   this.hasItems = hd.computed(function () {
     return this.items().length;
@@ -63,6 +66,14 @@ var Model = hd.model(function Model() {
     this.items.filter(function (item) { return !item.isComplete(); });
   };
 
+});
+
+var items = JSON.parse(localStorage.getItem("todos-hotdrink"));
+
+var model = new Model(items);
+
+hd.computed(function () {
+  localStorage.setItem("todos-hotdrink", hd.toJSON(model.items));
 });
 
 hd.bind(new Model);

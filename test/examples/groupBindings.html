@@ -10,7 +10,7 @@
       this.onOff = hd.variable(true);
       this.fontColors = hd.list(["black","red","orange","yellow","green","blue","violet"]);
       this.listofSelected = hd.list(["black","orange"]);
-      
+      this.selected = hd.variable("green");
     });
 
     var model = new Model;
@@ -22,7 +22,7 @@
 </head>
 <body>
 
-<h2>Checkbox example</h2>
+<h2>Checkbox examples</h2>
 <p>
 <input type="checkbox" name="onOff" id="onOff" data-bind="checkbox: onOff"><label for="onOff"> yes?</label>
 <br />
@@ -38,5 +38,17 @@ Selected =
 Selected = 
 <span data-bind="text: listofSelected"></span>
 </p>
+
+<h2>Radio example</h2>
+<p>
+<span data-bind="foreach: fontColors">
+<input type="radio" name="one" data-bind="attr: {value: $this, id: $this}, radio: $parent.selected" />
+  <label data-bind="attr: {for: $this}, text: $this"></label>
+</span>
+<br />
+Selected = 
+<span data-bind="text: selected"></span>
+</p>
+
 </body>
 </html>

@@ -47,6 +47,7 @@ SOURCES := \
   bindings/binders/value/common.js \
   bindings/binders/value/checkbox.js \
   bindings/binders/value/checkboxGroup.js \
+  bindings/binders/value/radio.js \
   bindings/binders/value/radioGroup.js \
   bindings/binders/value/selectOne.js \
   bindings/binders/value/selectMany.js \

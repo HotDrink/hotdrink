@@ -1,0 +1,42 @@
+<html>
+<head>
+  <title>HotDrink Examples</title>
+  <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="../js/hotdrink.js"></script>
+  <script type="text/javascript">
+    var Model = hd.model(function Model() {
+            
+      this.onOff = hd.variable(true);
+      this.fontColors = hd.list(["black","red","orange","yellow","green","blue","violet"]);
+      this.listofSelected = hd.list(["black","orange"]);
+      
+    });
+
+    var model = new Model;
+
+    $(document).ready(function () {
+      hd.bind(model);
+    });
+  </script>
+</head>
+<body>
+
+<h2>Checkbox example</h2>
+<p>
+<input type="checkbox" name="onOff" id="onOff" data-bind="checkbox: onOff"><label for="onOff"> yes?</label>
+<br />
+Selected = 
+<span data-bind="text: onOff"></span>
+</p>
+<p>
+<span data-bind="foreach: fontColors">
+<input type="checkbox" name="many" data-bind="attr: {value: $this, id: $this}, checkbox: $parent.listofSelected" />
+  <label data-bind="attr: {for: $this}, text: $this"></label>
+</span>
+<br />
+Selected = 
+<span data-bind="text: listofSelected"></span>
+</p>
+</body>
+</html>

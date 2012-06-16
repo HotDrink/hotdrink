@@ -20,13 +20,10 @@
         <input id="new-todo" placeholder="What needs to be done?" autofocus data-bind="textbox: next">
       </form>
 		</header>
-		<!-- This section should be hidden by default and shown when there are todos -->
 		<section id="main" data-bind="visible: hasItems">
 			<input id="toggle-all" type="checkbox" data-bind="checkbox: isAllComplete">
 			<label for="toggle-all">Mark all as complete</label>
 			<ul id="todo-list" data-bind="foreach: items">
-				<!-- These are here just to show the structure of the list items -->
-				<!-- List items should get the class `editing` when editing and `completed` when marked as completed -->
         <li data-bind="css: { completed: isComplete, editing: isEditing }">
           <div class="view" data-bind="dblclick: $parent.startEditing.bind($parent)">
 						<input class="toggle" type="checkbox" data-bind="checkbox: isComplete">
@@ -38,28 +35,22 @@
 				</li>
 			</ul>
 		</section>
-		<!-- This footer should hidden by default and shown when there are todos -->
 		<footer id="footer" data-bind="visible: hasItems">
-			<!-- This should be `0 items left` by default -->
       <span id="todo-count">
-        <strong data-bind="text: numPending">1</strong>
-        <span data-bind="text: numPendingUnits">item</span> left
+        <strong data-bind="text: numPending">0</strong>
+        <span data-bind="text: numPendingUnits">items</span> left
       </span>
-      <span data-bind="if: numComplete">
-      <button id="clear-completed" data-bind="click: prune">
-        Clear completed (<span data-bind="text: numComplete">1</span>)
+      <button id="clear-completed" data-bind="click: prune, visible: numComplete">
+        Clear completed (<span data-bind="text: numComplete">0</span>)
       </button>
-      </span>
 		</footer>
 	</section>
 	<footer id="info">
 		<p>Double-click to edit a todo</p>
 		<p>Template by <a href="http://github.com/sindresorhus">Sindre Sorhus</a></p>
-		<!-- Change this out with your name and url ↓ -->
 		<p>Created by <a href="https://github.com/thejohnfreeman/hotdrink">John Freeman</a></p>
 		<p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
 	</footer>
-	<!-- Scripts here. Don't remove this ↓ -->
 	<script src="assets/base.js"></script>
 	<script src="js/app.js"></script>
 </body>

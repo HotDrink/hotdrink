@@ -1,32 +1,20 @@
-var Item = hd.model(function Item(description) {
+var Item = hd.model(function Item(description, isComplete) {
   this.description = hd.variable(description || "");
-  this.isComplete = hd.variable(false);
+  this.isComplete = hd.variable(!!isComplete);
   this.isEditing = hd.variable(false);
 });
 
-var Model = hd.model(function Model() {
+var Model = hd.model(function Model(items) {
+  if (!Array.isArray(items)) items = [];
 
   this.next = hd.variable("");
 
-  this.items = hd.list([
-    new Item("mow the lawn"),
-    new Item("buy milk"),
-    new Item("brush teeth")
-  ]);
+  this.items = hd.list(items.map(function (item) {
+    return new Item(item.description, item.isComplete);
+  }));
 
   this.hasItems = hd.computed(function () {
     return this.items().length;
-  });
-
-  this.isAllComplete = hd.computed(function () {
-    return this.items().length &&
-    this.items().every(function (item) {
-      return item.isComplete();
-    });
-  }, function (value) {
-    this.items().forEach(function (item) {
-      item.isComplete(value);
-    });
   });
 
   this.numComplete = hd.computed(function () {
@@ -41,6 +29,14 @@ var Model = hd.model(function Model() {
 
   this.numPendingUnits = hd.computed(function () {
     return (this.numPending() === 1) ? "item" : "items";
+  });
+
+  this.isAllComplete = hd.computed(function () {
+    return !this.numPending();
+  }, function (value) {
+    this.items().forEach(function (item) {
+      item.isComplete(value);
+    });
   });
 
   this.remove = function remove(item) {
@@ -72,7 +68,13 @@ var Model = hd.model(function Model() {
 
 });
 
-var model = new Model();
+var items = JSON.parse(localStorage.getItem("todos-hotdrink"));
+
+var model = new Model(items);
+
+hd.computed(function () {
+  localStorage.setItem("todos-hotdrink", hd.toJSON(model.items));
+});
 
 hd.bind(model);
 

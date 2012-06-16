@@ -76,5 +76,5 @@ hd.computed(function () {
   localStorage.setItem("todos-hotdrink", hd.toJSON(model.items));
 });
 
-hd.bind(new Model);
+hd.bind(model);
 

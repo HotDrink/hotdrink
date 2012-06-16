@@ -1,58 +1,54 @@
 (function () {
 
-  var Model = function () {
-    this.initial_height = hd.variable(5*300);
-    this.initial_width = hd.variable(7*300);
+  var Model = hd.model(function Model() {
+    this.initialHeight = hd.variable(5*300);
+    this.initialWidth = hd.variable(7*300);
 
-    this.absolute_height = hd.variable(this.initial_height());
-    this.absolute_width = hd.variable();
+    this.absoluteHeight = hd.variable(this.initialHeight());
+    this.absoluteWidth = hd.variable();
 
-    this.relative_height = hd.variable();
-    this.relative_width = hd.variable();
+    this.relativeHeight = hd.variable();
+    this.relativeWidth = hd.variable();
 
-    this.preserve_ratio = hd.variable(true);
+    this.preserveRatio = hd.variable(true);
 
     hd.constraint()
-      .method(this.absolute_height, function () {
-        return this.initial_height() * this.relative_height() / 100;
+      .method(this.absoluteHeight, function () {
+        return this.initialHeight() * this.relativeHeight() / 100;
       })
-      .method(this.relative_height, function () {
-        return 100 * this.absolute_height() / this.initial_height();
+      .method(this.relativeHeight, function () {
+        return 100 * this.absoluteHeight() / this.initialHeight();
       });
 
     hd.constraint()
-      .method(this.absolute_width, function () {
-        return this.initial_width() * this.relative_width() / 100;
+      .method(this.absoluteWidth, function () {
+        return this.initialWidth() * this.relativeWidth() / 100;
       })
-      .method(this.relative_width, function () {
-        return 100 * this.absolute_width() / this.initial_width();
+      .method(this.relativeWidth, function () {
+        return 100 * this.absoluteWidth() / this.initialWidth();
       });
 
     hd.constraint()
-      .method(this.relative_height, function () {
-        return this.preserve_ratio()
-          ? this.relative_width()
-          : this.relative_height();
+      .method(this.relativeHeight, function () {
+        return this.preserveRatio()
+          ? this.relativeWidth()
+          : this.relativeHeight();
       })
-      .method(this.relative_width, function () {
-        return this.preserve_ratio()
-          ? this.relative_height()
-          : this.relative_width();
+      .method(this.relativeWidth, function () {
+        return this.preserveRatio()
+          ? this.relativeHeight()
+          : this.relativeWidth();
       });
 
     this.result = hd.command(function () {
-      return { height : this.absolute_height(),
-               width : this.absolute_width() };
+      return { height : this.absoluteHeight(),
+               width : this.absoluteWidth() };
     });
-  };
+  });
 
-  var resize_image = {
-    getModel : function () {
-      return hd.model(new Model());
-    }
+  hottest.resizeImage = {
+    Model: Model
   };
-
-  namespace.open("hottest").resize_image = resize_image;
 
 }());
 

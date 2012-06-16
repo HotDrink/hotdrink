@@ -1,6 +1,6 @@
 (function () {
 
-  var Model = function () {
+  var Model = hd.model(function Model() {
 
       // This test is for a "hidden dependency"
       // cc is not used as on output, so the dependency
@@ -54,15 +54,11 @@
               this.dd(); 
               return "m5";
           })
-};
+  });
 
-  var cycle = {
-    getModel : function () {
-      return hd.model(new Model());
-    }
+  hottest.cycle = {
+    Model: Model
   };
-
-  namespace.open("hottest").cycle = cycle;
 
 }());
 

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<title>HotDrink • TodoMVC</title>
+	<link rel="stylesheet" href="assets/base.css">
+	<!--[if IE]>
+	<script src="assets/ie.js"></script>
+	<![endif]-->
+
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="js/lib/hotdrink.js"></script>
+</head>
+<body>
+	<section id="todoapp">
+		<header id="header">
+			<h1>todos</h1>
+      <form data-bind="submit: add">
+        <input id="new-todo" placeholder="What needs to be done?" autofocus data-bind="textbox: next">
+      </form>
+		</header>
+		<section id="main" data-bind="visible: hasItems">
+			<input id="toggle-all" type="checkbox" data-bind="checkbox: isAllComplete">
+			<label for="toggle-all">Mark all as complete</label>
+			<ul id="todo-list" data-bind="foreach: items">
+        <li data-bind="css: { completed: isComplete, editing: isEditing }">
+          <div class="view" data-bind="dblclick: $parent.startEditing.bind($parent)">
+						<input class="toggle" type="checkbox" data-bind="checkbox: isComplete">
+						<label data-bind="text: description"></label>
+            <button class="destroy" data-bind="click: $parent.remove.bind($parent)"></button>
+					</div>
+          <input class="edit"
+            data-bind="btb: { value: description, editing: isEditing, blur: $parent.finishEditing.bind($parent) }">
+				</li>
+			</ul>
+		</section>
+		<footer id="footer" data-bind="visible: hasItems">
+      <span id="todo-count">
+        <strong data-bind="text: numPending">0</strong>
+        <span data-bind="text: numPendingUnits">items</span> left
+      </span>
+      <button id="clear-completed" data-bind="click: prune, visible: numComplete">
+        Clear completed (<span data-bind="text: numComplete">0</span>)
+      </button>
+		</footer>
+	</section>
+	<footer id="info">
+		<p>Double-click to edit a todo</p>
+		<p>Template by <a href="http://github.com/sindresorhus">Sindre Sorhus</a></p>
+		<p>Created by <a href="https://github.com/thejohnfreeman/hotdrink">John Freeman</a></p>
+		<p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+	</footer>
+	<script src="assets/base.js"></script>
+	<script src="js/app.js"></script>
+</body>
+</html>

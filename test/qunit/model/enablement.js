@@ -1,54 +1,54 @@
 (function () {
 
   var getCanBeDisabled = function (model, v) {
-    return model[v].getMore().canBeDisabled;
+    return model[v].unwrap().canBeDisabled;
   };
 
   module("enablement");
 
-  test("save_image", function () {
+  test("saveImage", function () {
     expect(12);
 
-    var model = hottest.save_image.getModel();
-    strictEqual(model.file_name(), "",
-      "file_name initialized");
-    strictEqual(model.file_type(), "bmp",
-      "file_type initialized");
-    strictEqual(getCanBeDisabled(model, "file_name"), false,
-      "file_name initially enabled");
-    strictEqual(getCanBeDisabled(model, "file_type"), false,
-      "file_type initially enabled");
-    strictEqual(getCanBeDisabled(model, "compression_ratio"), true,
-      "compression_ratio initially disabled");
-    strictEqual(getCanBeDisabled(model, "image_quality"), true,
-      "image_quality initially disabled");
+    var model = new hottest.saveImage.Model();
+    strictEqual(model.fileName(), "",
+      "fileName initialized");
+    strictEqual(model.fileType(), "bmp",
+      "fileType initialized");
+    strictEqual(getCanBeDisabled(model, "fileName"), false,
+      "fileName initially enabled");
+    strictEqual(getCanBeDisabled(model, "fileType"), false,
+      "fileType initially enabled");
+    strictEqual(getCanBeDisabled(model, "compressionRatio"), true,
+      "compressionRatio initially disabled");
+    strictEqual(getCanBeDisabled(model, "imageQuality"), true,
+      "imageQuality initially disabled");
     strictEqual(getCanBeDisabled(model, "result"), true,
       "result initially disabled");
 
-    model.file_type("jpeg");
+    model.fileType("jpeg");
     hd.update();
-    strictEqual(getCanBeDisabled(model, "compression_ratio"), false,
-      "compression_ratio enabled");
-    strictEqual(getCanBeDisabled(model, "image_quality"), false,
-      "image_quality enabled");
+    strictEqual(getCanBeDisabled(model, "compressionRatio"), false,
+      "compressionRatio enabled");
+    strictEqual(getCanBeDisabled(model, "imageQuality"), false,
+      "imageQuality enabled");
 
-    model.file_name("name");
+    model.fileName("name");
     hd.update();
     strictEqual(getCanBeDisabled(model, "result"), false,
       "result enabled");
 
-    model.file_type("bmp");
+    model.fileType("bmp");
     hd.update();
-    strictEqual(getCanBeDisabled(model, "compression_ratio"), true,
-      "compression_ratio disabled");
-    strictEqual(getCanBeDisabled(model, "image_quality"), true,
-      "image_quality disabled");
+    strictEqual(getCanBeDisabled(model, "compressionRatio"), true,
+      "compressionRatio disabled");
+    strictEqual(getCanBeDisabled(model, "imageQuality"), true,
+      "imageQuality disabled");
   });
 
-  test("grouped_options", function () {
+  test("groupedOptions", function () {
     expect(12);
 
-    var model = hottest.grouped_options.getModel();
+    var model = new hottest.groupedOptions.Model();
     strictEqual(getCanBeDisabled(model, "all"), false,
       "all initially enabled");
     strictEqual(getCanBeDisabled(model, "a"), false,

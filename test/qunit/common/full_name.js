@@ -1,20 +1,16 @@
 (function () {
 
-  var Model = function () {
+  var Model = hd.model(function Model() {
     this.firstName = hd.variable("John");
     this.lastName = hd.variable("Smith");
     this.fullName = hd.computed(function () {
       return this.firstName() + " " + this.lastName();
     });
-  };
+  });
 
-  var full_name = {
-    getModel : function () {
-      return hd.model(new Model());
-    }
+  hottest.fullName = {
+    Model: Model
   };
-
-  namespace.open("hottest").full_name = full_name;
 
 }());
 

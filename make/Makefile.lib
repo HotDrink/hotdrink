@@ -15,14 +15,8 @@ SRCDIR := lib
 SOURCES := \
   utility/debug.js \
   utility/stdlib.js \
-  utility/namespace.js \
   utility/publisher.js \
-  concept/model/behavior.js \
-  concept/model/value.js \
-  concept/bindings/ast.js \
-  concept/bindings/behavior.js \
-  concept/bindings/builder.js \
-  concept/bindings/controller.js \
+  hd.js \
   model/model.js \
   model/solver/solver.js \
   model/solver/helpers.js \
@@ -30,30 +24,43 @@ SOURCES := \
   model/solver/quickplan.js \
   model/runtime/evaluator.js \
   model/runtime/runtime.js \
-  model/factory/solver.js \
+  model/proxies/common.js \
+  model/proxies/scalar.js \
+  model/proxies/array.js \
   model/factory/factory.js \
   model/factory/internal.js \
+  model/factory/solver.js \
   model/factory/variable.js \
   model/factory/constraint.js \
   model/factory/model.js \
   model/behavior/precondition.js \
   model/behavior/enablement.js \
-  bindings/common.js \
+  bindings/controller.js \
   bindings/behavior/value.js \
   bindings/behavior/enablement.js \
-  bindings/html/common.js \
-  bindings/html/checkbox.js \
-  bindings/html/checkboxGroup.js \
-  bindings/html/radioGroup.js \
-  bindings/html/selectOne.js \
-  bindings/html/selectMany.js \
-  bindings/html/text.js \
-  bindings/html/number.js \
-  bindings/html/command.js \
-  bindings/html/attr.js \
-  bindings/html/html.js \
-  bindings/controller.js \
-  driver.js
+  bindings/binders/html/attr.js \
+  bindings/binders/html/text.js \
+  bindings/binders/html/html.js \
+  bindings/binders/html/style.js \
+  bindings/binders/html/css.js \
+  bindings/binders/html/visible.js \
+  bindings/binders/value/common.js \
+  bindings/binders/value/checkbox.js \
+  bindings/binders/value/checkboxGroup.js \
+  bindings/binders/value/radioGroup.js \
+  bindings/binders/value/selectOne.js \
+  bindings/binders/value/selectMany.js \
+  bindings/binders/value/number.js \
+  bindings/binders/value/textbox.js \
+  bindings/binders/value/betterTextbox.js \
+  bindings/binders/value/focused.js \
+  bindings/binders/event/event.js \
+  bindings/binders/event/click.js \
+  bindings/binders/event/dblclick.js \
+  bindings/binders/event/submit.js \
+  bindings/binders/dom/foreach.js \
+  bindings/binders/dom/if.js \
+  utility/json.js \
 
 HEADERS := \
   lib/utility/debug.m4.js

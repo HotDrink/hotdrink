@@ -13,6 +13,7 @@ TITLE := hotdrink-test
 
 SRCDIR := test/qunit
 SOURCES := \
+	common/hottest.js \
 	common/hello_world.js \
 	common/full_name.js \
   common/cycle.js \

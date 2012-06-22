@@ -1,4 +1,6 @@
-`jslint` and `jsc_jslint_wrapper.js` from [JeNeSuisPasDave's gist](https://gist.github.com/2064959)
+`jslint` and `jsc_jslint_wrapper.js` are from JeNeSuisPasDave's [gist](https://gist.github.com/2064959)
+
+`fulljslint.js` is from Douglas Crockfod's [JSLint](https://github.com/douglascrockford/JSLint)
 
 There is a rather well hidden javascript interpreter in the mac os x terminal out of the box. /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc
 See <http://www.phpied.com/javascript-shell-scripting/>

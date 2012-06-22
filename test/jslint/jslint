@@ -4,8 +4,9 @@
 # Set paths appropriately to the 'core' jslint javascript file
 # and to the jslint wrapper script
 #
-JSLINT=fulljslint.js
-JSC_WRAPPER=jsc_jslint_wrapper.js
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+JSLINT=$DIR/jslint.js
+JSC_WRAPPER=$DIR/jsc_jslint_wrapper.js
 
 if [ $# = "0" ]
 then

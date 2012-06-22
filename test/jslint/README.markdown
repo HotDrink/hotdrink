@@ -2,7 +2,7 @@
 
 `fulljslint.js` is from Douglas Crockfod's [JSLint](https://github.com/douglascrockford/JSLint)
 
-There is a rather well hidden javascript interpreter in the mac os x terminal out of the box. /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc
+`jslint` uses a rather well hidden javascript interpreter in the mac os x terminal out of the box. /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc
 See <http://www.phpied.com/javascript-shell-scripting/>
 
 

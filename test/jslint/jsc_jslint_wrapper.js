@@ -14,18 +14,18 @@ The script is depending on jslint, which means jslint has to be loaded before th
 	} 
 	var 
 		// Options from www.jslint.com when using "The good parts" 
-		goodPartsOptions = {devel: true,
-							browser: true,
-							white: true,
-							onevar: true,
-							undef: true,
-							newcap: true,
-							nomen: true,
-							regexp: true,
-							plusplus: true,
-							bitwise: true,
-							maxerr: 50,
-							indent: 4 },	
+//		goodPartsOptions = {devel: true,
+//							browser: true,
+//							white: true,
+//							onevar: true,
+//							undef: true,
+//							newcap: true,
+//							nomen: true,
+//							regexp: true,
+//							plusplus: true,
+//							bitwise: true,
+//							maxerr: 50,
+//							indent: 4 },	
       options = {browser: true,
               devel: true,
               passfail: false,
@@ -33,15 +33,19 @@ The script is depending on jslint, which means jslint has to be loaded before th
               undef: true,
               sloppy: true,
               vars: true,
+              plusplus: true,
+              white: true,
+              nomen: true,
               indent: 2,
-              maxlen: 78 },
+              maxlen: 78,
+              maxerr: 50 },
 	    result = JSLINT(source, options),
 	    errors = [],
 	    error = {},
 	    i;
 	
 	if (result) {
-		print('\tNo errors :-)');
+		print('\tNo errors.');
 	} else {
 		print('ERRORS:');
 		errors = JSLINT.data().errors;

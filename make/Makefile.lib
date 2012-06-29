@@ -27,10 +27,12 @@ SOURCES := \
   model/proxies/common.js \
   model/proxies/scalar.js \
   model/proxies/array.js \
+  model/proxies/lens.js \
   model/factory/factory.js \
   model/factory/internal.js \
   model/factory/solver.js \
   model/factory/variable.js \
+  model/factory/lens.js \
   model/factory/constraint.js \
   model/factory/model.js \
   model/behavior/precondition.js \
@@ -40,6 +42,7 @@ SOURCES := \
   bindings/behavior/enablement.js \
   bindings/binders/html/attr.js \
   bindings/binders/html/text.js \
+  bindings/binders/html/error.js \
   bindings/binders/html/html.js \
   bindings/binders/html/style.js \
   bindings/binders/html/css.js \

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/hotdrink.js"></script>
+    <title>Hotel Validation | HotDrink Test Suite</title>
+    <script type="text/javascript">
+      var oneday = 1000*60*60*24;
+
+      function dateToString(m) {
+        var d = new Date(m);
+        return { value: (d.getMonth() + 1) + "/" +
+                        d.getDate() + "/" + d.getFullYear() };
+      }
+
+      function stringToDate(s) {
+        var m = Date.parse(s);
+        if (isNaN(m))
+          return { error: "Invalid date format" };
+        else
+          return { value: m };
+      }
+
+      function strictlyPositive(val) {
+        if (val > 0) return {};
+        else return { error: "Must stay at least one night" };
+      }
+
+      var Model = hd.model(function Model() {
+        this.nightscharged = hd.variable(2);
+        this.rate = hd.variable(100);
+        this.total = hd.computed(function () {
+          return this.nightscharged() * this.rate();
+        });
+
+        this.nights = hd.lens(this.nightscharged).project(strictlyPositive);
+        this.checkin = hd.variable(new Date().getTime());
+        this.checkout = hd.variable();
+
+        hd.constraint()
+          .method(this.checkin, function() {
+            return this.checkout() - oneday*this.nights();
+          })
+          .method(this.checkout, function() {
+            return this.checkin() + oneday*this.nights();
+          })
+          .method(this.nights, function() {
+            return Math.floor((this.checkout() - this.checkin()) / oneday);
+          });
+
+        this.checkin$ =
+          hd.lens(this.checkin).project(stringToDate).reflect(dateToString);
+        this.checkout$ =
+          hd.lens(this.checkout).project(stringToDate).reflect(dateToString);
+        this.nights$ =
+          hd.lens(this.nights).number();
+      });
+
+      var model = new Model;
+
+      $(document).ready(function () {
+        hd.bind(model);
+      });
+    </script>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <td>Check in</td>
+        <td>
+          <input type="text" data-bind="textbox: checkin$"/>
+          <span data-bind="error: checkin$"></span>
+        </td>
+      </tr>
+      <tr>
+        <td>Check out</td>
+        <td>
+          <input type="text" data-bind="textbox: checkout$"/>
+          <span data-bind="error: checkout$"></span>
+        </td>
+      </tr>
+      <tr>
+        <td>Nights</td>
+        <td>
+          <input type="text" data-bind="textbox: nights$"/>
+          <span data-bind="error: nights$"></span>
+        </td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td colspan="2" data-bind="error: nights">&nbsp;</td>
+      </tr>
+      <tr>
+        <td>Nightly rate</td>
+        <td>
+          <input type="text" data-bind="number: rate"/>
+          <span data-bind="error: rate"></span>
+        </td>
+      </tr>
+      <tr>
+        <td>Total</td>
+        <td data-bind="text: total"></td>
+      </tr>
+    </table>
+  </body>
+</html>
+

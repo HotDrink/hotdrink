@@ -7,6 +7,13 @@
   <script type="text/javascript" src="../js/hotdrink.js"></script>
   <title>Default Binders | HotDrink Test Suite</title>
   <script type="text/javascript">
+    function validColor(val) {
+      if (val.search(/^#[\da-fA-F]{6}$/) > -1)
+        return {};
+      else
+        return {error: "Invalid color"};
+    }
+
     var Model = hd.model(function Model() {
       this.cbox = hd.variable(false);
 
@@ -15,7 +22,7 @@
 
       this.num = hd.variable(3.14);
 
-      this.color = hd.variable("green");
+      this.color = hd.variable("#009900");
 
       this.name = hd.variable("World");
       this.hello = hd.computed(function () {
@@ -90,15 +97,17 @@
   <p>
   <input type="text" id="num" data-bind="number: num" />
   =
-  <span id="numlbl" data-bind="text: num"></span>
+  <span id="numlbl" data-bind="text: num"></span><br/>
+  <span data-bind="error: num">&nbsp;</span>
   </p>
 
   <p>
   <label for="name">Who are you?</label>
   <input type="text" id="name" data-bind="textbox: { value: name, debounce: 1000 }" /><br />
-  <input type="text" id="color" data-bind="textbox: color" /><br />
+  <input type="text" id="color" data-bind="textbox: { value: color, validate: validColor}" />
+  <span data-bind="error: color"></span><br />
   <span id="hellolbl" data-bind="text: hello, style: { color: color }"></span></br />
-  <button id="ok" data-bind="command: ok">Ok</button>
+  <button id="ok">Ok</button>
   </p>
 </body>
 </html>

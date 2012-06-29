@@ -1,13 +1,8 @@
-/*
-This script is just a wrapper around Douglas Crockfords jslint, intended to be invoked by jsc.
-The script is depending on jslint, which means jslint has to be loaded before this script.
-*/
+/* This script is just a wrapper around Douglas Crockfords jslint. */
 /*global JSLINT, print, quit, arguments */	
-//load("jslint.js");
 (function (jslintFile,source) {
-	if(jslintFile != undefined) {
-		load(jslintFile);
-	}
+	load(jslintFile);
+
 	if (typeof JSLINT === 'undefined') {
 		print('ERROR: JSLINT does not appear to be properly loaded.');
 	}

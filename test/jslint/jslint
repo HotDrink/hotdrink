@@ -12,8 +12,10 @@ if [[ $OSTYPE == darwin* ]]; then
 	JS_SHELL=/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc
 	# If you have a link to jsc on your path, then you can comment out the previous line and uncomment the next one ...
 	#JS_SHELL=jsc
+	FILES="$JSC_WRAPPER -- $JSLINT"
 elif [[ $OSTYPE == linux-gnu ]]; then
 	JS_SHELL=rhino
+	FILES="$JSC_WRAPPER $JSLINT"
 else
 	echo "JSLint Error: OS not supported"
 	exit 0
@@ -39,7 +41,7 @@ else
 			continue
 		fi
 
-		"$JS_SHELL" $JSC_WRAPPER $JSLINT "`cat $sourcefile`"
+		"$JS_SHELL" $FILES "`cat $sourcefile`"
 
 		echo "==="
 	done

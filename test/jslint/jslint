@@ -6,7 +6,18 @@
 #
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 JSLINT=$DIR/jslint.js
-JSC_WRAPPER=$DIR/jsc_jslint_wrapper.js
+JSC_WRAPPER=$DIR/jslint_wrapper.js
+
+if [[ $OSTYPE == darwin* ]]; then
+	JS_SHELL=/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc
+	# If you have a link to jsc on your path, then you can comment out the previous line and uncomment the next one ...
+	#JS_SHELL=jsc
+elif [[ $OSTYPE == linux-gnu ]]; then
+	JS_SHELL=rhino
+else
+	echo "JSLint Error: OS not supported"
+	exit 0
+fi
 
 if [ $# = "0" ]
 then
@@ -28,10 +39,7 @@ else
 			continue
 		fi
 
-		# Invoke jslint via jsc
-		/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc  $JSLINT $JSC_WRAPPER -- "`cat $sourcefile`"
-		# If you have a link to jsc on your path, then you can comment out the previous line and uncomment the next one ...
-		# jsc  $JSLINT $JSC_WRAPPER -- "`cat $sourcefile`"
+		"$JS_SHELL" $JSC_WRAPPER $JSLINT "`cat $sourcefile`"
 
 		echo "==="
 	done

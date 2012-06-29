@@ -3,11 +3,14 @@ This script is just a wrapper around Douglas Crockfords jslint, intended to be i
 The script is depending on jslint, which means jslint has to be loaded before this script.
 */
 /*global JSLINT, print, quit, arguments */	
-(function (source) {
+//load("jslint.js");
+(function (jslintFile,source) {
+	if(jslintFile != undefined) {
+		load(jslintFile);
+	}
 	if (typeof JSLINT === 'undefined') {
 		print('ERROR: JSLINT does not appear to be properly loaded.');
 	}
-	
 	if (typeof JSLINT === 'undefined' || !source) {
 		print('usage:\n $ jsc jslint.js jsc_jslint.js -- "`cat source.js`"');
 		quit();
@@ -51,6 +54,10 @@ The script is depending on jslint, which means jslint has to be loaded before th
 		errors = JSLINT.data().errors;
 		for (i = 0; i < errors.length; i += 1) {
 			error = errors[i];
+			if (error == null) {
+				print('Total ' + errors.length + ' errors');
+				quit();
+			}
 			print(' ' + error.line + ':' + error.character + '\t' + error.reason);
 			print('\t' + error.evidence.trim());
 			print(' ---');
@@ -58,4 +65,4 @@ The script is depending on jslint, which means jslint has to be loaded before th
 		print('Total ' + errors.length + ' errors');
 	}
 	quit();
-}(arguments[0]));
+}(arguments[0],arguments[1]));

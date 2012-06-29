@@ -43,7 +43,7 @@ $(sort $(dir $(OBJECTS))) :
 ##################################################
 # targets
 
-.PHONY : all debug release doc
+.PHONY : all debug lint release doc
 
 all : debug
 #	@$(call watch,SOURCES)
@@ -51,7 +51,9 @@ all : debug
 
 debug : BUILD_FLAGS := $(DEBUG_FLAGS)
 debug : $(MAIN)
-	$(JSLINT) $^
+
+lint : debug
+	$(JSLINT) $(MAIN)
 
 release : BUILD_FLAGS := $(RELEASE_FLAGS)
 release : COMPILER := $(YUIC)

@@ -24,14 +24,18 @@
 
       this.color = hd.variable("#009900");
 
+      this.email = hd.variable("");
+      this.email$ = hd.lens(this.email).match(/^\w+@\w+(\.\w+)+$/, "Invalid email");
+
       this.name = hd.variable("World");
+      this.name$ = hd.lens(this.name).required();
       this.hello = hd.computed(function () {
         return "Hello, " + this.name() + "!";
       });
 
       this.ok = hd.command(function () {
         /* Access the other guys just so they'll be relevant. */
-        ["cbox", "many", "one", "num", "color"].forEach(function (v) {
+        ["cbox", "many", "one", "num", "email", "color"].forEach(function (v) {
           this[v]();
         }, this);
         /* The real action. */
@@ -102,8 +106,15 @@
   </p>
 
   <p>
+    <label for="email">Email address:</label>
+    <input type="text" id="email" data-bind="textbox: email$"/>
+    <span data-bind="error: email$"></span>
+  </p>
+
+  <p>
   <label for="name">Who are you?</label>
-  <input type="text" id="name" data-bind="textbox: { value: name, debounce: 1000 }" /><br />
+  <input type="text" id="name" data-bind="textbox: { value: name$, debounce: 1000 }" />
+  <span data-bind="error: name$"></span><br />
   <input type="text" id="color" data-bind="textbox: { value: color, validate: validColor}" />
   <span data-bind="error: color"></span><br />
   <span id="hellolbl" data-bind="text: hello, style: { color: color }"></span></br />

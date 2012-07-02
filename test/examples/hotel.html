@@ -6,21 +6,7 @@
     <script type="text/javascript" src="../js/hotdrink.js"></script>
     <title>Hotel Validation | HotDrink Test Suite</title>
     <script type="text/javascript">
-      var oneday = 1000*60*60*24;
-
-      function dateToString(m) {
-        var d = new Date(m);
-        return { value: (d.getMonth() + 1) + "/" +
-                        d.getDate() + "/" + d.getFullYear() };
-      }
-
-      function stringToDate(s) {
-        var m = Date.parse(s);
-        if (isNaN(m))
-          return { error: "Invalid date format" };
-        else
-          return { value: m };
-      }
+      var oneday_ms = 1000 * 60 * 60 * 24;
 
       function strictlyPositive(val) {
         if (val > 0) return {};
@@ -34,27 +20,26 @@
           return this.nightscharged() * this.rate();
         });
 
-        this.nights = hd.lens(this.nightscharged).project(strictlyPositive);
-        this.checkin = hd.variable(new Date().getTime());
+        this.nights = hd.lens(this.nightscharged).outgoing(strictlyPositive);
+        this.checkin = hd.variable(new Date());
         this.checkout = hd.variable();
 
         hd.constraint()
           .method(this.checkin, function() {
-            return this.checkout() - oneday*this.nights();
+            var checkout_ms = this.checkout().getTime();
+            return new Date(checkout_ms - oneday_ms*this.nights());
           })
           .method(this.checkout, function() {
-            return this.checkin() + oneday*this.nights();
+            var checkin_ms = this.checkin().getTime();
+            return new Date(checkin_ms + oneday_ms*this.nights());
           })
           .method(this.nights, function() {
-            return Math.floor((this.checkout() - this.checkin()) / oneday);
+            var checkout_ms = this.checkout().getTime();
+            var checkin_ms = this.checkin().getTime();
+            return Math.floor((checkout_ms - checkin_ms) / oneday_ms);
           });
 
-        this.checkin$ =
-          hd.lens(this.checkin).project(stringToDate).reflect(dateToString);
-        this.checkout$ =
-          hd.lens(this.checkout).project(stringToDate).reflect(dateToString);
-        this.nights$ =
-          hd.lens(this.nights).number();
+        this.nights$ = hd.lens(this.nights).number();
       });
 
       var model = new Model;
@@ -69,15 +54,15 @@
       <tr>
         <td>Check in</td>
         <td>
-          <input type="text" data-bind="textbox: checkin$"/>
-          <span data-bind="error: checkin$"></span>
+          <input type="text" data-bind="date: checkin"/>
+          <span data-bind="error: checkin"></span>
         </td>
       </tr>
       <tr>
         <td>Check out</td>
         <td>
-          <input type="text" data-bind="textbox: checkout$"/>
-          <span data-bind="error: checkout$"></span>
+          <input type="text" data-bind="date: checkout"/>
+          <span data-bind="error: checkout"></span>
         </td>
       </tr>
       <tr>
@@ -100,7 +85,11 @@
       </tr>
       <tr>
         <td>Total</td>
-        <td data-bind="text: total"></td>
+        <td>
+          <span data-bind="text: nightscharged"></span> &times;
+          <span data-bind="text: rate"></span> =
+          <span data-bind="text: total"></span>
+        </td>
       </tr>
     </table>
   </body>

@@ -17,6 +17,7 @@ SOURCES := \
   utility/stdlib.js \
   utility/publisher.js \
   hd.js \
+  validators.js \
   model/model.js \
   model/solver/solver.js \
   model/solver/helpers.js \
@@ -54,6 +55,7 @@ SOURCES := \
   bindings/binders/value/selectOne.js \
   bindings/binders/value/selectMany.js \
   bindings/binders/value/number.js \
+  bindings/binders/value/date.js \
   bindings/binders/value/textbox.js \
   bindings/binders/value/betterTextbox.js \
   bindings/binders/value/focused.js \

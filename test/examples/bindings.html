@@ -15,7 +15,7 @@
     }
 
     function displayDate(val) {
-      return {value: val.toLocaleString()};
+      return {value: val.toDateString()};
     }
 
     var Model = hd.model(function Model() {
@@ -38,6 +38,9 @@
       this.date$ = hd.lens(this.date).date();
       this.dateformat = hd.lens(this.date).incoming(displayDate);
 
+      this.text = hd.variable("Foo");
+      this.text$ = hd.lens(this.text).trim();
+
       this.name = hd.variable("World");
       this.name$ = hd.lens(this.name).defaultValue("Nobody");
       this.hello = hd.computed(function () {
@@ -46,7 +49,7 @@
 
       this.ok = hd.command(function () {
         /* Access the other guys just so they'll be relevant. */
-        ["cbox", "many", "one", "num", "email", "percent", "date", "color"].forEach(function (v) {
+        ["cbox", "many", "one", "num", "email", "percent", "text", "date", "color"].forEach(function (v) {
           this[v]();
         }, this);
         /* The real action. */
@@ -119,13 +122,13 @@
   <p>
     <input type="text" id="date" data-bind="textbox: date$"/> =
     <span data-bind = "text: dateformat"></span><br/>
-    <span data-bind = "error: date">&nbsp;</span>
+    <span data-bind = "error: date$">&nbsp;</span>
   </p>
 
   <p>
     <label for="email">Email address:</label>
     <input type="text" id="email" data-bind="textbox: email$"/>
-    <span data-bind="error: email$"></span>
+    <span data-bind="error: email$"></span><br/>
   </p>
 
   <p>
@@ -134,12 +137,17 @@
   </p>
 
   <p>
+    <input type="text" id="text" data-bind="textbox: text$"/>
+    = [<span style="font-family: monospace; white-space: pre" data-bind="text: text"></span>]
+  </p>
+
+  <p>
   <label for="name">Who are you?</label>
-  <input type="text" id="name" data-bind="textbox: { value: name$, debounce: 1000 }" />
+  <input type="text" id="name" data-bind="textbox: {value: name$, debounce: 1000}" />
   <span data-bind="error: name$"></span><br />
-  <input type="text" id="color" data-bind="textbox: { value: color, validate: validColor }" />
+  <input type="text" id="color" data-bind="textbox: {value: color, validate: validColor}" />
   <span data-bind="error: color"></span><br />
-  <span id="hellolbl" data-bind="text: hello, style: { color: color }"></span></br />
+  <span id="hellolbl" data-bind="text: hello, style: {color: color}"></span></br />
   <button id="ok">Ok</button>
   </p>
 </body>

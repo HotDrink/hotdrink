@@ -1,0 +1,1 @@
+--brower --devel --passfail false --es5 --undef --sloppy --vars --plusplus --white --nomen --indent 2 --maxerr 25

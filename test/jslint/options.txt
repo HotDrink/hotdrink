@@ -1,1 +1,1 @@
---brower --devel --passfail false --es5 --undef --sloppy --vars --plusplus --white --nomen --indent 2 --maxerr 25
+--browser --continue --devel --es5 --indent 2 --maxerr 23 --nomen --plusplus --sloppy --undef --vars --white --predef DEBUG_BEGIN --predef DEBUG_END --quiet

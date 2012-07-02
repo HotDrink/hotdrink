@@ -27,7 +27,7 @@
       options = {browser: true,
               devel: true,
               passfail: false,
-              ea5: true,
+              es5: true,
               undef: true,
               sloppy: true,
               vars: true,
@@ -35,8 +35,8 @@
               white: true,
               nomen: true,
               indent: 2,
-              maxlen: 78,
-              maxerr: 50 },
+              //maxlen: 78,
+              maxerr: 25 },
 	    result = JSLINT(source, options),
 	    errors = [],
 	    error = {},
@@ -53,8 +53,8 @@
 				print('Total ' + errors.length + ' errors');
 				quit();
 			}
-			print(' ' + error.line + ':' + error.character + '\t' + error.reason);
-			print('\t' + error.evidence.trim());
+			print(' ' + error.line + '\t' + error.reason);
+			print(' :'+ error.character + '\t' + error.evidence.trim());
 			print(' ---');
 		}
 		print('Total ' + errors.length + ' errors');

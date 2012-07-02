@@ -39,7 +39,7 @@
       this.dateformat = hd.lens(this.date).incoming(displayDate);
 
       this.name = hd.variable("World");
-      this.name$ = hd.lens(this.name).required();
+      this.name$ = hd.lens(this.name).defaultValue("Nobody");
       this.hello = hd.computed(function () {
         return "Hello, " + this.name() + "!";
       });

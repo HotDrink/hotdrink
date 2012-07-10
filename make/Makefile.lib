@@ -28,12 +28,12 @@ SOURCES := \
   model/proxies/common.js \
   model/proxies/scalar.js \
   model/proxies/array.js \
-  model/proxies/lens.js \
+  model/proxies/scratch.js \
   model/factory/factory.js \
   model/factory/internal.js \
   model/factory/solver.js \
   model/factory/variable.js \
-  model/factory/lens.js \
+  model/factory/scratch.js \
   model/factory/constraint.js \
   model/factory/model.js \
   model/behavior/precondition.js \

@@ -29,20 +29,20 @@
       this.color = hd.variable("#009900");
 
       this.email = hd.variable("");
-      this.email$ = hd.lens(this.email).match(/^\w+@\w+(\.\w+)+$/, "Invalid email");
+      this.email$ = hd.scratch(this.email).match(/^\w+@\w+(\.\w+)+$/, "Invalid email");
 
       this.percent = hd.variable(100);
-      this.percent$ = hd.lens(this.percent).required().number().range(0, 100);
+      this.percent$ = hd.scratch(this.percent).required().number().range(0, 100);
 
       this.date = hd.variable(new Date());
-      this.date$ = hd.lens(this.date).date();
-      this.dateformat = hd.lens(this.date).incoming(displayDate);
+      this.date$ = hd.scratch(this.date).date();
+      this.dateformat = hd.scratch(this.date).incoming(displayDate);
 
       this.text = hd.variable("Foo");
-      this.text$ = hd.lens(this.text).trim();
+      this.text$ = hd.scratch(this.text).trim();
 
       this.name = hd.variable("World");
-      this.name$ = hd.lens(this.name).defaultValue("Nobody");
+      this.name$ = hd.scratch(this.name).defaultValue("Nobody");
       this.hello = hd.computed(function () {
         return "Hello, " + this.name() + "!";
       });

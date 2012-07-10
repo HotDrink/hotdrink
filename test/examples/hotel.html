@@ -20,7 +20,7 @@
           return this.nightscharged() * this.rate();
         });
 
-        this.nights = hd.lens(this.nightscharged).outgoing(strictlyPositive);
+        this.nights = hd.scratch(this.nightscharged).outgoing(strictlyPositive);
         this.checkin = hd.variable(new Date());
         this.checkout = hd.variable();
 
@@ -39,7 +39,7 @@
             return Math.floor((checkout_ms - checkin_ms) / oneday_ms);
           });
 
-        this.nights$ = hd.lens(this.nights).number();
+        this.nights$ = hd.scratch(this.nights).number();
       });
 
       var model = new Model;

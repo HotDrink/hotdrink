@@ -44,8 +44,8 @@ Selected =
 <h2>Radio example</h2>
 <p>
 <span data-bind="foreach: fontColors, radioGroup: selected">
-  <input type="radio" name="one" data-bind="attr: {value: $this, id: $this}" />
-  <label data-bind="attr: {for: $this}, text: $this"></label>
+  <input type="radio" name="one" data-bind="attr: {value: $this, id: $this + 'Radio'}" />
+  <label data-bind="attr: {for: $this + 'Radio'}, text: $this"></label>
 </span>
 <br />
 Selected = 

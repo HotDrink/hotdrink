@@ -17,7 +17,6 @@ SOURCES := \
   utility/stdlib.js \
   utility/publisher.js \
   hd.js \
-  validators.js \
   model/model.js \
   model/solver/solver.js \
   model/solver/helpers.js \
@@ -28,6 +27,8 @@ SOURCES := \
   model/proxies/common.js \
   model/proxies/scalar.js \
   model/proxies/array.js \
+  model/proxies/util.js \
+  model/proxies/validators.js \
   model/proxies/scratch.js \
   model/factory/factory.js \
   model/factory/internal.js \

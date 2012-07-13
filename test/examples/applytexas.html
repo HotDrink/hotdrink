@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="https://www.applytexas.org/adappc/html/preview12/preview_core.css">
+  <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="../js/hotdrink.js"></script>
+  <title>Grouped Options | HotDrink Demo</title>
+  <script type="text/javascript">
+
+    var LEVELS = [
+      "LOCAL",
+      "CITY",
+      "DISTRICT",
+      "BI-DISTRICT",
+      "REGIONAL",
+      "STATE",
+      "NATIONAL"
+    ];
+
+    var ActivityYear = hd.model(function ActivityYear() {
+      this.isActive  = hd.variable(false);
+      this.position  = hd.variable("");
+      this.isElected = hd.variable(false);
+      this.hours     = hd.variable(0);
+      this.weeks     = hd.variable(0);
+    });
+
+    var Activity = hd.model(function Activity() {
+      this.index = hd.variable(0);
+      this.name  = hd.variable("");
+      this.level = hd.variable();
+      this.description = hd.variable("");
+      this.years = [0, 1, 2, 3].map(function() {
+        return new ActivityYear
+      });
+    });
+
+    var Model = hd.model(function Model() {
+      this.activities = hd.list([ new Activity ]);
+    });
+
+    var model = new Model;
+
+    var act1 = model.activities()[0];
+    act1.name("SPEECH CLUB");
+    act1.description("EXTEMPORANEOUS SPEAKING");
+
+    $(document).ready(function () {
+      hd.bind(model);
+    });
+  </script>
+</head>
+<body>
+  <table>
+    <tbody data-bind="foreach: activities">
+      <tr>
+        <th colspan="2"><strong><big>
+              Activity <span data-bind="text: index() + 1"></span>
+        </big></strong></th>
+      </tr>
+
+      <tr>
+        <td scope="col">
+          <div class="ctrlHolder blocklabel">
+            <label data-bind="attr: { for: 'org' + (index() + 1) }">
+              Organization / Activity</label>
+            <input data-bind="attr: { id: 'org' + (index() + 1),
+            title: 'Activity ' + (index + 1) + ' organization or activity name.' },
+            textbox: name"/>
+          </div>
+
+          <div class="ctrlHolder blocklabel">
+            <label data-bind="attr: { for: 'desc' + (index() + 1) }">
+              Description</label>
+            <input data-bind="attr: { id: 'desc' + (index() + 1),
+            title: 'Activity ' + (index() + 1) + ' description.' },
+            textbox: description"/>
+          </div>
+        </td>
+
+        <td>
+          <div class="ctrlHolder blocklabel">
+            <label data-bind="attr: { for: 'lev' + (index() + 1) }">
+              Activity <span data-bind="text: index() + 1"></span> level
+            </label>
+            <select data-bind="attr: { id: 'lev' + (index() + 1) },
+              selectOne: level, foreach: LEVELS">
+              <option data-bind="attr: { value: $this }, text: $this"></option>
+            </select>
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="2">
+          Participation Details for Activity
+          <span data-bind="text: index() + 1"></span>
+          (Use whole numbers only, no fractions.)
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
+

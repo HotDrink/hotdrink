@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo npm install -g git://github.com/philipvr/node-jslint.git
+
 gmake -s
 gmake -s test
 

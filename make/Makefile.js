@@ -21,6 +21,7 @@ export HEADERS
 DEFERRED_TARGETS := \
 	all \
 	debug \
+	lint \
 	release \
 	doc \
 	clean \

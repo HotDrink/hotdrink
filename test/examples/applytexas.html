@@ -42,8 +42,8 @@
       this.weeks     = hd.variable(0);
     });
 
-    var Activity = hd.model(function Activity() {
-      this.index = hd.variable(0);
+    var Activity = hd.model(function Activity(index) {
+      this.index = hd.variable(index || 0);
       this.name  = hd.variable("");
       this.level = hd.variable();
       this.description = hd.variable("");
@@ -53,7 +53,10 @@
     });
 
     var Model = hd.model(function Model() {
-      this.activities = hd.list([ new Activity ]);
+      this.activities = hd.list([
+        new Activity(0),
+        new Activity(1)
+      ]);
     });
 
     var model = new Model;

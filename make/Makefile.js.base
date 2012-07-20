@@ -18,7 +18,7 @@ YUIC := java -jar $(HOME)/local/bin/yuicompressor-2.4.2.jar --type js
 
 GZIP := gzip
 
-JSLINT := find lib -name "*.js" -print0 | xargs -0 jslint `cat test/jslint/options.txt`
+JSLINT := jslint `cat test/jslint/options.txt`
 
 ##################################################
 # self configuration (do not touch)
@@ -61,8 +61,8 @@ release : COMPILER := $(YUIC)
 #release : COMPILER := cat
 release : $(MAIN).gz
 
-lint : debug
-	$(JSLINT)
+lint :
+	find lib -name "*.js" | xargs $(JSLINT)
 
 $(MAIN) : $(OBJECTS)
 	cat $^ > $@

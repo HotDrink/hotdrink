@@ -52,14 +52,17 @@ all : debug
 debug : BUILD_FLAGS := $(DEBUG_FLAGS)
 debug : $(MAIN)
 
-lint : debug
-	$(JSLINT)
+raw : BUILD_FLAGS := $(RELEASE_FLAGS)
+raw : $(MAIN)
 
 release : BUILD_FLAGS := $(RELEASE_FLAGS)
 release : COMPILER := $(YUIC)
 # If you do not have the YUI Compressor installed:
 #release : COMPILER := cat
 release : $(MAIN).gz
+
+lint : debug
+	$(JSLINT)
 
 $(MAIN) : $(OBJECTS)
 	cat $^ > $@

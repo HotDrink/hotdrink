@@ -15,12 +15,15 @@ export BUILDDIR
 ##################################################
 # targets
 
-.PHONY : all debug release doc test
+.PHONY : all debug release doc test lint
 
 all :
 	@$(call defer,$(MAKEDIR)/Makefile.$(PRIMARY))
 
 debug :
+	@$(call defer,$(MAKEDIR)/Makefile.$(PRIMARY))
+
+raw :
 	@$(call defer,$(MAKEDIR)/Makefile.$(PRIMARY))
 
 release :
@@ -31,6 +34,10 @@ doc :
 
 test :
 	@$(MAKE) -f $(MAKEDIR)/Makefile.test
+
+lint :
+	@$(call defer,$(MAKEDIR)/Makefile.$(PRIMARY))
+	
 
 ##################################################
 # cleaning

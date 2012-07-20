@@ -18,6 +18,8 @@ YUIC := java -jar $(HOME)/local/bin/yuicompressor-2.4.2.jar --type js
 
 GZIP := gzip
 
+JSLINT := jslint `cat test/jslint/options.txt`
+
 ##################################################
 # self configuration (do not touch)
 
@@ -41,7 +43,7 @@ $(sort $(dir $(OBJECTS))) :
 ##################################################
 # targets
 
-.PHONY : all debug release doc
+.PHONY : all debug lint release doc
 
 all : debug
 #	@$(call watch,SOURCES)
@@ -50,11 +52,17 @@ all : debug
 debug : BUILD_FLAGS := $(DEBUG_FLAGS)
 debug : $(MAIN)
 
+raw : BUILD_FLAGS := $(RELEASE_FLAGS)
+raw : $(MAIN)
+
 release : BUILD_FLAGS := $(RELEASE_FLAGS)
 release : COMPILER := $(YUIC)
 # If you do not have the YUI Compressor installed:
 #release : COMPILER := cat
 release : $(MAIN).gz
+
+lint :
+	find lib -name "*.js" | xargs $(JSLINT)
 
 $(MAIN) : $(OBJECTS)
 	cat $^ > $@

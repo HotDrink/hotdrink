@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
     <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script type="text/javascript" src="../js/hotdrink.js"></script>
@@ -20,7 +21,7 @@
           return this.nightscharged() * this.rate();
         });
 
-        this.nights = hd.scratch(this.nightscharged).outgoing(strictlyPositive);
+        (this.nights = hd.translation(this.nightscharged)).validate.outgoing(strictlyPositive);
         this.checkin = hd.variable(new Date());
         this.checkout = hd.variable();
 
@@ -39,7 +40,7 @@
             return Math.floor((checkout_ms - checkin_ms) / oneday_ms);
           });
 
-        this.nights$ = hd.scratch(this.nights).number();
+        (this.nights$ = hd.translation(this.nights)).validate.number();
       });
 
       var model = new Model;
@@ -51,6 +52,13 @@
   </head>
   <body>
     <table>
+      <tr>
+        <td>Nightly rate</td>
+        <td>
+          <input type="text" data-bind="number: rate"/>
+          <span data-bind="error: rate"></span>
+        </td>
+      </tr>
       <tr>
         <td>Check in</td>
         <td>
@@ -77,18 +85,11 @@
         <td colspan="2" data-bind="error: nights">&nbsp;</td>
       </tr>
       <tr>
-        <td>Nightly rate</td>
-        <td>
-          <input type="text" data-bind="number: rate"/>
-          <span data-bind="error: rate"></span>
-        </td>
-      </tr>
-      <tr>
         <td>Total</td>
         <td>
-          <span data-bind="text: nightscharged"></span> &times;
-          <span data-bind="text: rate"></span> =
-          <span data-bind="text: total"></span>
+          $<span data-bind="text: total"></span>
+          (<span data-bind="text: nightscharged"></span> nights @
+          $<span data-bind="text: rate"></span>/night)
         </td>
       </tr>
     </table>

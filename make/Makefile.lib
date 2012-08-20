@@ -29,12 +29,12 @@ SOURCES := \
   model/proxies/array.js \
   model/proxies/util.js \
   model/proxies/validators.js \
-  model/proxies/scratch.js \
+  model/proxies/translation.js \
   model/factory/factory.js \
   model/factory/internal.js \
   model/factory/solver.js \
   model/factory/variable.js \
-  model/factory/scratch.js \
+  model/factory/translation.js \
   model/factory/constraint.js \
   model/factory/model.js \
   model/behavior/precondition.js \

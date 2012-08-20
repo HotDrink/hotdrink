@@ -49,6 +49,7 @@ SOURCES := \
   bindings/binders/html/style.js \
   bindings/binders/html/css.js \
   bindings/binders/html/visible.js \
+  bindings/binders/html/enable.js \
   bindings/binders/value/common.js \
   bindings/binders/value/checkbox.js \
   bindings/binders/value/checkboxGroup.js \
@@ -66,6 +67,7 @@ SOURCES := \
   bindings/binders/event/submit.js \
   bindings/binders/dom/foreach.js \
   bindings/binders/dom/if.js \
+  utility/json.js \
 
 HEADERS := \
   lib/utility/debug.m4.js

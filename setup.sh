@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo npm install -g git://github.com/philipvr/node-jslint.git
+
 gmake -s
 gmake -s test
 
@@ -9,7 +11,8 @@ ln -s ../../hotdrink.js 2>/dev/null
 ln -s ../../hotdrink-test.js 2>/dev/null
 cd -
 
-cd test/todomvc/js
-ln -s ../../../hotdrink.js 2>/dev/null
+mkdir -p test/todomvc/js/lib
+cd test/todomvc/js/lib
+ln -s ../../../../hotdrink.js 2>/dev/null
 cd -
 

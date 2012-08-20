@@ -2,11 +2,23 @@
    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
+  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
   <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
-  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
   <script type="text/javascript" src="../js/hotdrink.js"></script>
   <title>Default Binders | HotDrink Test Suite</title>
   <script type="text/javascript">
+    function validColor(val) {
+      if (val.search(/^#[\da-fA-F]{6}$/) > -1)
+        return {};
+      else
+        return {error: "Invalid color"};
+    }
+
+    function displayDate(val) {
+      return {value: val.toDateString()};
+    }
+
     var Model = hd.model(function Model() {
       this.cbox = hd.variable(false);
 
@@ -14,17 +26,39 @@
       this.one = hd.variable();
 
       this.num = hd.variable(3.14);
+      this.num$ = hd.translation(this.num);
 
-      this.color = hd.variable("green");
+      this.color = hd.variable("#009900");
+      this.color$ = hd.translation(this.color);
+
+      this.email = hd.variable("");
+      (this.email$ = hd.translation(this.email))
+        .validate.match(/^\w+@\w+(\.\w+)+$/, "Invalid email");
+
+      this.percent = hd.variable(100);
+      (this.percent$ = hd.translation(this.percent))
+        .validate.required().number().range(0, 100);
+
+      this.date = hd.variable(new Date());
+      (this.date$ = hd.translation(this.date))
+        .validate.date();
+      (this.dateformat = hd.translation(this.date))
+        .validate.incoming(displayDate);
+
+      this.text = hd.variable("Foo");
+      (this.text$ = hd.translation(this.text))
+        .validate.trim();
 
       this.name = hd.variable("World");
+      (this.name$ = hd.translation(this.name))
+        .validate.defaultValue("Nobody");
       this.hello = hd.computed(function () {
         return "Hello, " + this.name() + "!";
       });
 
       this.ok = hd.command(function () {
         /* Access the other guys just so they'll be relevant. */
-        ["cbox", "many", "one", "num", "color"].forEach(function (v) {
+        ["cbox", "many", "one", "num", "email", "percent", "text", "date", "color"].forEach(function (v) {
           this[v]();
         }, this);
         /* The real action. */
@@ -88,17 +122,42 @@
   </p>
 
   <p>
-  <input type="text" id="num" data-bind="number: num" />
+  <input type="text" id="num" data-bind="number: {value: num$, validate: hd.util.max(255)}" />
   =
-  <span id="numlbl" data-bind="text: num"></span>
+  <span id="numlbl" data-bind="text: num"></span><br/>
+  <span data-bind="error: num$">&nbsp;</span>
+  </p>
+
+  <p>
+    <input type="text" id="date" data-bind="textbox: date$"/> =
+    <span data-bind = "text: dateformat"></span><br/>
+    <span data-bind = "error: date$">&nbsp;</span>
+  </p>
+
+  <p>
+    <label for="email">Email address:</label>
+    <input type="text" id="email" data-bind="textbox: email$"/>
+    <span data-bind="error: email$"></span><br/>
+  </p>
+
+  <p>
+    <input type="text" id="percent" size="4" data-bind="textbox: percent$"/>%
+    <span data-bind="error:percent$"></span>
+  </p>
+
+  <p>
+    <input type="text" id="text" data-bind="textbox: text$"/>
+    = [<span style="font-family: monospace; white-space: pre" data-bind="text: text"></span>]
   </p>
 
   <p>
   <label for="name">Who are you?</label>
-  <input type="text" id="name" data-bind="textbox: { value: name, debounce: 1000 }" /><br />
-  <input type="text" id="color" data-bind="textbox: color" /><br />
-  <span id="hellolbl" data-bind="text: hello, style: { color: color }"></span></br />
-  <button id="ok" data-bind="command: ok">Ok</button>
+  <input type="text" id="name" data-bind="textbox: {value: name$, debounce: 1000}" />
+  <span data-bind="error: name$"></span><br />
+  <input type="text" id="color" data-bind="textbox: {value: color$, validate: validColor}" />
+  <span data-bind="error: color$"></span><br />
+  <span id="hellolbl" data-bind="text: hello, style: {color: color}"></span></br />
+  <button id="ok">Ok</button>
   </p>
 </body>
 </html>

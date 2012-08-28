@@ -33,6 +33,7 @@ SOURCES := \
   model/factory/variable.js \
   model/factory/constraint.js \
   model/factory/model.js \
+  model/factory/saved.js \
   model/behavior/precondition.js \
   model/behavior/enablement.js \
   bindings/controller.js \

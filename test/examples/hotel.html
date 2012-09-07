@@ -9,20 +9,21 @@
     <script type="text/javascript">
       var oneday_ms = 1000 * 60 * 60 * 24;
 
-      function strictlyPositive(val) {
+      var isPositive = function isPositive(val) {
         if (val > 0) return {};
         else return { error: "Must stay at least one night" };
       }
 
       var Model = hd.model(function Model() {
         this.nightscharged = hd.variable(2);
-        this.rate = hd.variable(100);
-        this.total = hd.computed(function () {
+        this.rate          = hd.variable(100);
+        this.total         = hd.computed(function () {
           return this.nightscharged() * this.rate();
         });
 
-        (this.nights = hd.translation(this.nightscharged)).validate.outgoing(strictlyPositive);
-        this.checkin = hd.variable(new Date());
+        (this.nights  = hd.translation(this.nightscharged))
+          .validate.outgoing(isPositive);
+        this.checkin  = hd.variable(new Date());
         this.checkout = hd.variable();
 
         hd.constraint()

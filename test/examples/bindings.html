@@ -8,51 +8,51 @@
   <script type="text/javascript" src="../js/hotdrink.js"></script>
   <title>Default Binders | HotDrink Test Suite</title>
   <script type="text/javascript">
-    function validColor(val) {
-      if (val.search(/^#[\da-fA-F]{6}$/) > -1)
+    var isColor = function isColor(val) {
+      if (val.search(/^#[\da-fA-F]{6}$/) >= 0)
         return {};
       else
-        return {error: "Invalid color"};
+        return { error: "Invalid color" };
     }
 
-    function displayDate(val) {
-      return {value: val.toDateString()};
+    var dateToString = function dateToString(val) {
+      return { value: val.toDateString() };
     }
 
     var Model = hd.model(function Model() {
       this.cbox = hd.variable(false);
 
       this.many = hd.variable([]);
-      this.one = hd.variable();
+      this.one  = hd.variable();
 
-      this.num = hd.variable(3.14);
+      this.num  = hd.variable(3.14);
       this.num$ = hd.translation(this.num);
 
-      this.color = hd.variable("#009900");
+      this.color  = hd.variable("#009900");
       this.color$ = hd.translation(this.color);
 
-      this.email = hd.variable("");
+      this.email   = hd.variable("");
       (this.email$ = hd.translation(this.email))
         .validate.match(/^\w+@\w+(\.\w+)+$/, "Invalid email");
 
-      this.percent = hd.variable(100);
+      this.percent   = hd.variable(100);
       (this.percent$ = hd.translation(this.percent))
         .validate.required().number().range(0, 100);
 
-      this.date = hd.variable(new Date());
+      this.date   = hd.variable(new Date());
       (this.date$ = hd.translation(this.date))
         .validate.date();
       (this.dateformat = hd.translation(this.date))
-        .validate.incoming(displayDate);
+        .validate.incoming(dateToString);
 
-      this.text = hd.variable("Foo");
+      this.text   = hd.variable("Foo");
       (this.text$ = hd.translation(this.text))
         .validate.trim();
 
-      this.name = hd.variable("World");
+      this.name   = hd.variable("World");
       (this.name$ = hd.translation(this.name))
         .validate.defaultValue("Nobody");
-      this.hello = hd.computed(function () {
+      this.hello  = hd.computed(function () {
         return "Hello, " + this.name() + "!";
       });
 
@@ -122,7 +122,7 @@
   </p>
 
   <p>
-  <input type="text" id="num" data-bind="number: {value: num$, validate: hd.util.max(255)}" />
+  <input type="text" id="num" data-bind="number: { value: num$, validate: hd.util.max(255) }" />
   =
   <span id="numlbl" data-bind="text: num"></span><br/>
   <span data-bind="error: num$">&nbsp;</span>
@@ -152,11 +152,11 @@
 
   <p>
   <label for="name">Who are you?</label>
-  <input type="text" id="name" data-bind="textbox: {value: name$, debounce: 1000}" />
+  <input type="text" id="name" data-bind="textbox: { value: name$, debounce: 1000 }" />
   <span data-bind="error: name$"></span><br />
-  <input type="text" id="color" data-bind="textbox: {value: color$, validate: validColor}" />
+  <input type="text" id="color" data-bind="textbox: { value: color$, validate: isColor }" />
   <span data-bind="error: color$"></span><br />
-  <span id="hellolbl" data-bind="text: hello, style: {color: color}"></span></br />
+  <span id="hellolbl" data-bind="text: hello, style: { color: color }"></span></br />
   <button id="ok">Ok</button>
   </p>
 </body>

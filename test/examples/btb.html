@@ -9,10 +9,30 @@
   <script type="text/javascript">
     $(document).ready(function () {
 
+      var log = $("#log");
+
       var viewModel = {
-        edit: function () { viewModel.editing(true); },
-        editing: hd.variable(false),
-        value: hd.variable("hello world")
+        value:     hd.variable("hello world"),
+        isEditing: hd.variable(false),
+
+        onFocus:   function () {
+          console.log("starting");
+          log.append("<p>starting</p>");
+        },
+
+        onEdit:    function () {
+          console.log("edit");
+          log.append("<p>edit</p>");
+        },
+
+        onBlur:    function () {
+          console.log("finish");
+          log.append("<p>finish</p>");
+        },
+
+        edit:      function () {
+          viewModel.isEditing(true);
+        }
       };
       hd.bind(viewModel);
 
@@ -21,12 +41,13 @@
 </head>
 <body>
   <p>
-  <input type="text" data-bind="btb: { value: value, editing: editing }" />
+  <input type="text" data-bind="btb: { value: value, editing: isEditing, focus: onFocus, edit: onEdit, blur: onBlur }" />
   <button data-bind="click: edit">Edit</button>
-  editing = <span data-bind="text: editing"></span>
+  editing = <span data-bind="text: isEditing"></span>
   </p>
   <p data-bind="text: value">
   </p>
+  <p id="log"></p>
 </body>
 </html>
 

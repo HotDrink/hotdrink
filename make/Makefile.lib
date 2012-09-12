@@ -27,12 +27,17 @@ SOURCES := \
   model/proxies/common.js \
   model/proxies/scalar.js \
   model/proxies/array.js \
+  model/proxies/util.js \
+  model/proxies/validators.js \
+  model/proxies/translation.js \
   model/factory/factory.js \
   model/factory/internal.js \
   model/factory/solver.js \
   model/factory/variable.js \
+  model/factory/translation.js \
   model/factory/constraint.js \
   model/factory/model.js \
+  model/factory/dirty.js \
   model/behavior/precondition.js \
   model/behavior/enablement.js \
   bindings/controller.js \
@@ -40,10 +45,13 @@ SOURCES := \
   bindings/behavior/enablement.js \
   bindings/binders/html/attr.js \
   bindings/binders/html/text.js \
+  bindings/binders/html/error.js \
   bindings/binders/html/html.js \
   bindings/binders/html/style.js \
   bindings/binders/html/css.js \
+  bindings/binders/html/klass.js \
   bindings/binders/html/visible.js \
+  bindings/binders/html/enable.js \
   bindings/binders/value/common.js \
   bindings/binders/value/checkbox.js \
   bindings/binders/value/checkboxGroup.js \
@@ -51,6 +59,7 @@ SOURCES := \
   bindings/binders/value/selectOne.js \
   bindings/binders/value/selectMany.js \
   bindings/binders/value/number.js \
+  bindings/binders/value/date.js \
   bindings/binders/value/textbox.js \
   bindings/binders/value/betterTextbox.js \
   bindings/binders/value/focused.js \

@@ -81,8 +81,8 @@
   };
 
   Model.prototype.prune = function prune() {
-    this.items.filter(function( item ) {
-      return !item.isComplete();
+    this.items.prune(function( item ) {
+      return item.isComplete();
     });
   };
 

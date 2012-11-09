@@ -59,6 +59,16 @@
     this.items.remove( item );
   };
 
+  Model.prototype.promote = function promote( item ) {
+    var i = this.items().indexOf( item );
+    this.items.swap( i, i - 1 );
+  };
+
+  Model.prototype.demote = function demote( item ) {
+    var i = this.items().indexOf( item );
+    this.items.swap( i, i + 1 );
+  };
+
   Model.prototype.startEditing = function startEditing( item ) {
     item.isEditing( true );
   };
@@ -81,8 +91,8 @@
   };
 
   Model.prototype.prune = function prune() {
-    this.items.filter(function( item ) {
-      return !item.isComplete();
+    this.items.prune(function( item ) {
+      return item.isComplete();
     });
   };
 

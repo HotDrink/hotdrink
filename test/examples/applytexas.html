@@ -33,30 +33,76 @@
       "NATIONAL"
     ];
 
-    var ActivityYear = hd.model(function ActivityYear(name) {
+    var ActivityYear = hd.model(function ActivityYear(activity, name) {
       this.isActive  = hd.variable(false);
       this.name      = name;
       this.position  = hd.variable("");
       this.isElected = hd.variable("X");
       this.hours     = hd.variable(0);
       this.weeks     = hd.variable(0);
+
+      /* A richer binding syntax could eliminate these. */
+      this.weeksId = hd.computed(function () {
+        return "weeks" + this.name + activity.index();
+      });
+      this.hoursId = hd.computed(function () {
+        return "hours" + this.name + activity.index();
+      });
+      this.electId = hd.computed(function () {
+        return "elect" + this.name + activity.index();
+      });
+      this.electTitleY = hd.computed(function () {
+        return "Activity " + activity.index() + " elected: Yes."
+      });
+      this.electTitleN = hd.computed(function () {
+        return "Activity " + activity.index() + " elected: No."
+      });
+      this.electTitleNA = hd.computed(function () {
+        return "Activity " + activity.index() + " elected: Not Applicable."
+      });
+      this.posId = hd.computed(function () {
+        return "pos" + this.name + activity.index();
+      });
+      this.posTitle = hd.computed(function () {
+        return "Activity " + activity.index() + " positions held.";
+      });
+      this.activeId = hd.computed(function () {
+        return "active" + this.name + activity.index();
+      });
     });
 
-    var Activity = hd.model(function Activity(index) {
-      this.index = hd.variable(index || 0);
+    var Activity = hd.model(function Activity(list) {
+      this.index = hd.computed(function () {
+        return list().indexOf(this) + 1;
+      });
       this.name  = hd.variable("");
       this.level = hd.variable();
       this.description = hd.variable("");
       this.years = ["Fresh", "Soph", "Junior", "Senior"].map(function(name) {
-        return new ActivityYear(name);
+        return new ActivityYear(this, name);
+      }, this);
+
+      this.levelId = hd.computed(function () {
+        return "lev" + this.index();
+      });
+      this.descId = hd.computed(function () {
+        return "desc" + this.index();
+      });
+      this.descTitle = hd.computed(function () {
+        return "Activity " + this.index() + " description.";
+      });
+      this.nameId = hd.computed(function () {
+        return "org" + this.index();
+      });
+      this.nameTitle = hd.computed(function () {
+        return "Activity " + this.index() + " organization or activity name.";
       });
     });
 
     var Model = hd.model(function Model() {
-      this.activities = hd.list([
-        new Activity(0),
-        new Activity(1)
-      ]);
+      this.activities = hd.list([]);
+      this.activities.push(new Activity(this.activities));
+      this.activities.push(new Activity(this.activities));
     });
 
     var model = new Model;
@@ -76,38 +122,31 @@
       <tbody data-bind="foreach: activities">
         <tr>
           <th colspan="2"><strong><big>
-                Activity <span data-bind="text: index() + 1"></span>
+                Activity <span data-bind="text: index"></span>
           </big></strong></th>
         </tr>
 
         <tr>
           <td scope="col">
             <div class="ctrlHolder blocklabel">
-              <label data-bind="attr: { for: 'org' + index() }">
+              <label data-bind="attr: { for: nameId }">
                 Organization / Activity</label>
-              <input type="text" maxlength=40 data-bind="attr: {
-              id: 'org' + index(),
-              title: 'Activity ' + (index() + 1) + ' organization or activity name.' },
-              textbox: name"/>
+              <input type="text" maxlength=40 data-bind="attr: { id: nameId, title: nameTitle }, textbox: name"/>
             </div>
 
             <div class="ctrlHolder blocklabel">
-              <label data-bind="attr: { for: 'desc' + index() }">
+              <label data-bind="attr: { for: descId }">
                 Description</label>
-              <input type="text" maxlength=70 data-bind="attr: {
-              id: 'desc' + index(),
-              title: 'Activity ' + (index() + 1) + ' description.' },
-              textbox: description"/>
+              <input type="text" maxlength=70 data-bind="attr: { id: descId, title: descTitle}, textbox: description"/>
             </div>
           </td>
 
           <td>
             <div class="ctrlHolder blocklabel">
-              <label data-bind="attr: { for: 'lev' + index() }">
-                Activity <span data-bind="text: index() + 1"></span> level
+              <label data-bind="attr: { for: levelId }">
+                Activity <span data-bind="text: index"></span> level
               </label>
-              <select data-bind="attr: { id: 'lev' + index() },
-                selectOne: level, foreach: LEVELS">
+              <select data-bind="attr: { id: levelId }, selectOne: level, foreach: LEVELS">
                 <option data-bind="attr: { value: $this }, text: $this"></option>
               </select>
             </div>
@@ -117,7 +156,7 @@
         <tr>
           <td colspan="2">
             Participation Details for Activity
-            <span data-bind="text: index() + 1"></span>
+            <span data-bind="text: index"></span>
             (Use whole numbers only, no fractions.)
 
             <table class="hours_weeks">
@@ -133,52 +172,28 @@
               <tbody data-bind="foreach: years">
                 <tr>
                   <th scope="row">
-                    <input type="checkbox" data-bind="attr: {
-                    id: 'fresh' + index() },
-                    checkbox: isActive"/>
-                    <label class="inline" data-bind="attr: {
-                      for: 'fresh' + index() }, text: name"></label>
+                    <input type="checkbox" data-bind="attr: { id: activeId }, checkbox: isActive"/>
+                    <label class="inline" data-bind="attr: { for: activeId }, text: name"></label>
                   </th>
                   <td>
-                    <label class="hide" data-bind="attr: {
-                      for: 'position' + index() }">Position(s) Held</label>
-                    <input type="text" maxlength=40 data-bind="attr: {
-                    id: 'position' + index(),
-                    title: 'Activity ' + (index() + 1) + ' positions held.' },
-                    textbox: position"/>
+                    <label class="hide" data-bind="attr: { for: posId }">Position(s) Held</label>
+                    <input type="text" maxlength=40 data-bind="attr: { id: posId, title: posTitle }, textbox: position"/>
                   </td>
                   <td>
-                    <label class="hide" data-bind="attr: {
-                      for: 'elected' + index() }">Were you elected?</label>
-                    <select data-bind="attr: {
-                      id: 'elected' + index() },
-                      selectOne: isElected ">
-                      <option value="Y" data-bind="attr: {
-                      title: 'Activity ' + (index() + 1) + ' elected: Yes.'
-                      }">Yes</option>
-                      <option value="N" data-bind="attr: {
-                      title: 'Activity ' + (index() + 1) + ' elected: No.'
-                      }">No</option>
-                      <option value="X" data-bind="attr: {
-                      title: 'Activity ' + (index() + 1) + ' elected: Not
-                      Applicable.' }">Not Applicable</option>
+                    <label class="hide" data-bind="attr: { for: electId }">Were you elected?</label>
+                    <select data-bind="attr: { id: electId }, selectOne: isElected">
+                      <option value="Y" data-bind="attr: { title: electTitleY }">Yes</option>
+                      <option value="N" data-bind="attr: { title: electTitleN }">No</option>
+                      <option value="X" data-bind="attr: { title: electTitleNA }">Not Applicable</option>
                     </select>
                   </td>
                   <td>
-                    <label class="hide" data-bind="attr: {
-                      for: 'hours' + index() },
-                      text: 'Hours per week: ' + name()"></label>
-                    <input type="text" maxlength=2 data-bind="attr: {
-                    id: 'hours' + index() },
-                    textbox: hours"/>
+                    <label class="hide" data-bind="attr: { for: hoursId }, text: 'Hours per week'"></label>
+                    <input type="text" maxlength=2 data-bind="attr: { id: hoursId }, textbox: hours"/>
                   </td>
                   <td>
-                    <label class="hide" data-bind="attr: {
-                      for: 'weeks' + index() },
-                      text: 'Weeks per year: ' + name()"></label>
-                    <input type="text" maxlength=2 data-bind="attr: {
-                    id: 'weeks' + index() },
-                    textbox: weeks"/>
+                    <label class="hide" data-bind="attr: { for: weeksId }, text: 'Weeks per year'"></label>
+                    <input type="text" maxlength=2 data-bind="attr: { id: weeksId }, textbox: weeks"/>
                   </td>
                 </tr>
               </tbody>

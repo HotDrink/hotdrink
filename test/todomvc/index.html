@@ -82,15 +82,15 @@
 			<label for="toggle-all">Mark all as complete</label>
 			<ul id="todo-list" data-bind="foreach: items">
         <li data-bind="css: { completed: isComplete, editing: isEditing }">
-          <div class="view" data-bind="dblclick: $parent.startEditing.bind($parent)">
+          <div class="view" data-bind="dblclick: @ isEditing(true) @">
 						<input class="toggle" type="checkbox" data-bind="checkbox: isComplete">
 						<label data-bind="text: description"></label>
-            <button class="promote" data-bind="click: $parent.promote.bind($parent)"></button>
-            <button class="demote" data-bind="click: $parent.demote.bind($parent)"></button>
-            <button class="destroy" data-bind="click: $parent.remove.bind($parent)"></button>
+            <button class="promote" data-bind="click: @ $parent.promote($this) @"></button>
+            <button class="demote" data-bind="click: @ $parent.demote($this) @"></button>
+            <button class="destroy" data-bind="click: @ $parent.remove($this) @"></button>
 					</div>
           <input class="edit"
-            data-bind="btb: { value: description, editing: isEditing, blur: $parent.finishEditing.bind($parent) }">
+            data-bind="btb: { value: description, editing: isEditing, blur: @ $parent.finishEditing($this) @ }">
 				</li>
 			</ul>
 		</section>

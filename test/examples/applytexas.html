@@ -33,41 +33,15 @@
       "NATIONAL"
     ];
 
-    var ActivityYear = hd.model(function ActivityYear(activity, name) {
+    var ActivityYear = hd.model(function ActivityYear(year, index) {
       this.isActive  = hd.variable(false);
-      this.name      = name;
+      this.year      = year;
       this.position  = hd.variable("");
       this.isElected = hd.variable("X");
       this.hours     = hd.variable(0);
       this.weeks     = hd.variable(0);
-
-      /* A richer binding syntax could eliminate these. */
-      this.weeksId = hd.computed(function () {
-        return "weeks" + this.name + activity.index();
-      });
-      this.hoursId = hd.computed(function () {
-        return "hours" + this.name + activity.index();
-      });
-      this.electId = hd.computed(function () {
-        return "elect" + this.name + activity.index();
-      });
-      this.electTitleY = hd.computed(function () {
-        return "Activity " + activity.index() + " elected: Yes."
-      });
-      this.electTitleN = hd.computed(function () {
-        return "Activity " + activity.index() + " elected: No."
-      });
-      this.electTitleNA = hd.computed(function () {
-        return "Activity " + activity.index() + " elected: Not Applicable."
-      });
-      this.posId = hd.computed(function () {
-        return "pos" + this.name + activity.index();
-      });
-      this.posTitle = hd.computed(function () {
-        return "Activity " + activity.index() + " positions held.";
-      });
-      this.activeId = hd.computed(function () {
-        return "active" + this.name + activity.index();
+      this.id        = hd.computed(function () {
+        return year + index();
       });
     });
 
@@ -78,25 +52,9 @@
       this.name  = hd.variable("");
       this.level = hd.variable();
       this.description = hd.variable("");
-      this.years = ["Fresh", "Soph", "Junior", "Senior"].map(function(name) {
-        return new ActivityYear(this, name);
+      this.years = ["Fresh", "Soph", "Junior", "Senior"].map(function(year) {
+        return new ActivityYear(year, this.index);
       }, this);
-
-      this.levelId = hd.computed(function () {
-        return "lev" + this.index();
-      });
-      this.descId = hd.computed(function () {
-        return "desc" + this.index();
-      });
-      this.descTitle = hd.computed(function () {
-        return "Activity " + this.index() + " description.";
-      });
-      this.nameId = hd.computed(function () {
-        return "org" + this.index();
-      });
-      this.nameTitle = hd.computed(function () {
-        return "Activity " + this.index() + " organization or activity name.";
-      });
     });
 
     var Model = hd.model(function Model() {
@@ -129,24 +87,28 @@
         <tr>
           <td scope="col">
             <div class="ctrlHolder blocklabel">
-              <label data-bind="attr: { for: nameId }">
+              <label data-bind="attr: { for: `'org' + index()` }">
                 Organization / Activity</label>
-              <input type="text" maxlength=40 data-bind="attr: { id: nameId, title: nameTitle }, textbox: name"/>
+              <input type="text" maxlength=40 data-bind=
+                "attr: { id: `'org' + index()`, title: `'Activity ' + index() + ' organization or activity name.'` },
+                textbox: name"/>
             </div>
 
             <div class="ctrlHolder blocklabel">
-              <label data-bind="attr: { for: descId }">
+              <label data-bind="attr: { for: `'desc' + index()` }">
                 Description</label>
-              <input type="text" maxlength=70 data-bind="attr: { id: descId, title: descTitle}, textbox: description"/>
+              <input type="text" maxlength=70 data-bind=
+                "attr: { id: `'desc' + index()`, title: `'Activity ' + index() + ' description.'` },
+                textbox: description"/>
             </div>
           </td>
 
           <td>
             <div class="ctrlHolder blocklabel">
-              <label data-bind="attr: { for: levelId }">
+              <label data-bind="attr: { for: `'lev' + index()` }">
                 Activity <span data-bind="text: index"></span> level
               </label>
-              <select data-bind="attr: { id: levelId }, selectOne: level, foreach: LEVELS">
+              <select data-bind="attr: { id: `'lev' + index()` }, selectOne: level, foreach: LEVELS">
                 <option data-bind="attr: { value: $this }, text: $this"></option>
               </select>
             </div>
@@ -172,28 +134,44 @@
               <tbody data-bind="foreach: years">
                 <tr>
                   <th scope="row">
-                    <input type="checkbox" data-bind="attr: { id: activeId }, checkbox: isActive"/>
-                    <label class="inline" data-bind="attr: { for: activeId }, text: name"></label>
+                    <input type="checkbox" data-bind=
+                      "attr: { id: `'active' + id()` }, checkbox: isActive"/>
+                    <label class="inline" data-bind=
+                      "attr: { for: `'active' + id()` }, text: year"></label>
                   </th>
                   <td>
-                    <label class="hide" data-bind="attr: { for: posId }">Position(s) Held</label>
-                    <input type="text" maxlength=40 data-bind="attr: { id: posId, title: posTitle }, textbox: position"/>
+                    <label class="hide" data-bind="attr: { for: `'pos' + id()` }">Position(s) Held</label>
+                    <input type="text" maxlength=40 data-bind=
+                      "attr: { id: `'pos' + id()`, title: `'Activity ' + index() + ' positions held.'` },
+                      textbox: position"/>
                   </td>
                   <td>
-                    <label class="hide" data-bind="attr: { for: electId }">Were you elected?</label>
-                    <select data-bind="attr: { id: electId }, selectOne: isElected">
-                      <option value="Y" data-bind="attr: { title: electTitleY }">Yes</option>
-                      <option value="N" data-bind="attr: { title: electTitleN }">No</option>
-                      <option value="X" data-bind="attr: { title: electTitleNA }">Not Applicable</option>
+                    <label class="hide" data-bind=
+                      "attr: { for: `'elect' + id()` }">Were you elected?</label>
+                    <select data-bind=
+                      "attr: { id: `'elect' + id()` }, selectOne: isElected">
+                      <option value="Y" data-bind=
+                        "attr: { title: `'Activity ' + index() + ' elected: Yes.'` }">
+                        Yes</option>
+                      <option value="N" data-bind=
+                        "attr: { title: `'Activity ' + index() + ' elected: No.'` }">
+                        No</option>
+                      <option value="X" data-bind=
+                        "attr: { title: `'Activity ' + index() + ' elected: Not Applicable.'` }">
+                        Not Applicable</option>
                     </select>
                   </td>
                   <td>
-                    <label class="hide" data-bind="attr: { for: hoursId }, text: 'Hours per week'"></label>
-                    <input type="text" maxlength=2 data-bind="attr: { id: hoursId }, textbox: hours"/>
+                    <label class="hide" data-bind=
+                      "attr: { for: `'hours' + id()` }, text: 'Hours per week'"></label>
+                    <input type="text" maxlength=2 data-bind=
+                      "attr: { id: `'hours' + id()` }, textbox: hours"/>
                   </td>
                   <td>
-                    <label class="hide" data-bind="attr: { for: weeksId }, text: 'Weeks per year'"></label>
-                    <input type="text" maxlength=2 data-bind="attr: { id: weeksId }, textbox: weeks"/>
+                    <label class="hide" data-bind=
+                      "attr: { for: `'weeks' + id()` }, text: 'Weeks per year'"></label>
+                    <input type="text" maxlength=2 data-bind=
+                      "attr: { id: `'weeks' + id()` }, textbox: weeks"/>
                   </td>
                 </tr>
               </tbody>

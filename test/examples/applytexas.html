@@ -2,6 +2,7 @@
    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
+	<meta charset="utf-8">
   <link rel="stylesheet" type="text/css" href="https://www.applytexas.org/adappc/html/preview12/preview_core.css">
   <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
@@ -19,6 +20,73 @@
     input[id^=weeks]
     {
       width: 6em !important;
+    }
+
+    button {
+      padding: 0;
+      border: 0;
+      background-color: inherit;
+    }
+
+    #content th {
+      position: relative;
+    }
+
+    #content th button {
+      display: none;
+      position: absolute;
+      top: 0;
+      width: 1em;
+      height: 1em;
+      margin: auto 0;
+      font-size: 22px;
+      -webkit-transition: all 0.2s;
+      -moz-transition: all 0.2s;
+      -ms-transition: all 0.2s;
+      -o-transition: all 0.2s;
+      transition: all 0.2s;
+    }
+
+    #content th button:hover {
+      -webkit-transform: scale(1.3);
+      -moz-transform: scale(1.3);
+      -ms-transform: scale(1.3);
+      -o-transform: scale(1.3);
+      transform: scale(1.3);
+    }
+
+    #content th:hover button {
+      display: block;
+    }
+
+    #content th .demote {
+      right: .5em;
+      color: red;
+    }
+
+    #content th .demote:hover {
+      text-shadow: 0 0 1px #000,
+        0 0 10px rgba(199, 107, 107, 0.8);
+    }
+
+    #content th .demote:after {
+      content: '▼';
+    }
+
+    #content th .promote {
+      /* Strange correction needed. */
+      font-size: 24px;
+      right: 2em;
+      color: green;
+    }
+
+    #content th .promote:hover {
+      text-shadow: 0 0 1px #000,
+        0 0 10px rgba(107, 199, 107, 0.8);
+    }
+
+    #content th .promote:after {
+      content: '▲';
     }
   </style>
   <script type="text/javascript">
@@ -63,6 +131,16 @@
       this.activities.push(new Activity(this.activities));
     });
 
+    Model.prototype.promote = function promote(activity) {
+      var i = this.activities().indexOf(activity);
+      this.activities.swap(i, i - 1);
+    };
+
+    Model.prototype.demote = function demote(activity) {
+      var i = this.activities().indexOf(activity);
+      this.activities.swap(i, i + 1);
+    };
+
     var model = new Model;
 
     var act1 = model.activities()[0];
@@ -79,9 +157,11 @@
     <table>
       <tbody data-bind="foreach: activities">
         <tr>
-          <th colspan="2"><strong><big>
-                Activity <span data-bind="text: index"></span>
-          </big></strong></th>
+          <th colspan="2">
+            <strong><big>Activity <span data-bind="text: index"></span></big></strong>
+            <button class="promote" data-bind="click: @ $parent.promote($this) @"></button>
+            <button class="demote" data-bind="click: @ $parent.demote($this) @"></button>
+          </th>
         </tr>
 
         <tr>

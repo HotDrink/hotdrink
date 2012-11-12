@@ -48,7 +48,7 @@ button {
 }
 
 #content th .demote {
-  right: .5em;
+  right: 1.75em;
   color: red;
 }
 
@@ -64,7 +64,7 @@ button {
 #content th .promote {
   /* Strange correction needed. */
   font-size: 24px;
-  right: 2em;
+  right: 2.75em;
   color: green;
 }
 
@@ -75,5 +75,23 @@ button {
 
 #content th .promote:after {
   content: '▲';
+}
+
+#content th .addBefore {
+  color: blue;
+  right: 4.25em;
+}
+
+#content th .addBefore:after {
+  content: '±';
+}
+
+#content th .addAfter {
+  color: blue;
+  right: 0.5em;
+}
+
+#content th .addAfter:after {
+  content: '∓';
 }
 

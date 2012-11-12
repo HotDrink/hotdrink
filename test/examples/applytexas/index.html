@@ -28,8 +28,10 @@
         <tr>
           <th colspan="2">
             <strong><big>Activity <span data-bind="text: index"></span></big></strong>
+            <button class="addBefore" data-bind="click: @ $parent.addBefore($this) @"></button>
             <button class="promote" data-bind="click: @ $parent.promote($this) @"></button>
             <button class="demote" data-bind="click: @ $parent.demote($this) @"></button>
+            <button class="addAfter" data-bind="click: @ $parent.addAfter($this) @"></button>
           </th>
         </tr>
 

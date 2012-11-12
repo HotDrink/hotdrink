@@ -38,13 +38,19 @@ var Model = hd.model(function Model() {
   this.activities.push(new Activity(this.activities));
 });
 
-Model.prototype.promote = function promote(activity) {
-  var i = this.activities().indexOf(activity);
-  this.activities.swap(i, i - 1);
+Model.prototype.promote = function promote(act) {
+  this.activities.swap(act.index() - 1, act.index() - 2);
 };
 
-Model.prototype.demote = function demote(activity) {
-  var i = this.activities().indexOf(activity);
-  this.activities.swap(i, i + 1);
+Model.prototype.demote = function demote(act) {
+  this.activities.swap(act.index() - 1, act.index());
 };
+
+Model.prototype.addBefore = function addBefore(act) {
+  this.activities.splice(act.index() - 1, 0, new Activity(this.activities));
+}
+
+Model.prototype.addAfter = function addAfter(act) {
+  this.activities.splice(act.index(), 0, new Activity(this.activities));
+}
 

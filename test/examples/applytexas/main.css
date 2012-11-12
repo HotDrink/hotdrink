@@ -1,0 +1,79 @@
+input[id^=org],
+input[id^=desc],
+input[id^=position]
+{
+  width: 30em !important;
+}
+
+input[id^=hours],
+input[id^=weeks]
+{
+  width: 6em !important;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  background-color: inherit;
+}
+
+#content th {
+  position: relative;
+}
+
+#content th button {
+  position: absolute;
+  top: 0;
+  width: 1em;
+  height: 1em;
+  margin: auto 0;
+  font-size: 22px;
+  -webkit-transition: all 0.2s;
+  -moz-transition: all 0.2s;
+  -ms-transition: all 0.2s;
+  -o-transition: all 0.2s;
+  transition: all 0.2s;
+}
+
+#content th button:hover {
+  -webkit-transform: scale(1.3);
+  -moz-transform: scale(1.3);
+  -ms-transform: scale(1.3);
+  -o-transform: scale(1.3);
+  transform: scale(1.3);
+}
+
+#content th:hover button {
+  display: block;
+}
+
+#content th .demote {
+  right: .5em;
+  color: red;
+}
+
+#content th .demote:hover {
+  text-shadow: 0 0 1px #000,
+    0 0 10px rgba(199, 107, 107, 0.8);
+}
+
+#content th .demote:after {
+  content: '▼';
+}
+
+#content th .promote {
+  /* Strange correction needed. */
+  font-size: 24px;
+  right: 2em;
+  color: green;
+}
+
+#content th .promote:hover {
+  text-shadow: 0 0 1px #000,
+    0 0 10px rgba(107, 199, 107, 0.8);
+}
+
+#content th .promote:after {
+  content: '▲';
+}
+

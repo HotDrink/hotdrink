@@ -27,7 +27,7 @@
       <tbody data-bind="foreach: activities">
         <tr>
           <th colspan="2">
-            <strong><big>Activity <span data-bind="text: index"></span></big></strong>
+            <strong><big>Activity <span data-bind="text: num"></span></big></strong>
             <button class="addBefore" data-bind="click: @ $parent.addBefore($this) @"></button>
             <button class="promote" data-bind="click: @ $parent.promote($this) @"></button>
             <button class="demote" data-bind="click: @ $parent.demote($this) @"></button>
@@ -38,28 +38,28 @@
         <tr>
           <td scope="col">
             <div class="ctrlHolder blocklabel">
-              <label data-bind="attr: { for: `'org' + index()` }">
+              <label data-bind="attr: { for: `'org' + num()` }">
                 Organization / Activity</label>
               <input type="text" maxlength=40 data-bind=
-                "attr: { id: `'org' + index()`, title: `'Activity ' + index() + ' organization or activity name.'` },
+                "attr: { id: `'org' + num()`, title: `'Activity ' + num() + ' organization or activity name.'` },
                 textbox: name"/>
             </div>
 
             <div class="ctrlHolder blocklabel">
-              <label data-bind="attr: { for: `'desc' + index()` }">
+              <label data-bind="attr: { for: `'desc' + num()` }">
                 Description</label>
               <input type="text" maxlength=70 data-bind=
-                "attr: { id: `'desc' + index()`, title: `'Activity ' + index() + ' description.'` },
+                "attr: { id: `'desc' + num()`, title: `'Activity ' + num() + ' description.'` },
                 textbox: description"/>
             </div>
           </td>
 
           <td>
             <div class="ctrlHolder blocklabel">
-              <label data-bind="attr: { for: `'lev' + index()` }">
-                Activity <span data-bind="text: index"></span> level
+              <label data-bind="attr: { for: `'lev' + num()` }">
+                Activity <span data-bind="text: num"></span> level
               </label>
-              <select data-bind="attr: { id: `'lev' + index()` }, selectOne: level, foreach: LEVELS">
+              <select data-bind="attr: { id: `'lev' + num()` }, selectOne: level, foreach: LEVELS">
                 <option data-bind="attr: { value: $this }, text: $this"></option>
               </select>
             </div>
@@ -69,7 +69,7 @@
         <tr>
           <td colspan="2">
             Participation Details for Activity
-            <span data-bind="text: index"></span>
+            <span data-bind="text: num"></span>
             (Use whole numbers only, no fractions.)
 
             <table class="hours_weeks">
@@ -93,7 +93,7 @@
                   <td>
                     <label class="hide" data-bind="attr: { for: `'pos' + id()` }">Position(s) Held</label>
                     <input type="text" maxlength=40 data-bind=
-                      "attr: { id: `'pos' + id()`, title: `'Activity ' + index() + ' positions held.'` },
+                      "attr: { id: `'pos' + id()`, title: `'Activity ' + num() + ' positions held.'` },
                       textbox: position"/>
                   </td>
                   <td>
@@ -102,13 +102,13 @@
                     <select data-bind=
                       "attr: { id: `'elect' + id()` }, selectOne: isElected">
                       <option value="Y" data-bind=
-                        "attr: { title: `'Activity ' + index() + ' elected: Yes.'` }">
+                        "attr: { title: `'Activity ' + num() + ' elected: Yes.'` }">
                         Yes</option>
                       <option value="N" data-bind=
-                        "attr: { title: `'Activity ' + index() + ' elected: No.'` }">
+                        "attr: { title: `'Activity ' + num() + ' elected: No.'` }">
                         No</option>
                       <option value="X" data-bind=
-                        "attr: { title: `'Activity ' + index() + ' elected: Not Applicable.'` }">
+                        "attr: { title: `'Activity ' + num() + ' elected: Not Applicable.'` }">
                         Not Applicable</option>
                     </select>
                   </td>

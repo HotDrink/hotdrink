@@ -13,7 +13,7 @@ TITLE := hotdrink
 
 SRCDIR := lib
 SOURCES := \
-  utility/debug.js \
+  utility/diag.js \
   utility/stdlib.js \
   utility/publisher.js \
   hd.js \

@@ -25,7 +25,7 @@
       var threeway = function(abs, init, rel) {
         hd.constraint()
           .method(abs, function () { return init() * rel() / 100; })
-          .method(rel, function () { return 100 * init() / abs(); });
+          .method(rel, function () { return 100 * abs() / init(); });
       }
 
       threeway(this.absolute_width, this.initial_width, this.relative_width);

@@ -2,7 +2,7 @@
 
   module("binders.visible", {
     setup: function () {
-      this.view = $("<div>").hide().appendTo("#qunit-fixture");
+      this.view = hottest.elt("<div>");
     }
   });
 
@@ -26,7 +26,7 @@
 
   module("binders.invisible", {
     setup: function () {
-      this.view = $("<div>").hide().appendTo("#qunit-fixture");
+      this.view = hottest.elt("<div>");
     }
   });
 

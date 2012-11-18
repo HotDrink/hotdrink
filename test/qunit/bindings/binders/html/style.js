@@ -2,7 +2,7 @@
 
   module("binders.style", {
     setup: function () {
-      this.view = $("<div>").hide().appendTo("#qunit-fixture");
+      this.view = hottest.elt("<div>");
     }
   });
 

@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+	<meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="https://www.applytexas.org/adappc/html/preview12/preview_core.css">
+  <link rel="stylesheet" type="text/css" href="./main.css">
+  <script type="text/javascript" src="https://raw.github.com/kriskowal/es5-shim/master/es5-shim.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="../../js/hotdrink.js"></script>
+  <script type="text/javascript" src="./model.js"></script>
+  <title>ApplyTexas | HotDrink Demo</title>
+  <script type="text/javascript">
+    var model = new Model;
+    var act1 = model.activities()[0];
+    act1.name("SPEECH CLUB");
+    act1.description("EXTEMPORANEOUS SPEAKING");
+
+    $(document).ready(function () {
+      hd.bind(model);
+    });
+  </script>
+</head>
+<body>
+  <div id="content">
+    <table>
+      <tbody data-bind="foreach: activities">
+        <tr>
+          <th colspan="2">
+            <strong><big>Activity <span data-bind="text: num"></span></big></strong>
+            <button class="addBefore" data-bind="click: @ $parent.addBefore($this) @"></button>
+            <button class="promote" data-bind="click: @ $parent.promote($this) @"></button>
+            <button class="demote" data-bind="click: @ $parent.demote($this) @"></button>
+            <button class="addAfter" data-bind="click: @ $parent.addAfter($this) @"></button>
+          </th>
+        </tr>
+
+        <tr>
+          <td scope="col">
+            <div class="ctrlHolder blocklabel">
+              <label data-bind="attr: { for: `'org' + num()` }">
+                Organization / Activity</label>
+              <input type="text" maxlength=40 data-bind=
+                "attr: { id: `'org' + num()`, title: `'Activity ' + num() + ' organization or activity name.'` },
+                textbox: name"/>
+            </div>
+
+            <div class="ctrlHolder blocklabel">
+              <label data-bind="attr: { for: `'desc' + num()` }">
+                Description</label>
+              <input type="text" maxlength=70 data-bind=
+                "attr: { id: `'desc' + num()`, title: `'Activity ' + num() + ' description.'` },
+                textbox: description"/>
+            </div>
+          </td>
+
+          <td>
+            <div class="ctrlHolder blocklabel">
+              <label data-bind="attr: { for: `'lev' + num()` }">
+                Activity <span data-bind="text: num"></span> level
+              </label>
+              <select data-bind="attr: { id: `'lev' + num()` }, selectOne: level, foreach: LEVELS">
+                <option data-bind="attr: { value: $this }, text: $this"></option>
+              </select>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td colspan="2">
+            Participation Details for Activity
+            <span data-bind="text: num"></span>
+            (Use whole numbers only, no fractions.)
+
+            <table class="hours_weeks">
+              <thead>
+                <tr>
+                  <th scope="col">Year</th>
+                  <th scope="col">Position(s) Held</th>
+                  <th scope="col">Were You Elected?</th>                
+                  <th scope="col">Hours/week</th> 
+                  <th scope="col">Weeks/year</th>
+                </tr>
+              </thead>
+              <tbody data-bind="foreach: years">
+                <tr>
+                  <th scope="row">
+                    <input type="checkbox" data-bind=
+                      "attr: { id: `'active' + id()` }, checkbox: isActive"/>
+                    <label class="inline" data-bind=
+                      "attr: { for: `'active' + id()` }, text: year"></label>
+                  </th>
+                  <td>
+                    <label class="hide" data-bind="attr: { for: `'pos' + id()` }">Position(s) Held</label>
+                    <input type="text" maxlength=40 data-bind=
+                      "attr: { id: `'pos' + id()`, title: `'Activity ' + num() + ' positions held.'` },
+                      textbox: position"/>
+                  </td>
+                  <td>
+                    <label class="hide" data-bind=
+                      "attr: { for: `'elect' + id()` }">Were you elected?</label>
+                    <select data-bind=
+                      "attr: { id: `'elect' + id()` }, selectOne: isElected">
+                      <option value="Y" data-bind=
+                        "attr: { title: `'Activity ' + num() + ' elected: Yes.'` }">
+                        Yes</option>
+                      <option value="N" data-bind=
+                        "attr: { title: `'Activity ' + num() + ' elected: No.'` }">
+                        No</option>
+                      <option value="X" data-bind=
+                        "attr: { title: `'Activity ' + num() + ' elected: Not Applicable.'` }">
+                        Not Applicable</option>
+                    </select>
+                  </td>
+                  <td>
+                    <label class="hide" data-bind=
+                      "attr: { for: `'hours' + id()` }, text: 'Hours per week'"></label>
+                    <input type="text" maxlength=2 data-bind=
+                      "attr: { id: `'hours' + id()` }, textbox: hours"/>
+                  </td>
+                  <td>
+                    <label class="hide" data-bind=
+                      "attr: { for: `'weeks' + id()` }, text: 'Weeks per year'"></label>
+                    <input type="text" maxlength=2 data-bind=
+                      "attr: { id: `'weeks' + id()` }, textbox: weeks"/>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
+

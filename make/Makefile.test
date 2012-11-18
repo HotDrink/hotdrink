@@ -13,7 +13,13 @@ TITLE := hotdrink-test
 
 SRCDIR := test/qunit
 SOURCES := \
-	common/hottest.js \
+	bindings/binders/html/attr.js \
+	bindings/binders/html/text.js \
+	bindings/binders/html/html.js \
+	bindings/binders/html/style.js \
+	bindings/binders/html/css.js \
+	bindings/binders/html/visible.js \
+	#common/hottest.js \
 	common/hello_world.js \
 	common/full_name.js \
   common/cycle.js \

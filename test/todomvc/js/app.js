@@ -53,39 +53,48 @@
         item.isComplete( value );
       });
     });
-
-    this.remove = function remove( item ) {
-      this.items.remove( item );
-    };
-
-    this.startEditing = function startEditing( item ) {
-      item.isEditing( true );
-    };
-
-    this.finishEditing = function finishEditing( item ) {
-      var desc = item.description().trim();
-      if ( desc ) {
-        item.description( desc );
-      } else {
-        this.remove( item );
-      }
-    };
-
-    this.add = function add() {
-      var next = this.next().trim();
-      if ( next ) {
-        this.items.push( new Item( next ) );
-      }
-      this.next('');
-    };
-
-    this.prune = function prune() {
-      this.items.filter(function( item ) {
-        return !item.isComplete();
-      });
-    };
-
   });
+
+  Model.prototype.remove = function remove( item ) {
+    this.items.remove( item );
+  };
+
+  Model.prototype.promote = function promote( item ) {
+    var i = this.items().indexOf( item );
+    this.items.swap( i, i - 1 );
+  };
+
+  Model.prototype.demote = function demote( item ) {
+    var i = this.items().indexOf( item );
+    this.items.swap( i, i + 1 );
+  };
+
+  Model.prototype.startEditing = function startEditing( item ) {
+    item.isEditing( true );
+  };
+
+  Model.prototype.finishEditing = function finishEditing( item ) {
+    var desc = item.description().trim();
+    if ( desc ) {
+      item.description( desc );
+    } else {
+      this.remove( item );
+    }
+  };
+
+  Model.prototype.add = function add() {
+    var next = this.next().trim();
+    if ( next ) {
+      this.items.push( new Item( next ) );
+    }
+    this.next('');
+  };
+
+  Model.prototype.prune = function prune() {
+    this.items.prune(function( item ) {
+      return item.isComplete();
+    });
+  };
 
   model = new Model( items );
 

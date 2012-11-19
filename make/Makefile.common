@@ -3,8 +3,8 @@
 ##################################################
 # standard library
 
-hide=$(dir $1).$(notdir $1)
-unhide=$(dir $1)$(patsubst .%,%,$(notdir $1))
+hide   = $(dir $1).$(notdir $1)
+unhide = $(dir $1)$(patsubst .%,%,$(notdir $1))
 
 watch = echo $1 := $($1)
 

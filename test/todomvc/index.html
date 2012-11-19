@@ -11,6 +11,63 @@
 
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
   <script type="text/javascript" src="js/lib/hotdrink.js"></script>
+  <style type="text/css">
+    #todo-list li button {
+      display: none;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 40px;
+      height: 40px;
+      margin: auto 0;
+      font-size: 22px;
+      -webkit-transition: all 0.2s;
+      -moz-transition: all 0.2s;
+      -ms-transition: all 0.2s;
+      -o-transition: all 0.2s;
+      transition: all 0.2s;
+    }
+
+    #todo-list li button:hover {
+      -webkit-transform: scale(1.3);
+      -moz-transform: scale(1.3);
+      -ms-transform: scale(1.3);
+      -o-transform: scale(1.3);
+      transform: scale(1.3);
+    }
+
+    #todo-list li:hover button {
+      display: block;
+    }
+
+    #todo-list li .demote {
+      right: 55px;
+      color: red;
+    }
+
+    #todo-list li .demote:hover {
+      text-shadow: 0 0 1px #000,
+        0 0 10px rgba(199, 107, 107, 0.8);
+    }
+
+    #todo-list li .demote:after {
+      content: '▼';
+    }
+
+    #todo-list li .promote {
+      right: 100px;
+      color: green;
+    }
+
+    #todo-list li .promote:hover {
+      text-shadow: 0 0 1px #000,
+        0 0 10px rgba(107, 199, 107, 0.8);
+    }
+
+    #todo-list li .promote:after {
+      content: '▲';
+    }
+  </style>
 </head>
 <body>
 	<section id="todoapp">
@@ -25,13 +82,15 @@
 			<label for="toggle-all">Mark all as complete</label>
 			<ul id="todo-list" data-bind="foreach: items">
         <li data-bind="css: { completed: isComplete, editing: isEditing }">
-          <div class="view" data-bind="dblclick: $parent.startEditing.bind($parent)">
+          <div class="view" data-bind="dblclick: @ isEditing(true) @">
 						<input class="toggle" type="checkbox" data-bind="checkbox: isComplete">
 						<label data-bind="text: description"></label>
-            <button class="destroy" data-bind="click: $parent.remove.bind($parent)"></button>
+            <button class="promote" data-bind="click: @ $parent.promote($this) @"></button>
+            <button class="demote" data-bind="click: @ $parent.demote($this) @"></button>
+            <button class="destroy" data-bind="click: @ $parent.remove($this) @"></button>
 					</div>
           <input class="edit"
-            data-bind="btb: { value: description, editing: isEditing, blur: $parent.finishEditing.bind($parent) }">
+            data-bind="btb: { value: description, editing: isEditing, blur: @ $parent.finishEditing($this) @ }">
 				</li>
 			</ul>
 		</section>

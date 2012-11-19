@@ -21,7 +21,7 @@ SOURCES := \
 	bindings/binders/html/css.js \
 	bindings/binders/html/visible.js \
 	bindings/expressions.js \
-	#common/hello_world.js \
+	common/hello_world.js \
 	common/full_name.js \
   common/cycle.js \
 	common/resize_image.js \

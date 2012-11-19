@@ -8,7 +8,7 @@
 
   test("write constant string", function () {
     expect(2);
-    strictEqual(this.view.text(), "");
+    notStrictEqual(this.view.text(), "john");
     hd.binders["text"](this.view, "john");
     strictEqual(this.view.text(), "john");
   });
@@ -21,7 +21,7 @@
 
   test("write constant object", function () {
     expect(3);
-    strictEqual(this.view.text(), "");
+    notStrictEqual(this.view.text(), "null");
     hd.binders["text"](this.view, null);
     strictEqual(this.view.text(), "null");
     var obj = { red: "fish", blue: "fish" };

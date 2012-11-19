@@ -8,7 +8,7 @@
 
   test("write constant", function () {
     expect(2);
-    strictEqual(this.view.attr("id"), undefined);
+    notStrictEqual(this.view.attr("id"), "john");
     hd.binders["attr"](this.view, { id: "john" });
     strictEqual(this.view.attr("id"), "john");
   });

@@ -39,10 +39,11 @@
   });
 
   test("bind variable", function () {
-    expect(1);
+    expect(2);
     var truthy = hd.variable(false);
     hd.binders["invisible"](this.view, truthy);
     truthy(true);
+    notStrictEqual(this.view.css("display"), "none");
     hd.update();
     strictEqual(this.view.css("display"), "none");
   });

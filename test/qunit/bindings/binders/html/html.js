@@ -8,8 +8,8 @@
 
   test("write constant", function () {
     expect(4);
-    strictEqual(this.view.text(), "");
-    strictEqual(this.view.html(), "");
+    notStrictEqual(this.view.text(), "john");
+    notStrictEqual(this.view.html(), "<p>john</p>");
     hd.binders["html"](this.view, "<p>john</p>");
     strictEqual(this.view.text(), "john");
     strictEqual(this.view.html(), "<p>john</p>");

@@ -1,0 +1,32 @@
+body {
+  padding: 2em;
+  background: #8df url(noise.png);
+  text-align: center;
+}
+
+label {
+  display: inline-block;
+  width: 5em;
+  text-align: right;
+  padding-right: 1em;
+}
+
+input {
+  width: 12em;
+  border: #3ad solid;
+  padding: .3em .8em;
+  border-radius: 1em;
+  -moz-border-radius: 1em;
+  -webkit-border-radius: 1em;
+  margin: .5em 0;
+}
+
+input:focus {
+  outline: none;
+  border-color: #4cf;
+}
+
+button {
+  width: 5em;
+}
+

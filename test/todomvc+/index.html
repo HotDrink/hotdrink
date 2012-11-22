@@ -5,6 +5,7 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<title>HotDrink • TodoMVC</title>
 	<link rel="stylesheet" href="assets/base.css">
+  <link rel="stylesheet" href="css/app.css">
 	<!--[if IE]>
 	<script src="assets/ie.js"></script>
 	<![endif]-->
@@ -27,6 +28,8 @@
           <div class="view" data-bind="dblclick: @ isEditing(true) @">
 						<input class="toggle" type="checkbox" data-bind="checkbox: isComplete">
 						<label data-bind="text: description"></label>
+            <button class="promote" data-bind="click: @ $parent.promote($this) @"></button>
+            <button class="demote" data-bind="click: @ $parent.demote($this) @"></button>
             <button class="destroy" data-bind="click: @ $parent.remove($this) @"></button>
 					</div>
           <input class="edit"

@@ -11,8 +11,7 @@ label {
   padding-right: 1em;
 }
 
-input {
-  width: 12em;
+input, button {
   border: #3ad solid;
   padding: .3em .8em;
   border-radius: 1em;
@@ -21,12 +20,16 @@ input {
   margin: .5em 0;
 }
 
-input:focus {
+input {
+  width: 12em;
+}
+
+input:focus, button:hover {
   outline: none;
   border-color: #4cf;
 }
 
 button {
-  width: 5em;
+  min-width: 5em;
 }
 

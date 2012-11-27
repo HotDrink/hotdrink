@@ -2,20 +2,27 @@
 
 $model = <<<EOS
 var Model = hd.model(function () {
-    this.name      = hd.variable("John");
-    this.greeting  = hd.computed(function () {
-        return "Hello, " + this.name() + "!";
-    });
+  this.firstName = hd.variable("James");
+  this.lastName  = hd.variable("Bond");
+  this.fullName  = hd.computed(function () {
+    return this.firstName() + " " + this.lastName();
+  });
 });
 
 $(document).ready(function () {
-    hd.bind(new Model);
+  hd.bind(new Model);
 });
 EOS;
 
 $view = <<<EOS
-<p>What's your name? <input type="text" data-bind="textbox: name"/></p>
-<span data-bind="text: greeting">Please enable JavaScript.</span>
+<p>
+  First name: <input type="text" data-bind="textbox: firstName" />
+  <br />
+  Last name: <input type="text" data-bind="textbox: lastName" />
+</p>
+<p>
+  Howdy, <span data-bind="text: fullName"></span>!
+</p>
 EOS;
 
 include "template.php";

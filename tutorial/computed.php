@@ -2,10 +2,11 @@
 
 $model = <<<EOS
 var Model = hd.model(function () {
-  this.firstName = hd.variable("James");
-  this.lastName  = hd.variable("Bond");
-  this.fullName  = hd.computed(function () {
-    return this.firstName() + " " + this.lastName();
+  this.length = hd.variable(3);
+  this.width  = hd.variable(4);
+  this.area   = hd.computed(function () {
+    // Compute area from length and width.
+    return this.length() * this.width();
   });
 });
 
@@ -16,12 +17,11 @@ EOS;
 
 $view = <<<EOS
 <p>
-  First name: <input type="text" data-bind="textbox: firstName" />
+  Length: <input type="text" data-bind="number: length" />
   <br />
-  Last name: <input type="text" data-bind="textbox: lastName" />
-</p>
-<p>
-  Howdy, <span data-bind="text: fullName"></span>!
+  Width: <input type="text" data-bind="number: width" />
+  <br />
+  Area: <span data-bind="text: area"></span>
 </p>
 EOS;
 

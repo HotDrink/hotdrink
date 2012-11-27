@@ -4,6 +4,11 @@ body {
   text-align: center;
 }
 
+.view {
+  display: inline-block;
+  text-align: left;
+}
+
 label {
   display: inline-block;
   width: 5em;

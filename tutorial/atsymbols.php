@@ -1,12 +1,12 @@
 <?php
 
 $model = <<<EOS
-var Model = hd.model(function (name) {
-  this.name = hd.variable(name);
-});
+var model = {
+  name: hd.variable("James")
+};
 
 $(document).ready(function () {
-  hd.bind(new Model("James"));
+  hd.bind(model);
 });
 EOS;
 
@@ -15,7 +15,9 @@ $view = <<<EOS
   Name: <input type="text" data-bind="textbox: name" />
 </p>
 <p>
-  Howdy, <span data-bind="text: name"></span>!
+  <button type="button" data-bind="click: @ alert('Howdy, ' + name() + '!') @">
+    Howdy!
+  </button>
 </p>
 EOS;
 

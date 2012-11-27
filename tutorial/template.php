@@ -19,10 +19,12 @@
 </head>
 <body>
   <noscript>Please enable JavaScript.</noscript>
+  <div class="view">
 
 <?= $view ?>
 
 
+  </div>
 </body>
 </html>
 

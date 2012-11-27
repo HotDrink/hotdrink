@@ -1,8 +1,10 @@
 <?php
 
 $model = <<<EOS
+var model = "James";
+
 $(document).ready(function () {
-  hd.bind("James");
+  hd.bind(model);
 });
 EOS;
 

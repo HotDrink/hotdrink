@@ -8,7 +8,6 @@ var Model = hd.model(function () {
 
   hd.constraint()
     .method(this.length, function () {
-      // Compute length from width and area.
       return this.area() / this.width();
     })
     .method(this.width, function () {

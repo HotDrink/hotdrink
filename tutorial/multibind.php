@@ -1,7 +1,10 @@
 <?php
 
 $model = <<<EOS
-var model = { name: "James" };
+var model = {
+  name:     "James",
+  codename: "007"
+}
 
 $(document).ready(function () {
   hd.bind(model);
@@ -9,7 +12,7 @@ $(document).ready(function () {
 EOS;
 
 $view = <<<EOS
-Howdy, <span data-bind="text: \$this.name"></span>!
+Howdy, <span data-bind="text: name, attr: { title: codename }"></span>!
 EOS;
 
 include "template.php";

@@ -3,7 +3,7 @@
 MAKEDIR := make
 include $(MAKEDIR)/Makefile.common
 
-PRIMARY := lib
+PRIMARY  := lib
 BUILDDIR := build
 
 ##################################################
@@ -37,7 +37,46 @@ test :
 
 lint :
 	@$(call defer,$(MAKEDIR)/Makefile.$(PRIMARY))
-	
+
+
+##################################################
+# publishing
+
+.PHONY : publish pubdebug pubrelease
+
+PUBHOST := example.com
+PUBPATH := path/to/root
+
+publish : pubdebug pubrelease tutorial
+
+pubdebug : debug
+	scp hotdrink.js $(PUBHOST):$(PUBPATH)/hotdrink-debug.js
+
+pubrelease : release
+	gunzip -f hotdrink.js.gz
+	scp hotdrink.js $(PUBHOST):$(PUBPATH)/hotdrink.js
+
+
+##################################################
+# tutorial
+
+.PHONY : tutorial clean-tut
+
+TUTFILES   := $(shell find tutorial -name '.*.swp' -prune -o -type f -print)
+TUTLAST    := build/tutorial
+TUTPUBPATH := $(PUBPATH)/tutorial
+
+tutorial : $(TUTLAST)
+
+$(TUTLAST) : $(TUTFILES)
+	@-ssh $(PUBHOST) 'mkdir $(TUTPUBPATH)' 2>/dev/null
+	@scp -r $? $(PUBHOST):$(TUTPUBPATH)
+	@touch $@
+
+clean-tut :
+	@-ssh $(PUBHOST) 'rm -rf $(TUTPUBPATH)' 2>/dev/null
+	@rm -f $(TUTLAST)
+
 
 ##################################################
 # cleaning

@@ -14,3 +14,7 @@ cd test/todomvc/js/lib
 ln -s ../../../../hotdrink.js 2>/dev/null
 cd - >/dev/null
 
+cd tutorial
+ln -s ../hotdrink.js 2>/dev/null
+cd - >/dev/null
+

@@ -3,7 +3,7 @@
 MAKEDIR := make
 include $(MAKEDIR)/Makefile.common
 
-PRIMARY := lib
+PRIMARY  := lib
 BUILDDIR := build
 
 ##################################################
@@ -42,16 +42,12 @@ lint :
 ##################################################
 # publishing
 
-.PHONY : publish pubdebug pubrelease pubtut clean-pubtut
+.PHONY : publish pubdebug pubrelease
 
 PUBHOST := example.com
 PUBPATH := path/to/root
-PUBTUTPATH := $(PUBPATH)/tutorial
 
-PUBFILES := $(shell find tutorial -name '.*.swp' -prune -o -type f -print)
-PUBLAST := build/lastpublished
-
-publish : pubdebug pubrelease pubtut
+publish : pubdebug pubrelease tutorial
 
 pubdebug : debug
 	scp hotdrink.js $(PUBHOST):$(PUBPATH)/hotdrink-debug.js
@@ -60,16 +56,27 @@ pubrelease : release
 	gunzip -f hotdrink.js.gz
 	scp hotdrink.js $(PUBHOST):$(PUBPATH)/hotdrink.js
 
-pubtut : $(PUBLAST)
 
-$(PUBLAST) : $(PUBFILES)
-	@-ssh $(PUBHOST) 'mkdir $(PUBTUTPATH)' 2>/dev/null
-	@scp -r $? $(PUBHOST):$(PUBTUTPATH)
+##################################################
+# tutorial
+
+.PHONY : tutorial clean-tut
+
+TUTFILES   := $(shell find tutorial -name '.*.swp' -prune -o -type f -print)
+TUTLAST    := build/tutorial
+TUTPUBPATH := $(PUBPATH)/tutorial
+
+tutorial : $(TUTLAST)
+
+$(TUTLAST) : $(TUTFILES)
+	@-ssh $(PUBHOST) 'mkdir $(TUTPUBPATH)' 2>/dev/null
+	@scp -r $? $(PUBHOST):$(TUTPUBPATH)
 	@touch $@
 
-clean-pubtut :
-	@-ssh $(PUBHOST) 'rm -rf $(PUBTUTPATH)' 2>/dev/null
-	@rm -f $(PUBLAST)
+clean-tut :
+	@-ssh $(PUBHOST) 'rm -rf $(TUTPUBPATH)' 2>/dev/null
+	@rm -f $(TUTLAST)
+
 
 ##################################################
 # cleaning

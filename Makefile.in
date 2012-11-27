@@ -45,7 +45,8 @@ lint :
 .PHONY : publish pubdebug pubrelease pubtut clean-pubtut
 
 PUBHOST := example.com
-PUBPATH := path/to/tutorial
+PUBPATH := path/to/root
+PUBTUTPATH := $(PUBPATH)/tutorial
 
 PUBFILES := $(shell find tutorial -name '.*.swp' -prune -o -type f -print)
 PUBLAST := build/lastpublished
@@ -53,21 +54,21 @@ PUBLAST := build/lastpublished
 publish : pubdebug pubrelease pubtut
 
 pubdebug : debug
-	scp hotdrink.js thejohnfreeman.com:~/html/hotdrinkjs/hotdrink-debug.js
+	scp hotdrink.js $(PUBHOST):$(PUBPATH)/hotdrink-debug.js
 
 pubrelease : release
 	gunzip -f hotdrink.js.gz
-	scp hotdrink.js thejohnfreeman.com:~/html/hotdrinkjs/hotdrink.js
+	scp hotdrink.js $(PUBHOST):$(PUBPATH)/hotdrink.js
 
 pubtut : $(PUBLAST)
 
 $(PUBLAST) : $(PUBFILES)
-	@-ssh $(PUBHOST) 'mkdir $(PUBPATH)' 2>/dev/null
-	@scp -r $? $(PUBHOST):$(PUBPATH)
+	@-ssh $(PUBHOST) 'mkdir $(PUBTUTPATH)' 2>/dev/null
+	@scp -r $? $(PUBHOST):$(PUBTUTPATH)
 	@touch $@
 
 clean-pubtut :
-	@-ssh $(PUBHOST) 'rm -rf $(PUBPATH)' 2>/dev/null
+	@-ssh $(PUBHOST) 'rm -rf $(PUBTUTPATH)' 2>/dev/null
 	@rm -f $(PUBLAST)
 
 ##################################################

@@ -18,7 +18,7 @@ var Model = hd.model(function () {
       var negb = this.perimeter() / 2;
       var discriminant = (negb * negb) - (4 * this.area());
 
-      if (discriminant < 0) return; // no real roots :(
+      if (discriminant < 0) return [0, 0]; // no real roots :(
       
       this.length((negb + Math.sqrt(discriminant)) / 2);
       this.width((negb - Math.sqrt(discriminant)) / 2);
@@ -42,6 +42,5 @@ $view = <<<EOS
 </p>
 EOS;
 
-$DEBUG = true;
 include "template.php";
 

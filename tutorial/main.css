@@ -1,0 +1,40 @@
+body {
+  padding: 2em;
+  background: #8df url(noise.png);
+  text-align: center;
+}
+
+.view {
+  display: inline-block;
+  text-align: left;
+}
+
+label {
+  display: inline-block;
+  width: 5em;
+  text-align: right;
+  padding-right: 1em;
+}
+
+input, button {
+  border: #3ad solid;
+  padding: .3em .8em;
+  border-radius: 1em;
+  -moz-border-radius: 1em;
+  -webkit-border-radius: 1em;
+  margin: .5em 0;
+}
+
+input {
+  width: 12em;
+}
+
+input:focus, button:hover {
+  outline: none;
+  border-color: #4cf;
+}
+
+button {
+  min-width: 5em;
+}
+

@@ -20,3 +20,7 @@ cd js
 ln -s ../../todomvc/js/lib
 cd ../.. >/dev/null
 
+cd tutorial
+ln -s ../hotdrink.js 2>/dev/null
+cd - >/dev/null
+

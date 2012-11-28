@@ -21,6 +21,8 @@
     });
   });
 
+  Model.behaviors(hd.enablement);
+
   hottest.groupedOptions = {
     Model: Model
   };

@@ -3,7 +3,7 @@
 $model = <<<EOS
 var model = "James";
 
-$(document).ready(function () {
+$(function () {
   hd.binders["text"]($("#view"), model);
 });
 EOS;

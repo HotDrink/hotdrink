@@ -5,7 +5,7 @@ var Model = hd.model(function (name) {
   this.name = hd.variable(name);
 });
 
-$(document).ready(function () {
+$(function () {
   hd.bind(new Model("James"));
 });
 EOS;

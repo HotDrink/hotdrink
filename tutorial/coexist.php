@@ -30,7 +30,7 @@ var Model = hd.model(function () {
     });
 });
 
-$(document).ready(function () {
+$(function () {
   hd.bind(new Model);
 });
 EOS;

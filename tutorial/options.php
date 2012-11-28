@@ -1,7 +1,7 @@
 <?php
 
 $model = <<<EOS
-$(document).ready(function () {
+$(function () {
   hd.binders["text"]($("#view"), "James");
   hd.binders["attr"]($("#view"), { title: "007" });
 });

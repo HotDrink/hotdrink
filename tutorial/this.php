@@ -24,7 +24,7 @@ model.report = hd.computed(function () {
   return "That area is " + (isRound ? "" : "not ") + "a nice round number!";
 }, model);
 
-$(document).ready(function () {
+$(function () {
   hd.bind(model);
 });
 EOS;

@@ -3,7 +3,7 @@
 $model = <<<EOS
 var model = { name: "James" };
 
-$(document).ready(function () {
+$(function () {
   hd.bind(model);
 });
 EOS;

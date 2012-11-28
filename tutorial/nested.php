@@ -8,7 +8,7 @@ var model = {
   }
 };
 
-$(document).ready(function () {
+$(function () {
   hd.bind(model);
 });
 EOS;

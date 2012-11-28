@@ -24,7 +24,7 @@ var Model = hd.model(function () {
     });
 });
 
-$(document).ready(function () {
+$(function () {
   var model = new Model;
   hd.bind(model);
   model.area(20);

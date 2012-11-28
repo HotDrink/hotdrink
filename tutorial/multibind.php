@@ -6,7 +6,7 @@ var model = {
   codename: "007"
 }
 
-$(document).ready(function () {
+$(function () {
   hd.bind(model);
 });
 EOS;

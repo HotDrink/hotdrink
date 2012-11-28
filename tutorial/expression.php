@@ -1,7 +1,7 @@
 <?php
 
 $model = <<<EOS
-$(document).ready(function () {
+$(function () {
   hd.bind();
 });
 EOS;

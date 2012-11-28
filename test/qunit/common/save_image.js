@@ -23,6 +23,8 @@
     hd.precondition(this.result, function () { return this.fileName() !== ""; });
   });
 
+  Model.behaviors(hd.enablement);
+
   hottest.saveImage = {
     Model: Model
   };

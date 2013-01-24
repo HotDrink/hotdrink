@@ -28,8 +28,19 @@
         return this.fileName() != "";
       });
 
+      this.password1 = hd.variable("");
+      this.password2 = hd.variable("");
+
       this.save = hd.command(function () {
-        return hd.fn(alert)("You saved " + this.fullName());
+        var str = (this.fileType() === "doc")
+        ? ("save_doc(filename = " + this.fullName() +
+          ", password = " + this.password1() + ")")
+        : ("save_txt(filename = " + this.fullName() + ")");
+        return hd.fn(alert)(str);
+      });
+
+      hd.precondition(this.save, function () {
+        return (this.fileType() !== "doc") || (this.password1() === this.password2());
       });
 
       hd.precondition(this.save, function () {
@@ -38,13 +49,12 @@
 
     });
 
+    Model.behaviors(hd.enablement);
+
     var model = new Model;
 
     $(function () {
       hd.bind(model);
-      model.fileName("foo");
-      hd.update();
-      model.fileName("");
     });
   </script>
 </head>
@@ -60,6 +70,14 @@
   <select id="fileType" data-bind="selectOne: fileType, foreach: FILETYPES">
     <option data-bind="attr: { value: value }, text: desc"></option>
   </select>
+  </p>
+
+  <p>
+  <label for="password1">Enter password:</label>
+  <input type="password" id="password1" data-bind="textbox: password1"/>
+  <br/>
+  <label for="password2">Confirm password:</label>
+  <input type="password" id="password2" data-bind="textbox: password2"/>
   </p>
 
   <p data-bind="visible: hasFileName">The file will be saved as <span data-bind="text: fullName"></span></p>

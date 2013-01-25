@@ -52,6 +52,7 @@ SOURCES := \
   bindings/binders/html/klass.js \
   bindings/binders/html/visible.js \
   bindings/binders/html/enable.js \
+  bindings/binders/html/ifenabled.js \
   bindings/binders/value/common.js \
   bindings/binders/value/checkbox.js \
   bindings/binders/value/checkboxGroup.js \

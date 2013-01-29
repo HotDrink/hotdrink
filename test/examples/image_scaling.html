@@ -8,6 +8,12 @@
   <title>Image Storing Example</title>
   <script type="text/javascript">
 
+    var threeway = function(abs, init, rel) {
+      hd.constraint()
+        .method(abs, function () { return init() * rel() / 100; })
+        .method(rel, function () { return 100 * abs() / init(); });
+    };
+
     var Model = hd.model(function Model() {
       this.initial_width = hd.variable(1000);
       this.relative_width = hd.variable(100);
@@ -21,12 +27,6 @@
         return "Abs.width: " + this.absolute_width() + 
                "; Abs.height: " + this.absolute_height() + ".";
       });
-
-      var threeway = function(abs, init, rel) {
-        hd.constraint()
-          .method(abs, function () { return init() * rel() / 100; })
-          .method(rel, function () { return 100 * abs() / init(); });
-      }
 
       threeway(this.absolute_width, this.initial_width, this.relative_width);
       threeway(this.absolute_height, this.initial_height, this.relative_height);

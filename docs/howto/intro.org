@@ -1,0 +1,168 @@
+#+TITLE: Introduction to HotDrink
+#+LANGUAGE:  en
+#+OPTIONS: H:2 author:nil creator:nil
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
+
+* Overview of basic concepts
+
+HotDrink is a GUI framework library which implements many useful interface
+behaviors, thereby making it easier to write robust, helpful user interfaces.
+
+To make use of these behaviors, all that is required of the programmer is to
+define the relationships between the various pieces of data in the interface:
+how does one piece of data affect others?  Thus, HotDrink supports a
+declarative programming style: instead of spelling out everything the
+interface should do and when it should do be done, the programmer simply
+describes the interface and lets HotDrink figure out the rest.
+
+** Constraint systems
+
+The heart of the HotDrink library is a /constraint system/.  A constraint
+system manages relations among variables in the user interface.  A /relation/
+is anything you want to be true about the values of your variables.  For
+example, given three variables, $x$, $y$, and $z$, you may want to enforce
+that $x = y + z$, or that $x \le y \le z$.
+
+The constraint system in HotDrink is a /dataflow/ constraint system.  The
+purpose of a dataflow constraint system is to decide which variables should be
+used to update other variables --- that is, it decides in which direction the
+data flows.  Then the system updates variables using functions that you, the
+programmer, have provided.
+
+The constraint system in HotDrink is also a /multi-way/ constraint system.
+This means data can flow in more than one direction.  A multi-way constraint
+system allows for more flexible interfaces because, potentially, all values
+can be edited.  HotDrink uses the current dataflow, not only to update
+variables, but also to understand how data is being used so that it can react
+appropriately.
+
+** MVVM
+
+Applications written with HotDrink follow the Model-View-ViewModel
+(a.k.a. MVVM) design pattern.  This pattern divides the application as
+follows:
+
+- The /view/ is responsible for presentation and capturing interactions with
+  the user.  It arranges everything on the screen and provides events which
+  can be used to know when the user does something.  For our purposes, the
+  view is your HTML, along with any toolkits you may use to generate HTML.
+  We'll show you some bits and snippets of HTML in this tutorial to help you
+  understand the examples, but we're not really going to explain it --- we're
+  going to assume that you already know HTML, and that you know how to
+  construct your web page.
+
+- The /view-model/ is responsible for managing your interface.  That means
+  supplying any data which is to be presented by the view, as well as
+  responding to things the user does.  The whole purpose of HotDrink is to be
+  a view-model: updating the dataflow in response to what the user does, and
+  updating variables in response to the dataflow.  The only thing that you,
+  the programmer, need to do for the view-model is write JavaScript code to
+  describe the constraint system for your interface.  We'll show you how to do
+  that below.
+
+- Another important part of an MVVM application is /binding/.  Binding is the
+  process of connecting elements of the view with data in the view-model.
+  Binding is sometimes treated as part of the view --- that's why there's no
+  "B" in "MVVM" --- but we treat it as its own part of the application.  With
+  HotDrink, you can bind manually using JavaScript, or you can bind
+  automatically by making annotations in your HTML.  We'll show you both
+  techniques below.
+
+- The /model/ is basically responsible for everything else: whatever it is
+  your application is actually supposed to /do/.  Your model does not need to
+  know anything about the user interface, it just needs to know how to go
+  about the business of whatever your application is for in the first place.
+  Generally your model will be code that runs on the server in response to
+  requests made by the user.  How you write that code is up to you; we're
+  going to ignore the model and focus here on the interface.
+
+* Including HotDrink in your web page
+
+To use HotDrink, all you need is the file [[file:hotdrink.min.js][=hotdrink.min.js=]] that came with
+this tutorial.  Alternatively, if you downloaded the source tree, follow the
+build instructions to compile your own =hotdrink.min.js=.
+
+To add the HotDrink library to your web page, add the following ~<script>~
+tag to the ~<head>~ section of your HTML.
+
+#+BEGIN_SRC html
+<script type="text/javascript" src="hotdrink.min.js"></script>
+#+END_SRC
+
+Make sure the ~src~ attribute contains the correct path to your
+=hotdrink.min.js= file.  Note that, in order for the examples in this
+tutorial to work, the file =hotdrink.min.js= must be located in the same
+directory as this HTML file.
+
+HotDrink itself does not rely on any other JavaScript frameworks.  However, it
+should be compatible with any other frameworks you wish to use (JQuery, Dojo,
+MooTools, etc.).  The only global symbol it exports is ~hd~, and all of its
+interactions with the DOM are via cooperative API functions,
+e.g. [[https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.addEventListener][~addEventListener~]], etc.
+
+* Important HotDrink objects
+
+There are three important objects which you will need to interact with when
+using HotDrink.
+
+** The model
+
+The model is HotDrink's representation of the data in your interface.  It
+consists of variables, which hold data, and constraints, which define how
+those variables are related.  The model also serves as a naming mechanism,
+allowing you to easily access variables you have created.  When you create
+a variable, you give it a name; that variable is then stored as a property of
+the model under that name.  So, for example, if create a variable named ~x~,
+that variable can be accessed as ~model.x~.
+
+** The model builder
+
+Building a model is a very detail-oriented task.  To make it more accessible,
+HotDrink contains a special object called the /model builder/, or sometimes
+simply /builder/, whose only purpose is to help you create a model.
+
+To use a model builder, simply create a new instance, then use its various
+member functions to add elements to the model.  (These member functions are
+described in detail in [[file:basics.org][Basic HotDrink Usage]].)  Use the ~result~ member
+function to retrieve the constructed model.
+
+#+BEGIN_SRC js
+var builder = new hd.ModelBuilder();
+
+// ...invoke various builder member functions to build the model ...
+
+var model = builder.end();
+#+END_SRC
+
+
+** The constraint system
+
+As we said in section [[Constraint systems]], the heart of HotDrink is a
+constraint system.  The job of the constraint system is to enforce the
+constraints you defined when building the model.  However, note that a
+constraint system is separate from the model.  You can have a model without a
+constraint system; that simply means that no one is enforcing your constraints
+for you.  Or you may have multiple constraint systems and choose which one you
+want to add your model to.
+
+To use a constraint system, simply create a new instance, then register your
+model.
+
+#+BEGIN_SRC js
+var system = new hd.ConstraintSystem();
+
+system.addComponent( model );
+#+END_SRC
+
+If you later decide to remove the model from the constraint system, you may do
+so as follows.
+
+#+BEGIN_SRC js
+system.removeComponent( model );
+#+END_SRC
+
+As those function names suggest, the full model for your application can
+actually consist of several different components, and new components can be
+added or removed at run-time.  For right now, however, we will assume there is
+only a single model component and treat it as the entire model.

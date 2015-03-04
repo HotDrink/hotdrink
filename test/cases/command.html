@@ -1,0 +1,58 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      {
+        var model = new hd.ModelBuilder()
+          .vs( 'begin, end, length', {begin: 30, end: 50} )
+
+          .c( 'begin, end, length' )
+          .m( 'begin, end -> length',
+              function( begin, end ) {
+                var p = new hd.Promise();
+                setTimeout( p.resolve.bind( p, end - begin ), 2000 )
+                return p;
+              } )
+          .m( 'begin, length -> end',
+              function( begin, length ) {
+                var p = new hd.Promise();
+                setTimeout( p.resolve.bind( p, begin + length ), 2000 )
+                return p;
+              } )
+          .m( 'end, length -> begin',
+              function( end, length ) {
+                var p = new hd.Promise();
+                setTimeout( p.resolve.bind( p, end - length ), 2000 );
+                return p;
+              } )
+
+          .syncommand( 'go', 'begin, end, length',
+                       function( begin, end, length ) {
+                         alert( length );
+                       }
+                     )
+
+          .end();
+
+        var system = new hd.ConstraintSystem;
+        system.addComponent( model );
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model );
+        } );
+      }
+    </script>
+    <style type="text/css">
+      .pending { background: right center no-repeat #eee url(spinner.gif); }
+    </style>
+  </head>
+  <body>
+    <div style="display:inline-block;text-align:right">
+      Begin: <input type="text" data-bind="hd.numVar( begin )"/><br/>
+      End: <input type="text" data-bind="hd.numVar( end )"/><br/>
+      Length: <input type="text" data-bind="hd.numVar( length )"/>
+    </div>
+    <p><button data-bind="hd.clicked( go ), hd.enabled( go.ready )">Go</button></p>
+  </body>
+</html>

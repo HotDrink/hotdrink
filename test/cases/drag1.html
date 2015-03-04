@@ -1,0 +1,107 @@
+<html>
+  <head>
+    <title>HotDrink Test Case</title>
+    <style type="text/css">
+      .puck {
+        position: absolute;
+        width: 60px; height: 60px;
+        line-height: 60px;
+        text-align: center; vertical-align: middle;
+        cursor: default;
+        user-select: none; -moz-user-select: none; -webkit-user-select: none;
+      }
+    </style>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      function init() {
+
+        var mod = new hd.ModelBuilder()
+          .v( 'p1', {x: 200, y: 50} )
+          .v( 'p2', {x: 150, y: 150} )
+          .v( 'p3', {x: 50, y: 200} )
+          .v( '$drag' )
+
+          .c( 'p1, p2, p3' )
+          .m( 'p1, p2, p3 -> p2, p3', bump2 )
+          .m( 'p2, p1, p3 -> p1, p3', bump2 )
+          .m( 'p3, p1, p2 -> p1, p2', bump2 )
+
+          .end();
+
+        var system = new hd.ConstraintSystem();
+        system.addComponent( mod );
+        hd.performDeclaredBindings( mod );
+        hd.bind( {view: hd.mousePosition(), model: hd.path( mod, 'drag' )} );
+
+        function bump2( pa, pb, pc ) {
+          var dx1 = pb.x - pa.x;
+          var dy1 = pb.y - pa.y;
+          var dist1 = Math.sqrt( dx1*dx1 + dy1*dy1 );
+          var dx2 = pc.x - pa.x;
+          var dy2 = pc.y - pa.y;
+          var dist2 = Math.sqrt( dx2*dx2 + dy2*dy2 );
+          if (dist1 < 60 && dist2 < 60) {
+            return [bump( pa, pb ), bump( pa, pc )];
+          }
+          else if (dist1 < 60) {
+            pb = bump( pa, pb );
+            return [pb, bump( pb, pc )];
+          }
+          else if (dist2 < 60) {
+            pc = bump( pa, pc );
+            return [bump( pc, pb ), pc];
+          }
+          else {
+            return [{x: pb.x, y: pb.y}, {x: pc.x, y: pc.y}];
+          }
+        }
+
+        function bump( pa, pb ) {
+          var dx = pb.x - pa.x;
+          var dy = pb.y - pa.y;
+          var distance = Math.sqrt( dx*dx + dy*dy );
+          if (distance < 60) {
+            dx = (dx / distance) * 60;
+            dy = (dy / distance) * 60;
+            return {x: pa.x + dx, y: pa.y + dy};
+          }
+          else {
+            return {x: pb.x, y: pb.y};
+          }
+        }
+
+        var canvas = document.createElement( 'canvas' );
+        var ctx = canvas.getContext( '2d' );
+        ctx.fillStyle = '#eef'
+        ctx.strokeStyle = '#00f'
+        ctx.beginPath();
+        ctx.arc( 30, 30, 29, 0, 6.3 );
+        ctx.stroke();
+        ctx.fill();
+        document.styleSheets[0].insertRule( ".puck { background: url(" + canvas.toDataURL() + ")", 0 );
+
+        ['p1', 'p2', 'p3'].forEach( function( id ) {
+          var el = document.getElementById( id );
+          el.addEventListener( 'mousedown', mousedown );
+          el.addEventListener( 'mouseup', mouseup );
+        } );
+
+        function mousedown( e ) {
+          mod.drag = mod[e.currentTarget.id];
+        }
+
+        function mouseup( e ) {
+          if (mod.drag === mod[e.currentTarget.id]) {
+            mod.drag = null;
+          }
+        }
+
+      }
+    </script>
+  </head>
+  <body onload="init()">
+    <div id="p1" class="puck" data-bind="hd.position( p1, hd.offset( -30, -30 ) )">1</div>
+    <div id="p2" class="puck" data-bind="hd.position( p2, hd.offset( -30, -30 ) )">2</div>
+    <div id="p3" class="puck" data-bind="hd.position( p3, hd.offset( -30, -30 ) )">3</div>
+  </body>
+</html>

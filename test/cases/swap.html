@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <style type="text/css">
+      .derived { background: #ffe; }
+    </style>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      {
+        var model = new hd.ModelBuilder()
+            .v( 'x', 3 )
+            .v( 'y', 7 )
+            .v( '$z' )
+            .end();
+        model.z = model.x;
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model );
+        } );
+      }
+
+      var flop = true;
+      function flip() {
+        if (flop) {
+          model.z = model.y;
+        }
+        else {
+          model.z = model.x;
+        }
+        flop = !flop;
+      }
+    </script>
+  </head>
+  <body>
+    <p>
+    </p>
+    <table>
+      <tr>
+        <td>X:</td>
+        <td><input type="text" data-bind="hd.num( x )"/></td>
+        <td>Y:</td>
+        <td><input type="text" data-bind="hd.num( y )"/></td>
+        <td>Z:</td>
+        <td><input type="text" data-bind="hd.num( hd.path( this, 'z' ) )"/></td>
+      </tr>
+    </table>
+    <button onclick="flip()">Flip!</button>
+  </body>
+</html>

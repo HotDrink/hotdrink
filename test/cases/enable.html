@@ -1,0 +1,119 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <style type="text/css">
+      input[type="text"] { width: 6ex; }
+      td { text-align: center; }
+      td.space { width: 2em; }
+      input:disabled { background: #ccc; }
+    </style>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+    {
+      console.time( 'model' );
+      var model = new hd.ModelBuilder()
+        .variables( {a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7,
+                     h: 8, i: undefined, j: undefined,
+                     k: undefined, l: undefined, m: undefined } )
+        .outputVariable( 'z' )
+        .equation( "i == 2*c" )
+        .equation( "k == b+i" )
+        .equation( "l == d+1" )
+        .equation( "j == e+f" )
+        .equation( "m == g*j" )
+
+        .constraint( 'a, k, l, m, g, h, z' )
+        .method( 'a, *k, *l, *g, *m, *h -> z',
+                 function( a, k, l, g, m, h ) {
+                   if (a >= 0) {
+                     return a;
+                   }
+                   else return k.then( function( k ) {
+                     if (k >= 0) {
+                       return k;
+                     }
+                     else return l.then( function( l ) {
+                       if (l >= 0) {
+                         return l;
+                       }
+                       else return g.then( function( g ) {
+                         if (g >= 0) {
+                           return g;
+                         }
+                         else return m.then( function( m ) {
+                           if (m >= 0) {
+                             return m;
+                           }
+                           else return h.then( function( h ) {
+                             if (h >= 0) {
+                               return h;
+                             }
+                             else {
+                               return 0;
+                             }
+                           } )
+                         } )
+                       } )
+                     } )
+                   } )
+                 }
+               )
+
+        .end();
+      console.timeEnd( 'model' );
+
+      var system = new hd.ConstraintSystem();
+      system.addComponent( model );
+
+      window.addEventListener( 'load', function() {
+        hd.performDeclaredBindings( model );
+      } );
+    }
+    </script>
+    <body>
+      <p>Enablement of widgets</p>
+      <table>
+        <tr>
+          <td>&nbsp;</td>
+          <td rowspan="3" class="space"></td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>C: <input type="text" data-bind="hd.numVar( c )"/></td>
+          <td rowspan="3" class="space">&nbsp;</td>
+          <td>&nbsp;</td>
+          <td rowspan="3" class="space">&nbsp;</td>
+          <td>E: <input type="text" data-bind="hd.numVar( e )"/></td>
+          <td>&nbsp;</td>
+          <td>F: <input type="text" data-bind="hd.numVar( f )"/></td>
+          <td rowspan="3" class="space">&nbsp;</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>B: <input type="text" data-bind="hd.numVar( b )"/></td>
+          <td>&nbsp;</td>
+          <td>2*C: <input type="text" data-bind="hd.numVar( i )"/></td>
+          <td>D: <input type="text" data-bind="hd.numVar( d )"/></td>
+          <td>&nbsp;</td>
+          <td>E+F: <input type="text" data-bind="hd.numVar( j )"/></td>
+        </tr>
+        <tr>
+          <td>A: <input type="text" data-bind="hd.numVar( a )"></td>
+          <td>&nbsp;</td>
+          <td>B+2*C: <input type="text" data-bind="hd.numVar( k )"/></td>
+          <td>&nbsp;</td>
+          <td>D+1: <input type="text" data-bind="hd.numVar( l )"/></td>
+          <td>G: <input type="text" data-bind="hd.numVar( g )"/></td>
+          <td>&nbsp;</td>
+          <td>G*(E+F): <input type="text"/ data-bind="hd.numVar( m )"></td>
+          <td>H: <input type="text" data-bind="hd.numVar( h )"/></td>
+        </tr>
+      </table>
+      <p style="margin-top:4em">
+        Output: <span data-bind="hd.text( z )"></span>
+      </p>
+      <p>
+        (Output is first non-negative number, reading the bottom row left-to-right.)
+      </p>
+    </body>
+  </head>
+</html>

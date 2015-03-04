@@ -1,0 +1,150 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <style type="text/css">
+      input { background: #eee; }
+      .contributing { background: #ffe; }
+      .source, .source.contributing  { background: #fff; }
+      td { padding: 0 0.6ex; }
+      .contrib { background-color: green; }
+      .pending { background-position: right center;
+                 background-repeat: no-repeat;
+                 background-image: url(spinner.gif); }
+      .disable { color: #999; }
+      input:disabled{ color: #999; }
+    </style>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+    {
+      function delay( time_ms ) {
+        return function( v ) {
+          var p = new hd.Promise();
+          setTimeout( function() { p.resolve( v ); }, time_ms );
+          return p;
+        }
+      }
+
+      function fetch_stock_value(symbol) {
+        var url = 'http://query.yahooapis.com/v1/public/yql';
+        var params = {
+          q: 'select * from yahoo.finance.quotes where symbol="' + symbol + '"',
+          format: 'json',
+          env: 'store://datatables.org/alltableswithkeys',
+          callback: ''
+        };
+        return hd.ajaxJSON( url, params ).then( delay( 1000 ) ).then( function( data ) {
+          return Number( data.query.results.quote['LastTradePriceOnly'] );
+        } );
+      }
+
+      var model = new hd.ModelBuilder()
+        .variables( {value: undefined,
+                     number: 10,
+                     useSym: true,
+                     symbol: undefined,
+                     favorite: "ADBE",
+                     useFav: true
+                    }
+                  )
+        .outputVariable( 'total' )
+
+        .constraint( 'favorite, symbol, useFav' )
+        .method( '*favorite, useFav, symbol -> symbol',
+                 function( f, u, s ) { return u ? f : s; }
+               )
+        .method( '-> useFav',
+                 function() { return false; }
+               )
+
+        .constraint( 'useSym, symbol, value' )
+        .method( '*symbol, useSym, value -> value',
+                 function( symbol, useSym, value ) {
+                   if (useSym) {
+                     return symbol.then( fetch_stock_value );
+                   }
+                   else {
+                     return value;
+                   }
+                 }
+               )
+        .method( '-> useSym',
+                 function() { return false; }
+               )
+
+        .constraint( 'value, number, total' )
+        .method( 'value, number -> total',
+                 function( value, number ) { return value * number; }
+               )
+        .method( 'total, value -> number',
+                 function( total, value ) { return total / value; }
+               )
+        .method( 'total, number -> value',
+                 function( total, number ) { return total / number; }
+               )
+
+        .end();
+
+      var system = new hd.ConstraintSystem();
+      system.addComponent( model );
+
+      window.addEventListener( 'load', function() {
+        hd.performDeclaredBindings( model );
+      } );
+    }
+    </script>
+  </head>
+  <body>
+    <p>
+      Multiple constraints; each over three variables.
+    </p>
+    <fieldset>
+      <legend>Stocks:</legend>
+
+      <table>
+        <tr>
+          <td><label class="al">Favorites:</label></td>
+          <td>
+            <select data-bind="hd.value( favorite ), hd.enabled( favorite.useful )">
+              <option value="FB">Facebook</option>
+              <option value="ADBE">Adobe</option>
+              <option value="MS">Microsoft</option>
+              <option value="YHOO">Yahoo!</option>
+            </select>
+          </td>
+          <td>
+            <input type="checkbox" data-bind="hd.checked( useFav ), hd.enabled( useFav.useful )"/>
+            <label for="useFav" data-bind="hd.cssClass( useFav.useful, '', 'disable' )">use</label>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="symbol" class="al">Symbol:</label></td>
+          <td>
+            <input type="text" data-bind="hd.editVar( symbol )"\></input>
+          </td>
+          <td>
+            <input type="checkbox" data-bind="hd.checked( useSym )">
+            <label for="useSym">use</label>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="value" class="al">Value:</label></td>
+          <td>
+            <input type="text" data-bind="hd.numVar( value, hd.fix(2) )"></input><br/>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="number" class="al">Number:</label></td>
+          <td>
+            <input type="text" data-bind="hd.numVar( number, hd.fix(0) )"></input>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="total">Total:</label></td>
+          <td>
+            <input type="text" data-bind="hd.numVar( total, hd.fix(2) )"></input>
+          </td>
+        </tr>
+      </table>
+    </fieldset>
+  </body>
+</html>

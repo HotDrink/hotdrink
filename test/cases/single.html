@@ -1,0 +1,57 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      {
+        var model = new hd.ModelBuilder()
+            .variable( 'height', 10 )
+            .variable( 'width', 8 )
+            .variable( 'area' )
+
+            .constraint( 'height, width, area' )
+            .method( 'height, width -> area',
+                     function( height, width ) {
+                       return height * width;
+                     }
+                   )
+            .method( 'area, height -> width',
+                     function( area, height ) {
+                       return area / height;
+                     }
+                   )
+            .method( 'area, width -> height',
+                     function( area, width ) {
+                       return area / width;
+                     }
+                   )
+
+            .end();
+
+        var system = new hd.ConstraintSystem();
+        system.addComponent( model );
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model )
+        } );
+      }
+    </script>
+  </head>
+  <body>
+    <p>Simple three-way constraint</p>
+    <table>
+      <tr>
+        <td>Height</td>
+        <td><input type="text" data-bind="hd.num( height )"/></td>
+      </tr>
+      <tr>
+        <td>Width</td>
+        <td><input type="text" data-bind="hd.num( width )"/></td>
+      </tr>
+      <tr>
+        <td>Area</td>
+        <td><input type="text" data-bind="hd.num( area )"/></td>
+      </tr>
+    </table>
+  </body>
+</html>

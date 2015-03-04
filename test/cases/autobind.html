@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      {
+        var model = new hd.ModelBuilder()
+            .variable( 'v', "hello" )
+            .variable( 'w', 123 )
+            .variable( 'x', new Date() )
+            .variable( 'y', 456 )
+            .variable( 'z', 7.89 )
+            .variable( 'n', 10 )
+            .end();
+
+        var model2 = new hd.ModelBuilder().variable( 'x', 3 ).end();
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model, document.getElementById( 'one' ) );
+          hd.performDeclaredBindings( model2, document.getElementById( 'two' ) );
+        } );
+      }
+
+      function check( n ) {
+        return n > 3;
+      }
+
+      function report( n ) {
+        if (n > 3) return "Yes!";
+        else return "No!";
+      }
+    </script>
+    <style type="text/css">
+      .red { color: red; }
+      .green { color: green; }
+    </style>
+  </head>
+  <body>
+    <p>
+      Create variables and bind to them.  This time variables are created
+      using the runtime model and bound using declarative binding.  No
+      constraints.
+    </p>
+    <div id="one">
+      <p>
+        <input type="text" data-bind="hd.edit( v )"/>
+        &nbsp;
+        <span data-bind="hd.text( v )"></span>
+      </p>
+      <p>
+        <input type="text" data-bind="hd.num( w )"/>
+        &nbsp;
+        <span data-bind="hd.text( w )"></span>
+      </p>
+      <p>
+        <input type="text" data-bind="hd.date( x )"/>
+        &nbsp;
+        <span data-bind="hd.text( x )"></span>
+      </p>
+      <p>
+        <input type="text" data-bind="hd.num( y, 2 )"/>
+        &nbsp;
+        <span data-bind="hd.text( y, hd.round( -2 ) )"></span>
+      </p>
+      <p>
+        <input type="text" data-bind="hd.num( z, 0, hd.scale( 100 ), hd.scale( 0.01 ) )"/>
+        &nbsp;
+        <span data-bind="hd.text( z )"></span>
+      </p>
+      <p>
+        <input type="text" data-bind="hd.num( n )"/>
+        &nbsp;
+        Is number &gt; 3? <span data-bind="hd.text( n, hd.fn( report ) ), hd.cssClass( n, 'green', 'red', hd.fn( check ) )"></span>
+      </p>
+    </div>
+    <div id="two">
+      <p>
+        <input type="text" data-bind="hd.date( x, hd.millisecondsToDate(), hd.dateToMilliseconds() )">
+        &nbsp;
+        <span data-bind="hd.text( x )"></span>
+      </p>
+    </div>
+  </body>
+</html>

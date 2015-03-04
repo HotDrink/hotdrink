@@ -1,0 +1,1140 @@
+#+TITLE: Advanced Binding Concepts
+#+LANGUAGE:  en
+#+OPTIONS: H:2 author:nil creator:nil
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
+
+* Translators
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/allrx.html :padline no
+<div>
+  <input type="text" id="a_edit"/> &rArr; <span id="a_view"></span><br/>
+  <input type="text" id="b_edit"/> &rArr; <span id="b_view"></span><br/>
+  <input type="text" id="c_edit"/> &rArr; <span id="c_view"></span><br/>
+  <input type="text" id="d_edit"/> &rArr; <span id="d_view"></span><br/>
+  <input type="text" id="e_edit"/> &rArr; <span id="e_view"></span><br/>
+  <input type="text" id="f_edit"/> &rArr; <span id="f_view"></span><br/>
+  <input type="text" id="g_edit"/> &nbsp; <span id="g_err" style="color:red"></span><br/>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/allrx.js :padline no
+var model = new hd.ModelBuilder()
+    .v( 'a', 3.14159 )
+    .v( 'b', 0.15 )
+    .v( 'c', new Date() )
+    .v( 'd', new Date().getTime() )
+    .v( 'e', 'John Doe' )
+    .v( 'f', 7 )
+    .v( 'g', 'hello' )
+    .end();
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/allrx.js :padline no :noweb yes
+window.addEventListener( 'load', function() {
+  hd.bind( {view: new hd.Edit( document.getElementById( 'a_edit' ) ),
+            model: model.a,
+            toModel: hd.toNum(),
+            toView: hd.fix( 2 )
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'a_view' ) ),
+            model: model.a
+           }
+         );
+
+<<chain>>
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'b_view' ) ),
+            model: model.b
+           } );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'c_edit' ) ),
+            model: model.c,
+            toModel: hd.toDate(),
+            toView: hd.dateToString()
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'c_view' ) ),
+            model: model.c
+           }
+         );
+
+<<array>>
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'd_view' ) ),
+            model: model.d
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'e_edit' ) ),
+            model: model.e,
+            toModel: hd.def( 'Unknown' )
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'e_view' ) ),
+            model: model.e
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'f_edit' ) ),
+            model: model.f,
+            toModel: [hd.toNum(), hd.def( 1 )]
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'f_view' ) ),
+            model: model.f
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'g_edit' ) ),
+            model: model.g,
+            toModel: [hd.req(), hd.msg( "Don't forget me!" )]
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'g_err' ) ),
+            model: model.g.error
+           }
+         );
+} );
+#+END_SRC
+
+/Results/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/allrx.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function () {
+#+INCLUDE: tangle/allrx.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example uses several different translators to convert between the values
+edited by the user in the text box and the values stored in the view-model.
+The text next to the edit boxes is meant to give a better view of what is
+actually stored in the model.
+#+HTML: </div>
+
+** What translators do
+
+A binding results in values being copied back and forth between the view and
+the view-model.  However, sometimes a little bit of work needs to be done in
+addition to the copying.  For example, one common task is converting the
+string value contained by the view to a different data type for use in the
+model, or vice-versa.
+
+To perform these sorts of tasks we use /translators/.  Inspired by Microsoft's
+[[https://rx.codeplex.com/][reactive extensions]], these are objects that can
+be inserted in between the view and the view-model and can operate on values
+as they are passed from one to the other.  Think of a chain of people passing packages
+from one destination to another.  Each person receives packages from the
+person behind him, has an opportunity to modify it, and then passes
+it to the next person in line.
+
+Every binding can potentially have two translators.  The translator labeled
+~toView~ in the binding specification is responsible for translating from the
+value used by the model to the value used by the view; the translator labeled
+~toModel~ in the binding specification is responsible for translating from the
+value used by the view to the value used by the model.
+
+** Chaining translators
+
+The HotDrink binders assume there will at most one translator from the view to
+the view-model, and at most one translator from the view-model to the view.
+However, you can easily sneak in multiple translators by wrapping them in a
+chain translator.  A chain encapsulates a sequence of translators, making them
+look like a single translator.  When it receives a value, it translates it by
+running it through all the translators it contains.  Whatever is produced by
+the final translator becomes the value produced by the chain.
+
+You can see chains used in the following binding.
+
+#+NAME: chain
+#+BEGIN_SRC js
+  hd.bind( {view: new hd.Edit( document.getElementById( 'b_edit' ) ),
+            model: model.b, (ref:chain)
+            toModel: hd.chain( hd.toNum(),
+                               hd.round( 0 ),
+                               hd.scale( 0.01 ) ),
+            toView: hd.chain( hd.scale( 100 ),
+                              hd.fix( 0 )      ),
+           }
+         );
+#+END_SRC
+
+However, as a convenience to you, if the ~bind~ function finds that you have
+passed an array as either ~toView~ or ~toModel~, it will use the contents of
+the array to create a chain.  This is simply a shortcut to make binding
+specifications a bit shorter.  You can see this shortcut is used in the
+following binding.
+
+#+NAME: array
+#+BEGIN_SRC js
+  hd.bind( {view: new hd.Edit( document.getElementById( 'd_edit' ) ),
+            model: model.d,
+            toModel: [hd.toDate(), hd.dateToMilliseconds()],
+            toView: [hd.toDate(), hd.dateToDateString()]
+           }
+         );
+#+END_SRC
+
+** When translators fail
+
+As mentioned previously, translators pass a value from one to the next until it
+reaches the variable.  It is possible, however, for some translators to fail.
+For example, the translator which translates a string to a number will fail if
+the string does not parse as a valid number.  If an translator fails, then it
+produces an error value which will be passed along in place of the value for
+the variable.  For example, all translators provided by HotDrink produce a
+string containing an error message.
+
+Most translators simply pass along error values without modifying them.  It is
+possible, however, for an translator to modify the error value, or even convert
+the error value back into a variable value (see [[msg][msg]] and [[def][def]].)  If an error
+value reaches the variable, it will be stored in the variable's ~error~
+property, and the variable's value will not be changed.  If a valid value
+reaches the variable, then the variable's ~error~ property will be set to
+~null~.
+
+The ~error~ property can be bound to the view, allowing the error to be
+displayed.  For more information, see the section "[[* Binding to variable properties][Binding to variable
+properties]]").
+
+
+** List of translators
+
+Here are the translators provided by HotDrink.
+
+
+*** ~toNum~
+
+Converts a value to number using JavaScript's ~Number~ constructor.  Fails if the
+result is ~NaN~.
+
+*** ~toDate~
+
+Converts a value to a ~Date~ object using JavaScript's ~Date~ constructor.  Fails if
+the resulting date's ~getTime~ method returns ~NaN~.
+
+*** ~toStr~
+
+Converts any value to string by invoking its ~toString~ method.  Generally
+not needed, as JavaScript will automatically do this any time it needs to
+coerce a value to string.
+
+*** ~toJson~
+
+Converts any value to string by invoking ~JSON.stringify~.
+
+*** ~dateToString~
+
+Converts a date object to a string using it's ~toLocaleString~ method.
+
+*** ~dateToDateString~
+
+Converts a date object to a string using it's ~toLocaleDateString~ method.
+
+
+*** ~dateToTimeString~
+
+Converts a date object to a string using it's ~toLocaleTimeString~ method.
+
+
+*** ~dateToMilliseconds~
+
+Converts a date object to a number of milliseconds using its ~getTime~ method.
+
+*** ~fix( places )~
+
+Converts a number to a string containing the specified number of places after
+the decimal point using JavaScript's ~Number.toFixed~.
+
+*** ~prec( sigfigs )~
+
+Converts a number to a string containing the specified number of significant
+figures using JavaScript's ~Number.toPrecision~.
+
+*** ~exp( places )~
+
+Converts a number to a string in scientific notation using the specified
+number of digits after the decimal point using JavaScript's ~Number.toExponential~.
+
+*** ~round( places )~
+
+Rounds a number to specified number of digits after the decimal point.  Note
+that this is different from ~fix~ because it produces a number, not a string.
+
+*** ~scale( factor )~
+
+Scales a number by a constant factor.
+
+*** ~stabilize( time_ms )~
+
+Wait specified number of milliseconds before passing along value; only pass
+along if no other value arrives in that time period.  Does not modify the
+value.
+
+*** ~req()~
+
+Results in error if value is ~undefined~, ~null~, or empty string.
+
+*** <<def>> ~def( value )~
+
+Replaces ~undefined~, ~null~, empty string, or error with given value.
+
+*** <<msg>> ~msg( value )~
+
+Replaces error with given value; can be used to customize error messages.
+
+*** ~chain( ext, ... )~
+
+Creates a single translator from a list of translators.
+
+*** ~fn( f )~
+
+Creates an translator which calls function ~f~ on the value, then produces the
+return value as a result.  Discussed in next section.
+
+* Creating translators from functions
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/fnext.html :padline no
+<table id="ex2">
+  <tr>
+    <td></td>
+    <td>
+      <input type="text" data-bind="hd.num( x )"/> &gt; 10 &rArr;
+      <span data-bind="hd.text( x, hd.fn( gt10 ) )"></span> (ref:usefn1)
+    </td>
+  </tr><tr>
+    <td>10 &le;&nbsp;</td>
+    <td>
+      <input type="text" data-bind="hd.num( y )"/> &le; 20 &rArr;
+      <span id="y_view" data-bind="hd.text( y, hd.fn( range, 10, 20 ) )"><span> (ref:usefn2)
+    </td>
+  </tr>
+</table>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/fnext.js :padline no
+var model = new hd.ModelBuilder()
+    .v( 'x', 3 )
+    .v( 'y', 13 )
+    .end();
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/fnext.js :padline no
+// Global function
+gt10 = function gt10( x ) { (ref:fn1)
+  return x > 10 ? 'Yes!' : 'No!';
+}
+
+// Global function
+range = function range( begin, end, x ) { (ref:fn2)
+  return (x >= begin && x <= end) ? 'Yes!' : 'No!';
+}
+
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex2' ) );
+} )
+#+END_SRC
+
+/Results/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/fnext.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/fnext.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example creates two translators from functions in order to translate the
+values displayed in the web page.
+#+HTML: </div>
+
+** The ~fn~ translator
+
+Translators are actually objects which conform to a certain interface.  You can
+define your own translator types as JavaScript objects.  However, in cases
+where you need to do a simple translation, there's an easier way:
+
+*** Write a translation function
+
+A translation function is a function which takes the incoming value as a
+parameter, then returns the translated value as the result.  For example, the
+function ~gt10~ on [[(fn1)][line (fn1)]] of the binding section takes a numeric value and
+translates it to the string "~Yes!~" if it is greater than 10, and the string
+"~No!~" otherwise.
+
+If your translation fails, your translation function should throw an
+error value as an exception.  This will be caught and passed on as an error
+value.
+
+Note that, if you want to, you can write an anonymous translation function
+directly into the binding specification.  The
+[[http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts][draft for EcmaScript 6]] includes an arrow notation for anonymous functions,
+which would allow such inline functions to be even more convenient.
+
+
+*** Use it in a ~fn~ translator
+
+The ~hd.fn~ translator takes a translation function as a parameter.  Then,
+when it receives a value, it invokes the translation function, and passes
+the result on.  We used the ~gt10~ function in the binding specification found
+in the view section on [[(usefn1)][line (usefn1)]].  Thus, the value displayed in the
+~<span>~ tag is not the numeric value of ~x~, but the string returned by
+passing that to ~gt10~.
+
+** Extra function parameters
+
+You may want your translation function to take some extra parameters that
+configure its behavior.  For example, the function ~range~ in [[(fn2)][line (fn2)]] of
+the binding section takes a ~begin~ and ~end~ parameter to specify the range
+to test.  Any extra parameters passed to ~hd.fn~ (after the function itself)
+will be passed directly to the function when it is called.  These extra
+parameters should be the first parameters of the function, with the value to
+be translated as the final parameter.  You can see this in [[(usefn2)][line (usefn2)]] of
+the view section.
+
+* View adapters
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/allbind.html :padline no
+<style type="text/css">
+  td.fancy { color: #009; background: #9f9; }
+  td.plain { color: #666; background: #eee; }
+  td.assertive { font-weight: bold; text-transform: uppercase; }
+</style>
+<table>
+  <tr>
+    <td>
+      <select id="edit_dropdown"> (ref:select)
+        <option>One</option><option>Two</option><option>Three</option>
+      </select>
+    </td>
+    <td id="view_dropdown"></td>
+  </tr><tr>
+    <td><input id="edit_num1" type="input"/></td> (ref:value)
+    <td id="view_num1"></td>
+  </tr><tr>
+    <td colspan="2">&nbsp;</td>
+  </tr><tr>
+    <td><input type="text" id="edit_num2"/></td> (ref:edit)
+    <td id="view_num2"></td>
+  </tr><tr>
+    <td>
+      <input id="edit_isenabled" type="checkbox"/> (ref:checked)
+      <label for="edit_isenabled">Enabled</label>
+    </td>
+    <td id="view_isenabled"></td>
+  </tr><tr>
+    <td colspan="2">&nbsp;</td>
+  </tr><tr>
+    <td id="view_css" colspan="2">How do I look?</td>
+  </tr><tr>
+    <td>
+      <input id="edit_isfancy" type="checkbox"/>
+      <label for="edit_isfancy">Fancy</label>
+    </td>
+    <td id="view_isfancy"></td>
+  </tr><tr>
+    <td>
+      <input id="edit_isassertive" type="checkbox"/>
+      <label for="edit_isassertive">Assertive</label>
+    </td>
+    <td id="view_isassertive"></td>
+  </tr><tr>
+    <td colspan="2">&nbsp;</td>
+  </tr><tr>
+    <td>Time:</td>
+    <td id="view_time"></td>
+  </tr><tr>
+    <td>Mouse:</td>
+    <td id="view_mouse"></td>
+  </tr>
+</table>
+</table>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/allbind.js :padline no
+var model = new hd.ModelBuilder()
+  .v( 'dropdown',    'Two'        )
+  .v( 'num1',        10           )
+  .v( 'num2',        20           )
+  .v( 'isenabled',   true         )
+  .v( 'isfancy',     true         )
+  .v( 'isassertive', false        )
+  .v( 'time',        new Date()   )
+  .v( 'mouse',       {x: 0, y: 0} )
+  .end();
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/allbind.js :padline no
+window.addEventListener( 'load', function() {
+  hd.bind( {view:  new hd.Value( document.getElementById( 'edit_dropdown' ) ),
+            model: model.dropdown
+           }
+         );
+
+  hd.bind( {view:    new hd.Value( document.getElementById( 'edit_num1' ) ),
+            model:   model.num1,
+            toModel: hd.toNum()
+           }
+         );
+
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'edit_num2' ) ),
+            model:   model.num2,
+            toModel: hd.toNum()
+           }
+         );
+
+  hd.bind( {view:  new hd.Enabled( document.getElementById( 'edit_num2' ) ),
+            model: model.isenabled
+           }
+         );
+
+  hd.bind( {view:  new hd.Checked( document.getElementById( 'edit_isenabled' ) ),
+            model: model.isenabled
+           }
+         );
+
+  hd.bind( {view:  new hd.Checked( document.getElementById( 'edit_isfancy' ) ),
+            model: model.isfancy
+           }
+         );
+
+  hd.bind( {view:  new hd.Checked( document.getElementById( 'edit_isassertive' ) ),
+            model: model.isassertive
+           }
+         );
+
+  hd.bind( {view:  new hd.CssClass( 'fancy',
+                                    'plain',
+                                    document.getElementById( 'view_css' ) ),
+            model: model.isfancy
+           }
+         ); (ref:justtrue)
+
+  hd.bind( {view:  new hd.CssClass( 'assertive',
+                                    null,
+                                    document.getElementById( 'view_css' ) ),
+            model: model.isassertive
+           }
+         ); (ref:truefalse)
+
+  hd.bind( {view:  new hd.Time( 1000 ),
+            model: model.time
+           }
+         );
+
+  hd.bind( {view:  new hd.MousePosition(),
+            model: model.mouse
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_dropdown' ) ),
+            model: model.dropdown
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_num1' ) ),
+            model: model.num1
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_num2' ) ),
+            model: model.num2
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_isenabled' ) ),
+            model: model.isenabled
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_isfancy' ) ),
+            model: model.isfancy
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_isassertive' ) ),
+            model: model.isassertive
+           }
+         );
+
+  hd.bind( {view:   new hd.Text( document.getElementById( 'view_time' ) ),
+            model:  model.time,
+            toView: hd.dateToTimeString()
+           }
+         );
+
+  hd.bind( {view:   new hd.Text( document.getElementById( 'view_mouse' ) ),
+            model:  model.mouse,
+            toView: hd.pointToString()
+           }
+         );
+
+} );
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/allbind.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/allbind.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+Variable values are displayed in the page so that you can see their values.
+The "enabled" check-box controls whether the text box is enabled.  The "fancy"
+and "assertive" check-boxes control the style of the preceding text.
+#+HTML: </div>
+
+** What view adapters do
+
+As described in the [[file:basics.org][Basic HotDrink Usage]] document, a binding connects an
+element of the view with an element of the model so that changes in one will
+be reflected in the other.  In order to do this, we need an object that
+represents the view and which supports the interface HotDrink expects.  This
+object is called a view adapter.  We will define the interfaces used in the
+[[file:program.org][Programming Guide]], but for now we simply list the adapters that we provide
+with HotDrink.
+
+There are two interfaces which a view adapter may use:  one for sending values
+to the view-model, and one for receiving values from the model.  We say that a
+adapter which only receives values is a /read-only/ adapter, an adapter which
+only sends values is a /write-only/ adapter, and an adapter which does both is
+a /read-write/ adapter.
+
+Most adapter types take a single parameter upon construction:  an HTML DOM
+element node for the view element to be encapsulated.  There is currently only
+one that takes additional parameters; there are two which don't require a DOM
+element because they do not encapsulate a specific DOM node.
+
+This example showcases the adapters that are currently available in HotDrink.
+As the focus of HotDrink is on view-model behavior, the number of adapters we
+have developed is relatively small.  We expect to add to this collection as
+time goes on.  In the meantime, we have tried to make adding adapters to
+HotDrink as simple as possible so that, if we don't have the adapter you need,
+you can easily write it yourself.  For more information, see the HotDrink
+[[file:program.org][Programming Guide]].
+
+** List of adapters
+
+Here are the adapters provided by HotDrink.
+
+*** ~Value( el )~
+
+This adapter uses the value of the variable as the ~value~ property of the
+corresponding element.  This adapter is well suited for ~<select>~ tags, like
+the one on [[(select)][line (select)]] of the view section.  You may also use it for
+text-editing inputs, as on [[(value)][line (value)]] of the view section, though ~bindEdit~
+is probably a better choice.
+
+This is a read-write adapter.
+
+*** ~Edit( el )~
+
+This adapter also uses the value of the variable as the ~value~ property
+of the tag, but it has some additional behaviors to make it work well with text
+editing.  In particular:
+
+- When the input is edited, the ~edit~ binding waits a fraction of a second
+  before changing its variable in case any more changes are made.  If so, the
+  binding discards the previous edit.  This is nice when the user is typing
+  something --- to update the GUI after every keystroke would be distracting.
+
+- If the value of the variable changes while the user is editing, the ~edit~
+  binding remembers the new value, but does not set it until the edit box
+  loses focus.  This might happen, for example, if the binding converts the
+  value to some canonical form.
+
+We used the edit binding for the text box in [[(edit)][line (edit)]] of the view section.
+Compare it's behavior to the value binding.  (Try typing "1e10" into both to
+see what happens.)
+
+This is a read-write adapter.
+
+*** ~Checked( el )~
+
+This adapter uses a Boolean value as the ~checked~ property on a check-box.
+
+This is a read-write binding: checking or un-checking the check-box updates
+the variable.
+
+*** ~Enabled( el )~
+
+This adapter uses a Boolean value to determine whether or not a widget is
+enabled --- a ~true~ value means enabled, a ~false~ value means disabled.
+Later on we'll show you how this can be used to automatically disable
+variables which become irrelevant.
+
+This is a read-only adapter: explicitly enabling or disabling the widget will
+/not/ affect the value of the variable.
+
+*** ~CssClass( ontrue, onfalse, el )~
+
+This adapter uses a Boolean value to determine whether or not the given CSS
+class name should be applied to the view element.  Notice that this
+constructor takes additional parameters.  If the boolean value is true, then
+the ~ontrue~ class will be added to the element.  If it is false, then the
+~onfalse~ class will be added to the element.
+
+Both ~ontrue~ and ~onfalse~ may be ~null~; if so, then the adapter simply will
+not add a class for the corresponding value.  You can see, the binding on [[(justtrue)][line
+(justtrue)]] of the binding section specifies both, whereas the binding on [[(truefalse)][line
+(truefalse)]] of the binding section only specifies a class to add when the
+value is true.
+
+This is a read-only binding: explicitly setting the element's class name will
+/not/ update the variable.
+
+*** ~Text( el )~
+
+This adapter replaces the contents of the tag with the value of the variable.
+Note that the value is treated as text, /not/ as HTML; any HTML tags or
+entities in the value will simply be displayed as text.
+
+This is a read-only binding:  explicitly changing the contents of the tag will
+/not/ update the variable.
+
+*** ~Time( update_ms )~
+
+This adapter writes the current time to the variable every ~update_ms~
+milliseconds.  The time is given as a JavaScript ~Date~ object.
+
+This is a write-only binding:  changing the contents of the variable will have
+no effect on the time.
+
+*** ~MousePosition()~
+
+This adapter writes the current mouse position to the variable every time the
+mouse moves.  The position is given as a JavaScript object with an ~x~ and ~y~
+property.
+
+This is a write-only binding:  changing the contents of the variable will have
+no effect on the mouse position.
+
+*** ~Position( el )~
+
+This adapter takes a point (an object with an ~x~ and ~y~ property) and uses
+it to set the element's CSS ~left~ and ~top~ properties.  The adapter will
+also set the element's CSS ~position~ property to ~absolute~.
+
+This is a read-only binding: changing the position or the style of the element
+will /not/ update the variable.
+
+** Factory functions
+
+As described in the [[file:basics.org][Basic HotDrink Usage]] document, factory functions are
+simply helpers which generate binding specifications for you.  We have
+included factories for the specifications we think will be most common.
+However, you are encouraged to create and use your own if the provided
+factories do not meet your needs.
+
+When using declarative binding, the format of the ~data-bind~ attribute is a
+comma-delimited list of binding specifications.  In order to allow factory
+functions to generate multiple binding specifications, we make the following
+accommodation: the list of specifications will be /flattened/ --- that is, if
+an array is found in the list, the contents of the array will be interpolated
+into the list in place of the array.  This flattening is repeated until there
+are no more arrays in the list; thus arrays can be arbitrarily nested.
+
+** List of factories
+
+*** value( model, toView?, toModel? )
+
+Use the ~Value~ adapter with optional ~toView~ and ~toModel~ arguments.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.value( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+  ==
+{mkview:  hd.Value,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>,
+ toModel: <i>toModel</i>
+}
+</pre>
+#+END_HTML
+
+*** edit( model, toView?, toModel? )
+
+Use the ~Edit~ adapter with optional ~toView~ and ~toModel~ arguments.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.edit( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+  ==
+{mkview:  hd.Edit,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>,
+ toModel: <i>toModel</i>
+}
+</pre>
+#+END_HTML
+
+*** number( model )
+
+Use the ~Edit~ adapter where the variable holds a number.  Note that no
+~toView~ is needed, as JavaScript will automatically convert a number to a
+string when needed.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.num( <i>model</i> )
+  ==
+{mkview:  hd.Edit,
+ model:   <i>model</i>,
+ toModel: hd.toNum()
+}
+</pre>
+#+END_HTML
+
+*** number( model, places, toView?, toModel? )
+
+This overloaded form of ~number~ will round the number to a specified number
+of digits after the decimal point.  Note that the ~toView~ and ~toModel~
+specified here should treat the view as if it is a number, not a string.  For
+example, the following specification will round to two places after the
+decimal point and the value showed in the view will be 100 times the value in
+the model.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.num( <i>model</i>, 2, hd.scale( 100 ), hd.scale( 0.01 ) );
+</pre>
+#+END_HTML
+
+*** date( model )
+
+Use the ~Edit~ adapter where the variable holds a ~Date~ object.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.date( <i>model</i> )
+  ==
+{mkview:  hd.Edit,
+ model:   <i>model</i>,
+ toView:  hd.dateToDateStr(),
+ toModel: hd.toDate()
+}
+</pre>
+#+END_HTML
+
+*** date( model, toView, toModel )
+
+This overloaded form of ~date~ allows an additional ~toView~ and ~toModel~
+transformation.  Note that these transformations hsould treat the view as if
+it is a date, not a string.  For example, the following specification will let
+the user enter a date, but will store it in the model as the number of
+milliseconds after the epoch.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.date( <i>model</i>, hd.dateToMilliseconds(), hd.toDate() );
+</pre>
+#+END_HTML
+
+*** checked( model, toView?, toModel? )
+
+Use the ~Checked~ adapter with optional ~toView~ and ~toModel~ arguments.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.checked( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+  ==
+{mkview:  hd.Checked,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>,
+ toModel: <i>toModel</i>
+}
+</pre>
+#+END_HTML
+
+*** enabled( model, toView? )
+
+Use the ~Enabled~ adapter with optional ~toView~ argument.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.enabled( <i>model</i>, <i>toView</i> )
+  ==
+{mkview:  hd.Enabled,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>
+}
+</pre>
+#+END_HTML
+
+*** cssClass( model, ontrue, onfalse, toView? )
+
+Use the ~CssClass~ adapter with optional ~toView~ argument.
+
+Note that the ~ontrue~ and ~onfalse~ values are bound to the ~CssClass~
+constructor to create a constructor requiring only a single argument.  If you
+don't want to specify a class for ~ontrue~ (or ~onfalse~) you may use the
+empty string or ~null~.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.cssClass( <i>model</i>, <i>ontrue</i>, <i>onfalse</i>, <i>toView</i> )
+  ==
+{mkview:  hd.CssClass.bind( null, <i>ontrue</i>, <i>onfalse</i> ),
+ model:   <i>model</i>,
+ toView:  <i>toView</i>
+}
+</pre>
+#+END_HTML
+
+*** cssClass( model )
+
+This overloaded form of ~cssClass~ takes a variable and generates multiple
+binding specifications which bind several CSS classes to various variable
+properties.  For more information on binding to variable properties, see the
+section "[[* Binding to variable properties][Binding to variable properties]]".
+
+#+BEGIN_HTML
+<pre class="results">
+hd.cssClass( <i>variable</i> )
+  ==
+[cssClass( <i>variable</i>.source,        <span style="color: #a0522d;">'source'</span>,       <span style="color: #a0522d;">'derived'</span>         ),
+ cssClass( <i>variable</i>.pending,       <span style="color: #a0522d;">'pending'</span>,      <span style="color: #a0522d;">'complete'</span>        ),
+ cssClass( <i>variable</i>.constributing, <span style="color: #a0522d;">'contributing'</span>, <span style="color: #a0522d;">'noncontributing'</span> ),
+ cssClass( <i>variable</i>.error,         <span style="color: #a0522d;">'error'</span>,         <span style="color: #8b1a1a;">null</span>             )
+];
+</pre>
+#+END_HTML
+
+
+*** text( model, toView? )
+
+Use the ~Text~ adapter with optional ~toView~ argument.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.text( <i>model</i>, <i>toView</i> )
+  ==
+{mkview:  hd.Edit,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>
+}
+</pre>
+#+END_HTML
+
+*** editVar( model, toView?, toModel? )
+
+This single factory function is a shortcut for invoking three different
+factories on a variable.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.editVar( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+ ==
+[hd.edit( <i>model</i>, <i>toView</i>, <i>toModel</i> ),
+ hd.cssClass( <i>model</i> ),
+ hd.enabled( <i>model</i>.relevant )
+]
+</pre>
+#+END_HTML
+
+*** numVar( model, places?, toview?, toModel? )
+
+This single factory function is a shortcut for invoking three different
+factories on a variable.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.numVar( <i>model</i>, <i>places</i>, <i>toView</i>, <i>toModel</i> )
+ ==
+[hd.num( <i>model</i>, <i>places</i>, <i>toView</i>, <i>toModel</i> ),
+ hd.cssClass( <i>model</i> ),
+ hd.enabled( <i>model</i>.relevant )
+]
+</pre>
+#+END_HTML
+
+*** dateVar( model, toView?, toModel? )
+
+This single factory function is a shortcut for invoking three different
+factories on a variable.
+
+#+BEGIN_HTML
+<pre class="results">
+hd.dateVar( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+ ==
+[hd.edit( <i>model</i>, <i>toView</i>, <i>toModel</i> ),
+ hd.cssClass( <i>model</i> ),
+ hd.enabled( <i>model</i>.relevant )
+]
+</pre>
+#+END_HTML
+
+* Binding to variable properties
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/prop.html :padline no
+<style type="text/css">
+  .source { background-color: #ffe; }
+  .derived { background-color: #eee; }
+  .error { border: 2px solid #f00; }
+</style>
+<table id="ex4" style="text-align: right">
+  <tr>
+    <td>Number:</td>
+    <td><input type="text" data-bind="hd.num( x ),
+           hd.cssClass( x.error, 'error' )"/></td>
+    <td style="color: red" data-bind="hd.text( x.error )"></td>
+  </tr><tr>
+    <td>&nbsp;</td>
+  </tr><tr>
+    <td>Width:</td>
+    <td><input type="text" data-bind="hd.num( width ),
+           hd.cssClass( width.source, 'source', 'derived' )"/><td>
+  </tr><tr>
+    <td>Height:</td>
+    <td><input type="text" data-bind="hd.num( height ),
+           hd.cssClass( height.source, 'source', 'derived' )"/><td>
+  </tr><tr>
+    <td>Area:</td>
+    <td><input type="text" data-bind="hd.num( area ),
+           hd.cssClass( area.source, 'source', 'derived' )"/><td>
+  </tr>
+</table>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/prop.js :padline no
+var model = new hd.ModelBuilder()
+  .v( 'x', 10 ).v( 'width', 8 ).v( 'height', 6 ).v( 'area' )
+  .eq( 'area == width * height' )
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/prop.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex4' ) );
+} )
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/prop.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+INCLUDE: tangle/prop.js html
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+Typing an invalid number into the first box gives it a red border and produces
+an error message.  The variables /width/, /height/, and /area/, are related by
+the constraint ~area == width * height~.  Thus, data will always flow from two
+of these variables into the third.  The two source variables will be yellow,
+and the third --- which is derived from the other two --- will be gray.
+#+HTML: </div>
+
+** Variable properties
+
+You can bind to more than just a variable in the view-model; any object
+conforming to a certain interface can be bound to.  (We describe this
+interface later in the [[file:program.org][Programming Guide]]).  Each variable contains several
+properties which conform to this interface, and thus can be bound to by the
+view.
+
+It is important to note that these properties are read-only.  Thus, they
+should only be used with read-only adapters, such as ~text~ and ~cssClass~, and
+never with read-write adapters, such as ~Edit~.
+
+** List of variable properties
+
+Although we list all properties here, some of them will not be fully explained
+here.  They will be, however, in other documentation.
+
+*** error
+
+This property contains any error that was generated the last time the variable
+was set --- whether by the view or by a method.  In particular, note that any
+exceptions thrown by translators will be stored in this property.
+
+If no error was generated for the variable, the value of this property will be
+~null~.  Note that, using normal JavaScript semantics, you may use this
+property as a Boolean value: an object or non-empty string will naturally
+evaluate to ~true~, and ~null~ or the empty string will evaluate to ~false~.
+
+*** source
+
+This Boolean property is true if the variable was a /source/ (kept its value)
+during the last evaluation, and false if it was /derived/ (received a new
+value from a method).
+
+*** pending
+
+This Boolean property is true if the variable is currently waiting for an
+update from an asynchronous method, and false if it is not.  For more
+information, see [[file:async.org][Asynchronous Methods]].
+
+*** contributing
+
+This Boolean property is true if the value of the variable was used to compute
+an output variable, and false if it was not.  For more information, see [[file:async.org][Asynchronous Methods]].
+
+*** relevant
+
+This Boolean property is true if editing the variable may cause a change to an
+output variable, and false if not.  For more information, see [[file:async.org][Asynchronous Methods]].
+
+*** value
+
+This property contains the current value of the variable.  There should be no
+reason to bind to this property, as it is the same as binding to the variable
+itself, except that it is read-only.  It is listed only for completeness.

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Constraint System Visualization</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+    <script src="arbor.js"></script>
+    <script src="../../scripts/hotdrink.js"></script>
+    <script src="main.js"></script>
+    <style type="text/css">
+      body{
+        margin:0;
+        padding:20px;
+        font:12px/17px Arial, sans-serif;
+        background:#eeeeee;
+      }
+    </style>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <td>
+          <canvas id="viewport" width="960" height="540"></canvas>
+          <!-- canvas id="viewport" width="600" height="600"></canvas -->
+        </td>
+        <td valign="top">
+          <button id="pause" style="width: 75px">Pause</button><br/>
+          <button id="compose" style="width: 75px">Compose</button><br/>
+          <input type="checkbox" id="connect" checked/>
+          <label for="connect">Connect constraints</label>
+          <br/>
+          <br/>
+          <b>Editing:</b> <span id="varname">None</span><br/>
+          <input type="text" id="varvalue" style="width: 100px"/>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

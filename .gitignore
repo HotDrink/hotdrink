@@ -1,0 +1,5 @@
+modules
+tmp
+scripts
+tests/models/model.js
+tests/models/*.c.js

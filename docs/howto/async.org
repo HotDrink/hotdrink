@@ -1,0 +1,1181 @@
+#+TITLE: Asynchronous Methods
+#+LANGUAGE:  en
+#+OPTIONS: H:2 author:nil creator:nil
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
+
+* Asynchronous concepts
+
+** Asynchronous execution
+
+When methods are executed /synchronously/ it means that they are run
+one after another, and that each method must complete before the next method
+can begin.  This can be problematic if a
+method takes a long time to finish --- e.g., a method which needs to make a
+request to a server.  Such methods, if run synchronously, can cause the
+interface to "hang" or become unresponsive.
+
+When methods are executed /asynchronously/, the system does not wait for them
+to finish, but instead resumes normal operation while methods continue to run.
+Methods begin execution as soon as their inputs are ready and signal when they
+are completed.  In this way, the interface remains responsive even when
+methods take a long time to execute.
+
+Note that, in order to be useful, an asynchronous method requires some way of
+executing code "in the background" so that it does not tie up the main
+event-handling thread.  JavaScript provides several mechanisms in support of
+this.  For example, [[https://developer.mozilla.org/en-US/docs/AJAX][AJAX]] allows asynchronous server requests, and [[https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/basic_usage][web workers]]
+allow JavaScript to run on a different thread.  HotDrink is designed to work
+regardless of which mechanism you use for asynchronous code execution (though
+it does provide some light-weight wrappers to facilitate simple AJAX and web
+worker tasks --- see Sections [[Helper: AJAX requests]] and [[Helper: web workers]]).
+This gives you the freedom to make use of whatever mechanism you wish to
+implement your methods.
+
+** Promises
+
+A /promise/ represents a value that will be supplied later.  Promises are a
+common programming idiom for asynchronous programming.  HotDrink promises
+follow the [[https://promisesaplus.com/][Promises/A+]] specification --- an open standard for interoperable
+JavaScript promises.  There are many good sources of documentation on using
+promises in JavaScript, therefore, we show only the basics here.
+
+#+BEGIN_SRC js -n -r
+// "p" is a new promise
+var p = new hd.Promise(); (ref:newpromise)
+
+// Schedule function "f1" to be called with the value of "p" once it's ready
+// Returns a promise for the result of "f1" which we store in "q"
+var q = p.then( (ref:then)
+  function f1( v ) {
+    return v + 10;
+  }
+);
+
+// Schedule function "f2" to be called with the value of "q" once it's ready
+// This, too, returns a promise, but we ignore it
+//   (we're not interested in the result of f2)
+q.then( (ref:then2)
+  function f2( w ) {
+    console.log( 'Value: ' + w );
+  }
+);
+
+// Give "p" a value
+p.resolve( 17 ); (ref:resolve)
+
+// This causes "f1" to be called with 17 as the argument...
+//   ...which returns 27...
+//   ...which resolves promise "q"...
+//   ...which causes "f2" to be called with 27 as the argument...
+//   ...resulting in "Value: 27" being printed to the log
+#+END_SRC
+
+Using promises involves three steps.
+
+1. Create a new promise object.  This is a simple construction using the ~new~
+   operator, as shown in [[(newpromise)][line (newpromise)]].
+2. Register one or more functions to be executed once the promise has been
+   given a value.  (We call this /scheduling/ the functions.)  This is done
+   using the ~then~ function, as shown in [[(then)][line (then)]].  When you schedule a
+   function, you get back a promise for the result of that function.  In this
+   way you can chain together asynchronous calculations --- the value produced
+   by one will be passed to the next.  You can see this on [[(then2)][line (then2)]] where
+   we schedule ~f2~ to be run using the result of ~f1~.
+3. Resolve the promise with a value.  This is done using the ~resolve~
+   function, as shown in [[(resolve)][line (resolve)]].
+
+/Note:  It is not required that you give names to functions you schedule for
+promises; we only did so to make it easier to refer to them in other places./
+
+* Asynchronous methods
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/timer.html :padline no
+<div id="ex1" style="display:inline-block; text-align:right">
+  <style type="text/css" scoped>
+    .pending { background: right center no-repeat url(spinner.gif); }
+  </style>
+  Total Cost: <input type="text" data-bind="hd.numVar( total, 2 )"/><br/> (ref:numvar)
+  Tip Percentage: <input type="text" data-bind="hd.numVar( percent, 0 )"/><br/>
+  Tip: <input type="text" data-bind="hd.numVar( tip, 2 )" readonly/>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/timer.js :padline no
+var model = new hd.ModelBuilder()
+  .vs( 'total, percent, tip', {total: 50, percent: 20} )
+
+  .c( 'total, percent, tip' )
+  .asyncMethod( 'total, percent -> tip', function( pTotal, pPercent ) { (ref:fn)
+    var pTip = new hd.Promise();  (ref:mkprom)
+
+    pTotal.then( function f1( total ) { (ref:waitx)
+      pPercent.then( function f2( percent ) { (ref:waity)
+        setTimeout( function() { pTip.resolve( total * percent / 100 ); }, 3000 ); (ref:resz)
+      } );
+    } );
+
+    return pTip; (ref:retz)
+  } )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/timer.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex1' ) );
+} )
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/timer.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/timer.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example implements a simple tip calculator.  If you modify the cost or the
+percentage, you will notice that there is a delay in calculating the tip.  We
+used an asynchronous method to allow the user interface to remain responsive
+even during this delay.
+
+Because the code for this asynchronous method is a little bulky, we have
+written only a single method for our constraint.  (That's why you cannot edit
+the tip directly:  the only option for solving the constraint is to calculate
+the tip.)  Later we will see how to make the code for asynchronous methods
+more compact.
+#+HTML: </div>
+
+** Activations and activating functions
+
+We refer to a single execution of a method as an /activation/ of that method.
+The activation of a synchronous method corresponds to a single function call.
+For asynchronous methods this is no longer the case: the activation of an
+asynchronous method may involve multiple callback functions running in
+response to things such as Ajax calls, web workers, etc.  However, there must
+still be one single function which initiates the activation and which tells us
+how to get the results when it is finished.  We call this function the
+/activating function/ for the method.
+
+We can create an asynchronous method using the ~asyncMethod~ member function
+of the model builder.  (Note that, as with other builder member functions, we
+can abbreviate this as simply ~a~.)  The parameter to ~asyncMethod~ is the
+activating function for the method.
+
+Whereas the functions for synchronous methods take the values of input
+variables as parameters and return new values for output variables, activating
+functions take /promises/ for the values of input variables as parameters, and
+return /promises/ for new values for output variables.  Thus, the activating
+function for the method "~total, percent -> tip~" (on [[(fn)][line (fn)]] of the
+view-model) takes two parameters: a promise for the value of ~total~ and a
+promise for the value of ~percent~; and it returns a promise for a new value
+of ~tip~.
+
+In general, then, an activating function should behave as follows:
+
+1. Take input promises as parameters.  Note that, on [[(fn)][line (fn)]] of the
+   view-model source, we named our parameters $pTotal$ and $pPercent$ to
+   remind us that these are promises, not values.
+2. Create promise(s) for the outputs of the method.  You can see this on
+   [[(mkprom)][line (mkprom)]] of the view-model source.
+3. Schedule a function or functions to be run once the input promises have
+   been resolved; these functions should compute values for the output
+   promises.  You can see this in the view-model source.  We start by
+   scheduling $f1$ to run when $x$ is ready ([[(waitx)][line (waitx)]]); $f1$ will schedule
+   $f2$ to run when $y$ is ready ([[(waity)][line (waity)]]); and $f2$ will calculate the
+   result and resolve the promise we made for $z$ ([[(resz)][line (resz)]]).  In order to
+   make the delay noticeable, we use a three-second timer to resolve $z$
+   instead of resolving right away.
+4. Return the output promise(s).  You can see this on [[(retz)][line (retz)]] of the
+   view-model source.  As with ordinary methods, if there is more
+   than one output you should return an array of promises.
+
+To reiterate, the activating function itself is /not/ asynchronous.  Any
+function is inherently synchronous: once you start it, you must wait for it to
+finish.  Your activating function should /not/ take long to run, or else the
+system will hang.  However, the purpose of the activating function is /not/ to
+perform the work of the method; rather, its purpose is to /schedule/ the work
+so that it will proceed on its own once the inputs are ready.  (In our example
+it is function $f2$ where the actual work of the method is performed.)
+
+** Pending variables
+
+Every variable has a read-only Boolean property named ~pending~.  This
+property is true when the variable's value is scheduled to be changed once a
+promise has been resolved.  The suggested use for this variable is with a CSS
+binding (e.g., the ~hd.bindCssClass~ binder) to give some sort of visual
+indication that this variable will be updated soon.
+
+The ~hd.numVar~ factory function we use, e.g., on [[(numvar)][line (numvar)]] of the view,
+creates a binding which adds the ~pending~ CSS class to an element when the
+variable's ~pending~ property is true, and adds the ~complete~ CSS class when
+it is false.  We refer to this in the CSS block on [[(css)][line (css)]] of the view to
+show a spinner when the variable is pending.
+
+For more information on binding specifications, see the [[file:binding.org][Advanced Binding
+Concepts]] document.
+
+# ** Helper: ~Promise.all~
+
+# As you can see from the example, waiting for several promises to resolve may
+# result in several nested calls to ~then~, resulting in code that is difficult
+# to read.  The ~hd.Promise.all~ function is a helper function which can make
+# this type of code cleaner.
+
+# The ~hd.Promise.all~ function takes multiple promises and returns a single
+# promise.  Once all the input promises have been resolved, the output promise
+# will be resolved with a single array containing the values of all the input
+# promises.  Thus, we could rewrite the function on [[(fn)][line (fn)]] of the view-model
+# source as follows.
+
+# #+BEGIN_SRC js -n -r
+# function( pTotal, pPercent ) {
+#   var z = new hd.Promise();
+#   hd.Promise.all( pTotal, pPercent ).then( function( vals ) {
+#     setTimeout( function() { z.resolve( vals[0] * vals[1] / 100 ); }, 3000 );
+#   } );
+# }
+# #+END_SRC
+
+** Caveat
+
+There are some subtleties to writing your own asynchronous method that are
+beyond the scope of this document.  (We will discuss them later in our
+[[file:program.org][Programming Guide]].)  Thus, for the time being, we suggest you use HotDrink's
+function lifting mechanism to create activating functions for asynchronous
+methods.  We'll talk about that next.
+
+* Lifting functions
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/div.html :padline no
+<div id="ex2" style="display:inline-block; text-align:right">
+  Dividend: <input type="text" data-bind="hd.numVar( n, 0 )"/><br/>
+  Divisor: <input type="text" data-bind="hd.numVar( d, 0 )"/><br/>
+  Quotient: <input type="text" data-bind="hd.numVar( q, 0 )"/><br/>
+  Remainder: <input type="text" data-bind="hd.numVar( r, 0 )"/>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/div.js :padline no
+function divideRemainder( n, d ) {
+  return [Math.floor( n / d ), n % d];
+}
+
+function multiplyRemainder( d, q, r ) {
+  return q*d + r;
+}
+
+
+var model = new hd.ModelBuilder()
+  .vs( 'n, d, q, r', {n: 50, q: 6} )
+
+  .c( 'n, d, q, r' )
+  .a( 'n, d -> q, r', hd.liftFunction( divideRemainder, 2 ) ) (ref:out1)
+  .a( 'n, q -> d, r', hd.liftFunction( divideRemainder, 2 ) ) (ref:out2)
+  .a( 'd, q, r -> n', hd.liftFunction( multiplyRemainder ) )  (ref:out3)
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/div.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex2' ) );
+} )
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/div.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/div.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+Notice that all methods in this example are created as asynchronous methods.
+However, rather than writing our own activating functions, we lifted functions
+which operate on values.
+#+HTML: </div>
+
+** Using ~liftFunction~
+
+The purpose of ~liftFunction~ is to transform a function which operates on
+values into a function which operates on promises.  Thus, the parameter for
+~liftFunction~ is a function which takes values and returns values, and the
+return value is a function which takes promises and returns promises.  This
+lifted function behaves as follows.
+
+1. Takes input promises as parameters.
+2. Creates output promises.
+3. Schedules a function to be run once all input promises are resolved.  This
+   function will pass the input values to the original function (which was
+   passed to ~liftFunction~) and use the result to resolve the output promises.
+4. Returns the output promises.
+
+Note that such a function works perfectly as an activating function for an
+asynchronous method.  Thus, in effect, ~liftFunction~ can turn a synchronous
+method into an asynchronous method.
+
+The lifted function does not need to know ahead of time how many inputs to
+pass to the original function: it simply passes as many inputs as it receives
+promises.  However, it /does/ need to know how many outputs the original
+function will return ahead of time: it must create output promises before it
+can examine the output of the original function.  By default, ~liftFunction~
+creates a lifted function which has only one output.  If your lifted function
+will have more than one output, you must provide the number of outputs as the
+second parameter to ~liftFunction~; you can see this on [[(out1)][line (out1)]] and [[(out2)][line
+(out2)]] of the view-model source.
+
+
+** The truth about "ordinary" methods
+
+It's time to come clean.  Up to now we've been discussing asynchronous methods
+as if they were somehow different from other methods.  In fact, if you're
+going to allow some methods to be asynchronous, then they must all be
+asynchronous (because if one method is going to take a while to execute, then
+other methods are going to have to be prepared to wait until it is done).
+
+The truth of the matter is, /all/ methods in HotDrink are asynchronous
+methods.  The only difference between creating a method with the ~method~
+builder function and creating a method with the ~asyncMethod~ builder
+function is that the ~method~ builder function will use ~liftFunction~ to
+create an activating function for your method, whereas ~asyncMethod~ assumes
+you have given it the activating function.
+
+Thus, in the example above, we could have saved ourselves some trouble and
+defined our view-model as follows.
+
+#+BEGIN_SRC js -n -r
+var model = new hd.ModelBuilder()
+  .vs( 'n, d, q, r', {n: 50, q: 6} )
+
+  .c( 'n, d, q, r' )
+  .m( 'n, d -> q, r', divideRemainder )
+  .m( 'n, q -> d, r', divideRemainder )
+  .m( 'q, r, d -> n', multiplyRemainder )
+
+  .end();
+#+END_SRC
+
+This produces /exactly the same/ view-model as the source in the example.
+(Note that we do not need to specify the number of outputs here, as the model
+builder can deduce it from the signature.)  Thus, there really is no reason to
+call ~liftFunction~ directly; it is simpler just to use the ~method~
+(a.k.a. ~m~) member function.
+
+And so, we've come full circle.  It turns out we've been writing asynchronous
+methods all along and didn't realize it.  However, now that we know what's
+really going on with our methods, let's discuss a few tricks that we can do.
+
+* Partial lifting: returning promises
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/promout.html :padline no
+<div id="ex3" style="display:inline-block; text-align:right">
+  <style type="text/css" scoped> (ref:css)
+    .pending { background: right center no-repeat url(spinner.gif); }
+  </style>
+  Width: <input type="text" data-bind="hd.numVar( w )"/><br/>
+  Height: <input type="text" data-bind="hd.numVar( h )"/><br/>
+  Area: <input type="text" data-bind="hd.numVar( a )"/><br/>
+  Perimeter: <input type="text" data-bind="hd.numVar( p )"/>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/promout.js :padline no
+function delayedPromise( val ) { (ref:delprom)
+  var p = new hd.Promise();
+  setTimeout( function() { p.resolve( val ) }, 5000 );
+  return p;
+}
+
+var model = new hd.ModelBuilder()
+  .vs( 'w, h, a, p', {w: 80, h: 60} )
+
+  .c( 'w, h, a' )
+  .m( 'w, h -> a', function( w, h ) { return w*h; } )
+  .m( 'a, h -> w', function( a, h ) { return delayedPromise( a/h ); } )
+  .m( 'a, w -> h', function( a, w ) { return delayedPromise( a/w ); } )
+
+  .c( 'w, h, p' )
+  .m( 'w, h -> p', function( w, h ) { return 2*w + 2*h; } )
+  .m( 'p, h -> w', function( p, h ) { return delayedPromise( p/2 - h ); } )
+  .m( 'p, w -> h', function( p, w ) { return delayedPromise( p/2 - w ); } )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/promout.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex3' ) );
+} )
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/promout.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/promout.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example enforces the expected relations between the width, height, area,
+and perimeter of a rectangle.  However, any calculation of width or height is
+delayed by five seconds.  Note that, during this delay, you may continue to
+edit values in the form.
+#+HTML: </div>
+
+** A promise for a promise
+
+Notice that all methods in the example are created using the ~method~ builder
+function, and yet some of them return promises as if they were activating
+functions for asynchronous methods.  How does this work?
+
+According to the [[https://promisesaplus.com/][Promises/A+]] specification, if you resolve a promise $p$ using
+a second promise $q$, the behavior is as follows: $p$ remains in a pending
+state until $q$ is resolved; as soon as $q$ is resolved, then $p$ will
+automatically be resolved using the same value as $q$.
+
+Consider what this means for functions lifted with ~liftFunction~.  When you
+lift a function, the return values of the original function are used to
+resolve the corresponding output promises of the lifted function.  Thus, if
+your original function returns a promise, that promise will be used to resolve
+the corresponding output promise --- and later when you resolve that promise,
+the output promise will automatically be resolved using the same value.
+
+Thus, the function for a synchronous method --- one which will be lifted with
+~liftFunction~ --- can return a promise just as an activating function can.
+In both cases, the end result is the same:  whatever value eventually given to
+the promise will become the output of the method.
+
+** Coordinating promises
+
+One common problem with implementing asynchronous behavior in a user interface
+is managing edits that are made before all asynchronous calculations have
+completed.  On the one hand, you don't want your interface to lock up,
+refusing to allow any user input until the current calculations have complete.
+But, on the other hand, you also don't want to start new calculations using
+stale values which are scheduled to be updated.
+
+Fortunately, this type of organization is completely handled for you by
+HotDrink. If you play around with the example above --- rapidly making edits
+to multiple fields --- you can see that the user interface remains fully
+responsive even as it waits on promises to be resolved.  When an edit is made
+to a HotDrink variable, HotDrink will immediately run the activating functions
+for all methods which should be executed in response.  (Remember, every method
+is asynchronous, so every method has a activating function.)  Later, once all
+input promises have been resolved, the actual work of the method will take
+place.
+
+Perhaps a helpful analogy would be water flowing through a pipeline.  Promises
+are like the pipes, defining where values will eventually be, and values are
+like the water flowing through the pipes.  The activating function for an
+asynchronous method constructs a small pipeline for the method: input pipes
+and output pipes are connected to some calculation, creating a pipeline
+suitable for conducting water at some point in the future.  HotDrink then
+connects those small pipelines into one large, continuous pipeline.  New
+pipelines can be added on to this, even before there is water in the pipes.
+Eventually the water will flow forward, filling all the pipes; how quickly the
+water comes does not affect the results.
+
+* Partial lifting: promise parameters
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/promin.html :padline no
+<div id="ex4">
+  <style type="text/css" scoped> (ref:css)
+    .pending { background: #eee right center no-repeat url(spinner.gif); }
+  </style>
+  <table>
+    <tr>
+      <td>Quantity:</td>
+      <td><input type="text" data-bind="hd.numVar( qty, 0 )"/></td>
+    </tr><tr>
+      <td>Unit price:</td>
+      <td><input type="text" data-bind="hd.numVar( unit, 2 )"/></td>
+    </tr><tr>
+      <td>Subtotal:</td>
+      <td data-bind="hd.text( sub, hd.fix( 2 ) )"></td>
+    </tr><tr>
+      <td colspan="2"><hr/></td>
+    </tr><tr>
+      <td>
+        <input id="shipcheck" type="checkbox" data-bind="hd.checked( doship )"/>
+        <label for="shipcheck">Ship to:</label>
+      </td>
+      <td>
+        <select data-bind="hd.value( state ), hd.enabled( state.relevant )"> (ref:enable)
+          <option>Texas</option>
+          <option>Oklahoma</option>
+          <option>Arkansas</option>
+          <option>Louisiana</option>
+        </select>
+      </td>
+    </tr><tr>
+      <td>Shipping:</td>
+      <td data-bind="hd.text( ship, hd.fix( 2 ) ), hd.cssClass( ship )"></td>
+    </tr><tr>
+      <td colspan="2"><hr/></td>
+    </tr><tr>
+      <td>Total:</td>
+      <td data-bind="hd.text( total, hd.fix( 2 ) ), hd.cssClass( total )"></td>
+    </tr>
+  </table>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/promin.js :padline no
+var model = new hd.ModelBuilder()
+  .vs( 'qty, unit, sub, doship, state, ship',
+       {qty: 4, unit: 10, doship: true, state: 'Texas'}
+     )
+  .outputVariable( 'total' ) (ref:output)
+
+  .c( 'qty, unit, sub' )
+  .m( 'qty, unit -> sub', function( qty, unit ) { return qty * unit; } )
+
+  .c( 'state, qty, ship' )
+  .m( 'state, qty -> ship', function( state, qty ) {
+    var cost;
+    switch (state) {
+    case 'Texas':     cost = 1; break;
+    case 'Oklahoma':  cost = 2; break;
+    case 'Arkansas':  cost = 3; break;
+    case 'Louisiana': cost = 2; break;
+    }
+    var p = new hd.Promise();
+    setTimeout( function() { p.resolve( qty * cost ); }, 2000 );
+    return p;
+  } )
+
+  .c( 'sub, doship, ship, total' )
+  .m( 'sub, doship, *ship -> total', function f3( sub, doship, pShip ) { (ref:asterisk)
+    if (doship) {
+      return pShip.then( function( ship ) { (ref:then3)
+        return sub + ship;
+      } );
+    }
+    else {
+      return sub;
+    }
+  } )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/promin.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex4' ) );
+} )
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/promin.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/promin.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example simulates a lengthy calculation: for example, determining
+shipping costs for an order.  In this example, shipping cost is a simple
+function which we have deliberately delayed with a timer; in a more realistic
+scenario, calculating shipping costs may require a call to a server resulting
+in a noticeable delay.
+
+Try editing the quantity.  Notice how behavior changes when the shipping cost
+is not used: the system no longer waits for shipping cost before calculating
+the total.  Furthermore, the drop-down box is disabled as it is no longer
+relevant.
+#+HTML: </div>
+
+** Requesting input promises
+
+In some cases you may want your method to wait on all but one or two input
+promises.  In such cases, you can request that the function lifting mechanism
+pass to your function, not the /value/ of the promise, but the promise itself.
+This allows you to decide if and when you will wait on this promise.
+
+The full signature of ~liftFunction~ is as follows.  Note that the last two
+parameters are optional.
+
+#+HTML: <div class="notes">
+~liftFunction( fn, numOutputs, promiseMask )~
+#+HTML: </div>
+
+We explained the first two parameters in Section [[* Lifting functions]].  The
+final parameter, if provided, should be an array of Boolean values, one for
+each parameter, where ~true~ means to pass the corresponding parameter's
+promise directly, and ~false~ means to wait for the corresponding parameter's
+promise to resolve and pass its value.
+
+However, as we mentioned earlier, there's really no reason to call
+~liftFunction~ directly; you should simply use the ~method~ builder member function
+which calls ~liftFunction~ for you.  To indicate to the model builder that you
+want to recieve a promise for a parameter, you place an asterisk ("~*~") in
+front of the parameter name in the method signature.  You can see this in the
+method declared in [[(asterisk)][line (asterisk)]] of the view-model.
+
+If you decide you need this parameter, you must use it's ~then~ method to schedule a
+function to be run when its value is ready.  On [[(then3)][line (then3)]] of the view-model
+we schedule a function to calculate the total using the shipping cost as soon
+as it is ready.  Remember that the return value for the ~then~ function is a
+promise for the return value of the function we scheduled.  We return this
+as the promise for the output of our method.
+
+Observe what happens if the checkbox for ~doship~ is unchecked: Since ~doship~
+is false, we do not subscribe to the promise for ~ship~.  Since we do not
+subscribe to that promise, we do not have to wait for it to be ready.  Thus,
+we can calculate the total cost before the shipping cost is even ready.  This is
+convenient when the calculation for shipping cost is so slow.
+
+** Output variables
+
+Typically the purpose of a user interface is to allow the user to enter values
+for variables that will be used elsewhere in the program --- e.g., in the
+/model/.  (If you don't know what that is, see [[file:intro.org][Introduction to HotDrink]]
+for an explanation of MVVM.)  We refer to these variables as /output/
+variables.
+
+It is possible that a user interface contains some additional variables ---
+variables which are not used elsewhere in the program, but are there to help
+the user calculate other variables which are.  We refer to these variables as
+/interface/ variables.
+
+By default, HotDrink considers all variables as interface variables.  If this
+is not the case, then you will need to explicitly tell HotDrink which ones
+are.  You can change a single variable to an output variable using the
+~outputVariable~ member function (abbreviated ~ov~), or change a list of
+variables to output variables using the ~outputVariables~ member function
+(abbreviated ~ovs~).  Similarly, you can change a single variable to an
+interface variable using the ~outputVariable~ member function (abbreviated
+~ov~), or change a list of variables to interface variables using the
+~outputVariables~ member function (abbreviated ~ovs~).
+
+The parameter for these functions is the name, or a comma-delimited list of
+the names, to be changed.  For example:
+
+#+BEGIN_SRC js
+builder.outputVariable( 'x' );
+
+builder.interfaceVariables( 'x, y, z' );
+#+END_SRC
+
+As a convenience for you, these functions are overloaded so that, if there is
+no variable with the name given, they will create one first.  Just as with the
+~variable~ and ~variables~ builder functions, you may specify an initial value
+for the variables as well.  Thus, on [[(output)][line (output)]] of the
+view-model we both create a new variable named "output" and also mark the
+variable as an output variable.
+
+** Contributing and relevant
+
+There is another advantage to taking an input promise when you might not need
+its value: HotDrink can tell if a promise was never subscribed to, and can
+conclude that the corresponding input was not used.  As mentioned previously,
+interface variables are not used elsewhere in the program; thus, their only
+possible use is in calculating output variables.  HotDrink can check to see if
+these variables were, in fact, used this way.
+
+An interface variable is said to be /contributing/ if, during the last time
+the constraint system was updated, its value was used to calculate the value
+of at least one output variable.  An interface variable is said to be
+/relevant/ if editing it would have any effect on an output variable.  Every
+contributing variable is automatically relevant; however, a non-contributing
+variable can still be relevant if editing it would cause it to become
+contributing.
+
+Note that output variables are always both contributing and relevant.
+
+** Automatic disabling
+
+Every variable has two Boolean, read-only properties named /contributing/ and
+a /relevant/ that report whether the variable is contributing and relevant, respectively.
+HotDrink sets these properties; however, it does not use these properties for
+anything.  The recommended use is to bind to them in the interface to give
+useful information to the user.
+
+In particular, the ~Enabled~ view adapter automatically disables a
+user-interface element when the corresponding value is false.  In
+[[(enable)][line (enable)]] of the view source, we use this binder to
+automatically disable the state drop-down box whenever the corresponding
+variable is irrelevant.
+
+Note that the ~hd.enabled~ factory function creates an ~hd.Enabled~ binding
+specification.  Also, the ~hd.*Var~ factories (~hd.editVar~, ~hd.numVar~,
+etc.) add a ~hd.nabled~ binding to their specifications.  For more information
+on binding specifications, see the [[file:binding.org][Advanced Binding
+Concepts]] document.
+
+Let's walk through what happens when the "Ship to" checkbox is unchecked.
+
+- The ~doShip~ variable becomes false.
+
+- The method on [[(asterisk)][line (asterisk)]] of the view-model is evaluated, causing
+  function ~f3~ to be executed.
+
+- Function ~f3~ does not subscribe to the promise for ~ship~.
+
+- HotDrink notices that ~ship~ was not used, and is therefore
+  non-contributing.
+
+- Not only that, the method of ~f3~ is the /only/ possible way that ~ship~
+  could affect an output variable --- and ~f3~ is currently not using ~ship~.
+
+- HotDrink concludes that editing ~ship~ cannot affect an output variable, and
+  is therefore irrelevant.
+
+- The ~bindEnabled~ binding disables the drop-down box.
+
+Note the assumption that HotDrink makes:  if a parameter is unused, then
+changing it cannot make it become used.  That is certainly the case in
+function ~f3~:  if ~doship~ is false, then it doesn't matter what value you give
+~ship~ --- it's never going to be used.  The only way ~ship~ can be used is if
+~doship~ changes.
+
+What if you have a parameter that you only use in certain cases?  For example,
+you use it if it's a positive number, but not if it's a negative number.  In
+that case, you must subscribe to the promise in order to see the number so
+that you can test whether it is positive or negative.  Since you subscribe to
+the promise, HotDrink will consider it used.  This is consistent with our
+definition of relevant:  the parameter is relevant because changing it could
+potentially affect the output (i.e. if you changed it to a positive number).
+
+** Explicit control over usage
+
+HotDrink's default behavior is to consider a variable used if its promise was
+subscribed to, and unused if it was not.  For most cases, that is reasonable
+behavior.  However, it is possible that you might want to subscribe to a
+parameter without committing to use its value, or to skip subscribing to a
+promise but still treat it as being used.  In this case, you can explicitly
+set the usage of a parameter using the following two functions.
+
+- ~hd.markUsed( promise )~ marks a promise as being used, even if it was never
+  subscribed to.
+
+- ~hd.markUnused( promise )~ marks a promise as being unused, even if it was
+  subscribed to.
+
+* Helper: AJAX requests
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/stocks.html :padline no
+<table id="ex5" style="text-align:right">
+  <style type="text/css" scoped>
+    .pending { background: #eee right center no-repeat url(spinner.gif); }
+    .noncontributing { background-color: #eee; }
+  </style>
+  <tr>
+    <td>Symbol:</td>
+    <td style="text-align:left">
+      <select data-bind="hd.value( symbol ), hd.cssClass( symbol )">
+        <option value="FB">Facebook</option>
+        <option value="ADBE">Adobe</option>
+        <option value="MS">Microsoft</option>
+        <option value="YHOO">Yahoo!</option>
+      </select>
+    </td>
+  </tr><tr>
+    <td>Value:</td>
+    <td><input type="text" data-bind="hd.numVar( value, 2 )"/></td>
+  </tr><tr>
+    <td>Quantity:</td>
+    <td><input type="text" data-bind="hd.numVar( quantity, 0 )"/></td>
+  </tr><tr>
+    <td>Total:</td>
+    <td><input type="text" data-bind="hd.numVar( total, 2 )"/></td>
+  </tr>
+</table>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/stocks.js :padline no
+function fetch_stock_value( symbol ) {
+  var url = 'http://query.yahooapis.com/v1/public/yql';
+  var params = {
+    q: 'select * from yahoo.finance.quotes where symbol="' + symbol + '"',
+    format: 'json',
+    env: 'store://datatables.org/alltableswithkeys',
+    callback: ''
+  };
+  return hd.ajaxJSON( url, params ).then( function( data ) {
+    return Number( data.query.results.quote.LastTradePriceOnly );
+  } );
+}
+
+var model = new hd.ModelBuilder()
+  .vs( 'symbol, value, quantity', {symbol: 'ADBE', quantity: 10} )
+  .ov( 'total' )
+
+  .c( 'symbol, value' )
+  .m( 'symbol -> value', fetch_stock_value )
+  .m( 'symbol -> symbol', function( x ) { return x; } )
+
+  .eq( 'total == value * quantity' )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/stocks.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex5' ) );
+} )
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/stocks.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/stocks.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example uses a Yahoo! web service to look up the stock price for the given
+symbol.  Selecting a new company results in a new stock price look up.  Note
+that editing the stock price directly causes the drop-down list to be grayed
+out, indicating that it is not being used.
+#+HTML: </div>
+
+** Simple AJAX wrappers
+
+AJAX refers to the technique of using JavaScript to make an asynchronous HTTP
+request to another server.  A full description of AJAX is beyond the scope of
+this document, but many such descriptions can be found online.
+
+There are many JavaScript frameworks which simplify the process of making an
+AJAX request, allowing the programmer a great deal of control over how the
+request is made and how the results of the request are processed.  HotDrink is
+not one of those frameworks.  However, we would like to make it easy for you
+to experiment with asynchronous methods that make AJAX requests, so we have
+included a wrapper for simple AJAX requests.  If you need more control over
+the request process, we recommend you look into other frameworks, or simply
+write your own wrapper.
+
+HotDrink provides the following functions.
+
+*** ~ajax( url, params )~
+
+This function makes an asynchronous HTTP GET request to the provided URL.  If
+provided, the ~params~ should be an object used as a map of parameters to be
+included in the request; these will be added to the query string following
+the GET request protocol.
+
+The return value of this function is a promise which will be resolved with
+the [[https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest][~XMLHttpRequest~]] object once the request has been successfully completed.
+
+*** ~ajaxXML( url, params )~
+
+This function is identical to ~ajax~, except that the returned promise will be
+resolved with the contents of the request as an XML DOM (i.e., the
+~responseXML~ property of the ~XMLHttpRequest~ object).
+
+*** ~ajaxText( url, params )~
+
+This function is identical to ~ajax~, except that the returned promise will be
+resolved with the contents of the request as a string (i.e. the
+~responseText~ property of the ~XMLHttpRequest~ object).
+
+*** ~ajaxJSON( url, params )~
+
+This function is identical to ~ajax~, except that the returned promise will be
+resolved with an object that is the result of parsing the contents of the
+request as JSON.
+
+* Helper: web workers
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/worker.html :padline no
+<div id="ex6">
+  <style type="text/css" scoped>
+    .pending { background: #eee right center no-repeat url(spinner.gif); }
+    .error { color: #900; }
+  </style>
+  <table style="text-align:right">
+    <tr>
+      <td>Start position:</td>
+      <td><input type="text" data-bind="hd.numVar( start )"/></td>
+      <td class="error" data-bind="hd.text( start.error )"></td>
+    </tr><tr>
+      <td>End position:</td>
+      <td><input type="text" data-bind="hd.numVar( end )"/></td>
+      <td class="error" data-bind="hd.text( end.error )"></td>
+    </tr><tr>
+      <td>Length:</td>
+      <td><input type="text" data-bind="hd.numVar( length )"/></td>
+      <td class="error" data-bind="hd.text( length.error )"></td>
+    </tr>
+  </table>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/worker.js :padline no
+var model = new hd.ModelBuilder()
+  .vs( 'start, end, length', {start: 10, end: 25} )
+
+  .c( 'start, end, length' )
+  .m( 'start, length -> end', hd.worker( 'worker.js', 'slowSum' ) ) (ref:worker)
+  .m( 'end, length -> start', hd.worker( 'worker.js', 'slowDiff' ) )
+  .m( 'end, start -> length', hd.worker( 'worker.js', 'slowDiff' ) )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/worker.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex6' ) );
+} )
+#+END_SRC
+
+/Worker/  (file: worker.js)
+
+#+BEGIN_SRC js -n -r :exports code :tangle publish/worker.js :padline no
+importScripts( 'fn-worker.js' ); (ref:import)
+
+function slowSum( a, b ) {
+  var n;
+  if (b < 0) {
+    n = -1;
+    b = -b;
+  }
+  else {
+    n = 1;
+  }
+  for (var i = 0; i < b; ++i, ++n) {
+    a += n - i;
+  }
+  return a;
+}
+
+function slowDiff( a, b ) {
+  return slowSum( a, -b );
+}
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/worker.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/worker.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example uses an extremely poor algorithm for addition which is very
+slow for large numbers.  (Try entering "1e9" for all values.)  Yet, because
+the slow process is performed on a web worker with an asynchronous method, it
+can never cause the interface to become unresponsive.
+#+HTML: </div>
+
+** Simple web worker wrapper
+
+A /web worker/ is a thread created by the web browser which can run JavaScript
+code.  A web worker runs in parallel with the user-interface thread, meaning
+it won't block the user interface, making it unresponsive.  As with AJAX, a
+full description of web workers is beyond the scope of this document, and
+readers are encouraged to look online for more information.
+
+And, just as HotDrink is not a full-featured AJAX framework, neither is it a
+full-featured web worker framework.  However, we would like to make it easy
+for you to experiment with asynchronous methods run in web workers, so we have
+included a wrapper for running functions on web workers.  If you need more
+control over the process, we recommend you look into other frameworks, or
+simply write your own wrapper.
+
+To use HotDrink's wrapper requires two steps.
+
+*** Place the JavaScript functions to be executed by the worker in a separate file.
+
+As you can see on [[(import)][line (import)]] of the worker source, the first line of this
+separate file should be this:
+
+#+BEGIN_SRC js
+importScripts( 'fn-worker.js' );
+#+END_SRC
+
+This line causes the JavaScript code in the file [[file:fn-worker.js][=fn-worker.js=]] to be included
+in your web worker.  This file is included with HotDrink, and provides the
+framework necessary for communication with the main thread.
+
+Remember that the functions in your web worker will not have access to the
+user interface, nor to any libraries being used in the main thread.  If you
+want to use other JavaScript libraries, you will need to import them using the
+~importScript~ function.
+
+*** Use ~hd.worker~ to create a wrapper which will invoke the worker
+
+The function ~hd.worker~ takes two string parameters: the URL for the file
+containing the worker code, and the name of the function.  Note that the URL
+may be relative to your main file.
+
+The ~hd.worker~ function returns a new function which behaves as follows:
+when called, it initiates a web worker to execute your function, passes the
+parameters it received to the web worker, then returns a promise for the
+result.  When the function on the web worker completes, its return value is
+passed back to the main thread and then used to resolve the output promise.
+
+This function is just right for use as a method; you can see it used as a
+method on [[(worker)][line (worker)]] of the view-model source.
+
+** Security restrictions
+
+There are several security restrictions where the worker file must be located.
+Again, a full description of web worker security is beyond the scope of this
+document; in brief, the worker code must come from the [[https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy][same origin]] as your
+main file.
+
+Note, however, that most web browsers do not, by default, allow code from web
+workers to come directly from the file system; thus, web workers require a web
+server to work.
+
+** Worker pools
+
+We could create a new web worker for every method call; however, that would
+introduce a lot of overhead.  Not only that, most browsers place a limit on
+the number of web workers that can be running at one time.  At the other
+extreme, we could create a single web worker and use it for every method call;
+however, that requires waiting for one function to finish before initiating
+the next.
+
+The typical compromise to this dilemma is to create a /pool/ of workers.  When
+a new method needs to be executed, we attempt to find an unused worker in the
+pool.  If we find one, we use it to execute the method; if we cannot find one,
+we wait until one becomes available.  This is the approach HotDrink takes.
+
+HotDrink keeps a separate pool for each worker source file.  (So, in our
+example, there is a single pool for the "~worker.js~" source file.)  Each pool
+has a maximum number of allowable workers.  HotDrink creates a new worker only
+when there are none available in the pool, and the pool has not yet reached is
+maximum size.
+
+The default maximum size for a worker pool is twenty --- that number seems to
+work well with the browsers we tested on.  If you decide you would like to
+change the maximum for a pool, you can use the ~hd.setMaxWorkers~ function to
+do so.  This function takes two parameters: the source file for the pool to
+modify, and the value for the new maximum.
+
+In the example for this section, we could set the maximum number of web
+workers spawned to three like so:
+
+#+BEGIN_SRC js
+hd.setMaxWorkers( 'worker.js', 3 )
+#+END_SRC
+
+** Killing workers
+
+Sometimes the output of a method becomes irrelevant before it has even been
+produced.  For example, suppose a method was scheduled to calculate the value
+for a variable, but before it could complete, the user edited that variable
+directly.  Now the output of the method no longer matters: it has been
+replaced with the user's edit.
+
+HotDrink can detect when these situations occur and react to them.  We will
+save the full details of how this works for another document, but for now we
+want to point out that, if the output of a method running on a web worker
+becomes irrelevant, HotDrink's worker wrapper will kill the worker.
+
+This behavior is necessary to ensure that the user interface will never become
+unresponsive:  if we did not do this, then it would be possible for the worker
+pool to become exhausted with web workers which were not returning but whose
+output are no longer needed.
+
+However, to suddenly kill a thread with no warning is generally considered to
+be unsafe: the thread may have been in the middle of doing something important
+and need to clean up before exiting.  If this is the case for your thread,
+then you should not use the web worker wrapper provided with HotDrink; you
+should write your own instead.  To do this, check out the Programming Guide.

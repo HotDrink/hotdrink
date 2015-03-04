@@ -1,0 +1,1062 @@
+#+TITLE: Basic HotDrink Usage
+#+LANGUAGE:  en
+#+OPTIONS: H:2 author:nil creator:nil
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
+
+* Variables and binding
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/bind.html :padline no
+<div>
+  X: <input type="text" id="x_edit"/> &rArr; <span id="x_view"></span><br/>
+  Y: <input type="text" id="y_edit"/> &rArr; <span id="y_view"></span><br/>
+  Z: <span type="text" id="z_view"></span>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/bind.js :padline no
+var model = new hd.ModelBuilder()
+    .variable( 'x', 'Hello, HotDrink!' ) (ref:varx)
+    .variable( 'y', 3 ) (ref:vary)
+    .variable( 'z', {x: 0, y: 0} )
+    .end();
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/bind.js :padline no
+window.addEventListener( 'load', function() { (ref:onload)
+
+  // Bind x to <input>
+  hd.bind( {view:  new hd.Edit( document.getElementById( 'x_edit' ) ),
+            model: model.x,
+            dir:   hd.dir.bi
+           }
+         ); (ref:x1)
+
+  // Bind x to <span>
+  hd.bind( {view:  new hd.Text( document.getElementById( 'x_view' ) ),
+            model: model.x,
+            dir:   hd.dir.m2v
+           }
+         ); (ref:x2)
+
+  // Bind y to <input>
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'y_edit' ) ),
+            model:   model.y,
+            dir:     hd.dir.bi,
+            toModel: hd.toNum()
+           }
+         ); (ref:y1)
+
+  // Bind y to <span>
+  hd.bind( {view:  new hd.Text( document.getElementById( 'y_view' ) ),
+            model: model.y,
+            dir:   hd.dir.m2v
+           }
+         );
+
+  // Bind z to mouse
+  hd.bind( {view:  new hd.MousePosition(),
+            model: model.z,
+            dir:   hd.dir.v2m
+           }
+         );
+
+  // Bind z to <span>
+  hd.bind( {view:   new hd.Text( document.getElementById( 'z_view' ) ),
+            model:  model.z,
+            dir:    hd.dir.m2v,
+            toView: hd.pointToString()
+           }
+         );
+} );
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/bind.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/bind.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+The value of variables ~x~ and ~y~ are each contained in an edit box and also
+displayed in the page next to the edit box.  Editing the value changes the
+text beside it --- though the ~y~ variable only changes when a valid number is
+entered.  The variable ~z~ is set according to the mouse position and
+displayed in the page.
+#+HTML: </div>
+
+** Creating variables
+
+Just as in a programming language, values in HotDrink are stored in variables.
+(Note, however, that HotDrink variables are /not/ the same as JavaScript
+variables --- HotDrink variables are actually JavaScript objects.)
+
+Variables are created with the model builder using the ~variable~ member
+function and then stored in the model.  To create a variable you must specify
+a name; you may optionally specify an initial value.  As with JavaScript
+variables, uninitialized variables are given the value ~undefined~.  For
+example, [[(varx)][line (varx)]] of the view-model creates a variable named ~x~ which is
+initialized to the string "~Hello, world~".
+
+The return value of the ~variable~ function is the builder itself.  This allows a
+succinct programming style known as "chaining" in which multiple calls to
+builder functions are joined together into a single expression.
+
+The builder member functions get used frequently when declaring a property
+model.  To make them easier to use, the model builder provides abbreviated
+names for many of them.  For example, you may refer to the ~variable~ member
+function simply as ~v~.  This is perhaps slightly less readable, but much
+easier to type; we will use the abbreviated name ~v~ in the remainder of the
+examples.
+
+** Binding to the view
+
+In order to make the data of the view-model visible in the view, we must
+create a connection called a /binding/.  (Note: we use the word /binding/ both
+as a noun to refer to the connection, and also as a verb to refer to the
+process of creating the connection.)  A binding is created through the
+~hd.bind~ function by passing it a binding specification.  We explain binding
+in great detail in the [[file:binding.org][Advanced Binding Concepts]] how-to, but for now we will
+examine just the fundamental concepts.
+
+A binding specification contains two important elements: an object
+representing the /view/, and an object representing the /model/.  These can be
+any objects as long as they follow HotDrink's protocol for passing values
+between objects.  (We discuss this in much more detail in the [[file:program.org][Programming
+Guide]].)  Typically, the /model/ object will be a variable in the model, and
+the /view/ object will represent some element in the web page.  We refer to
+these view objects as /view adapters/ because they translate the various
+interfaces of different DOM elements into the standard interface used by
+HotDrink.
+
+This example makes use of three view adapters.  The ~hd.Edit~ adapter
+encapsulates a text edit box, using the value of the variable as the value of
+the edit box.  The ~hd.Text~ adapter encapsulates any tag which may contain
+text, using the value of the variable as the contents of the tag.  And the
+~hd.MousePosition~ adapter encapsulates the mouse, using its current position
+as the value of the variable.
+
+Note that the ~hd.Edit~ and ~hd.Text~ adapters are initialized with the HTML
+DOM node they are intended to encapsulate.  Remember that HTML DOM elements
+are not available until their HTML has been processed by the browser.
+Therefore, a good time to perform binding is immediately after your entire
+document has been processed.  For purposes of this document, we accomplish
+this by scheduling our binding to execute when the ~window.onload~ event
+occurs.  You can see this on [[(onload)][line (onload)]] of the binding section above.  Many
+JavaScript frameworks offer alternative methods of running code as soon as the
+DOM is ready, and you are welcome to use them if you wish.
+
+In addition to the ~view~ and ~model~ property, there are three optional
+properties in a binding specification.  The ~dir~ property indicates the
+direction of the binding.  There are three possible values for this property,
+illustrated by the three different binding adapters we used in this example.
+The binding for the ~hd.Text~ adapters goes only from the model to the view
+--- that is, we always use the value of the model to set the value of the
+view, never vice-versa.  This direction is indicated by the value
+~hd.dir.m2v~.  Conversely, the binding for the ~hd.MousePosition~ adapter goes
+only from the view to the model, as indicated by the value ~hd.dir.v2m~.  The
+binding for the ~hd.Edit~ adapter is bi-directional, meaning that changing the
+model updates the view /and/ changing the view updates the model.  This is
+indicated by the value ~hd.dir.bi~.
+
+Again, the ~dir~ property of a binding specification is optional; if it is
+omitted, the system will attempt to deduce the direction based on the
+interfaces supported by the objects.  Most of the time this is sufficient ---
+in fact, in this example, none of the ~dir~ properties are actually needed.
+The only time you must specify ~dir~ is if values /could/ be passed in both
+directions but you want them passed in only one direction.
+
+There other two optional properties are ~toModel~ and ~toView~.  If used,
+these properties should refer to /transformation objects/ which modify the
+values passed between objects.  Again, we defer in-depth discussion of this
+for a later time, but for now notice the two transformations we use in the
+example.  The variable ~z~ contains an object representing the current
+coordinates of the mouse.  Thus, in order to bind this to a text binding, we
+must transform the point object to a string using ~hd.pointToString~.  Since
+that transformation takes place when the value is copied to the view, this is
+a ~toView~ transformation.
+
+Similarly, we wish for the variable ~y~ to contain a number.  Thus, we must
+convert the string value of the edit box to a numeric value using ~hd.toNum~.
+Since this transformation takes place when the value is copied to the model,
+this is a ~toModel~ transformation.  If desired, we could specify a ~toView~
+transformation to use to convert the number back to a string.  In this case we
+choose not to, simply relying on JavaScript's built-in string coercion;
+however, we a transformation could ensure the number is formatted as desired.
+
+Note that certain transformations may fail in certain cases.  (For example,
+try entering "abc" into the edit box for Y.)  When this happens, the value
+will /not/ be passed from the view to the model (or from the model to the
+view, depending on the direction).  Also, transformations may result in loss
+of formatting, since formatting is a property of the string.  (For example,
+try entering "1e3" into the edit box for Y.)
+
+* Constraints and methods
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/constraint.html :padline no
+<div style="display:inline-block; text-align:right">
+  Income:   <input type="text" id="income"/><br/>
+  Expenses: <input type="text" id="expenses"/><br/>
+  Profit:   <input type="text" id="profit"/><br/>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/constraint.js :padline no
+var model = new hd.ModelBuilder()
+  .v( 'income', 1500 ).v( 'expenses', 900 ).v( 'profit' )
+
+  // Constraint:  profit == income - expenses
+  .constraint( 'income, expenses, profit' ) (ref:con)
+  .method( 'income, expenses -> profit', function( income, expenses ) { (ref:mth1)
+    return income - expenses;
+  } )
+  .method( 'profit, expenses -> income', function( profit, expenses ) { (ref:mth2)
+    return profit + expenses;
+  } )
+  .method( 'income, profit -> expenses', function( income, profit ) { (ref:mth3)
+    return income - profit;
+  } )
+
+  .end(); (ref:end)
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/constraint.js :padline no
+window.addEventListener( 'load', function() {
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'income' ) ),
+            model:   model.income,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'expenses' ) ),
+            model:   model.expenses,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'profit' ) ),
+            model:   model.profit,
+            toModel: hd.toNum()
+           }
+         );
+} );
+#+END_SRC
+
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/constraint.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/constraint.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+Each time you make a change to one variable, the system automatically updates
+another variable as well so that the equation "~profit == income - expenses~" is
+always true.  The variable that is changed is always the variable you edited
+/least/ recently.
+#+HTML: </div>
+
+** Constraints
+
+A constraint is simply something that should always be true concerning some
+(not necessarily all) of your variables.  When that thing is true, we say the
+constraint is /satisfied/.  Exactly what it is that should be true is entirely
+up to you.  Often it is a simple equation: in the example above, it is the
+equation "~profit == income - expenses~."  But you might also have a
+constraint that one number lies between the other two; or that the sum of all
+three numbers is divisible by 7; or that a database lookup using the first two
+numbers returns the third; and so on and so forth.
+
+To define a constraint in HotDrink, all you need to specify is the variables
+involved.  To make this simple, the ~constraint~ member function of the model
+builder takes a string containing all of the variables' names in a
+comma delimited list.  In [[(con)][line (con)]] above we define a constraint for the
+variables ~income~, ~expenses~, and ~profit~.
+
+The return value of the ~constraint~ member function is the builder, to
+facilitate chaining. The ~constraint~ member function may be abbreviated as
+~c~; we will use this abbreviation in the remainder of the examples.
+
+** Methods
+
+As stated above, the constraint can be whatever you want, but here's the
+catch: you must tell HotDrink how to /enforce/ the constraint --- i.e.,
+whenever the constraint is not satisfied, how can HotDrink change one or more
+variables so that it is?  Each of these ways to enforce the constraint is
+called a /constraint satisfaction method/, or just /method/ for short.
+
+A method is always a function whose parameters are /some/
+variables of the constraint, and which returns new values for /the other/
+variables of the
+constraint.  In the example above we provide three constraint satisfaction
+methods: one on [[(mth1)][line (mth1)]], one on [[(mth2)][line (mth2)]], and one on [[(mth3)][line (mth3)]].  Each
+one of these methods takes two of the variables and calculates a new value for
+the third variable.
+
+The method-creation function of the model builder, named ~method~, takes a
+signature and a function.  The signature is a string defining which variables
+are inputs and which are outputs; it has the form "/inputs/ ~->~ /outputs/",
+where both /inputs/ and /outputs/ are comma-delimited lists of variables. In
+the example above we provide an anonymous function for each method, but this
+is not a requirement; they can be named functions defined previously.
+
+Note that it is not a requirement for function parameter names to match the
+variables which should be passed to them; in fact, HotDrink has no way of
+knowing what you named your parameters.  HotDrink will use the signature you
+provided to decide what variables to pass to the function.
+
+Whenever you call ~method~, HotDrink assumes you are adding a method to the most
+recently defined constraint.  As with the other builder member functions, the
+return value of ~method~ is the
+builder to facilitate chaining, and it may be abbreviated as ~m~; we will use
+this abbreviation in the remainder of the examples.
+
+** Declaring the end
+
+You begin a constraint using the ~constraint~ builder member function; you add
+methods to it using ~method~; so how does the builder know when the constraint
+is finished?  Well, it turns out there is a builder function named
+~endConstraint~ which does just that.  Technically, the constraint is not
+fully created until ~endConstraint~ is called.
+
+That being said, many builder member functions (such as ~variable~,
+~constraint~, ~result~, etc.) check to see if the builder has an unfinished
+constraint and, if so, calls ~endConstraint~ for you.  The upshot is, most of
+the time there is no need to call ~endConstraint~; it is only when you're
+doing something unusual with the builder must you be aware of it.
+Technically, your constraint has not been created until you call
+~endConstraint~ or it is called for you.
+
+* Connected constraints
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/multi-constraint.html :padline no
+<table style="text-align: right">
+  <tr>
+    <td>
+      Left:  <input type="text" id="left"/><br/>
+      Right: <input type="text" id="right"/><br/>
+      Width: <input type="text" id="width"/><br/>
+    </td>
+    <td>
+      Top:    <input type="text" id="top"/><br/>
+      Bottom: <input type="text" id="bottom"/><br/>
+      Height: <input type="text" id="height"/><br/>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align:center">
+      Aspect Ratio: <input type="text" id="aspect"/>
+    </td>
+  </tr>
+</table>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/multi-constraint.js :padline no
+// Helper functions
+function sum ( x, y ) { return x + y; }
+function diff( x, y ) { return x - y; }
+function prod( x, y ) { return x * y; }
+function quot( x, y ) { return x / y; }
+
+var model = new hd.ModelBuilder()
+  .variables( 'left, right, width, top, bottom, height, aspect', (ref:vs)
+              {left: 0, right: 100, top: 60, bottom: 140}
+  )
+
+  // Constraint: width == right - left
+  .c( 'left, right, width' )
+  .m( 'left, width -> right', sum  )
+  .m( 'right, left -> width', diff )
+  .m( 'right, width -> left', diff )
+
+  // Constraint: height == bottom - top
+  .c( 'top, bottom, height' )
+  .m( 'top, height -> bottom', sum  )
+  .m( 'bottom, top -> height', diff )
+  .m( 'bottom, height -> top', diff )
+
+  // Constraint: aspect == width / height
+  .c( 'width, height, aspect' )
+  .m( 'height, aspect -> width', prod )
+  .m( 'width, height -> aspect', quot )
+  .m( 'width, aspect -> height', quot )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/multi-constraint.js :padline no
+window.addEventListener( 'load', function() {
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'left' ) ),
+            model:   model.left,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'right' ) ),
+            model:   model.right,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'width' ) ),
+            model:   model.width,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'top' ) ),
+            model:   model.top,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'bottom' ) ),
+            model:   model.bottom,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'height' ) ),
+            model:   model.height,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'aspect' ) ),
+            model:   model.aspect,
+            toModel: hd.toNum()
+           }
+         );
+} );
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/multi-constraint.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/multi-constraint.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+The seven variables of this UI are tied together by three different
+interconnected constraints.  Editing one variable can result in several
+different variables changing so that all values are consistent with one
+another.
+#+HTML: </div>
+
+** Updating the constraint system
+
+Whenever you modify any of the variables of the system, HotDrink assumes any
+constraints which use those variables are no longer satisfied.  It then
+performs two tasks.  The first is to decide which variable (or variables)
+should be updated.  The second is to use a method (or methods) you provided to
+calculate a new value for that variable (or variables).
+
+Deciding which variables to update is not a trivial task.  Consider: the
+variable ~left~ is modified, so HotDrink decides to update the ~width~
+variable so that ~width == right - left~.  But now the constraint ~aspect ==
+width / height~ is no longer satisfied, so HotDrink must update one of those
+variables as well.  Thus, the effects of a single edit can cascade to multiple
+variables.  HotDrink must consider the entire constraint system and decide
+which variables will be used to update which other variables.  This plan for
+how to update is called a /dataflow/.
+
+Often there is more than one possible dataflow which could work.  In this
+case, HotDrink will /generally/ select the dataflow which preserves variables
+that have been more recently edited by the user.  (In certain unusual cases
+the behavior is slightly more complicated, but this rule of thumb is close
+enough for now.)  We believe this is generally what the user wants, as the
+values more recently edited are more likely to reflect the user's current
+intent.
+
+** Declaring multiple variables at once
+
+As you can see on [[(vs)][line (vs)]] of the view-model source, this example uses an
+alternative approach to declaring variables.  The ~variables~ builder member
+function takes two parameters.  The first is a string containing a
+comma-delimited list of variables to create.  The second is an object used as
+a map to provide initial values for variables.  If a variable does not contain
+an entry in the map, it is treated as uninitialized, and therefore given the
+value ~undefined~.
+
+Note that the variables are created in the order in which they appear in the
+string.  This is significant as the order in which variables are created
+determines the initial editing order for the variables, and thus affects the
+initial dataflow selected by the system.  Initializing a variable is treated
+as an edit; creating an uninitialized variable is not treated as an edit.
+Thus, the system will initially pick a dataflow that writes to uninitialized
+variables; If any initialized variables need to be overwritten, the system
+will choose to overwrite the variables created /earlier/, since those will be
+considered less-recently edited.
+
+The ~variables~ member function returns the builder.  The abbreviation for
+~variables~ is ~vs~; we will use this abbreviation in the remainder of the
+examples.
+
+** Reusing functions
+
+Notice that we can reuse the same function for multiple methods.  In this
+example, we defined four simple mathematical functions at the top, then simply
+used the appropriate function for each method.  Again, the values passed as
+arguments will come from the variables specified in the signature.
+
+In fact, if your constraints really are trivial equations such as this, there
+is an even easier way to specify them.  We'll discuss that in the section
+"[[* Shortcut: equations][Shortcut: equations]]".
+
+* Input/output variables
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/io-param.html :padline no
+<div style="display:inline-block; text-align:right">
+  Begin: <input type="text" id="begin"/><br/>
+  End:   <input type="text" id="end"/>
+</div>
+#+END_SRC
+
+/Veiw-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/io-param.js :padline no
+var model = new hd.ModelBuilder()
+  .v( 'begin', 10 ).v( 'end', 20 )
+
+   // Constraint: begin < end
+  .c( 'begin, end' )
+  .m( 'begin, end -> end', function( begin, end ) {
+    return end < begin + 1 ? begin + 1 : end;
+  } )
+  .m( 'begin, end -> begin', function( begin, end ) {
+    return begin > end - 1 ? end - 1 : begin;
+  } )
+
+  .end();
+
+var system = new hd.ConstraintSystem;
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/io-param.js :padline no
+window.addEventListener( 'load', function() {
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'begin' ) ),
+            model:   model.begin,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'end' ) ),
+            model:   model.end,
+            toModel: hd.toNum()
+           }
+         );
+} );
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/io-param.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/io-param.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+The constraint here is acutally an inequality: ~begin <= end + 1~.  If you set one
+variable so that the inequality holds, then the other variable is not
+modified.  However, if you make the inequality false, then the other variable
+is changed just enough to make the inequality true.
+#+HTML: </div>
+
+** The meaning of I/O parameters
+
+When a method uses a variable for both input and output, the value given as
+input is the /previous/ value of the variable --- the value it had after the
+last time we enforced the constraint.  The value returned is the /next/ value
+of the variable.
+
+This may seem obvious, but it's an important point because, as a rule,
+dependency cycles are not allowed.  A dependency cycle would be something like
+this:  the value of ~a~ depends on ~b~, the value of ~b~ depends on ~c~, and
+the value of ~c~ depends on ~a~.  You cannot solve such a system because
+there's nowhere to start: every variable depends on something else.
+
+I/O parameters do /not/ create dependency cycles because they effectively
+reference two different variables: the pre-update variable and the post-update
+variable.
+
+** Caveat
+
+Methods in HotDrink are generally assumed to not have side effects.  That is,
+HotDrink assumes that if the parameters have not changed since the last time
+the function was executed, that there is no reason to execute it again; it
+will simply produce the same results.  Another way of saying this is: if
+HotDrink executes a method to enforce one of your constraints, then
+immediately executing the method again should have no effect.
+
+You should write your methods with this in mind.  The methods given above
+respect this assumption:  executing them immediately after they have just been
+executed has no effect.  However, you should avoid methods like this:
+
+#+BEGIN_SRC js
+rt.builder( "n -> n", function( n ) {
+  return n + 1;
+} )
+#+END_SRC
+
+This method gives different results every time it is run, and may lead to
+unexpected behavior.
+
+* Multiple output variables
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/multi-out.html :padline no
+<div style="display:inline-block; text-align:right">
+  First Quarter:  <input type="text" id="q1"/><br/>
+  Second Quarter: <input type="text" id="q2"/><br/>
+  Third Quarter:  <input type="text" id="q3"/><br/>
+  Fourth Quarter: <input type="text" id="q4"/><br/>
+  <hr/>
+  Full Year:      <input type="text" id="year"/><br/>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/multi-out.js :padline no
+var model = new hd.ModelBuilder()
+  .vs( 'q1, q2, q3, q4, year', {q1: 10, q2: 30, q3: 60, q4: 100} )
+
+  .c( 'q1, q2, q3, q4, year' )
+  .m( 'q1, q2, q3, q4 -> year',
+      function( q1, q2, q3, q4 ) {
+        return q1 + q2 + q3 + q4;
+      }
+   )
+  .m( 'year, q1, q2, q3, q4 -> q1, q2, q3, q4', (ref:multi)
+      function( year, q1, q2, q3, q4 ) {
+        var diff = (year - q1 - q2 - q3 - q4) / 4;
+        return [q1 + diff, q2 + diff, q3 + diff, q4 + diff ];
+      }
+  )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/multi-out.js :padline no
+window.addEventListener( 'load', function() {
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'q1' ) ),
+            model:   model.q1,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'q2' ) ),
+            model:   model.q2,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'q3' ) ),
+            model:   model.q3,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'q4' ) ),
+            model:   model.q4,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'year' ) ),
+            model:   model.year,
+            toModel: hd.toNum()
+           }
+         );
+} );
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/multi-out.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/multi-out.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This is a straightforward constraint: the value for the year is the sum of the
+values for the four quarters.  However, data can only flow two ways in this
+constraint.  If any one of the quarters is modified, then the year is updated.
+If the year is modified, then we take the difference and distribute it evenly
+among the four quarters, thus satisfying the constraint.
+#+HTML: </div>
+
+** Multiple return values
+
+For functions which must calculate values for multiple variables, we employ a
+very simple convention:  the function returns an array of values.  We will use
+the methods signature to decide which variables each element of the array
+should be assigned to.  So, for the method on [[(multi)][line (multi)]] of the view-model
+section, the first element of the array will go to ~q1~, the second to ~q2~,
+and so on.
+
+Note that your function should return an array /only/ if the method outputs to
+multiple variables.  Methods which output to a single variable should always
+return a single value.
+
+* Shortcut:  declarative binding
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/decl-bind.html :padline no
+<div id="ex6"> (ref:root)
+  X: <input type="text" data-bind="{mkview: hd.Edit, model: x}"/> (ref:editx)
+           &rArr; <span data-bind="{mkview: hd.Text, model: x}"></span><br/> (ref:textx)
+  Y: <input type="text" data-bind="{mkview: hd.Edit, model: y, toModel: hd.toNum()}"/> (ref:edity)
+           &rArr; <span data-bind="{mkview: hd.Text, model: y}"></span>                 (ref:texty)
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/decl-bind.js :padline no
+var model = new hd.ModelBuilder()
+    .v( 'x', 'Hello, again!' ).v( 'y', 3 ).end();
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/decl-bind.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex6' ) );
+} ); (ref:bindTo)
+#+END_SRC
+
+/Results/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/decl-bind.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/decl-bind.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This is the same as the first example, except that it uses declarative binding
+specifications.
+#+HTML: </div>
+
+** Automatic binding function
+
+By now you've probably noticed that the binding section tends to be repetitive
+and boring.  HotDrink offers two shortcuts to help alleviate this.  The first,
+shown here, is allowing binding specifications to be embedded in the HTML.
+There are two steps required for this.
+
+*** Add binding specifications
+
+The first step is to add markup in the HTML to describe how elements should be
+bound.  To indicate that you wish to bind a variable to the node for an HTML
+tag, simply add a ~data-bind~ attribute to the tag with the code for the
+binding specification.  At run-time, HotDrink will evaluate this attribute
+string as JavaScript code to take the result as the binding specification
+object.
+
+Note, however, one slight change to this binding specification.  In previous
+examples our view object was a view adapter which encapsulated some DOM node
+in the tree.  When you embed a binding specification in the HTML, HotDrink
+assumes that a view adapter needs to be created for the DOM node.  Thus, it
+looks for an attribute named "~mkview~".  This should be a constructor or
+factory function which takes a single DOM node parameter.  HotDrink will use
+this constructor or factory to create the view object, like so.
+
+#+BEGIN_SRC js
+specification.view = new specification.mkview( domNode );
+#+END_SRC
+
+Also notice that, in the binding specification, you may refer to the variable
+by it's name in the model; e.g., the binding specification in [[(editx)][line (editx)]] of
+the view section says "~target: x~" instead of "~target: rt.model.x~".
+HotDrink will attempt to look up any variables referenced in the model you
+pass to the binding function (see below); if it cannot find it in the model,
+it will treat it as a global variable.
+
+*** Call the binding function
+
+The second step is to call the HotDrink function to performs the binding.  You
+can do this as follows.
+
+#+BEGIN_SRC js
+hd.performDeclaredBindings( mod, document.getElementById( 'ex6' ),  );
+#+END_SRC
+
+This function takes two parameters: a model to use, and a DOM node at which to
+start searching.  This function will search the DOM node passed to it and any
+DOM nodes under it for elements with a ~data-bind~ attribute.  When it finds
+one, it evaluate the binding specification as described above and then pass it
+to ~hd.bind~.
+
+In the example above, HotDrink would examine all tags contained by the ~<div>~
+tag in [[(root)][line (root)]] of the view.  It would evaluate the binding specifications
+for each of the four tags with ~data-bind~ attributes.  Then it will attempt
+to bind according to each of those specifications.
+
+The second parameter is optional; it defaults to ~document.body~ so that the
+entire document will be searched.  Note, however, that this could cause
+problems if you are binding different models to different parts of the
+document (for example, as we are in this document).
+
+As with manual binding, you must ensure that the nodes involved have been
+added to the DOM /before/ calling ~performDeclaredBindings~; therefore, it is
+advised to use the ~window.onload~ event or some alternative method of
+executing code after the DOM is fully ready.
+
+* Shortcut: binding specification factories
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/fact-bind.html :padline no
+<div id="ex7"> (ref:root)
+  X: <input type="text" data-bind="hd.edit( x )"/> (ref:editx)
+           &rArr; <span data-bind="hd.text( x )"></span><br/> (ref:textx)
+  Y: <input type="text" data-bind="hd.num( y )"/> (ref:edity)
+           &rArr; <span data-bind="hd.text( y )"></span>                 (ref:texty)
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/fact-bind.js :padline no
+var model = new hd.ModelBuilder()
+    .v( 'x', 'Hello, again!' ).v( 'y', 3 ).end();
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/fact-bind.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex7' ) );
+} ); (ref:bindTo)
+#+END_SRC
+
+/Results/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/fact-bind.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/fact-bind.js html
+#+HTML: })()
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This is the same as the previous example, except the binding specification
+objects are created using factory functions.
+#+HTML: </div>
+
+** Factory functions
+
+Binding specification objects tend to be lengthy and follow the same basic
+patterns.  Since the ~data-bind~ attribute is simply evaluated as JavaScript
+code, we can use any JavaScript code we want to create these objects --- e.g.,
+call a factory function to create the object for us.
+
+HotDrink provides several factory functions for creating these objects.  There
+is nothing special about these factory functions, and you are encouraged to
+make your own.  For example, the function ~hd.edit~ looks basically like the
+following:
+
+#+BEGIN_SRC js
+hd.edit = function( model, toView, toModel ) {
+  return {mkview:  hd.Edit,
+          model:   model,
+          toView:  toView,
+          toModel: toModel
+         };
+}
+#+END_SRC
+
+A full list of the factory functions can be found in the [[file:binding.org][Advanced Binding
+Concepts]] how-to, but for now we point out the following three:
+
+1. The ~hd.edit~ factory creates the binding specification for a text edit
+   box.
+2. The ~hd.num~ factory also creates a specification for a text edit box,
+   but the value is converted to a number before passing it to the model.
+   Note that this factory takes a second optional argument which is used to
+   specify the number of digits after the decimal point.
+3. The ~hd.text~ factory creates the binding specification for replacing the
+   contents of a tag with the value of a variable.
+
+* Shortcut: equations
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/eq.html :padline no
+<table style="text-align: right" id="ex8">
+  <tr><td>
+    Account Balance: <input type="text" data-bind="hd.num( balance, 2 )"/><br/>
+    Minimum Percentage: <input type="text" data-bind="hd.num( min_rate, 3 )"/><br/>
+    Minimum Payment: <input type="text" data-bind="hd.num( min_pay, 2 )"/><br/>
+    <hr/>
+    Payment Made: <input type="text" data-bind="hd.num( pay, 2 )"/>
+  </td></tr>
+</table>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/eq.js :padline no
+var model = new hd.ModelBuilder()
+  .vs( 'balance, min_rate, min_pay, pay', {balance: 4000, min_rate: 6.125} )
+  .equation( "min_pay == balance * min_rate / 100" )
+  .equation( "pay >= min_pay" )
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex8' ) );
+} );
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/eq.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/eq.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+In this example we can calculate the minimum payment required on an account
+balance based on a given percentage of the balance.  We can also specify the
+actual payment made, though it must be higher than the minimum.
+#+HTML: </div>
+
+** Allowable equations
+
+HotDrink is /not/ a program for solving mathematical equations.  However,
+simple equations like the ones in this example are common and are not hard to
+solve.  Therefore, as a convenience, HotDrink provides this shortcut method
+for creating constraints from /simple/ equations.
+
+The equations which HotDrink can enforce are those in which (1) no variable
+appears in the equation more than once, and (2) the only operations are add
+(~+~), subtract (~-~), multiply (~*~), and divide (~/~).  This means, e.g., no
+exponents, no square roots, etc.
+
+Note that, despite the name, the ~equation~ member function can also parse
+inequalities.  Thus, the allowable comparison operators in an equation are
+~==~, ~<=~, and ~>=~.
+
+Examples of valid equations:
+
+- ~width == right - left~
+- ~aspect == width / height~
+- ~surface == (2*width + 2*length) * height~
+
+Examples of invalid equations:
+
+- ~perimeter = width + height + width + height~
+- ~area == 3.14*radius^2~
+- ~side == sqrt(area)~
+
+** Implementation
+
+HotDrink implements these equations by parsing them and then, for each
+variable, constructing a function which solves for that variable.  Each of
+these functions becomes a method.  Thus, the constraint will have as many
+methods as there are variables, with each method updating exactly one
+variable.
+
+To be clear, the ~equation~ function's only advantage is that it saves you
+some typing; in the end you still get a regular constraint.  Therefore, in the
+example from section [[*Constraints and methods]], replacing the constraint
+specification with ~equation( "profit == income - expenses" )~ would result in
+the /exact/ same constraint.
+
+If, for any method, the solution involves a division by zero, then the
+variable will not be updated and the constraint will not be satisfied.
+
+As you probably expect by now, the ~equation~ member function returns the
+builder.  It can be abbreviated ~eq~.

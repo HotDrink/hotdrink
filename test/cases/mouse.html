@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      {
+        var model = new hd.ModelBuilder()
+            .v( 'x', {x: 0, y: 0} )
+            .end();
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model );
+          hd.bind( {view: hd.mousePosition(),
+                    model: model.x
+                   }
+                 );
+        } );
+      }
+    </script>
+    <style type="text/css">
+      span.silly { background: #def; border: 1px solid #080; padding: 2px }
+    </style>
+  </head>
+  <body>
+    <span class="silly" data-bind="{mkview: hd.Position, model: x, toView: [hd.offset( 20, 18 ), hd.delay( 300 )]}">Me too!</span>
+    <span class="silly" data-bind="{mkview: hd.Position, model: x, toView: hd.offset( 20, -6 )}">Look at me!</span>
+  </body>
+</html>

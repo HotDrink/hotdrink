@@ -1,0 +1,71 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <style type="text/css">
+      input { background: #ffe; }
+      .source { background: #fff; }
+    </style>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      {
+        var model = new hd.ModelBuilder()
+            .variables( {a: 0, b: 0, c: 0, d: 0} )
+
+            .constraint( 'a, b, c' )
+            .method( 'b, c -> a',
+                     function( b, c ) {
+                       return b + c + 1;
+                     }
+                   )
+            .method( 'a -> b, c',
+                     function( a ) {
+                       return [a + 1, a + 2];
+                     }
+                   )
+
+            .constraint( 'c, d' )
+            .method( 'c -> d',
+                     function( c ) {
+                       return c + 1;
+                     }
+                   )
+            .method( 'd -> c',
+                     function( d ) {
+                       return d + 1;
+                     }
+                   )
+
+            .end();
+
+        var system = new hd.ConstraintSystem();
+        system.addComponent( model );
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model );
+        } );
+      }
+    </script>
+  </head>
+  <body>
+    <p>
+      Perform topological sorting of priorities.<br/>
+      m1: &nbsp; (a &rarr; b, c); &nbsp; (b, c &rarr; a)<br/>
+      m2: &nbsp; (c &rarr; d) ; &nbsp; (d &rarr; c) <br/>
+      (Edit D, A, B)
+    </p>
+    <table>
+      <tr>
+        <td rowspan="2">A:</td>
+        <td rowspan="2"><input type="text" data-bind="hd.numVar( a )"/></td>
+        <td>B:</td>
+        <td><input type="text" data-bind="hd.numVar( b )"/></td>
+      </tr>
+      <tr>
+        <td>C:</td>
+        <td><input type="text" data-bind="hd.numVar( c )"/></td>
+        <td>D:</td>
+        <td><input type="text" data-bind="hd.numVar( d )"/></td>
+      </tr>
+    </table>
+  </body>
+</html>

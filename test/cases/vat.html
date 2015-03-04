@@ -1,0 +1,89 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <style type="text/css">
+      input { background: #ffe; }
+      .source  { background: #fff; }
+    </style>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      function product( a, b ) {
+        return a*b;
+      }
+      function quotient( a, b ) {
+        return b == 0 ? 0 : a/b;
+      }
+      function sum( a, b ) {
+        return a + b;
+      }
+      function difference( a, b ) {
+        return a - b;
+      }
+
+      var model = new hd.ModelBuilder()
+          .variables( {pprice: 100, prate: 0.05, ptax: undefined,
+                       sprice: 150, srate: 0.06, stax: undefined, diff: undefined} )
+
+          .constraint( 'pprice, prate, ptax' )
+            .method( 'pprice, prate -> ptax', product )
+            .method( 'ptax, pprice -> prate', quotient )
+            .method( 'ptax, prate -> pprice', quotient )
+
+          .constraint( 'sprice, srate, stax' )
+            .method( 'sprice, srate -> stax', product )
+            .method( 'stax, sprice -> srate', quotient )
+            .method( 'stax, srate -> sprice', quotient )
+
+          .constraint( 'ptax, stax, diff' )
+            .method( 'ptax, diff -> stax', sum )
+            .method( 'stax, ptax -> diff', difference )
+            .method( 'stax, diff -> ptax', difference )
+
+          .end();
+
+      var system = new hd.ConstraintSystem();
+      system.addComponent( model );
+
+      window.addEventListener( 'load', function() {
+        hd.performDeclaredBindings( model );
+      } );
+    </script>
+  </head>
+  <body>
+    <p>
+      Form for calculating value-added-tax.
+    </p>
+    <table>
+      <tr>
+        <td colspan="6"><b>Purchase</b></td>
+      </tr>
+      <tr>
+        <td>Price:</td>
+        <td><input type="text" data-bind="hd.numVar( pprice, 2 )"/></td>
+        <td>Tax Rate:</td>
+        <td><input type="text" data-bind="hd.numVar( prate, 0, hd.scale(100), hd.scale(0.01) )"/></td>
+        <td>Tax Paid:</td>
+        <td><input type="text" data-bind="hd.numVar( ptax, 2 )"/></td>
+      </tr>
+      <tr>
+        <td colspan="6"><b>Sell</b></td>
+      </tr>
+      <tr>
+        <td>Price:</td>
+        <td><input type="text" data-bind="hd.numVar( sprice, 2 )"/></td>
+        <td>Tax Rate:</td>
+        <td><input type="text" data-bind="hd.numVar( srate, 0, hd.scale(100), hd.scale(0.01) )"/></td>
+        <td>Tax Owed:</td>
+        <td><input type="text" data-bind="hd.numVar( stax, 2 )"/></td>
+      </tr>
+      <tr>
+        <td colspan="6">&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="4">&nbsp;</td>
+        <td>VAT Owed:</td>
+        <td><input type="text" data-bind="hd.numVar( diff, 2 )"/></td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,46 @@
+#+TITLE: Welcome to HotDrink
+#+LANGUAGE:  en
+#+OPTIONS: H:2 author:nil creator:nil
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
+
+* About this documentation
+
+The purpose of this document collection is to explain how to use the HotDrink
+library.  It is not intended to showcase HotDrink, but rather to lay the
+groundwork for a solid grasp of how to get the most out of the library.  Thus,
+instead of beginning with the most interesting features of HotDrink, it begins
+with fundamental concepts and works its way up from there.
+
+Most chapters in these documents begin with a working example which
+illustrates the new concepts of that chapter.  The rest of the chapter
+explains why the example works, and gives any further information needed.
+
+We use software to inject the source code of the example directly into the
+how-to documents.  Thus, you can see the results of the example code
+together with the code itself.  Note, however, that these examples will only
+work if the file [[file:hotdrink.min.js][=hotdrink.min.js=]] is in the same directory as the how-to.
+
+* List of documents
+
+1. [[file:intro.org][Introduction to HotDrink]] --- This document explains the basic concepts
+   behind HotDrink and how to include it in your web application.  You should
+   start here.
+
+2. [[file:basics.org][Basic HotDrink Usage]] --- This document explains the basics of using
+   HotDrink:  specifying a constraint system and binding to the view.  You
+   should read this second.
+
+3. [[file:binding.org][Advanced Binding Concepts]] --- This document goes into the binding system in
+   more depth:  customizing binders and creating your own.  Read this if you
+   need more control over how your data is displayed in the web page.
+
+4. [[file:async.org][Asynchronous Methods]] --- This document explains HotDrink's support for
+   asynchronous methods and how it can respond to unused values.  Read this if
+   you need to write methods which run asynchronously or perform asynchronous
+   server calls, or methods which may not use all of their inputs.
+
+5. [[file:program.org][Programming Guide]] --- This document explains programming idioms used by
+   HotDrink and gets you set up to write your own translators, view adapters
+   and asynchronous methods.  You should read this last, and only if the
+   default mechanisms provided by HotDrink are not cutting it for you.

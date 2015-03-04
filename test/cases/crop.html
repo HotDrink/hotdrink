@@ -1,0 +1,101 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <style type="text/css">
+      .derived { background: #ffe; }
+    </style>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      {
+        var model = new hd.ModelBuilder()
+            .variables( {left: 0, top: 0, right: undefined, bottom: undefined,
+                         width: 200, height: 200, aspect: undefined} )
+
+            .constraint( 'left, right, width' )
+            .method( 'right, width -> left',
+                     function( right, width ) {
+                       return right - width;
+                     }
+                   )
+            .method( 'left, width -> right',
+                     function( left, width ) {
+                       return left + width;
+                     }
+                   )
+            .method( 'left, right -> width',
+                     function( left, right ) {
+                       return right - left;
+                     }
+                   )
+
+            .constraint( 'top, bottom, height' )
+            .method( 'bottom, height -> top',
+                     function( bottom, height ) {
+                       return bottom - height;
+                     }
+                   )
+            .method( 'top, height -> bottom',
+                     function( top, height ) {
+                       return top + height;
+                     }
+                   )
+            .method( 'top, bottom -> height',
+                     function( top, bottom ) {
+                       return bottom - top;
+                     }
+                   )
+
+            .constraint( 'height, width, aspect' )
+            .method( 'height, aspect -> width',
+                     function( height, aspect ) {
+                       return height * aspect;
+                     }
+                   )
+            .method( 'width, aspect -> height',
+                     function( width, aspect ) {
+                       return width / aspect;
+                     }
+                   )
+            .method( 'width, height -> aspect',
+                     function( width, height ) {
+                       return width / height;
+                     }
+                   )
+
+            .end();
+
+        var system = new hd.ConstraintSystem();
+        system.addComponent( model );
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model );
+        } );
+      }
+    </script>
+  </head>
+  <body>
+    <p>
+      Form for specifying the cropping region of an image.
+    </p>
+    <table>
+      <tr>
+        <td>Left:</td>
+        <td><input type="text" data-bind="hd.num( left ), hd.cssClass( left )"/></td>
+        <td>Right:</td>
+        <td><input type="text" data-bind="hd.num( right ), hd.cssClass( right )"/></td>
+        <td>Width:</td>
+        <td><input type="text" data-bind="hd.num( width ), hd.cssClass( width )"/></td>
+        <td rowspan="2">Aspect:</td>
+        <td rowspan="2"><input type="text" data-bind="hd.num( aspect ), hd.cssClass( aspect )"/></td>
+      </tr>
+      <tr>
+        <td>Top:</td>
+        <td><input type="text" data-bind="hd.num( top ), hd.cssClass( top )"/></td>
+        <td>Bottom:</td>
+        <td><input type="text" data-bind="hd.num( bottom ), hd.cssClass( bottom )"/></td>
+        <td>Height:</td>
+        <td><input type="text" data-bind="hd.num( height ), hd.cssClass( height )"/></td>
+      </tr>
+    </table>
+  </body>
+</html>

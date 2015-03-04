@@ -1,0 +1,1085 @@
+#+TITLE: Programming Guide
+#+LANGUAGE: en
+#+OPTIONS: H:3 author:nil creator:nil
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css"/>
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
+
+* Utility: an HTML JavaScript Console
+
+We wish to start by illustrating a few simple classes and interfaces used in
+HotDrink.  Unfortunately, a web page does not offer a particularly good
+environment for demonstrating simple code.  Thus, we compensate with a simple
+"HTML Console" which allows simple string I/O within a web page.  This code is
+not relevant to HotDrink itself, only to these examples.  Therefore, we
+present it once (in case your interested) and then assume it is available from
+here on.
+
+The ~HtmlConsole~ class takes an empty [[https://developer.mozilla.org/en-US/docs/Web/API/HTMLDivElement][~HTMLDivElement~]] (i.e., the DOM node
+for a ~<div>~ tag) and fills it with the HTML elements needed for the console.
+It has two public members.  The first is the ~println~ function takes a string
+and prints it on a new line in the console.  The second is the ~oninput~
+property where one can assign a callback function to be called when input is
+generated.
+
+/HTML/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/print.html :padline no
+<style type="text/css">
+  div.console {
+    width: 600px;  height: 120px;  padding: 10px; overflow: auto;
+    background: #224; color: #FFF
+  }
+  div.console div.input {
+    color: #999;
+  }
+  input[type="text"].console {
+    width: 554px; padding: 1px;
+    background: #EEF;
+  }
+  input[type="submit"].console {
+    width: 60px;
+  }
+</style>
+#+END_SRC
+
+/JavaScript/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/print.js :padline no
+function HtmlConsole( div ) {
+  var form = document.createElement( 'form' );
+  div.appendChild( form );
+
+  var console = document.createElement( 'div' );
+  console.className = "console";
+  form.appendChild( console );
+
+  var input = document.createElement( 'input' );
+  input.type = "text";
+  input.className = "console";
+  form.appendChild( input );
+
+  var go = document.createElement( 'input' );
+  go.type = "submit";
+  go.value = "Go";
+  go.className = "console";
+  form.appendChild( go );
+
+  form.onsubmit = function() {
+    this.println( input.value, 'input' );
+    if (this.oninput) {
+      this.oninput( input.value );
+    }
+    input.select();
+    return false;
+  }.bind( this );
+
+  this.console = console;
+}
+
+HtmlConsole.prototype.println = function( msg, className ) {
+  var newdiv = document.createElement( 'div' );
+  if (className) {
+    newdiv.className = className;
+  }
+  newdiv.appendChild( document.createTextNode( msg ) );
+  this.console.appendChild( newdiv );
+  this.console.scrollTop = this.console.scrollHeight - this.console.clientHeight;
+}
+#+END_SRC
+
+#+INCLUDE: tangle/print.html html
+#+HTML: <script type="text/javascript">
+#+INCLUDE: tangle/print.js html
+#+HTML: </script>
+
+* HotDrink Observable/Observer types
+
+** Observable and Observer interfaces
+
+*** The example
+
+/HTML/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/observ.html :padline no
+<div id="console1"></div>
+#+END_SRC
+
+/JavaScript/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/observ.js :padline no :noweb yes
+// Create console
+var console = new HtmlConsole( document.getElementById( 'console1' ) );
+
+<<observer>>
+
+<<observable>>
+
+<<sendNext>>
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/observ.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/observ.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+The Observable produces numbers as they are entered in the input box.  The
+Observer receives these and prints them to the console.  Values which are not
+valid numbers produce errors.  The special value "END" completes the
+Observable.
+#+HTML: </div>
+
+*** Defining the interfaces
+
+Observable and Observer are two interfaces that we use in HotDrink.  An
+interface simply defines certain member variables or functions that an object
+should have.  Note that, in JavaScript, you do not have to explicitly declare
+which interfaces your object implements; any object which has the specified
+members is said to implement the interface.
+
+An /Observable/ is largely equivalent to what is called an "event" in
+traditional event-driven programming: it represents something that may occur
+multiple times during the lifetime of the program, and allows you to register
+a callback function (in the form of an Observer) to be executed whenever it
+does.  Each time the event occurs, a single value is passed to the callback
+function to represent the event.  Thus, we may describe an Observable as
+something which produces values from time to time over its lifetime.
+
+Our implementation of observable and observer is largely inspired by
+Microsoft's [[https://rx.codeplex.com/][reactive extensions]].  Unlike a traditional event, Observables
+actually have three associated callbacks: one for normal event values, one for
+error values indicating something has gone wrong, and one without a value
+indicating no more values will be produced.  An /Observer/ is any object which
+provides these three callback functions; thus, an Observer must have the
+following three properties.
+
+- ~onNext( value )~ :: function called on normal event; takes value associated
+     with the event
+
+- ~onError( error )~ :: function called when error occurs; takes value
+     associated with the error
+
+- ~onCompleted()~ :: function called when no more events can occur
+
+Here is the JavaScript excerpt which creates an object implementing the
+Observer interface.  For this simple example, the three callbacks do nothing
+more than print the argument to the HTML console.  Again, notice that the object
+may contain fields beyond those required by the Observer interface.
+
+#+NAME: observer
+#+BEGIN_SRC js
+// Observer object
+var observer = {
+  id: 'Observer',
+  onNext:    function( v ) { console.println( '[' + this.id + '] value: ' + v );    },
+  onError:   function( e ) { console.println( '[' + this.id + '] error: ' + e );    },
+  onCompleted:  function() { console.println( '[' + this.id + '] complete' );       }
+};
+#+END_SRC
+
+An Observer must be registered with an Observable in order for its callbacks
+to be invoked by that Observer.  We say that the Observer /subscribes/ to the
+Observable.  An Observable is any object which allows observers to subscribe
+and unsubscribe; thus, an Observable must have the following two properties.
+
+- ~addObserver( observer )~ :: function which subscribes the observer to this
+     observable
+
+- ~removeObserver( observer )~ :: function which unsubscribes the observer from
+     this observable
+
+*** The ~BasicObservable~ type
+
+As we said before, any JavaScript object can be Observable as long as it
+contains the two functions defined in the interface.  However, in order to
+simplify the process of making Observable types, we have created a simple,
+straightforward implementation named ~hd.BasicObservable~.  In the following
+excerpt we create a new instance and subscribe the observer to it.
+
+#+NAME: observable
+#+BEGIN_SRC js
+// Observable object
+var observable = new hd.BasicObservable();
+
+// Subscribe
+observable.addObserver( observer );
+#+END_SRC
+
+The ~BasicObservable~ type keeps an array of Observers which have subscribed
+to the object in a property named ~observers~; it is recommended that you not
+modify this field directly, but use ~addObserver~ and ~removeObserver~
+instead.
+
+In addition, the ~BasicObservable~ type has member functions ~sendNext~,
+~sendError~, and ~sendCompleted~ which can be used to invoke the corresponding
+callbacks of all subscribed Observers.
+
+- ~sendNext( value )~ :: call the ~onNext~ function of all subscribers with
+     the given event value
+
+- ~sendError( error )~ :: call the ~onError~ function of all subscribers with
+     the given error value
+
+- ~sendCompleted()~ :: call the ~onCompleted~ function of all subscribers;
+     also unsubscribes all observers so that they will not receive any further
+     messages
+
+The following excerpt uses these functions to invoke callbacks when
+it receives input from the console.
+
+#+NAME: sendNext
+#+BEGIN_SRC js
+// Console input triggers observable
+console.oninput = function( value ) {
+  if (value == "END") {
+    observable.sendCompleted();
+  }
+  else {
+    var n = Number( value );
+    if (isNaN( n )) {
+      observable.sendError( 'Not a number' );
+    }
+    else {
+      observable.sendNext( n );
+    }
+  }
+}
+#+END_SRC
+
+** Custom Observable and observer types
+
+*** The example
+
+/HTML/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/type.html :padline no
+<div id="console2"></div>
+#+END_SRC
+
+/JavaScript/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/type.js :padline no :noweb yes
+var console = new HtmlConsole( document.getElementById( 'console2' ) );
+
+<<observable-type>>
+
+/*--------------------------------------------------------------------
+ ,* Observable instance
+ ,*/
+
+var observable = new NumberObservable();
+
+console.oninput = observable.processInput.bind( observable );
+
+/*--------------------------------------------------------------------
+ ,* An observer type
+ ,*/
+
+// Constructor
+NumberObserver = function NumberObserver( id, console ) {
+  this.id = id;
+  this.console = console;
+}
+
+// onNext callback
+NumberObserver.prototype.onNext = function( value ) {
+  this.console.println( '[' + this.id + '] number: ' + value );
+}
+
+// onError callback
+NumberObserver.prototype.onError = function( error ) {
+  this.console.println( '[' + this.id + '] error: ' + error );
+}
+
+// onCompleted callback
+NumberObserver.prototype.onCompleted = function() {
+  this.console.println( '[' + this.id + '] complete' );
+}
+
+/*--------------------------------------------------------------------
+ ,* Observer instances
+ ,*/
+
+var observerA = new NumberObserver( 'Observer-A', console );
+observable.addObserver( observerA );
+
+var observerB = new NumberObserver( 'Observer-B', console );
+observable.addObserver( observerB );
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/type.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/type.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example is the same as the first (albeit with two observers instead of
+one).  The difference in the code is that we have created our own types to
+encapsulate details and improve abstraction.
+#+HTML: </div>
+
+*** Creating ~BasicObservable~ subtypes
+
+The recommended way to create your own observable type is to make a subtype of
+~BasicObservable~.  This will give you all the ~BasicObservable~ methods we've
+discussed so far: ~addObserver~, ~removeObserver~, ~sendNext~, ~sendError~,
+and ~sendCompleted~.  The only member of ~BasicObservable~ we haven't
+discussed is the ~observers~ property, which used to store all subscribed
+observers.  It is recommended that you not access this field directly, but use
+~addObserver~ and ~removeObserver~ instead.
+
+The following excerpt creates a type named ~NumberObservable~ which triggers
+observers' callbacks when its ~processInput~ method is called.  Note that the
+~BasicObservable~ constructor does nothing, so there is no need to call it in
+your own constructor.
+
+#+NAME: observable-type
+#+BEGIN_SRC js
+/*--------------------------------------------------------------------
+ ,* An observable type
+ ,*/
+
+// Constructor
+NumberObservable = function NumberObservable() { }
+
+// Inheritance
+NumberObservable.prototype = Object.create( hd.BasicObservable.prototype );
+
+// Convert string to number
+NumberObservable.prototype.processInput = function( value ) {
+  if (value === "END") {
+    this.sendCompleted();
+  }
+  else {
+    var n = Number( value );
+    if (isNaN( n )) {
+      this.sendError( 'Not a number' );
+    }
+    else {
+      this.sendNext( n );
+    }
+  }
+}
+#+END_SRC
+
+*** Creating Observer types
+
+HotDrink does not provide any base implementation of the Observer interface
+because there is no prescribed behavior for an observer.  Simply write your
+type to include ~onNext~, ~onError~, and ~onCompleted~.  (They can be empty
+functions if needed.)
+
+** Proxy observers
+
+*** The example
+/HTML/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/proxy-1.html :padline no
+<div id="console3"></div>
+#+END_SRC
+
+/JavaScript/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/proxy-1.js :padline no :noweb yes
+/*--------------------------------------------------------------------
+ * Observable instance and console
+ */
+
+var observable = new NumberObservable();
+
+var console = new HtmlConsole( document.getElementById( 'console3' ) );
+console.oninput = observable.processInput.bind( observable );
+
+/*--------------------------------------------------------------------
+ * Proxy observers
+ */
+
+<<object-proxy>>
+
+<<global-function>>
+#+END_SRC
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/proxy-1.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/proxy-1.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example has the same behavior as past examples.  What is interesting
+about this example is that it uses an object that does not implement the
+Observer interface as well as a global function by wrapping them in proxy
+observers.
+#+HTML: </div>
+
+*** Using ~ProxyObserver~ wrappers
+
+Sometimes it may not be convenient to force your object to meet the exact
+interface of an observer.  For such cases, HotDrink provides a special
+wrapper: the ~hd.ProxyObserver~ type.  The constructor for ~ProxyObserver~
+looks like so:
+
+- ~ProxyObserver( object, next_cb, error_cb, completed_cb )~ :: initialize an
+     observer that will invoke the given callback functions on the given
+     object
+
+A ~ProxyObserver~ is initialized by providing another object, along with the
+callback functions that should be invoked on the object when events occur.
+The ~ProxyObserver~ will implement the ~Observer~ interface by invoking the
+corresponding callback function with which you initialized it.  In this
+excerpt, we create a proxy observer for an object by using its ~good~ method
+as ~onNext~ and is ~bad~ method as ~onError~.
+
+#+NAME: object-proxy
+#+BEGIN_SRC js
+// Just an object; not an observer
+var object = {
+  id: 'Object',
+  good: function( v ) { console.println( '[' + this.id + '] good: ' + v ); },
+  bad:  function( e ) { console.println( '[' + this.id + '] bad:  ' + e ); },
+};
+
+// Create proxy observer for object
+var proxy = new hd.ProxyObserver( object, object.good, object.bad, null );
+
+// Subscribe proxy
+observable.addObserver( proxy );
+#+END_SRC
+
+Note that any of the callback function parameters may be ~null~, indicating
+that no function should be called.  In the above excerpt, we use ~null~ to
+indicate that there is no function to be called for ~onCompleted~.
+Furthermore, the object itself may be ~null~, indicating that the callback
+functions should be executed as global functions instead of being invoked on
+an object.  This can be seen in the next excerpt in which we use a proxy to
+call a global function as ~onCompleted~.
+
+#+NAME: global-function
+#+BEGIN_SRC js
+function warn() { console.println( "No more input!" ); }
+
+// Create proxy for global function
+observable.addObserver( new hd.ProxyObserver( null, null, null, warn ) );
+#+END_SRC
+
+** Observing multiple Observables
+
+*** The example
+
+/HTML/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/proxy-2.html :padline no
+<div>
+  First console:
+  <button id="happysad">Remove happy/sad</button>
+  <button id="all">Remove all</button>
+</div>
+<div id="console4"></div>
+<div style="margin-top:1em">Second console:</div>
+<div id="console5"></div>
+#+END_SRC
+
+/JavaScript/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/proxy-2.js :padline no :noweb yes
+/*--------------------------------------------------------------------
+ * Observables and consoles
+ */
+observableA = new NumberObservable();
+consoleA = new HtmlConsole( document.getElementById( 'console4' ) );
+consoleA.oninput = observableA.processInput.bind( observableA );
+
+observableB = new NumberObservable();
+consoleB = new HtmlConsole( document.getElementById( 'console5' ) );
+consoleB.oninput = observableB.processInput.bind( observableB );
+
+/*--------------------------------------------------------------------
+ * An observer with extra methods
+ */
+var observer = new NumberObserver( 'Multi-Observer', consoleA );
+
+<<extra-parameter>>
+
+observer.happy = function( v, console ) {
+  console.println( '[' + this.id + '] happy: ' + v );
+}
+
+observer.sad = function( e, console ) {
+  console.println( '[' + this.id + '] sad:   ' + e );
+}
+
+/*--------------------------------------------------------------------
+ * Observer subscriptions
+ */
+
+// A regular (no-proxy) subscription to observableA
+observableA.addObserver( observer );
+
+<<console-tag>>
+
+<<implicit-proxy>>
+
+<<happysad-button>>
+
+<<all-button>>
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/proxy-2.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/proxy-2.js html
+#+HTML: })();
+#+HTML: </script>
+
+*** Extra parameters for callbacks
+
+What if your Observer needs a little extra information about the Observable it
+is responding to?  Of course, every JavaScript programmer should know how to
+create /closures/ --- functions that capture elements of the environment in
+which they were defined.  However, it can be more convenient to simply pass
+any extra information needed as a parameter to the function: then you can
+reuse the same function many times instead of creating distinct closures for
+each one.
+
+The ~ProxyObserver~ type supports this approach through an overloaded
+constructor.
+
+- ~ProxyObserver( object, next_cb, error_cb, completed_cb, tag )~ ::
+     initialize an observer that will invoke the given callback functions on
+     the given object, also passing the given tag
+
+Whatever value you provide as the ~tag~ will be passed to all three callbacks
+as an additional parameter.  Notice how, in the example, we wrote callbacks
+that took the console to which output was to be written as a parameter.
+
+#+NAME: extra-parameter
+#+BEGIN_SRC js
+observer.good = function( v, console ) {
+  console.println( '[' + this.id + '] good:  ' + v );
+}
+
+observer.bad = function( e, console ) {
+  console.println( '[' + this.id + '] bad:   ' + e );
+}
+
+observer.done = function( console ) {
+  console.println( '[' + this.id + '] done   ' );
+}
+#+END_SRC
+
+Then, when we created our proxy observers, we passed the console to be used as
+the ~tag~.
+
+#+NAME: console-tag
+#+BEGIN_SRC js
+// Subscribe proxy to obeservableA
+observableA.addObserver(
+  new hd.ProxyObserver( observer, observer.good, observer.bad, observer.done, consoleA )
+);
+
+// Subscribe proxy to observableB
+observableB.addObserver(
+  new hd.ProxyObserver( observer, observer.good, observer.bad, observer.done, consoleB )
+);
+#+END_SRC
+
+In this way, we were able to subscribe our observer to two different
+Observables, and have it react differently to each one.
+
+*** ~BasicObservable~ shortcuts for ~ProxyObserver~
+
+The ~BasicObservable~ type was written with the ~ProxyObserver~ type in mind.
+This can be seen in two ways.  First, the ~addObserver~ function has an
+overloaded version which will create a ~ProxyObserver~ for you.
+
+- ~addObserver( object, next_cb, error_cb, completed_cb, tag )~ :: creates a
+     ~ProxyObserver~ using the given object and callback functions, then
+     subscribes that proxy to this observer
+
+The ~addObserver~ function in a ~BasicObservable~ has a return value: the
+object which was subscribed.  When you pass an Observer, you simply get the
+same Observer back; but, when you pass the parameters to a ~ProxyObserver~,
+you get back the ~ProxyObserver~ it created for you.  You may use this later
+if you want to unsubscribe.  The following excerpt uses ~addObserver~ to
+implicitly create a ~ProxyObserver~, and stores the observer in a variable to
+use later.
+
+#+NAME: implicit-proxy
+#+BEGIN_SRC js
+// Subscribe another proxy to observableA -- and keep the proxy
+var happysadproxy =
+  observableA.addObserver( observer, observer.happy, observer.sad, null, consoleA );
+#+END_SRC
+
+Note that you may subscribe the same object to the same observable multiple
+times by creating a separate proxy for each subscription.  This is not
+ambiguous: each subscription is represented by a distinct object.  You can
+cancel a single subscription by passing ~removeObserver~ the proxy for the
+subscription.  You can see this with the button that removes just the proxy
+that uses ~happy~ and ~sad~ functions as callbacks.
+
+#+NAME: happysad-button
+#+BEGIN_SRC js
+// Remove just the one proxy
+document.getElementById( 'happysad' ).onclick = function() {
+  observableA.removeObserver( happysadproxy );
+}
+#+END_SRC
+
+However, the second way in which ~BasicObservable~ reacts specially to
+~ProxyObserver~ objects is this: you may pass any object to the
+~removeObserver~ function, and it will unsubscribe any ~ProxyObserver~s
+which target that object.  Note that if you have multiple proxies targeting
+the same object, this will unsubscribe /all/ of them.  You can see this with
+the button that removes all callbacks for the observer.
+
+#+NAME: all-button
+#+BEGIN_SRC js
+// Remove all subscriptions for the observer
+document.getElementById( 'all' ).onclick = function() {
+  observableA.removeObserver( observer );
+}
+#+END_SRC
+
+Note that clicking this button removes every possible subscription the object
+has to the observable: any subscriptions represented by proxies, as well as
+the subscription in which the object itself is the observer.
+
+* Extensions
+
+** Basic extensions
+
+*** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/extension.html :padline no :noweb yes
+<div id="extension-example">
+  <<extension-binding>>
+  <span data-bind="hd.text( x )"></span>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/extension.js :padline no
+var model = new hd.ModelBuilder().v( 'x', '0' ).end();
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/extension.js :padline no :noweb yes
+<<extension-type>>
+
+<<extension-factory>>
+
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'extension-example' ) );
+} )
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/extension.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/extension.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+The extension we use for this edit box strips out any characters which are not
+digits from the input.  Try entering "1a2b3c" and see the result.
+#+HTML: </div>
+
+*** Writing extensions
+
+We described the basic idea behind extensions in the [[file:binding.org][Advanced Binding Concepts]]
+document.  Now it should be clear that an extension is simply an object which
+is both an Observer and an Observable: it takes a value from the previous
+observable, and passes it on to the next observer.
+
+In order to make it easier to write your own extensions, we have provided the
+~hd.Extension~ type.  ~Extension~ is simply a ~BasicObservable~ which
+implements ~onNext~ using ~sendNext~, ~onError~ using ~sendError~, and
+~onCompleted~ using ~sendCompleted~.  Thus, an ~Extension~ simply passes on
+the value it receives with no alteration.  You can make your own extension by
+overriding the desired functions.
+
+Here's an example of an extension that removes any non-digit characters from
+the string it receives.
+
+#+NAME: extension-type
+#+BEGIN_SRC js
+// Constructor: nothing to do
+function DigitsOnly() { }
+
+// Use Extension as prototype
+DigitsOnly.prototype = Object.create( hd.Extension.prototype );
+
+// Override onNext to remove non-digit characters
+DigitsOnly.prototype.onNext = function( value ) {
+  this.sendNext( value.replace( /\D/g, '' ) );
+}
+#+END_SRC
+
+Notice that we did not implement ~onError~ or ~onCompleted~; the
+implementation we inherited from ~Extension~ (simply pass along the value
+received) was all we needed for those.
+
+To use this extension in your binding, simply create a new ~DigitsOnly~ object
+and provide it in the appropriate spot.  Here we use the extension in an
+~edit~ binding.
+
+#+BEGIN_SRC html
+<input type="text" data-bind="hd.edit( x, null, new DigitsOnly() )"/>
+#+END_SRC
+
+This binding will take whatever value the user enters, remove any non-digit
+characters, then translate the resulting string into a number.
+
+As an alternative approach, you might create a factory function for your
+extension type.  (This is what HotDrink does for its extensions.)
+
+#+NAME: extension-factory
+#+BEGIN_SRC js
+// Factory function for DigitsOnly extension
+digits = function digits() { return new DigitsOnly(); }
+#+END_SRC
+
+This simply makes the resulting binding expression a little bit easier to read.
+
+#+NAME: extension-binding
+#+BEGIN_SRC html
+<input type="text" data-bind="hd.edit( x, null, digits() )"/>
+#+END_SRC
+
+*** Review: the ~hd.fn~ extension
+
+Remember that, for simple translations like this, really all you need is
+the ~hd.fn~ extension: just create the function that translates the value, and
+pass it to ~hd.fn~ to get an extension.  You can still create factory
+functions to make your binding specifications short and easy to read.  For
+example, here's how to rewrite the ~digits~ extension using the ~hd.fn~
+extension.
+
+#+BEGIN_SRC js
+function digitsOnly( value ) {
+  return value.replace( /\D/g, '' );
+}
+
+function digits() {
+  return hd.fn( digitsOnly );
+}
+#+END_SRC
+
+** Fancier extensions
+
+*** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/extension-2.html :padline no :noweb yes
+<div id="extension-example-2">
+  <style type="text/css" scoped>
+    .error { color: #900; }
+  </style>
+  <span class="error" data-bind="hd.text( x.error )"></span><br/>
+  <input type="text" data-bind="hd.editVar( x, null, [hd.toNum(), new DelayErrors()] )"/>
+  <span data-bind="hd.text( x )"></span>
+</div>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/extension-2.js :padline no
+var model = new hd.ModelBuilder().v( 'x', '0' ).end();
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/extension-2.js :padline no :noweb yes
+/*--------------------------------------------------------------------
+ * Extension type
+ */
+
+// Constructor
+function DelayErrors() {
+  this.timeout = null;
+}
+
+// Inheritance
+DelayErrors.prototype = Object.create( hd.Extension.prototype );
+
+// Good value clears any delayed errors
+DelayErrors.prototype.onNext = function( value ) {
+  if (this.timeout) {
+    window.clearTimeout( this.timeout );
+    this.timeout = null;
+  }
+  this.sendNext( value );
+}
+
+// Delay error messages three seconds
+DelayErrors.prototype.onError = function( error ) {
+  if (this.timeout) {
+    window.clearTimeout( this.timeout );
+  }
+  this.timeout = window.setTimeout( this.sendError.bind( this, error ), 3000 );
+}
+
+// Completed clears any delayed errors
+DelayErrors.prototype.onCompleted = function() {
+  if (this.timeout) {
+    window.clearTimeout( this.timeout );
+    this.timeout = null;
+  }
+  this.sendCompleted();
+}
+
+/*------------------------------------------------------------------*/
+
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'extension-example-2' ) );
+} )
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/extension-2.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+INCLUDE: tangle/extension-2.js html
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This extension delays any error messages for three seconds.  Notice how long
+it takes to get error messages (for invalid numbers) compared to the
+propagation of good values.
+#+HTML: </div>
+
+*** Extension possibilities
+
+By writing your own extension types you can implement functionality not
+possible with the ~hd.fn~ extension.  For example, by overriding the ~onError~
+function, you can write extensions that interact with errors.  Or, by choosing
+when to call ~sendNext~, you can make extensions which delay or even cancel
+certain values.
+
+To illustrate this, the example above defines an extension which delays error
+values for two seconds.  If the user produces another value within that time
+period, it never sends the error.
+
+Note that it is important that your extension not block or take an excessively
+long time to complete.  However extensions are well suited for asynchronous
+programming:  you do not have to send a value right away; you may schedule an
+operation that will result in sending a value later.  (In our example we
+simply use ~setTimeout~ to send the value later.)  Whenever you do send the
+value, it will simply continue on its way.
+
+* View adapters
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/slider.html :padline no
+<div id="adapter-example">
+<div id="slider" data-bind="{mkview: Slider, model: x}"></div>
+<p>Value:
+  <input type="text" data-bind="hd.num( x, 0, null, hd.fn( restrict, 0, 100 ) )"/>
+</p>
+</div>
+<script type="text/javascript">
+// Using jQuery-UI to create a slider
+$(function() { $("#slider").slider( {min: 0, max: 100, step: 1} ); });
+</script>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/slider.js :padline no
+var model = new hd.ModelBuilder().v( "x", 50 ).end();
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/slider.js :padline no :noweb yes
+/*--------------------------------------------------------------------
+ * Define the object that represents the slider.  Must be Observable
+ * and Observer.
+ */
+
+// Constructor - register callback for slider change
+function Slider( el ) {
+  this.el = el;
+  $(el).on( "slide", this.onSlide.bind( this ) );
+}
+
+// Inheritance
+Slider.prototype = Object.create( hd.BasicObservable.prototype );
+
+// When slider changes
+Slider.prototype.onSlide = function( event, ui ) {
+  <<send-next>>
+}
+
+// When variable changes
+Slider.prototype.onNext = function( value ) {
+  this.last = value;
+  <<set-slider>>
+}
+
+// Needed by Observer
+Slider.prototype.onError = function( error ) { }
+
+// Neede by Observer
+Slider.prototype.onCompleted = function() { }
+
+/*--------------------------------------------------------------------
+ * Translation function for extension
+ */
+function restrict( from, to, n ) {
+  if (n < from) { return from; }
+  if (n > to) { return to; }
+  return n;
+}
+
+// Schedule the binder
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'adapter-example' ) )
+} );
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/slider.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+INCLUDE: tangle/slider.js html
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+Here, we bind a slider and a text input to the same variable.  Notice that
+changing the slider changes the text box, and vice-versa.
+#+HTML: </div>
+
+** Writing adapters
+
+We first described view adapters in the [[file:binding.org][Advanced Binding Concepts]] document.
+It should be clear now that an adapter is an object which implements the
+Observable and/or Observer interfaces.  If your view element produces values
+which should be used to update the variable, it should be an Observable.  If
+your view element accepts updates from the variable, it should be an Observer.
+
+In the example above we define an adapter for a jQuery UI slider widget.  We
+want the slider to be used to update the variable; therefore we make the
+adapter Observable by using the ~BasicObservable~ type as a prototype and
+calling ~sendNext~ every time the slider's value changes.
+
+We also want the slider to change every time the variable changes; therefore
+we make the adapter an Observer by implementing ~onNext~, ~onError~, and
+~onCompleted~.  The ~onNext~ function updates the slider with the new value;
+the other two functions have no effect.
+
+** Beware of cycles
+
+Note that /every/ time your view adapter produces a new value with which to
+update the variable, the variable will respond by producing a new value with
+which to update the view.  This is an intentional design decision in order to
+allow the value to pass through the translators defined for the binding --- it
+may very well be that the value your adapter produces is not the same value
+that the variable is updated with.
+
+However, this design decision does present a possibility for an infinite loop
+in which the view and the view-model continually update one another.  This is
+especially a danger if updating the view causes the view to generate update
+events, as is the case with the jQuery UI slider.  In the case of the slider,
+a cycle would go like this:
+
+1. The user moves the slider to a new position --- say, 25.
+2. The slider reports that its position has been changed.
+3. The view adapter uses ~sendNext~ to report the new position.
+4. The variable is updated to 25.
+5. The variable calls the adapter's ~onNext~ to report that the variable has,
+   in fact, been set to 25.
+6. The adapter sets the slider's position to 25.
+7. The slider reports that its position has been changed.
+8. The adapter uses ~sendNext~ to report the new position.
+9. And so on, and so forth...
+
+To avoid this cycle, we add a couple of safety checks.  The first is a check
+in ~onNext~ to avoid setting the slider to the same value it currently has.
+
+#+NAME: set-slider
+#+BEGIN_SRC js
+  if ($(this.el).slider( "value" ) != value) {
+    $(this.el).slider( "value", value );
+  }
+#+END_SRC
+
+The second is a check in ~onSlide~ to avoid setting the variable to the same
+value it currently has.
+
+#+NAME: send-next
+#+BEGIN_SRC js
+  if (ui.value != this.last) {
+    this.sendNext( ui.value )
+  }
+#+END_SRC
+
+Either one of these checks is sufficient to break the cycle; however, together
+they ensure that we will never do unnecessary work by setting something to a
+value which it already has.
+
+** Side note: a range enforcing translator
+
+Finally, we draw attention to one other important detail in this example.  We
+created a translator function to ensure that the value entered in the text box
+will always be betwen zero and one hundred: the valid range of the slider.  If
+the value lies outside the valid range, it changes it either to the minimum of
+the range (if it is too low) or the maximum of the range (if it is too high).
+This enforces an invariant on the variable ~x~:  it is a number between zero
+and one hundred.
+
+Note that we wrote this function so that the range it enforces is passed as
+parameters to the function, making it easy to reuse as needed.

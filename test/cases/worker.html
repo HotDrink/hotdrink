@@ -1,0 +1,55 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      {
+        var model = new hd.ModelBuilder()
+          .v( 'start', 3 ).v( 'finish', 17 ).v( 'length' )
+
+          .c( 'start, finish, length' )
+          .m( 'start, length -> finish', hd.worker( 'worker.js', 'sum'  ) )
+          .m( 'finish, start -> length', hd.worker( 'worker.js', 'diff' ) )
+          .m( 'finish, length -> start', hd.worker( 'worker.js', 'diff' ) )
+
+          .end();
+
+        var system = new hd.ConstraintSystem();
+        system.addComponent( model );
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model );
+        } );
+      }
+    </script>
+    <style type="text/css">
+      .error { color: #900; }
+    </style>
+  </head>
+  <body>
+    <p>
+      Methods run on a web worker.
+    </p>
+    <p>
+      This test case needs to be run on a web server to work.  (Web workers
+      won't run if you're just browsing files.)
+    </p>
+    <table style="text-align:right">
+      <tr>
+        <td>Start:</td>
+        <td><input type="text" data-bind="hd.numVar( start )"/></td>
+        <td class="error" data-bind="hd.text( start.error )"></td>
+      </tr>
+      <tr>
+        <td>Finish:</td>
+        <td><input type="text" data-bind="hd.numVar( finish )"/></td>
+        <td class="error" data-bind="hd.text( finish.error )"></td>
+      </tr>
+      <tr>
+        <td>Length:</td>
+        <td><input type="text" data-bind="hd.numVar( length )"/></td>
+        <td class="error" data-bind="hd.text( length.error )"></td>
+      </tr>
+    </table>
+  </body>
+</html>

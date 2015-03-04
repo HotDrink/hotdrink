@@ -1,0 +1,2123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Programming Guide</title>
+<!-- 2015-03-04 Wed 16:27 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="hotdrink.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css"/>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Programming Guide</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Utility: an HTML JavaScript Console</a></li>
+<li><a href="#sec-2">2. HotDrink Observable/Observer types</a>
+<ul>
+<li><a href="#sec-2-1">2.1. Observable and Observer interfaces</a>
+<ul>
+<li><a href="#sec-2-1-1">2.1.1. The example</a></li>
+<li><a href="#sec-2-1-2">2.1.2. Defining the interfaces</a></li>
+<li><a href="#sec-2-1-3">2.1.3. The <code>BasicObservable</code> type</a></li>
+</ul>
+</li>
+<li><a href="#sec-2-2">2.2. Custom Observable and observer types</a>
+<ul>
+<li><a href="#sec-2-2-1">2.2.1. The example</a></li>
+<li><a href="#sec-2-2-2">2.2.2. Creating <code>BasicObservable</code> subtypes</a></li>
+<li><a href="#sec-2-2-3">2.2.3. Creating Observer types</a></li>
+</ul>
+</li>
+<li><a href="#sec-2-3">2.3. Proxy observers</a>
+<ul>
+<li><a href="#sec-2-3-1">2.3.1. The example</a></li>
+<li><a href="#sec-2-3-2">2.3.2. Using <code>ProxyObserver</code> wrappers</a></li>
+</ul>
+</li>
+<li><a href="#sec-2-4">2.4. Observing multiple Observables</a>
+<ul>
+<li><a href="#sec-2-4-1">2.4.1. The example</a></li>
+<li><a href="#sec-2-4-2">2.4.2. Extra parameters for callbacks</a></li>
+<li><a href="#sec-2-4-3">2.4.3. <code>BasicObservable</code> shortcuts for <code>ProxyObserver</code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#sec-3">3. Extensions</a>
+<ul>
+<li><a href="#sec-3-1">3.1. Basic extensions</a>
+<ul>
+<li><a href="#sec-3-1-1">3.1.1. The example</a></li>
+<li><a href="#sec-3-1-2">3.1.2. Writing extensions</a></li>
+<li><a href="#sec-3-1-3">3.1.3. Review: the <code>hd.fn</code> extension</a></li>
+</ul>
+</li>
+<li><a href="#sec-3-2">3.2. Fancier extensions</a>
+<ul>
+<li><a href="#sec-3-2-1">3.2.1. The example</a></li>
+<li><a href="#sec-3-2-2">3.2.2. Extension possibilities</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#sec-4">4. View adapters</a>
+<ul>
+<li><a href="#sec-4-1">4.1. The example</a></li>
+<li><a href="#sec-4-2">4.2. Writing adapters</a></li>
+<li><a href="#sec-4-3">4.3. Beware of cycles</a></li>
+<li><a href="#sec-4-4">4.4. Side note: a range enforcing translator</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Utility: an HTML JavaScript Console</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+We wish to start by illustrating a few simple classes and interfaces used in
+HotDrink.  Unfortunately, a web page does not offer a particularly good
+environment for demonstrating simple code.  Thus, we compensate with a simple
+"HTML Console" which allows simple string I/O within a web page.  This code is
+not relevant to HotDrink itself, only to these examples.  Therefore, we
+present it once (in case your interested) and then assume it is available from
+here on.
+</p>
+
+<p>
+The <code>HtmlConsole</code> class takes an empty <a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLDivElement"><code>HTMLDivElement</code></a> (i.e., the DOM node
+for a <code>&lt;div&gt;</code> tag) and fills it with the HTML elements needed for the console.
+It has two public members.  The first is the <code>println</code> function takes a string
+and prints it on a new line in the console.  The second is the <code>oninput</code>
+property where one can assign a callback function to be called when input is
+generated.
+</p>
+
+<p>
+<i>HTML</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span>&gt;
+<span class="linenr"> 2: </span>  div.console {
+<span class="linenr"> 3: </span>    width: 600px;  height: 120px;  padding: 10px; overflow: auto;
+<span class="linenr"> 4: </span>    background: #224; color: #FFF
+<span class="linenr"> 5: </span>  }
+<span class="linenr"> 6: </span>  div.console div.input {
+<span class="linenr"> 7: </span>    color: #999;
+<span class="linenr"> 8: </span>  }
+<span class="linenr"> 9: </span>  input[type=<span style="color: #008000;">"text"</span>].console {
+<span class="linenr">10: </span>    width: 554px; padding: 1px;
+<span class="linenr">11: </span>    background: #EEF;
+<span class="linenr">12: </span>  }
+<span class="linenr">13: </span>  input[type=<span style="color: #008000;">"submit"</span>].console {
+<span class="linenr">14: </span>    width: 60px;
+<span class="linenr">15: </span>  }
+<span class="linenr">16: </span>&lt;/<span style="color: #006699;">style</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>JavaScript</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">HtmlConsole</span>( <span style="color: #BA36A5;">div</span> ) {
+<span class="linenr"> 2: </span>  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">form</span> = document.createElement( <span style="color: #008000;">'form'</span> );
+<span class="linenr"> 3: </span>  div.appendChild( form );
+<span class="linenr"> 4: </span>
+<span class="linenr"> 5: </span>  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">console</span> = document.createElement( <span style="color: #008000;">'div'</span> );
+<span class="linenr"> 6: </span>  console.className = <span style="color: #008000;">"console"</span>;
+<span class="linenr"> 7: </span>  form.appendChild( console );
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span>  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">input</span> = document.createElement( <span style="color: #008000;">'input'</span> );
+<span class="linenr">10: </span>  input.type = <span style="color: #008000;">"text"</span>;
+<span class="linenr">11: </span>  input.className = <span style="color: #008000;">"console"</span>;
+<span class="linenr">12: </span>  form.appendChild( input );
+<span class="linenr">13: </span>
+<span class="linenr">14: </span>  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">go</span> = document.createElement( <span style="color: #008000;">'input'</span> );
+<span class="linenr">15: </span>  go.type = <span style="color: #008000;">"submit"</span>;
+<span class="linenr">16: </span>  go.value = <span style="color: #008000;">"Go"</span>;
+<span class="linenr">17: </span>  go.className = <span style="color: #008000;">"console"</span>;
+<span class="linenr">18: </span>  form.appendChild( go );
+<span class="linenr">19: </span>
+<span class="linenr">20: </span>  form.onsubmit = <span style="color: #0000FF;">function</span>() {
+<span class="linenr">21: </span>    <span style="color: #8b1a1a;">this</span>.println( input.value, <span style="color: #008000;">'input'</span> );
+<span class="linenr">22: </span>    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>.oninput) {
+<span class="linenr">23: </span>      <span style="color: #8b1a1a;">this</span>.oninput( input.value );
+<span class="linenr">24: </span>    }
+<span class="linenr">25: </span>    input.select();
+<span class="linenr">26: </span>    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">false</span>;
+<span class="linenr">27: </span>  }.bind( <span style="color: #8b1a1a;">this</span> );
+<span class="linenr">28: </span>
+<span class="linenr">29: </span>  <span style="color: #8b1a1a;">this</span>.console = console;
+<span class="linenr">30: </span>}
+<span class="linenr">31: </span>
+<span class="linenr">32: </span>HtmlConsole.<span style="color: #8b1a1a;">prototype</span>.println = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">msg</span>, <span style="color: #BA36A5;">className</span> ) {
+<span class="linenr">33: </span>  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">newdiv</span> = document.createElement( <span style="color: #008000;">'div'</span> );
+<span class="linenr">34: </span>  <span style="color: #0000FF;">if</span> (className) {
+<span class="linenr">35: </span>    newdiv.className = className;
+<span class="linenr">36: </span>  }
+<span class="linenr">37: </span>  newdiv.appendChild( document.createTextNode( msg ) );
+<span class="linenr">38: </span>  <span style="color: #8b1a1a;">this</span>.console.appendChild( newdiv );
+<span class="linenr">39: </span>  <span style="color: #8b1a1a;">this</span>.console.scrollTop = <span style="color: #8b1a1a;">this</span>.console.scrollHeight - <span style="color: #8b1a1a;">this</span>.console.clientHeight;
+<span class="linenr">40: </span>}
+</pre>
+</div>
+
+<style type="text/css">
+  div.console {
+    width: 600px;  height: 120px;  padding: 10px; overflow: auto;
+    background: #224; color: #FFF
+  }
+  div.console div.input {
+    color: #999;
+  }
+  input[type="text"].console {
+    width: 554px; padding: 1px;
+    background: #EEF;
+  }
+  input[type="submit"].console {
+    width: 60px;
+  }
+</style>
+<script type="text/javascript">
+function HtmlConsole( div ) {
+  var form = document.createElement( 'form' );
+  div.appendChild( form );
+
+  var console = document.createElement( 'div' );
+  console.className = "console";
+  form.appendChild( console );
+
+  var input = document.createElement( 'input' );
+  input.type = "text";
+  input.className = "console";
+  form.appendChild( input );
+
+  var go = document.createElement( 'input' );
+  go.type = "submit";
+  go.value = "Go";
+  go.className = "console";
+  form.appendChild( go );
+
+  form.onsubmit = function() {
+    this.println( input.value, 'input' );
+    if (this.oninput) {
+      this.oninput( input.value );
+    }
+    input.select();
+    return false;
+  }.bind( this );
+
+  this.console = console;
+}
+
+HtmlConsole.prototype.println = function( msg, className ) {
+  var newdiv = document.createElement( 'div' );
+  if (className) {
+    newdiv.className = className;
+  }
+  newdiv.appendChild( document.createTextNode( msg ) );
+  this.console.appendChild( newdiv );
+  this.console.scrollTop = this.console.scrollHeight - this.console.clientHeight;
+}
+</script>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> HotDrink Observable/Observer types</h2>
+<div class="outline-text-2" id="text-2">
+</div><div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> Observable and Observer interfaces</h3>
+<div class="outline-text-3" id="text-2-1">
+</div><div id="outline-container-sec-2-1-1" class="outline-4">
+<h4 id="sec-2-1-1"><span class="section-number-4">2.1.1</span> The example</h4>
+<div class="outline-text-4" id="text-2-1-1">
+<p>
+<i>HTML</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"console1"</span>&gt;&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>JavaScript</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create console</span>
+<span class="linenr"> 2: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">console</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">HtmlConsole</span>( document.getElementById( <span style="color: #008000;">'console1'</span> ) );
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Observer object</span>
+<span class="linenr"> 5: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">observer</span> = {
+<span class="linenr"> 6: </span>  id: <span style="color: #008000;">'Observer'</span>,
+<span class="linenr"> 7: </span>  <span style="color: #006699;">onNext</span>:    <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">v</span> ) { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] value: '</span> + v );    },
+<span class="linenr"> 8: </span>  <span style="color: #006699;">onError</span>:   <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">e</span> ) { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] error: '</span> + e );    },
+<span class="linenr"> 9: </span>  <span style="color: #006699;">onCompleted</span>:  <span style="color: #0000FF;">function</span>() { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] complete'</span> );       }
+<span class="linenr">10: </span>};
+<span class="linenr">11: </span>
+<span class="linenr">12: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Observable object</span>
+<span class="linenr">13: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">observable</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.BasicObservable</span>();
+<span class="linenr">14: </span>
+<span class="linenr">15: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe</span>
+<span class="linenr">16: </span>observable.addObserver( observer );
+<span class="linenr">17: </span>
+<span class="linenr">18: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Console input triggers observable</span>
+<span class="linenr">19: </span>console.oninput = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">value</span> ) {
+<span class="linenr">20: </span>  <span style="color: #0000FF;">if</span> (value == <span style="color: #008000;">"END"</span>) {
+<span class="linenr">21: </span>    observable.sendCompleted();
+<span class="linenr">22: </span>  }
+<span class="linenr">23: </span>  <span style="color: #0000FF;">else</span> {
+<span class="linenr">24: </span>    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">n</span> = Number( value );
+<span class="linenr">25: </span>    <span style="color: #0000FF;">if</span> (isNaN( n )) {
+<span class="linenr">26: </span>      observable.sendError( <span style="color: #008000;">'Not a number'</span> );
+<span class="linenr">27: </span>    }
+<span class="linenr">28: </span>    <span style="color: #0000FF;">else</span> {
+<span class="linenr">29: </span>      observable.sendNext( n );
+<span class="linenr">30: </span>    }
+<span class="linenr">31: </span>  }
+<span class="linenr">32: </span>}
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="console1"></div>
+</div>
+<script type="text/javascript">
+(function() {
+// Create console
+var console = new HtmlConsole( document.getElementById( 'console1' ) );
+
+// Observer object
+var observer = {
+  id: 'Observer',
+  onNext:    function( v ) { console.println( '[' + this.id + '] value: ' + v );    },
+  onError:   function( e ) { console.println( '[' + this.id + '] error: ' + e );    },
+  onCompleted:  function() { console.println( '[' + this.id + '] complete' );       }
+};
+
+// Observable object
+var observable = new hd.BasicObservable();
+
+// Subscribe
+observable.addObserver( observer );
+
+// Console input triggers observable
+console.oninput = function( value ) {
+  if (value == "END") {
+    observable.sendCompleted();
+  }
+  else {
+    var n = Number( value );
+    if (isNaN( n )) {
+      observable.sendError( 'Not a number' );
+    }
+    else {
+      observable.sendNext( n );
+    }
+  }
+}
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+The Observable produces numbers as they are entered in the input box.  The
+Observer receives these and prints them to the console.  Values which are not
+valid numbers produce errors.  The special value "END" completes the
+Observable.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-2" class="outline-4">
+<h4 id="sec-2-1-2"><span class="section-number-4">2.1.2</span> Defining the interfaces</h4>
+<div class="outline-text-4" id="text-2-1-2">
+<p>
+Observable and Observer are two interfaces that we use in HotDrink.  An
+interface simply defines certain member variables or functions that an object
+should have.  Note that, in JavaScript, you do not have to explicitly declare
+which interfaces your object implements; any object which has the specified
+members is said to implement the interface.
+</p>
+
+<p>
+An <i>Observable</i> is largely equivalent to what is called an "event" in
+traditional event-driven programming: it represents something that may occur
+multiple times during the lifetime of the program, and allows you to register
+a callback function (in the form of an Observer) to be executed whenever it
+does.  Each time the event occurs, a single value is passed to the callback
+function to represent the event.  Thus, we may describe an Observable as
+something which produces values from time to time over its lifetime.
+</p>
+
+<p>
+Our implementation of observable and observer is largely inspired by
+Microsoft's <a href="https://rx.codeplex.com/">reactive extensions</a>.  Unlike a traditional event, Observables
+actually have three associated callbacks: one for normal event values, one for
+error values indicating something has gone wrong, and one without a value
+indicating no more values will be produced.  An <i>Observer</i> is any object which
+provides these three callback functions; thus, an Observer must have the
+following three properties.
+</p>
+
+<dl class="org-dl">
+<dt><code>onNext( value )</code></dt><dd>function called on normal event; takes value associated
+with the event
+</dd>
+
+<dt><code>onError( error )</code></dt><dd>function called when error occurs; takes value
+associated with the error
+</dd>
+
+<dt><code>onCompleted()</code></dt><dd>function called when no more events can occur
+</dd>
+</dl>
+
+<p>
+Here is the JavaScript excerpt which creates an object implementing the
+Observer interface.  For this simple example, the three callbacks do nothing
+more than print the argument to the HTML console.  Again, notice that the object
+may contain fields beyond those required by the Observer interface.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="observer"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Observer object</span>
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">observer</span> = {
+  id: <span style="color: #008000;">'Observer'</span>,
+  <span style="color: #006699;">onNext</span>:    <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">v</span> ) { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] value: '</span> + v );    },
+  <span style="color: #006699;">onError</span>:   <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">e</span> ) { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] error: '</span> + e );    },
+  <span style="color: #006699;">onCompleted</span>:  <span style="color: #0000FF;">function</span>() { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] complete'</span> );       }
+};
+</pre>
+</div>
+
+<p>
+An Observer must be registered with an Observable in order for its callbacks
+to be invoked by that Observer.  We say that the Observer <i>subscribes</i> to the
+Observable.  An Observable is any object which allows observers to subscribe
+and unsubscribe; thus, an Observable must have the following two properties.
+</p>
+
+<dl class="org-dl">
+<dt><code>addObserver( observer )</code></dt><dd>function which subscribes the observer to this
+observable
+</dd>
+
+<dt><code>removeObserver( observer )</code></dt><dd>function which unsubscribes the observer from
+this observable
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-3" class="outline-4">
+<h4 id="sec-2-1-3"><span class="section-number-4">2.1.3</span> The <code>BasicObservable</code> type</h4>
+<div class="outline-text-4" id="text-2-1-3">
+<p>
+As we said before, any JavaScript object can be Observable as long as it
+contains the two functions defined in the interface.  However, in order to
+simplify the process of making Observable types, we have created a simple,
+straightforward implementation named <code>hd.BasicObservable</code>.  In the following
+excerpt we create a new instance and subscribe the observer to it.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="observable"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Observable object</span>
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">observable</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.BasicObservable</span>();
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe</span>
+observable.addObserver( observer );
+</pre>
+</div>
+
+<p>
+The <code>BasicObservable</code> type keeps an array of Observers which have subscribed
+to the object in a property named <code>observers</code>; it is recommended that you not
+modify this field directly, but use <code>addObserver</code> and <code>removeObserver</code>
+instead.
+</p>
+
+<p>
+In addition, the <code>BasicObservable</code> type has member functions <code>sendNext</code>,
+<code>sendError</code>, and <code>sendCompleted</code> which can be used to invoke the corresponding
+callbacks of all subscribed Observers.
+</p>
+
+<dl class="org-dl">
+<dt><code>sendNext( value )</code></dt><dd>call the <code>onNext</code> function of all subscribers with
+the given event value
+</dd>
+
+<dt><code>sendError( error )</code></dt><dd>call the <code>onError</code> function of all subscribers with
+the given error value
+</dd>
+
+<dt><code>sendCompleted()</code></dt><dd>call the <code>onCompleted</code> function of all subscribers;
+also unsubscribes all observers so that they will not receive any further
+messages
+</dd>
+</dl>
+
+<p>
+The following excerpt uses these functions to invoke callbacks when
+it receives input from the console.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="sendNext"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Console input triggers observable</span>
+console.oninput = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">value</span> ) {
+  <span style="color: #0000FF;">if</span> (value == <span style="color: #008000;">"END"</span>) {
+    observable.sendCompleted();
+  }
+  <span style="color: #0000FF;">else</span> {
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">n</span> = Number( value );
+    <span style="color: #0000FF;">if</span> (isNaN( n )) {
+      observable.sendError( <span style="color: #008000;">'Not a number'</span> );
+    }
+    <span style="color: #0000FF;">else</span> {
+      observable.sendNext( n );
+    }
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Custom Observable and observer types</h3>
+<div class="outline-text-3" id="text-2-2">
+</div><div id="outline-container-sec-2-2-1" class="outline-4">
+<h4 id="sec-2-2-1"><span class="section-number-4">2.2.1</span> The example</h4>
+<div class="outline-text-4" id="text-2-2-1">
+<p>
+<i>HTML</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"console2"</span>&gt;&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>JavaScript</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">console</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">HtmlConsole</span>( document.getElementById( <span style="color: #008000;">'console2'</span> ) );
+<span class="linenr"> 2: </span>
+<span class="linenr"> 3: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr"> 4: </span><span style="color: #8D8D84; font-style: italic;"> * An observable type</span>
+<span class="linenr"> 5: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constructor</span>
+<span class="linenr"> 8: </span>NumberObservable = <span style="color: #0000FF;">function</span> NumberObservable() { }
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Inheritance</span>
+<span class="linenr">11: </span>NumberObservable.<span style="color: #8b1a1a;">prototype</span> = Object.create( hd.BasicObservable.<span style="color: #8b1a1a;">prototype</span> );
+<span class="linenr">12: </span>
+<span class="linenr">13: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Convert string to number</span>
+<span class="linenr">14: </span>NumberObservable.<span style="color: #8b1a1a;">prototype</span>.processInput = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">value</span> ) {
+<span class="linenr">15: </span>  <span style="color: #0000FF;">if</span> (value === <span style="color: #008000;">"END"</span>) {
+<span class="linenr">16: </span>    <span style="color: #8b1a1a;">this</span>.sendCompleted();
+<span class="linenr">17: </span>  }
+<span class="linenr">18: </span>  <span style="color: #0000FF;">else</span> {
+<span class="linenr">19: </span>    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">n</span> = Number( value );
+<span class="linenr">20: </span>    <span style="color: #0000FF;">if</span> (isNaN( n )) {
+<span class="linenr">21: </span>      <span style="color: #8b1a1a;">this</span>.sendError( <span style="color: #008000;">'Not a number'</span> );
+<span class="linenr">22: </span>    }
+<span class="linenr">23: </span>    <span style="color: #0000FF;">else</span> {
+<span class="linenr">24: </span>      <span style="color: #8b1a1a;">this</span>.sendNext( n );
+<span class="linenr">25: </span>    }
+<span class="linenr">26: </span>  }
+<span class="linenr">27: </span>}
+<span class="linenr">28: </span>
+<span class="linenr">29: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr">30: </span><span style="color: #8D8D84; font-style: italic;"> * Observable instance</span>
+<span class="linenr">31: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr">32: </span>
+<span class="linenr">33: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">observable</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">NumberObservable</span>();
+<span class="linenr">34: </span>
+<span class="linenr">35: </span>console.oninput = observable.processInput.bind( observable );
+<span class="linenr">36: </span>
+<span class="linenr">37: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr">38: </span><span style="color: #8D8D84; font-style: italic;"> * An observer type</span>
+<span class="linenr">39: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr">40: </span>
+<span class="linenr">41: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constructor</span>
+<span class="linenr">42: </span>NumberObserver = <span style="color: #0000FF;">function</span> NumberObserver( <span style="color: #BA36A5;">id</span>, <span style="color: #BA36A5;">console</span> ) {
+<span class="linenr">43: </span>  <span style="color: #8b1a1a;">this</span>.id = id;
+<span class="linenr">44: </span>  <span style="color: #8b1a1a;">this</span>.console = console;
+<span class="linenr">45: </span>}
+<span class="linenr">46: </span>
+<span class="linenr">47: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">onNext callback</span>
+<span class="linenr">48: </span>NumberObserver.<span style="color: #8b1a1a;">prototype</span>.onNext = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">value</span> ) {
+<span class="linenr">49: </span>  <span style="color: #8b1a1a;">this</span>.console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] number: '</span> + value );
+<span class="linenr">50: </span>}
+<span class="linenr">51: </span>
+<span class="linenr">52: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">onError callback</span>
+<span class="linenr">53: </span>NumberObserver.<span style="color: #8b1a1a;">prototype</span>.onError = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">error</span> ) {
+<span class="linenr">54: </span>  <span style="color: #8b1a1a;">this</span>.console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] error: '</span> + error );
+<span class="linenr">55: </span>}
+<span class="linenr">56: </span>
+<span class="linenr">57: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">onCompleted callback</span>
+<span class="linenr">58: </span>NumberObserver.<span style="color: #8b1a1a;">prototype</span>.onCompleted = <span style="color: #0000FF;">function</span>() {
+<span class="linenr">59: </span>  <span style="color: #8b1a1a;">this</span>.console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] complete'</span> );
+<span class="linenr">60: </span>}
+<span class="linenr">61: </span>
+<span class="linenr">62: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr">63: </span><span style="color: #8D8D84; font-style: italic;"> * Observer instances</span>
+<span class="linenr">64: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr">65: </span>
+<span class="linenr">66: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">observerA</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">NumberObserver</span>( <span style="color: #008000;">'Observer-A'</span>, console );
+<span class="linenr">67: </span>observable.addObserver( observerA );
+<span class="linenr">68: </span>
+<span class="linenr">69: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">observerB</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">NumberObserver</span>( <span style="color: #008000;">'Observer-B'</span>, console );
+<span class="linenr">70: </span>observable.addObserver( observerB );
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="console2"></div>
+</div>
+<script type="text/javascript">
+(function() {
+var console = new HtmlConsole( document.getElementById( 'console2' ) );
+
+/*--------------------------------------------------------------------
+ * An observable type
+ */
+
+// Constructor
+NumberObservable = function NumberObservable() { }
+
+// Inheritance
+NumberObservable.prototype = Object.create( hd.BasicObservable.prototype );
+
+// Convert string to number
+NumberObservable.prototype.processInput = function( value ) {
+  if (value === "END") {
+    this.sendCompleted();
+  }
+  else {
+    var n = Number( value );
+    if (isNaN( n )) {
+      this.sendError( 'Not a number' );
+    }
+    else {
+      this.sendNext( n );
+    }
+  }
+}
+
+/*--------------------------------------------------------------------
+ * Observable instance
+ */
+
+var observable = new NumberObservable();
+
+console.oninput = observable.processInput.bind( observable );
+
+/*--------------------------------------------------------------------
+ * An observer type
+ */
+
+// Constructor
+NumberObserver = function NumberObserver( id, console ) {
+  this.id = id;
+  this.console = console;
+}
+
+// onNext callback
+NumberObserver.prototype.onNext = function( value ) {
+  this.console.println( '[' + this.id + '] number: ' + value );
+}
+
+// onError callback
+NumberObserver.prototype.onError = function( error ) {
+  this.console.println( '[' + this.id + '] error: ' + error );
+}
+
+// onCompleted callback
+NumberObserver.prototype.onCompleted = function() {
+  this.console.println( '[' + this.id + '] complete' );
+}
+
+/*--------------------------------------------------------------------
+ * Observer instances
+ */
+
+var observerA = new NumberObserver( 'Observer-A', console );
+observable.addObserver( observerA );
+
+var observerB = new NumberObserver( 'Observer-B', console );
+observable.addObserver( observerB );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This example is the same as the first (albeit with two observers instead of
+one).  The difference in the code is that we have created our own types to
+encapsulate details and improve abstraction.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2-2" class="outline-4">
+<h4 id="sec-2-2-2"><span class="section-number-4">2.2.2</span> Creating <code>BasicObservable</code> subtypes</h4>
+<div class="outline-text-4" id="text-2-2-2">
+<p>
+The recommended way to create your own observable type is to make a subtype of
+<code>BasicObservable</code>.  This will give you all the <code>BasicObservable</code> methods we've
+discussed so far: <code>addObserver</code>, <code>removeObserver</code>, <code>sendNext</code>, <code>sendError</code>,
+and <code>sendCompleted</code>.  The only member of <code>BasicObservable</code> we haven't
+discussed is the <code>observers</code> property, which used to store all subscribed
+observers.  It is recommended that you not access this field directly, but use
+<code>addObserver</code> and <code>removeObserver</code> instead.
+</p>
+
+<p>
+The following excerpt creates a type named <code>NumberObservable</code> which triggers
+observers' callbacks when its <code>processInput</code> method is called.  Note that the
+<code>BasicObservable</code> constructor does nothing, so there is no need to call it in
+your own constructor.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="observable-type"><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span style="color: #8D8D84; font-style: italic;"> * An observable type</span>
+<span style="color: #8D8D84; font-style: italic;"> */</span>
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constructor</span>
+NumberObservable = <span style="color: #0000FF;">function</span> NumberObservable() { }
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Inheritance</span>
+NumberObservable.<span style="color: #8b1a1a;">prototype</span> = Object.create( hd.BasicObservable.<span style="color: #8b1a1a;">prototype</span> );
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Convert string to number</span>
+NumberObservable.<span style="color: #8b1a1a;">prototype</span>.processInput = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">value</span> ) {
+  <span style="color: #0000FF;">if</span> (value === <span style="color: #008000;">"END"</span>) {
+    <span style="color: #8b1a1a;">this</span>.sendCompleted();
+  }
+  <span style="color: #0000FF;">else</span> {
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">n</span> = Number( value );
+    <span style="color: #0000FF;">if</span> (isNaN( n )) {
+      <span style="color: #8b1a1a;">this</span>.sendError( <span style="color: #008000;">'Not a number'</span> );
+    }
+    <span style="color: #0000FF;">else</span> {
+      <span style="color: #8b1a1a;">this</span>.sendNext( n );
+    }
+  }
+}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2-3" class="outline-4">
+<h4 id="sec-2-2-3"><span class="section-number-4">2.2.3</span> Creating Observer types</h4>
+<div class="outline-text-4" id="text-2-2-3">
+<p>
+HotDrink does not provide any base implementation of the Observer interface
+because there is no prescribed behavior for an observer.  Simply write your
+type to include <code>onNext</code>, <code>onError</code>, and <code>onCompleted</code>.  (They can be empty
+functions if needed.)
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3"><span class="section-number-3">2.3</span> Proxy observers</h3>
+<div class="outline-text-3" id="text-2-3">
+</div><div id="outline-container-sec-2-3-1" class="outline-4">
+<h4 id="sec-2-3-1"><span class="section-number-4">2.3.1</span> The example</h4>
+<div class="outline-text-4" id="text-2-3-1">
+<p>
+<i>HTML</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"console3"</span>&gt;&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>JavaScript</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr"> 2: </span><span style="color: #8D8D84; font-style: italic;"> * Observable instance and console</span>
+<span class="linenr"> 3: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr"> 4: </span>
+<span class="linenr"> 5: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">observable</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">NumberObservable</span>();
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">console</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">HtmlConsole</span>( document.getElementById( <span style="color: #008000;">'console3'</span> ) );
+<span class="linenr"> 8: </span>console.oninput = observable.processInput.bind( observable );
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr">11: </span><span style="color: #8D8D84; font-style: italic;"> * Proxy observers</span>
+<span class="linenr">12: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr">13: </span>
+<span class="linenr">14: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Just an object; not an observer</span>
+<span class="linenr">15: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">object</span> = {
+<span class="linenr">16: </span>  id: <span style="color: #008000;">'Object'</span>,
+<span class="linenr">17: </span>  <span style="color: #006699;">good</span>: <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">v</span> ) { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] good: '</span> + v ); },
+<span class="linenr">18: </span>  <span style="color: #006699;">bad</span>:  <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">e</span> ) { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] bad:  '</span> + e ); },
+<span class="linenr">19: </span>};
+<span class="linenr">20: </span>
+<span class="linenr">21: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create proxy observer for object</span>
+<span class="linenr">22: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">proxy</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ProxyObserver</span>( object, object.good, object.bad, <span style="color: #8b1a1a;">null</span> );
+<span class="linenr">23: </span>
+<span class="linenr">24: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe proxy</span>
+<span class="linenr">25: </span>observable.addObserver( proxy );
+<span class="linenr">26: </span>
+<span class="linenr">27: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">warn</span>() { console.println( <span style="color: #008000;">"No more input!"</span> ); }
+<span class="linenr">28: </span>
+<span class="linenr">29: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create proxy for global function</span>
+<span class="linenr">30: </span>observable.addObserver( <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ProxyObserver</span>( <span style="color: #8b1a1a;">null</span>, <span style="color: #8b1a1a;">null</span>, <span style="color: #8b1a1a;">null</span>, warn ) );
+</pre>
+</div>
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="console3"></div>
+</div>
+<script type="text/javascript">
+(function() {
+/*--------------------------------------------------------------------
+ * Observable instance and console
+ */
+
+var observable = new NumberObservable();
+
+var console = new HtmlConsole( document.getElementById( 'console3' ) );
+console.oninput = observable.processInput.bind( observable );
+
+/*--------------------------------------------------------------------
+ * Proxy observers
+ */
+
+// Just an object; not an observer
+var object = {
+  id: 'Object',
+  good: function( v ) { console.println( '[' + this.id + '] good: ' + v ); },
+  bad:  function( e ) { console.println( '[' + this.id + '] bad:  ' + e ); },
+};
+
+// Create proxy observer for object
+var proxy = new hd.ProxyObserver( object, object.good, object.bad, null );
+
+// Subscribe proxy
+observable.addObserver( proxy );
+
+function warn() { console.println( "No more input!" ); }
+
+// Create proxy for global function
+observable.addObserver( new hd.ProxyObserver( null, null, null, warn ) );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This example has the same behavior as past examples.  What is interesting
+about this example is that it uses an object that does not implement the
+Observer interface as well as a global function by wrapping them in proxy
+observers.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3-2" class="outline-4">
+<h4 id="sec-2-3-2"><span class="section-number-4">2.3.2</span> Using <code>ProxyObserver</code> wrappers</h4>
+<div class="outline-text-4" id="text-2-3-2">
+<p>
+Sometimes it may not be convenient to force your object to meet the exact
+interface of an observer.  For such cases, HotDrink provides a special
+wrapper: the <code>hd.ProxyObserver</code> type.  The constructor for <code>ProxyObserver</code>
+looks like so:
+</p>
+
+<dl class="org-dl">
+<dt><code>ProxyObserver( object, next_cb, error_cb, completed_cb )</code></dt><dd>initialize an
+observer that will invoke the given callback functions on the given
+object
+</dd>
+</dl>
+
+<p>
+A <code>ProxyObserver</code> is initialized by providing another object, along with the
+callback functions that should be invoked on the object when events occur.
+The <code>ProxyObserver</code> will implement the <code>Observer</code> interface by invoking the
+corresponding callback function with which you initialized it.  In this
+excerpt, we create a proxy observer for an object by using its <code>good</code> method
+as <code>onNext</code> and is <code>bad</code> method as <code>onError</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="object-proxy"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Just an object; not an observer</span>
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">object</span> = {
+  id: <span style="color: #008000;">'Object'</span>,
+  <span style="color: #006699;">good</span>: <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">v</span> ) { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] good: '</span> + v ); },
+  <span style="color: #006699;">bad</span>:  <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">e</span> ) { console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] bad:  '</span> + e ); },
+};
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create proxy observer for object</span>
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">proxy</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ProxyObserver</span>( object, object.good, object.bad, <span style="color: #8b1a1a;">null</span> );
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe proxy</span>
+observable.addObserver( proxy );
+</pre>
+</div>
+
+<p>
+Note that any of the callback function parameters may be <code>null</code>, indicating
+that no function should be called.  In the above excerpt, we use <code>null</code> to
+indicate that there is no function to be called for <code>onCompleted</code>.
+Furthermore, the object itself may be <code>null</code>, indicating that the callback
+functions should be executed as global functions instead of being invoked on
+an object.  This can be seen in the next excerpt in which we use a proxy to
+call a global function as <code>onCompleted</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="global-function"><span style="color: #0000FF;">function</span> <span style="color: #006699;">warn</span>() { console.println( <span style="color: #008000;">"No more input!"</span> ); }
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create proxy for global function</span>
+observable.addObserver( <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ProxyObserver</span>( <span style="color: #8b1a1a;">null</span>, <span style="color: #8b1a1a;">null</span>, <span style="color: #8b1a1a;">null</span>, warn ) );
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-4" class="outline-3">
+<h3 id="sec-2-4"><span class="section-number-3">2.4</span> Observing multiple Observables</h3>
+<div class="outline-text-3" id="text-2-4">
+</div><div id="outline-container-sec-2-4-1" class="outline-4">
+<h4 id="sec-2-4-1"><span class="section-number-4">2.4.1</span> The example</h4>
+<div class="outline-text-4" id="text-2-4-1">
+<p>
+<i>HTML</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span>&gt;
+<span class="linenr">2: </span>  First console:
+<span class="linenr">3: </span>  &lt;<span style="color: #006699;">button</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"happysad"</span>&gt;Remove happy/sad&lt;/<span style="color: #006699;">button</span>&gt;
+<span class="linenr">4: </span>  &lt;<span style="color: #006699;">button</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"all"</span>&gt;Remove all&lt;/<span style="color: #006699;">button</span>&gt;
+<span class="linenr">5: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+<span class="linenr">6: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"console4"</span>&gt;&lt;/<span style="color: #006699;">div</span>&gt;
+<span class="linenr">7: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"margin-top:1em"</span>&gt;Second console:&lt;/<span style="color: #006699;">div</span>&gt;
+<span class="linenr">8: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"console5"</span>&gt;&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>JavaScript</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr"> 2: </span><span style="color: #8D8D84; font-style: italic;"> * Observables and consoles</span>
+<span class="linenr"> 3: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr"> 4: </span>observableA = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">NumberObservable</span>();
+<span class="linenr"> 5: </span>consoleA = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">HtmlConsole</span>( document.getElementById( <span style="color: #008000;">'console4'</span> ) );
+<span class="linenr"> 6: </span>consoleA.oninput = observableA.processInput.bind( observableA );
+<span class="linenr"> 7: </span>
+<span class="linenr"> 8: </span>observableB = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">NumberObservable</span>();
+<span class="linenr"> 9: </span>consoleB = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">HtmlConsole</span>( document.getElementById( <span style="color: #008000;">'console5'</span> ) );
+<span class="linenr">10: </span>consoleB.oninput = observableB.processInput.bind( observableB );
+<span class="linenr">11: </span>
+<span class="linenr">12: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr">13: </span><span style="color: #8D8D84; font-style: italic;"> * An observer with extra methods</span>
+<span class="linenr">14: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr">15: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">observer</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">NumberObserver</span>( <span style="color: #008000;">'Multi-Observer'</span>, consoleA );
+<span class="linenr">16: </span>
+<span class="linenr">17: </span>observer.good = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">v</span>, <span style="color: #BA36A5;">console</span> ) {
+<span class="linenr">18: </span>  console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] good:  '</span> + v );
+<span class="linenr">19: </span>}
+<span class="linenr">20: </span>
+<span class="linenr">21: </span>observer.bad = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">e</span>, <span style="color: #BA36A5;">console</span> ) {
+<span class="linenr">22: </span>  console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] bad:   '</span> + e );
+<span class="linenr">23: </span>}
+<span class="linenr">24: </span>
+<span class="linenr">25: </span>observer.done = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">console</span> ) {
+<span class="linenr">26: </span>  console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] done   '</span> );
+<span class="linenr">27: </span>}
+<span class="linenr">28: </span>
+<span class="linenr">29: </span>observer.happy = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">v</span>, <span style="color: #BA36A5;">console</span> ) {
+<span class="linenr">30: </span>  console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] happy: '</span> + v );
+<span class="linenr">31: </span>}
+<span class="linenr">32: </span>
+<span class="linenr">33: </span>observer.sad = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">e</span>, <span style="color: #BA36A5;">console</span> ) {
+<span class="linenr">34: </span>  console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] sad:   '</span> + e );
+<span class="linenr">35: </span>}
+<span class="linenr">36: </span>
+<span class="linenr">37: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr">38: </span><span style="color: #8D8D84; font-style: italic;"> * Observer subscriptions</span>
+<span class="linenr">39: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr">40: </span>
+<span class="linenr">41: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">A regular (no-proxy) subscription to observableA</span>
+<span class="linenr">42: </span>observableA.addObserver( observer );
+<span class="linenr">43: </span>
+<span class="linenr">44: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe proxy to obeservableA</span>
+<span class="linenr">45: </span>observableA.addObserver(
+<span class="linenr">46: </span>  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ProxyObserver</span>( observer, observer.good, observer.bad, observer.done, consoleA )
+<span class="linenr">47: </span>);
+<span class="linenr">48: </span>
+<span class="linenr">49: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe proxy to observableB</span>
+<span class="linenr">50: </span>observableB.addObserver(
+<span class="linenr">51: </span>  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ProxyObserver</span>( observer, observer.good, observer.bad, observer.done, consoleB )
+<span class="linenr">52: </span>);
+<span class="linenr">53: </span>
+<span class="linenr">54: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe another proxy to observableA -- and keep the proxy</span>
+<span class="linenr">55: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">happysadproxy</span> =
+<span class="linenr">56: </span>  observableA.addObserver( observer, observer.happy, observer.sad, <span style="color: #8b1a1a;">null</span>, consoleA );
+<span class="linenr">57: </span>
+<span class="linenr">58: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Remove just the one proxy</span>
+<span class="linenr">59: </span>document.getElementById( <span style="color: #008000;">'happysad'</span> ).onclick = <span style="color: #0000FF;">function</span>() {
+<span class="linenr">60: </span>  observableA.removeObserver( happysadproxy );
+<span class="linenr">61: </span>}
+<span class="linenr">62: </span>
+<span class="linenr">63: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Remove all subscriptions for the observer</span>
+<span class="linenr">64: </span>document.getElementById( <span style="color: #008000;">'all'</span> ).onclick = <span style="color: #0000FF;">function</span>() {
+<span class="linenr">65: </span>  observableA.removeObserver( observer );
+<span class="linenr">66: </span>}
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div>
+  First console:
+  <button id="happysad">Remove happy/sad</button>
+  <button id="all">Remove all</button>
+</div>
+<div id="console4"></div>
+<div style="margin-top:1em">Second console:</div>
+<div id="console5"></div>
+</div>
+<script type="text/javascript">
+(function() {
+/*--------------------------------------------------------------------
+ * Observables and consoles
+ */
+observableA = new NumberObservable();
+consoleA = new HtmlConsole( document.getElementById( 'console4' ) );
+consoleA.oninput = observableA.processInput.bind( observableA );
+
+observableB = new NumberObservable();
+consoleB = new HtmlConsole( document.getElementById( 'console5' ) );
+consoleB.oninput = observableB.processInput.bind( observableB );
+
+/*--------------------------------------------------------------------
+ * An observer with extra methods
+ */
+var observer = new NumberObserver( 'Multi-Observer', consoleA );
+
+observer.good = function( v, console ) {
+  console.println( '[' + this.id + '] good:  ' + v );
+}
+
+observer.bad = function( e, console ) {
+  console.println( '[' + this.id + '] bad:   ' + e );
+}
+
+observer.done = function( console ) {
+  console.println( '[' + this.id + '] done   ' );
+}
+
+observer.happy = function( v, console ) {
+  console.println( '[' + this.id + '] happy: ' + v );
+}
+
+observer.sad = function( e, console ) {
+  console.println( '[' + this.id + '] sad:   ' + e );
+}
+
+/*--------------------------------------------------------------------
+ * Observer subscriptions
+ */
+
+// A regular (no-proxy) subscription to observableA
+observableA.addObserver( observer );
+
+// Subscribe proxy to obeservableA
+observableA.addObserver(
+  new hd.ProxyObserver( observer, observer.good, observer.bad, observer.done, consoleA )
+);
+
+// Subscribe proxy to observableB
+observableB.addObserver(
+  new hd.ProxyObserver( observer, observer.good, observer.bad, observer.done, consoleB )
+);
+
+// Subscribe another proxy to observableA -- and keep the proxy
+var happysadproxy =
+  observableA.addObserver( observer, observer.happy, observer.sad, null, consoleA );
+
+// Remove just the one proxy
+document.getElementById( 'happysad' ).onclick = function() {
+  observableA.removeObserver( happysadproxy );
+}
+
+// Remove all subscriptions for the observer
+document.getElementById( 'all' ).onclick = function() {
+  observableA.removeObserver( observer );
+}
+})();
+</script>
+</div>
+</div>
+
+<div id="outline-container-sec-2-4-2" class="outline-4">
+<h4 id="sec-2-4-2"><span class="section-number-4">2.4.2</span> Extra parameters for callbacks</h4>
+<div class="outline-text-4" id="text-2-4-2">
+<p>
+What if your Observer needs a little extra information about the Observable it
+is responding to?  Of course, every JavaScript programmer should know how to
+create <i>closures</i> &#x2014; functions that capture elements of the environment in
+which they were defined.  However, it can be more convenient to simply pass
+any extra information needed as a parameter to the function: then you can
+reuse the same function many times instead of creating distinct closures for
+each one.
+</p>
+
+<p>
+The <code>ProxyObserver</code> type supports this approach through an overloaded
+constructor.
+</p>
+
+<dl class="org-dl">
+<dt><code>ProxyObserver( object, next_cb, error_cb, completed_cb, tag )</code></dt><dd>     initialize an observer that will invoke the given callback functions on
+the given object, also passing the given tag
+</dd>
+</dl>
+
+<p>
+Whatever value you provide as the <code>tag</code> will be passed to all three callbacks
+as an additional parameter.  Notice how, in the example, we wrote callbacks
+that took the console to which output was to be written as a parameter.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="extra-parameter">observer.good = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">v</span>, <span style="color: #BA36A5;">console</span> ) {
+  console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] good:  '</span> + v );
+}
+
+observer.bad = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">e</span>, <span style="color: #BA36A5;">console</span> ) {
+  console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] bad:   '</span> + e );
+}
+
+observer.done = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">console</span> ) {
+  console.println( <span style="color: #008000;">'['</span> + <span style="color: #8b1a1a;">this</span>.id + <span style="color: #008000;">'] done   '</span> );
+}
+</pre>
+</div>
+
+<p>
+Then, when we created our proxy observers, we passed the console to be used as
+the <code>tag</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="console-tag"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe proxy to obeservableA</span>
+observableA.addObserver(
+  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ProxyObserver</span>( observer, observer.good, observer.bad, observer.done, consoleA )
+);
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe proxy to observableB</span>
+observableB.addObserver(
+  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ProxyObserver</span>( observer, observer.good, observer.bad, observer.done, consoleB )
+);
+</pre>
+</div>
+
+<p>
+In this way, we were able to subscribe our observer to two different
+Observables, and have it react differently to each one.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-4-3" class="outline-4">
+<h4 id="sec-2-4-3"><span class="section-number-4">2.4.3</span> <code>BasicObservable</code> shortcuts for <code>ProxyObserver</code></h4>
+<div class="outline-text-4" id="text-2-4-3">
+<p>
+The <code>BasicObservable</code> type was written with the <code>ProxyObserver</code> type in mind.
+This can be seen in two ways.  First, the <code>addObserver</code> function has an
+overloaded version which will create a <code>ProxyObserver</code> for you.
+</p>
+
+<dl class="org-dl">
+<dt><code>addObserver( object, next_cb, error_cb, completed_cb, tag )</code></dt><dd>creates a
+<code>ProxyObserver</code> using the given object and callback functions, then
+subscribes that proxy to this observer
+</dd>
+</dl>
+
+<p>
+The <code>addObserver</code> function in a <code>BasicObservable</code> has a return value: the
+object which was subscribed.  When you pass an Observer, you simply get the
+same Observer back; but, when you pass the parameters to a <code>ProxyObserver</code>,
+you get back the <code>ProxyObserver</code> it created for you.  You may use this later
+if you want to unsubscribe.  The following excerpt uses <code>addObserver</code> to
+implicitly create a <code>ProxyObserver</code>, and stores the observer in a variable to
+use later.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="implicit-proxy"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Subscribe another proxy to observableA -- and keep the proxy</span>
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">happysadproxy</span> =
+  observableA.addObserver( observer, observer.happy, observer.sad, <span style="color: #8b1a1a;">null</span>, consoleA );
+</pre>
+</div>
+
+<p>
+Note that you may subscribe the same object to the same observable multiple
+times by creating a separate proxy for each subscription.  This is not
+ambiguous: each subscription is represented by a distinct object.  You can
+cancel a single subscription by passing <code>removeObserver</code> the proxy for the
+subscription.  You can see this with the button that removes just the proxy
+that uses <code>happy</code> and <code>sad</code> functions as callbacks.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="happysad-button"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Remove just the one proxy</span>
+document.getElementById( <span style="color: #008000;">'happysad'</span> ).onclick = <span style="color: #0000FF;">function</span>() {
+  observableA.removeObserver( happysadproxy );
+}
+</pre>
+</div>
+
+<p>
+However, the second way in which <code>BasicObservable</code> reacts specially to
+<code>ProxyObserver</code> objects is this: you may pass any object to the
+<code>removeObserver</code> function, and it will unsubscribe any ~ProxyObserver~s
+which target that object.  Note that if you have multiple proxies targeting
+the same object, this will unsubscribe <i>all</i> of them.  You can see this with
+the button that removes all callbacks for the observer.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="all-button"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Remove all subscriptions for the observer</span>
+document.getElementById( <span style="color: #008000;">'all'</span> ).onclick = <span style="color: #0000FF;">function</span>() {
+  observableA.removeObserver( observer );
+}
+</pre>
+</div>
+
+<p>
+Note that clicking this button removes every possible subscription the object
+has to the observable: any subscriptions represented by proxies, as well as
+the subscription in which the object itself is the observer.
+</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Extensions</h2>
+<div class="outline-text-2" id="text-3">
+</div><div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> Basic extensions</h3>
+<div class="outline-text-3" id="text-3-1">
+</div><div id="outline-container-sec-3-1-1" class="outline-4">
+<h4 id="sec-3-1-1"><span class="section-number-4">3.1.1</span> The example</h4>
+<div class="outline-text-4" id="text-3-1-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"extension-example"</span>&gt;
+<span class="linenr">2: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.edit( x, null, digits() )"</span>/&gt;
+<span class="linenr">3: </span>  &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( x )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;
+<span class="linenr">4: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>().v( <span style="color: #008000;">'x'</span>, <span style="color: #008000;">'0'</span> ).end();
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constructor: nothing to do</span>
+<span class="linenr"> 2: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">DigitsOnly</span>() { }
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Use Extension as prototype</span>
+<span class="linenr"> 5: </span>DigitsOnly.<span style="color: #8b1a1a;">prototype</span> = Object.create( hd.Extension.<span style="color: #8b1a1a;">prototype</span> );
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Override onNext to remove non-digit characters</span>
+<span class="linenr"> 8: </span>DigitsOnly.<span style="color: #8b1a1a;">prototype</span>.onNext = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">value</span> ) {
+<span class="linenr"> 9: </span>  <span style="color: #8b1a1a;">this</span>.sendNext( value.replace( <span style="color: #008000;">/\D/</span>g, <span style="color: #008000;">''</span> ) );
+<span class="linenr">10: </span>}
+<span class="linenr">11: </span>
+<span class="linenr">12: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Factory function for DigitsOnly extension</span>
+<span class="linenr">13: </span>digits = <span style="color: #0000FF;">function</span> digits() { <span style="color: #0000FF;">return</span> <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">DigitsOnly</span>(); }
+<span class="linenr">14: </span>
+<span class="linenr">15: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">16: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'extension-example'</span> ) );
+<span class="linenr">17: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="extension-example">
+  <input type="text" data-bind="hd.edit( x, null, digits() )"/>
+  <span data-bind="hd.text( x )"></span>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder().v( 'x', '0' ).end();
+// Constructor: nothing to do
+function DigitsOnly() { }
+
+// Use Extension as prototype
+DigitsOnly.prototype = Object.create( hd.Extension.prototype );
+
+// Override onNext to remove non-digit characters
+DigitsOnly.prototype.onNext = function( value ) {
+  this.sendNext( value.replace( /\D/g, '' ) );
+}
+
+// Factory function for DigitsOnly extension
+digits = function digits() { return new DigitsOnly(); }
+
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'extension-example' ) );
+} )
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+The extension we use for this edit box strips out any characters which are not
+digits from the input.  Try entering "1a2b3c" and see the result.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-1-2" class="outline-4">
+<h4 id="sec-3-1-2"><span class="section-number-4">3.1.2</span> Writing extensions</h4>
+<div class="outline-text-4" id="text-3-1-2">
+<p>
+We described the basic idea behind extensions in the <a href="binding.html">Advanced Binding Concepts</a>
+document.  Now it should be clear that an extension is simply an object which
+is both an Observer and an Observable: it takes a value from the previous
+observable, and passes it on to the next observer.
+</p>
+
+<p>
+In order to make it easier to write your own extensions, we have provided the
+<code>hd.Extension</code> type.  <code>Extension</code> is simply a <code>BasicObservable</code> which
+implements <code>onNext</code> using <code>sendNext</code>, <code>onError</code> using <code>sendError</code>, and
+<code>onCompleted</code> using <code>sendCompleted</code>.  Thus, an <code>Extension</code> simply passes on
+the value it receives with no alteration.  You can make your own extension by
+overriding the desired functions.
+</p>
+
+<p>
+Here's an example of an extension that removes any non-digit characters from
+the string it receives.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="extension-type"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constructor: nothing to do</span>
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">DigitsOnly</span>() { }
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Use Extension as prototype</span>
+DigitsOnly.<span style="color: #8b1a1a;">prototype</span> = Object.create( hd.Extension.<span style="color: #8b1a1a;">prototype</span> );
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Override onNext to remove non-digit characters</span>
+DigitsOnly.<span style="color: #8b1a1a;">prototype</span>.onNext = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">value</span> ) {
+  <span style="color: #8b1a1a;">this</span>.sendNext( value.replace( <span style="color: #008000;">/\D/</span>g, <span style="color: #008000;">''</span> ) );
+}
+</pre>
+</div>
+
+<p>
+Notice that we did not implement <code>onError</code> or <code>onCompleted</code>; the
+implementation we inherited from <code>Extension</code> (simply pass along the value
+received) was all we needed for those.
+</p>
+
+<p>
+To use this extension in your binding, simply create a new <code>DigitsOnly</code> object
+and provide it in the appropriate spot.  Here we use the extension in an
+<code>edit</code> binding.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html">&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.edit( x, null, new DigitsOnly() )"</span>/&gt;
+</pre>
+</div>
+
+<p>
+This binding will take whatever value the user enters, remove any non-digit
+characters, then translate the resulting string into a number.
+</p>
+
+<p>
+As an alternative approach, you might create a factory function for your
+extension type.  (This is what HotDrink does for its extensions.)
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="extension-factory"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Factory function for DigitsOnly extension</span>
+digits = <span style="color: #0000FF;">function</span> digits() { <span style="color: #0000FF;">return</span> <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">DigitsOnly</span>(); }
+</pre>
+</div>
+
+<p>
+This simply makes the resulting binding expression a little bit easier to read.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html" id="extension-binding">&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.edit( x, null, digits() )"</span>/&gt;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-1-3" class="outline-4">
+<h4 id="sec-3-1-3"><span class="section-number-4">3.1.3</span> Review: the <code>hd.fn</code> extension</h4>
+<div class="outline-text-4" id="text-3-1-3">
+<p>
+Remember that, for simple translations like this, really all you need is
+the <code>hd.fn</code> extension: just create the function that translates the value, and
+pass it to <code>hd.fn</code> to get an extension.  You can still create factory
+functions to make your binding specifications short and easy to read.  For
+example, here's how to rewrite the <code>digits</code> extension using the <code>hd.fn</code>
+extension.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #0000FF;">function</span> <span style="color: #006699;">digitsOnly</span>( <span style="color: #BA36A5;">value</span> ) {
+  <span style="color: #0000FF;">return</span> value.replace( <span style="color: #008000;">/\D/</span>g, <span style="color: #008000;">''</span> );
+}
+
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">digits</span>() {
+  <span style="color: #0000FF;">return</span> hd.fn( digitsOnly );
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> Fancier extensions</h3>
+<div class="outline-text-3" id="text-3-2">
+</div><div id="outline-container-sec-3-2-1" class="outline-4">
+<h4 id="sec-3-2-1"><span class="section-number-4">3.2.1</span> The example</h4>
+<div class="outline-text-4" id="text-3-2-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"extension-example-2"</span>&gt;
+<span class="linenr">2: </span>  &lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span> scoped&gt;
+<span class="linenr">3: </span>    .error { color: #900; }
+<span class="linenr">4: </span>  &lt;/<span style="color: #006699;">style</span>&gt;
+<span class="linenr">5: </span>  &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">class</span>=<span style="color: #008000;">"error"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( x.error )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">6: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.editVar( x, null, [hd.toNum(), new DelayErrors()] )"</span>/&gt;
+<span class="linenr">7: </span>  &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( x )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;
+<span class="linenr">8: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>().v( <span style="color: #008000;">'x'</span>, <span style="color: #008000;">'0'</span> ).end();
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr"> 2: </span><span style="color: #8D8D84; font-style: italic;"> * Extension type</span>
+<span class="linenr"> 3: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr"> 4: </span>
+<span class="linenr"> 5: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constructor</span>
+<span class="linenr"> 6: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">DelayErrors</span>() {
+<span class="linenr"> 7: </span>  <span style="color: #8b1a1a;">this</span>.timeout = <span style="color: #8b1a1a;">null</span>;
+<span class="linenr"> 8: </span>}
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Inheritance</span>
+<span class="linenr">11: </span>DelayErrors.<span style="color: #8b1a1a;">prototype</span> = Object.create( hd.Extension.<span style="color: #8b1a1a;">prototype</span> );
+<span class="linenr">12: </span>
+<span class="linenr">13: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Good value clears any delayed errors</span>
+<span class="linenr">14: </span>DelayErrors.<span style="color: #8b1a1a;">prototype</span>.onNext = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">value</span> ) {
+<span class="linenr">15: </span>  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>.timeout) {
+<span class="linenr">16: </span>    window.clearTimeout( <span style="color: #8b1a1a;">this</span>.timeout );
+<span class="linenr">17: </span>    <span style="color: #8b1a1a;">this</span>.timeout = <span style="color: #8b1a1a;">null</span>;
+<span class="linenr">18: </span>  }
+<span class="linenr">19: </span>  <span style="color: #8b1a1a;">this</span>.sendNext( value );
+<span class="linenr">20: </span>}
+<span class="linenr">21: </span>
+<span class="linenr">22: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Delay error messages three seconds</span>
+<span class="linenr">23: </span>DelayErrors.<span style="color: #8b1a1a;">prototype</span>.onError = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">error</span> ) {
+<span class="linenr">24: </span>  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>.timeout) {
+<span class="linenr">25: </span>    window.clearTimeout( <span style="color: #8b1a1a;">this</span>.timeout );
+<span class="linenr">26: </span>  }
+<span class="linenr">27: </span>  <span style="color: #8b1a1a;">this</span>.timeout = window.setTimeout( <span style="color: #8b1a1a;">this</span>.sendError.bind( <span style="color: #8b1a1a;">this</span>, error ), 3000 );
+<span class="linenr">28: </span>}
+<span class="linenr">29: </span>
+<span class="linenr">30: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Completed clears any delayed errors</span>
+<span class="linenr">31: </span>DelayErrors.<span style="color: #8b1a1a;">prototype</span>.onCompleted = <span style="color: #0000FF;">function</span>() {
+<span class="linenr">32: </span>  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>.timeout) {
+<span class="linenr">33: </span>    window.clearTimeout( <span style="color: #8b1a1a;">this</span>.timeout );
+<span class="linenr">34: </span>    <span style="color: #8b1a1a;">this</span>.timeout = <span style="color: #8b1a1a;">null</span>;
+<span class="linenr">35: </span>  }
+<span class="linenr">36: </span>  <span style="color: #8b1a1a;">this</span>.sendCompleted();
+<span class="linenr">37: </span>}
+<span class="linenr">38: </span>
+<span class="linenr">39: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">------------------------------------------------------------------*/</span>
+<span class="linenr">40: </span>
+<span class="linenr">41: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">42: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'extension-example-2'</span> ) );
+<span class="linenr">43: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="extension-example-2">
+  <style type="text/css" scoped>
+    .error { color: #900; }
+  </style>
+  <span class="error" data-bind="hd.text( x.error )"></span><br/>
+  <input type="text" data-bind="hd.editVar( x, null, [hd.toNum(), new DelayErrors()] )"/>
+  <span data-bind="hd.text( x )"></span>
+</div>
+</div>
+<script type="text/javascript">
+var model = new hd.ModelBuilder().v( 'x', '0' ).end();
+/*--------------------------------------------------------------------
+ * Extension type
+ */
+
+// Constructor
+function DelayErrors() {
+  this.timeout = null;
+}
+
+// Inheritance
+DelayErrors.prototype = Object.create( hd.Extension.prototype );
+
+// Good value clears any delayed errors
+DelayErrors.prototype.onNext = function( value ) {
+  if (this.timeout) {
+    window.clearTimeout( this.timeout );
+    this.timeout = null;
+  }
+  this.sendNext( value );
+}
+
+// Delay error messages three seconds
+DelayErrors.prototype.onError = function( error ) {
+  if (this.timeout) {
+    window.clearTimeout( this.timeout );
+  }
+  this.timeout = window.setTimeout( this.sendError.bind( this, error ), 3000 );
+}
+
+// Completed clears any delayed errors
+DelayErrors.prototype.onCompleted = function() {
+  if (this.timeout) {
+    window.clearTimeout( this.timeout );
+    this.timeout = null;
+  }
+  this.sendCompleted();
+}
+
+/*------------------------------------------------------------------*/
+
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'extension-example-2' ) );
+} )
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This extension delays any error messages for three seconds.  Notice how long
+it takes to get error messages (for invalid numbers) compared to the
+propagation of good values.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2-2" class="outline-4">
+<h4 id="sec-3-2-2"><span class="section-number-4">3.2.2</span> Extension possibilities</h4>
+<div class="outline-text-4" id="text-3-2-2">
+<p>
+By writing your own extension types you can implement functionality not
+possible with the <code>hd.fn</code> extension.  For example, by overriding the <code>onError</code>
+function, you can write extensions that interact with errors.  Or, by choosing
+when to call <code>sendNext</code>, you can make extensions which delay or even cancel
+certain values.
+</p>
+
+<p>
+To illustrate this, the example above defines an extension which delays error
+values for two seconds.  If the user produces another value within that time
+period, it never sends the error.
+</p>
+
+<p>
+Note that it is important that your extension not block or take an excessively
+long time to complete.  However extensions are well suited for asynchronous
+programming:  you do not have to send a value right away; you may schedule an
+operation that will result in sending a value later.  (In our example we
+simply use <code>setTimeout</code> to send the value later.)  Whenever you do send the
+value, it will simply continue on its way.
+</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> View adapters</h2>
+<div class="outline-text-2" id="text-4">
+</div><div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1"><span class="section-number-3">4.1</span> The example</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"adapter-example"</span>&gt;
+<span class="linenr"> 2: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"slider"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"{mkview: Slider, model: x}"</span>&gt;&lt;/<span style="color: #006699;">div</span>&gt;
+<span class="linenr"> 3: </span>&lt;<span style="color: #006699;">p</span>&gt;Value:
+<span class="linenr"> 4: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( x, 0, null, hd.fn( restrict, 0, 100 ) )"</span>/&gt;
+<span class="linenr"> 5: </span>&lt;/<span style="color: #006699;">p</span>&gt;
+<span class="linenr"> 6: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+<span class="linenr"> 7: </span>&lt;<span style="color: #006699;">script</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/javascript"</span>&gt;
+<span class="linenr"> 8: </span>// Using jQuery-UI to create a slider
+<span class="linenr"> 9: </span>$(function() { $(<span style="color: #008000;">"#slider"</span>).slider( {min: 0, max: 100, step: 1} ); });
+<span class="linenr">10: </span>&lt;/<span style="color: #006699;">script</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>().v( <span style="color: #008000;">"x"</span>, 50 ).end();
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr"> 2: </span><span style="color: #8D8D84; font-style: italic;"> * Define the object that represents the slider.  Must be Observable</span>
+<span class="linenr"> 3: </span><span style="color: #8D8D84; font-style: italic;"> * and Observer.</span>
+<span class="linenr"> 4: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr"> 5: </span>
+<span class="linenr"> 6: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constructor - register callback for slider change</span>
+<span class="linenr"> 7: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">Slider</span>( <span style="color: #BA36A5;">el</span> ) {
+<span class="linenr"> 8: </span>  <span style="color: #8b1a1a;">this</span>.el = el;
+<span class="linenr"> 9: </span>  $(el).on( <span style="color: #008000;">"slide"</span>, <span style="color: #8b1a1a;">this</span>.onSlide.bind( <span style="color: #8b1a1a;">this</span> ) );
+<span class="linenr">10: </span>}
+<span class="linenr">11: </span>
+<span class="linenr">12: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Inheritance</span>
+<span class="linenr">13: </span>Slider.<span style="color: #8b1a1a;">prototype</span> = Object.create( hd.BasicObservable.<span style="color: #8b1a1a;">prototype</span> );
+<span class="linenr">14: </span>
+<span class="linenr">15: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">When slider changes</span>
+<span class="linenr">16: </span>Slider.<span style="color: #8b1a1a;">prototype</span>.onSlide = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">event</span>, <span style="color: #BA36A5;">ui</span> ) {
+<span class="linenr">17: </span>    <span style="color: #0000FF;">if</span> (ui.value != <span style="color: #8b1a1a;">this</span>.last) {
+<span class="linenr">18: </span>      <span style="color: #8b1a1a;">this</span>.sendNext( ui.value )
+<span class="linenr">19: </span>    }
+<span class="linenr">20: </span>}
+<span class="linenr">21: </span>
+<span class="linenr">22: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">When variable changes</span>
+<span class="linenr">23: </span>Slider.<span style="color: #8b1a1a;">prototype</span>.onNext = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">value</span> ) {
+<span class="linenr">24: </span>  <span style="color: #8b1a1a;">this</span>.last = value;
+<span class="linenr">25: </span>    <span style="color: #0000FF;">if</span> ($(<span style="color: #8b1a1a;">this</span>.el).slider( <span style="color: #008000;">"value"</span> ) != value) {
+<span class="linenr">26: </span>      $(<span style="color: #8b1a1a;">this</span>.el).slider( <span style="color: #008000;">"value"</span>, value );
+<span class="linenr">27: </span>    }
+<span class="linenr">28: </span>}
+<span class="linenr">29: </span>
+<span class="linenr">30: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Needed by Observer</span>
+<span class="linenr">31: </span>Slider.<span style="color: #8b1a1a;">prototype</span>.onError = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">error</span> ) { }
+<span class="linenr">32: </span>
+<span class="linenr">33: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Neede by Observer</span>
+<span class="linenr">34: </span>Slider.<span style="color: #8b1a1a;">prototype</span>.onCompleted = <span style="color: #0000FF;">function</span>() { }
+<span class="linenr">35: </span>
+<span class="linenr">36: </span><span style="color: #8D8D84;">/*</span><span style="color: #8D8D84; font-style: italic;">--------------------------------------------------------------------</span>
+<span class="linenr">37: </span><span style="color: #8D8D84; font-style: italic;"> * Translation function for extension</span>
+<span class="linenr">38: </span><span style="color: #8D8D84; font-style: italic;"> */</span>
+<span class="linenr">39: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">restrict</span>( <span style="color: #BA36A5;">from</span>, <span style="color: #BA36A5;">to</span>, <span style="color: #BA36A5;">n</span> ) {
+<span class="linenr">40: </span>  <span style="color: #0000FF;">if</span> (n &lt; from) { <span style="color: #0000FF;">return</span> from; }
+<span class="linenr">41: </span>  <span style="color: #0000FF;">if</span> (n &gt; to) { <span style="color: #0000FF;">return</span> to; }
+<span class="linenr">42: </span>  <span style="color: #0000FF;">return</span> n;
+<span class="linenr">43: </span>}
+<span class="linenr">44: </span>
+<span class="linenr">45: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Schedule the binder</span>
+<span class="linenr">46: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">47: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'adapter-example'</span> ) )
+<span class="linenr">48: </span>} );
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="adapter-example">
+<div id="slider" data-bind="{mkview: Slider, model: x}"></div>
+<p>Value:
+  <input type="text" data-bind="hd.num( x, 0, null, hd.fn( restrict, 0, 100 ) )"/>
+</p>
+</div>
+<script type="text/javascript">
+// Using jQuery-UI to create a slider
+$(function() { $("#slider").slider( {min: 0, max: 100, step: 1} ); });
+</script>
+</div>
+<script type="text/javascript">
+var model = new hd.ModelBuilder().v( "x", 50 ).end();
+/*--------------------------------------------------------------------
+ * Define the object that represents the slider.  Must be Observable
+ * and Observer.
+ */
+
+// Constructor - register callback for slider change
+function Slider( el ) {
+  this.el = el;
+  $(el).on( "slide", this.onSlide.bind( this ) );
+}
+
+// Inheritance
+Slider.prototype = Object.create( hd.BasicObservable.prototype );
+
+// When slider changes
+Slider.prototype.onSlide = function( event, ui ) {
+    if (ui.value != this.last) {
+      this.sendNext( ui.value )
+    }
+}
+
+// When variable changes
+Slider.prototype.onNext = function( value ) {
+  this.last = value;
+    if ($(this.el).slider( "value" ) != value) {
+      $(this.el).slider( "value", value );
+    }
+}
+
+// Needed by Observer
+Slider.prototype.onError = function( error ) { }
+
+// Neede by Observer
+Slider.prototype.onCompleted = function() { }
+
+/*--------------------------------------------------------------------
+ * Translation function for extension
+ */
+function restrict( from, to, n ) {
+  if (n < from) { return from; }
+  if (n > to) { return to; }
+  return n;
+}
+
+// Schedule the binder
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'adapter-example' ) )
+} );
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+Here, we bind a slider and a text input to the same variable.  Notice that
+changing the slider changes the text box, and vice-versa.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2"><span class="section-number-3">4.2</span> Writing adapters</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+We first described view adapters in the <a href="binding.html">Advanced Binding Concepts</a> document.
+It should be clear now that an adapter is an object which implements the
+Observable and/or Observer interfaces.  If your view element produces values
+which should be used to update the variable, it should be an Observable.  If
+your view element accepts updates from the variable, it should be an Observer.
+</p>
+
+<p>
+In the example above we define an adapter for a jQuery UI slider widget.  We
+want the slider to be used to update the variable; therefore we make the
+adapter Observable by using the <code>BasicObservable</code> type as a prototype and
+calling <code>sendNext</code> every time the slider's value changes.
+</p>
+
+<p>
+We also want the slider to change every time the variable changes; therefore
+we make the adapter an Observer by implementing <code>onNext</code>, <code>onError</code>, and
+<code>onCompleted</code>.  The <code>onNext</code> function updates the slider with the new value;
+the other two functions have no effect.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3"><span class="section-number-3">4.3</span> Beware of cycles</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+Note that <i>every</i> time your view adapter produces a new value with which to
+update the variable, the variable will respond by producing a new value with
+which to update the view.  This is an intentional design decision in order to
+allow the value to pass through the translators defined for the binding &#x2014; it
+may very well be that the value your adapter produces is not the same value
+that the variable is updated with.
+</p>
+
+<p>
+However, this design decision does present a possibility for an infinite loop
+in which the view and the view-model continually update one another.  This is
+especially a danger if updating the view causes the view to generate update
+events, as is the case with the jQuery UI slider.  In the case of the slider,
+a cycle would go like this:
+</p>
+
+<ol class="org-ol">
+<li>The user moves the slider to a new position &#x2014; say, 25.
+</li>
+<li>The slider reports that its position has been changed.
+</li>
+<li>The view adapter uses <code>sendNext</code> to report the new position.
+</li>
+<li>The variable is updated to 25.
+</li>
+<li>The variable calls the adapter's <code>onNext</code> to report that the variable has,
+in fact, been set to 25.
+</li>
+<li>The adapter sets the slider's position to 25.
+</li>
+<li>The slider reports that its position has been changed.
+</li>
+<li>The adapter uses <code>sendNext</code> to report the new position.
+</li>
+<li>And so on, and so forth&#x2026;
+</li>
+</ol>
+
+<p>
+To avoid this cycle, we add a couple of safety checks.  The first is a check
+in <code>onNext</code> to avoid setting the slider to the same value it currently has.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="set-slider">  <span style="color: #0000FF;">if</span> ($(<span style="color: #8b1a1a;">this</span>.el).slider( <span style="color: #008000;">"value"</span> ) != value) {
+    $(<span style="color: #8b1a1a;">this</span>.el).slider( <span style="color: #008000;">"value"</span>, value );
+  }
+</pre>
+</div>
+
+<p>
+The second is a check in <code>onSlide</code> to avoid setting the variable to the same
+value it currently has.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="send-next">  <span style="color: #0000FF;">if</span> (ui.value != <span style="color: #8b1a1a;">this</span>.last) {
+    <span style="color: #8b1a1a;">this</span>.sendNext( ui.value )
+  }
+</pre>
+</div>
+
+<p>
+Either one of these checks is sufficient to break the cycle; however, together
+they ensure that we will never do unnecessary work by setting something to a
+value which it already has.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-4" class="outline-3">
+<h3 id="sec-4-4"><span class="section-number-3">4.4</span> Side note: a range enforcing translator</h3>
+<div class="outline-text-3" id="text-4-4">
+<p>
+Finally, we draw attention to one other important detail in this example.  We
+created a translator function to ensure that the value entered in the text box
+will always be betwen zero and one hundred: the valid range of the slider.  If
+the value lies outside the valid range, it changes it either to the minimum of
+the range (if it is too low) or the maximum of the range (if it is too high).
+This enforces an invariant on the variable <code>x</code>:  it is a number between zero
+and one hundred.
+</p>
+
+<p>
+Note that we wrote this function so that the range it enforces is passed as
+parameters to the function, making it easy to reuse as needed.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2015-03-04 Wed 16:27</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>

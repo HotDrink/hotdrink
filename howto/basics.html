@@ -1,0 +1,1937 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Basic HotDrink Usage</title>
+<!-- 2015-03-04 Wed 16:27 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript" src="hotdrink.min.js"></script>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Basic HotDrink Usage</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Variables and binding</a>
+<ul>
+<li><a href="#sec-1-1">1.1. The example</a></li>
+<li><a href="#sec-1-2">1.2. Creating variables</a></li>
+<li><a href="#sec-1-3">1.3. Binding to the view</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2. Constraints and methods</a>
+<ul>
+<li><a href="#sec-2-1">2.1. The example</a></li>
+<li><a href="#sec-2-2">2.2. Constraints</a></li>
+<li><a href="#sec-2-3">2.3. Methods</a></li>
+<li><a href="#sec-2-4">2.4. Declaring the end</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">3. Connected constraints</a>
+<ul>
+<li><a href="#sec-3-1">3.1. The example</a></li>
+<li><a href="#sec-3-2">3.2. Updating the constraint system</a></li>
+<li><a href="#sec-3-3">3.3. Declaring multiple variables at once</a></li>
+<li><a href="#sec-3-4">3.4. Reusing functions</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">4. Input/output variables</a>
+<ul>
+<li><a href="#sec-4-1">4.1. The example</a></li>
+<li><a href="#sec-4-2">4.2. The meaning of I/O parameters</a></li>
+<li><a href="#sec-4-3">4.3. Caveat</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">5. Multiple output variables</a>
+<ul>
+<li><a href="#sec-5-1">5.1. The example</a></li>
+<li><a href="#sec-5-2">5.2. Multiple return values</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">6. Shortcut:  declarative binding</a>
+<ul>
+<li><a href="#sec-6-1">6.1. The example</a></li>
+<li><a href="#sec-6-2">6.2. Automatic binding function</a></li>
+</ul>
+</li>
+<li><a href="#sec-7">7. Shortcut: binding specification factories</a>
+<ul>
+<li><a href="#sec-7-1">7.1. The example</a></li>
+<li><a href="#sec-7-2">7.2. Factory functions</a></li>
+</ul>
+</li>
+<li><a href="#sec-8">8. Shortcut: equations</a>
+<ul>
+<li><a href="#sec-8-1">8.1. The example</a></li>
+<li><a href="#sec-8-2">8.2. Allowable equations</a></li>
+<li><a href="#sec-8-3">8.3. Implementation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Variables and binding</h2>
+<div class="outline-text-2" id="text-1">
+</div><div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> The example</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span>&gt;
+<span class="linenr">2: </span>  X: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"x_edit"</span>/&gt; <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"x_view"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">3: </span>  Y: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"y_edit"</span>/&gt; <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"y_view"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">4: </span>  Z: &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"z_view"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;
+<span class="linenr">5: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span id="coderef-varx" class="coderef-off"><span class="linenr">2: </span>    .variable( <span style="color: #008000;">'x'</span>, <span style="color: #008000;">'Hello, HotDrink!'</span> )</span>
+<span id="coderef-vary" class="coderef-off"><span class="linenr">3: </span>    .variable( <span style="color: #008000;">'y'</span>, 3 )</span>
+<span class="linenr">4: </span>    .variable( <span style="color: #008000;">'z'</span>, {x: 0, y: 0} )
+<span class="linenr">5: </span>    .end();
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span id="coderef-onload" class="coderef-off"><span class="linenr"> 1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {</span>
+<span class="linenr"> 2: </span>
+<span class="linenr"> 3: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Bind x to &lt;input&gt;</span>
+<span class="linenr"> 4: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'x_edit'</span> ) ),
+<span class="linenr"> 5: </span>            model: model.x,
+<span class="linenr"> 6: </span>            dir:   hd.dir.bi
+<span class="linenr"> 7: </span>           }
+<span id="coderef-x1" class="coderef-off"><span class="linenr"> 8: </span>         );</span>
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Bind x to &lt;span&gt;</span>
+<span class="linenr">11: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'x_view'</span> ) ),
+<span class="linenr">12: </span>            model: model.x,
+<span class="linenr">13: </span>            dir:   hd.dir.m2v
+<span class="linenr">14: </span>           }
+<span id="coderef-x2" class="coderef-off"><span class="linenr">15: </span>         );</span>
+<span class="linenr">16: </span>
+<span class="linenr">17: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Bind y to &lt;input&gt;</span>
+<span class="linenr">18: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'y_edit'</span> ) ),
+<span class="linenr">19: </span>            model:   model.y,
+<span class="linenr">20: </span>            dir:     hd.dir.bi,
+<span class="linenr">21: </span>            toModel: hd.toNum()
+<span class="linenr">22: </span>           }
+<span id="coderef-y1" class="coderef-off"><span class="linenr">23: </span>         );</span>
+<span class="linenr">24: </span>
+<span class="linenr">25: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Bind y to &lt;span&gt;</span>
+<span class="linenr">26: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'y_view'</span> ) ),
+<span class="linenr">27: </span>            model: model.y,
+<span class="linenr">28: </span>            dir:   hd.dir.m2v
+<span class="linenr">29: </span>           }
+<span class="linenr">30: </span>         );
+<span class="linenr">31: </span>
+<span class="linenr">32: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Bind z to mouse</span>
+<span class="linenr">33: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.MousePosition</span>(),
+<span class="linenr">34: </span>            model: model.z,
+<span class="linenr">35: </span>            dir:   hd.dir.v2m
+<span class="linenr">36: </span>           }
+<span class="linenr">37: </span>         );
+<span class="linenr">38: </span>
+<span class="linenr">39: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Bind z to &lt;span&gt;</span>
+<span class="linenr">40: </span>  hd.bind( {view:   <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'z_view'</span> ) ),
+<span class="linenr">41: </span>            model:  model.z,
+<span class="linenr">42: </span>            dir:    hd.dir.m2v,
+<span class="linenr">43: </span>            toView: hd.pointToString()
+<span class="linenr">44: </span>           }
+<span class="linenr">45: </span>         );
+<span class="linenr">46: </span>} );
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div>
+  X: <input type="text" id="x_edit"/> &rArr; <span id="x_view"></span><br/>
+  Y: <input type="text" id="y_edit"/> &rArr; <span id="y_view"></span><br/>
+  Z: <span type="text" id="z_view"></span>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+    .variable( 'x', 'Hello, HotDrink!' ) 
+    .variable( 'y', 3 ) 
+    .variable( 'z', {x: 0, y: 0} )
+    .end();
+window.addEventListener( 'load', function() { 
+
+  // Bind x to <input>
+  hd.bind( {view:  new hd.Edit( document.getElementById( 'x_edit' ) ),
+            model: model.x,
+            dir:   hd.dir.bi
+           }
+         ); 
+
+  // Bind x to <span>
+  hd.bind( {view:  new hd.Text( document.getElementById( 'x_view' ) ),
+            model: model.x,
+            dir:   hd.dir.m2v
+           }
+         ); 
+
+  // Bind y to <input>
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'y_edit' ) ),
+            model:   model.y,
+            dir:     hd.dir.bi,
+            toModel: hd.toNum()
+           }
+         ); 
+
+  // Bind y to <span>
+  hd.bind( {view:  new hd.Text( document.getElementById( 'y_view' ) ),
+            model: model.y,
+            dir:   hd.dir.m2v
+           }
+         );
+
+  // Bind z to mouse
+  hd.bind( {view:  new hd.MousePosition(),
+            model: model.z,
+            dir:   hd.dir.v2m
+           }
+         );
+
+  // Bind z to <span>
+  hd.bind( {view:   new hd.Text( document.getElementById( 'z_view' ) ),
+            model:  model.z,
+            dir:    hd.dir.m2v,
+            toView: hd.pointToString()
+           }
+         );
+} );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+The value of variables <code>x</code> and <code>y</code> are each contained in an edit box and also
+displayed in the page next to the edit box.  Editing the value changes the
+text beside it &#x2014; though the <code>y</code> variable only changes when a valid number is
+entered.  The variable <code>z</code> is set according to the mouse position and
+displayed in the page.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> Creating variables</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+Just as in a programming language, values in HotDrink are stored in variables.
+(Note, however, that HotDrink variables are <i>not</i> the same as JavaScript
+variables &#x2014; HotDrink variables are actually JavaScript objects.)
+</p>
+
+<p>
+Variables are created with the model builder using the <code>variable</code> member
+function and then stored in the model.  To create a variable you must specify
+a name; you may optionally specify an initial value.  As with JavaScript
+variables, uninitialized variables are given the value <code>undefined</code>.  For
+example, <a href="#coderef-varx"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-varx');" onmouseout="CodeHighlightOff(this, 'coderef-varx');">line 2</a> of the view-model creates a variable named <code>x</code> which is
+initialized to the string "<code>Hello, world</code>".
+</p>
+
+<p>
+The return value of the <code>variable</code> function is the builder itself.  This allows a
+succinct programming style known as "chaining" in which multiple calls to
+builder functions are joined together into a single expression.
+</p>
+
+<p>
+The builder member functions get used frequently when declaring a property
+model.  To make them easier to use, the model builder provides abbreviated
+names for many of them.  For example, you may refer to the <code>variable</code> member
+function simply as <code>v</code>.  This is perhaps slightly less readable, but much
+easier to type; we will use the abbreviated name <code>v</code> in the remainder of the
+examples.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3"><span class="section-number-3">1.3</span> Binding to the view</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+In order to make the data of the view-model visible in the view, we must
+create a connection called a <i>binding</i>.  (Note: we use the word <i>binding</i> both
+as a noun to refer to the connection, and also as a verb to refer to the
+process of creating the connection.)  A binding is created through the
+<code>hd.bind</code> function by passing it a binding specification.  We explain binding
+in great detail in the <a href="binding.html">Advanced Binding Concepts</a> how-to, but for now we will
+examine just the fundamental concepts.
+</p>
+
+<p>
+A binding specification contains two important elements: an object
+representing the <i>view</i>, and an object representing the <i>model</i>.  These can be
+any objects as long as they follow HotDrink's protocol for passing values
+between objects.  (We discuss this in much more detail in the <a href="program.html">Programming
+Guide</a>.)  Typically, the <i>model</i> object will be a variable in the model, and
+the <i>view</i> object will represent some element in the web page.  We refer to
+these view objects as <i>view adapters</i> because they translate the various
+interfaces of different DOM elements into the standard interface used by
+HotDrink.
+</p>
+
+<p>
+This example makes use of three view adapters.  The <code>hd.Edit</code> adapter
+encapsulates a text edit box, using the value of the variable as the value of
+the edit box.  The <code>hd.Text</code> adapter encapsulates any tag which may contain
+text, using the value of the variable as the contents of the tag.  And the
+<code>hd.MousePosition</code> adapter encapsulates the mouse, using its current position
+as the value of the variable.
+</p>
+
+<p>
+Note that the <code>hd.Edit</code> and <code>hd.Text</code> adapters are initialized with the HTML
+DOM node they are intended to encapsulate.  Remember that HTML DOM elements
+are not available until their HTML has been processed by the browser.
+Therefore, a good time to perform binding is immediately after your entire
+document has been processed.  For purposes of this document, we accomplish
+this by scheduling our binding to execute when the <code>window.onload</code> event
+occurs.  You can see this on <a href="#coderef-onload"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-onload');" onmouseout="CodeHighlightOff(this, 'coderef-onload');">line 1</a> of the binding section above.  Many
+JavaScript frameworks offer alternative methods of running code as soon as the
+DOM is ready, and you are welcome to use them if you wish.
+</p>
+
+<p>
+In addition to the <code>view</code> and <code>model</code> property, there are three optional
+properties in a binding specification.  The <code>dir</code> property indicates the
+direction of the binding.  There are three possible values for this property,
+illustrated by the three different binding adapters we used in this example.
+The binding for the <code>hd.Text</code> adapters goes only from the model to the view
+&#x2014; that is, we always use the value of the model to set the value of the
+view, never vice-versa.  This direction is indicated by the value
+<code>hd.dir.m2v</code>.  Conversely, the binding for the <code>hd.MousePosition</code> adapter goes
+only from the view to the model, as indicated by the value <code>hd.dir.v2m</code>.  The
+binding for the <code>hd.Edit</code> adapter is bi-directional, meaning that changing the
+model updates the view <i>and</i> changing the view updates the model.  This is
+indicated by the value <code>hd.dir.bi</code>.
+</p>
+
+<p>
+Again, the <code>dir</code> property of a binding specification is optional; if it is
+omitted, the system will attempt to deduce the direction based on the
+interfaces supported by the objects.  Most of the time this is sufficient &#x2014;
+in fact, in this example, none of the <code>dir</code> properties are actually needed.
+The only time you must specify <code>dir</code> is if values <i>could</i> be passed in both
+directions but you want them passed in only one direction.
+</p>
+
+<p>
+There other two optional properties are <code>toModel</code> and <code>toView</code>.  If used,
+these properties should refer to <i>transformation objects</i> which modify the
+values passed between objects.  Again, we defer in-depth discussion of this
+for a later time, but for now notice the two transformations we use in the
+example.  The variable <code>z</code> contains an object representing the current
+coordinates of the mouse.  Thus, in order to bind this to a text binding, we
+must transform the point object to a string using <code>hd.pointToString</code>.  Since
+that transformation takes place when the value is copied to the view, this is
+a <code>toView</code> transformation.
+</p>
+
+<p>
+Similarly, we wish for the variable <code>y</code> to contain a number.  Thus, we must
+convert the string value of the edit box to a numeric value using <code>hd.toNum</code>.
+Since this transformation takes place when the value is copied to the model,
+this is a <code>toModel</code> transformation.  If desired, we could specify a <code>toView</code>
+transformation to use to convert the number back to a string.  In this case we
+choose not to, simply relying on JavaScript's built-in string coercion;
+however, we a transformation could ensure the number is formatted as desired.
+</p>
+
+<p>
+Note that certain transformations may fail in certain cases.  (For example,
+try entering "abc" into the edit box for Y.)  When this happens, the value
+will <i>not</i> be passed from the view to the model (or from the model to the
+view, depending on the direction).  Also, transformations may result in loss
+of formatting, since formatting is a property of the string.  (For example,
+try entering "1e3" into the edit box for Y.)
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Constraints and methods</h2>
+<div class="outline-text-2" id="text-2">
+</div><div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> The example</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"display:inline-block; text-align:right"</span>&gt;
+<span class="linenr">2: </span>  Income:   &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"income"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">3: </span>  Expenses: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"expenses"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">4: </span>  Profit:   &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"profit"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">5: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr"> 2: </span>  .v( <span style="color: #008000;">'income'</span>, 1500 ).v( <span style="color: #008000;">'expenses'</span>, 900 ).v( <span style="color: #008000;">'profit'</span> )
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constraint:  profit == income - expenses</span>
+<span id="coderef-con" class="coderef-off"><span class="linenr"> 5: </span>  .constraint( <span style="color: #008000;">'income, expenses, profit'</span> )</span>
+<span id="coderef-mth1" class="coderef-off"><span class="linenr"> 6: </span>  .method( <span style="color: #008000;">'income, expenses -&gt; profit'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">income</span>, <span style="color: #BA36A5;">expenses</span> ) {</span>
+<span class="linenr"> 7: </span>    <span style="color: #0000FF;">return</span> income - expenses;
+<span class="linenr"> 8: </span>  } )
+<span id="coderef-mth2" class="coderef-off"><span class="linenr"> 9: </span>  .method( <span style="color: #008000;">'profit, expenses -&gt; income'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">profit</span>, <span style="color: #BA36A5;">expenses</span> ) {</span>
+<span class="linenr">10: </span>    <span style="color: #0000FF;">return</span> profit + expenses;
+<span class="linenr">11: </span>  } )
+<span id="coderef-mth3" class="coderef-off"><span class="linenr">12: </span>  .method( <span style="color: #008000;">'income, profit -&gt; expenses'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">income</span>, <span style="color: #BA36A5;">profit</span> ) {</span>
+<span class="linenr">13: </span>    <span style="color: #0000FF;">return</span> income - profit;
+<span class="linenr">14: </span>  } )
+<span class="linenr">15: </span>
+<span id="coderef-end" class="coderef-off"><span class="linenr">16: </span>  .end();</span>
+<span class="linenr">17: </span>
+<span class="linenr">18: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">19: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr"> 2: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'income'</span> ) ),
+<span class="linenr"> 3: </span>            model:   model.income,
+<span class="linenr"> 4: </span>            toModel: hd.toNum()
+<span class="linenr"> 5: </span>           }
+<span class="linenr"> 6: </span>         );
+<span class="linenr"> 7: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'expenses'</span> ) ),
+<span class="linenr"> 8: </span>            model:   model.expenses,
+<span class="linenr"> 9: </span>            toModel: hd.toNum()
+<span class="linenr">10: </span>           }
+<span class="linenr">11: </span>         );
+<span class="linenr">12: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'profit'</span> ) ),
+<span class="linenr">13: </span>            model:   model.profit,
+<span class="linenr">14: </span>            toModel: hd.toNum()
+<span class="linenr">15: </span>           }
+<span class="linenr">16: </span>         );
+<span class="linenr">17: </span>} );
+</pre>
+</div>
+
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div style="display:inline-block; text-align:right">
+  Income:   <input type="text" id="income"/><br/>
+  Expenses: <input type="text" id="expenses"/><br/>
+  Profit:   <input type="text" id="profit"/><br/>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+  .v( 'income', 1500 ).v( 'expenses', 900 ).v( 'profit' )
+
+  // Constraint:  profit == income - expenses
+  .constraint( 'income, expenses, profit' ) 
+  .method( 'income, expenses -> profit', function( income, expenses ) { 
+    return income - expenses;
+  } )
+  .method( 'profit, expenses -> income', function( profit, expenses ) { 
+    return profit + expenses;
+  } )
+  .method( 'income, profit -> expenses', function( income, profit ) { 
+    return income - profit;
+  } )
+
+  .end(); 
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'income' ) ),
+            model:   model.income,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'expenses' ) ),
+            model:   model.expenses,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'profit' ) ),
+            model:   model.profit,
+            toModel: hd.toNum()
+           }
+         );
+} );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+Each time you make a change to one variable, the system automatically updates
+another variable as well so that the equation "<code>profit == income - expenses</code>" is
+always true.  The variable that is changed is always the variable you edited
+<i>least</i> recently.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Constraints</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+A constraint is simply something that should always be true concerning some
+(not necessarily all) of your variables.  When that thing is true, we say the
+constraint is <i>satisfied</i>.  Exactly what it is that should be true is entirely
+up to you.  Often it is a simple equation: in the example above, it is the
+equation "<code>profit == income - expenses</code>."  But you might also have a
+constraint that one number lies between the other two; or that the sum of all
+three numbers is divisible by 7; or that a database lookup using the first two
+numbers returns the third; and so on and so forth.
+</p>
+
+<p>
+To define a constraint in HotDrink, all you need to specify is the variables
+involved.  To make this simple, the <code>constraint</code> member function of the model
+builder takes a string containing all of the variables' names in a
+comma delimited list.  In <a href="#coderef-con"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-con');" onmouseout="CodeHighlightOff(this, 'coderef-con');">line 5</a> above we define a constraint for the
+variables <code>income</code>, <code>expenses</code>, and <code>profit</code>.
+</p>
+
+<p>
+The return value of the <code>constraint</code> member function is the builder, to
+facilitate chaining. The <code>constraint</code> member function may be abbreviated as
+<code>c</code>; we will use this abbreviation in the remainder of the examples.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3"><span class="section-number-3">2.3</span> Methods</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+As stated above, the constraint can be whatever you want, but here's the
+catch: you must tell HotDrink how to <i>enforce</i> the constraint &#x2014; i.e.,
+whenever the constraint is not satisfied, how can HotDrink change one or more
+variables so that it is?  Each of these ways to enforce the constraint is
+called a <i>constraint satisfaction method</i>, or just <i>method</i> for short.
+</p>
+
+<p>
+A method is always a function whose parameters are <i>some</i>
+variables of the constraint, and which returns new values for <i>the other</i>
+variables of the
+constraint.  In the example above we provide three constraint satisfaction
+methods: one on <a href="#coderef-mth1"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-mth1');" onmouseout="CodeHighlightOff(this, 'coderef-mth1');">line 6</a>, one on <a href="#coderef-mth2"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-mth2');" onmouseout="CodeHighlightOff(this, 'coderef-mth2');">line 9</a>, and one on <a href="#coderef-mth3"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-mth3');" onmouseout="CodeHighlightOff(this, 'coderef-mth3');">line 12</a>.  Each
+one of these methods takes two of the variables and calculates a new value for
+the third variable.
+</p>
+
+<p>
+The method-creation function of the model builder, named <code>method</code>, takes a
+signature and a function.  The signature is a string defining which variables
+are inputs and which are outputs; it has the form "<i>inputs</i> <code>-&gt;</code> <i>outputs</i>",
+where both <i>inputs</i> and <i>outputs</i> are comma-delimited lists of variables. In
+the example above we provide an anonymous function for each method, but this
+is not a requirement; they can be named functions defined previously.
+</p>
+
+<p>
+Note that it is not a requirement for function parameter names to match the
+variables which should be passed to them; in fact, HotDrink has no way of
+knowing what you named your parameters.  HotDrink will use the signature you
+provided to decide what variables to pass to the function.
+</p>
+
+<p>
+Whenever you call <code>method</code>, HotDrink assumes you are adding a method to the most
+recently defined constraint.  As with the other builder member functions, the
+return value of <code>method</code> is the
+builder to facilitate chaining, and it may be abbreviated as <code>m</code>; we will use
+this abbreviation in the remainder of the examples.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-4" class="outline-3">
+<h3 id="sec-2-4"><span class="section-number-3">2.4</span> Declaring the end</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+You begin a constraint using the <code>constraint</code> builder member function; you add
+methods to it using <code>method</code>; so how does the builder know when the constraint
+is finished?  Well, it turns out there is a builder function named
+<code>endConstraint</code> which does just that.  Technically, the constraint is not
+fully created until <code>endConstraint</code> is called.
+</p>
+
+<p>
+That being said, many builder member functions (such as <code>variable</code>,
+<code>constraint</code>, <code>result</code>, etc.) check to see if the builder has an unfinished
+constraint and, if so, calls <code>endConstraint</code> for you.  The upshot is, most of
+the time there is no need to call <code>endConstraint</code>; it is only when you're
+doing something unusual with the builder must you be aware of it.
+Technically, your constraint has not been created until you call
+<code>endConstraint</code> or it is called for you.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Connected constraints</h2>
+<div class="outline-text-2" id="text-3">
+</div><div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> The example</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">table</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"text-align: right"</span>&gt;
+<span class="linenr"> 2: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 3: </span>    &lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 4: </span>      Left:  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"left"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr"> 5: </span>      Right: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"right"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr"> 6: </span>      Width: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"width"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr"> 7: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 8: </span>    &lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 9: </span>      Top:    &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"top"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">10: </span>      Bottom: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"bottom"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">11: </span>      Height: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"height"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">12: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">13: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">14: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">15: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">colspan</span>=<span style="color: #008000;">"2"</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"text-align:center"</span>&gt;
+<span class="linenr">16: </span>      Aspect Ratio: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"aspect"</span>/&gt;
+<span class="linenr">17: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">18: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">19: </span>&lt;/<span style="color: #006699;">table</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Helper functions</span>
+<span class="linenr"> 2: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">sum</span> ( <span style="color: #BA36A5;">x</span>, <span style="color: #BA36A5;">y</span> ) { <span style="color: #0000FF;">return</span> x + y; }
+<span class="linenr"> 3: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">diff</span>( <span style="color: #BA36A5;">x</span>, <span style="color: #BA36A5;">y</span> ) { <span style="color: #0000FF;">return</span> x - y; }
+<span class="linenr"> 4: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">prod</span>( <span style="color: #BA36A5;">x</span>, <span style="color: #BA36A5;">y</span> ) { <span style="color: #0000FF;">return</span> x * y; }
+<span class="linenr"> 5: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">quot</span>( <span style="color: #BA36A5;">x</span>, <span style="color: #BA36A5;">y</span> ) { <span style="color: #0000FF;">return</span> x / y; }
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span id="coderef-vs" class="coderef-off"><span class="linenr"> 8: </span>  .variables( <span style="color: #008000;">'left, right, width, top, bottom, height, aspect'</span>,</span>
+<span class="linenr"> 9: </span>              {left: 0, right: 100, top: 60, bottom: 140}
+<span class="linenr">10: </span>  )
+<span class="linenr">11: </span>
+<span class="linenr">12: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constraint: width == right - left</span>
+<span class="linenr">13: </span>  .c( <span style="color: #008000;">'left, right, width'</span> )
+<span class="linenr">14: </span>  .m( <span style="color: #008000;">'left, width -&gt; right'</span>, sum  )
+<span class="linenr">15: </span>  .m( <span style="color: #008000;">'right, left -&gt; width'</span>, diff )
+<span class="linenr">16: </span>  .m( <span style="color: #008000;">'right, width -&gt; left'</span>, diff )
+<span class="linenr">17: </span>
+<span class="linenr">18: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constraint: height == bottom - top</span>
+<span class="linenr">19: </span>  .c( <span style="color: #008000;">'top, bottom, height'</span> )
+<span class="linenr">20: </span>  .m( <span style="color: #008000;">'top, height -&gt; bottom'</span>, sum  )
+<span class="linenr">21: </span>  .m( <span style="color: #008000;">'bottom, top -&gt; height'</span>, diff )
+<span class="linenr">22: </span>  .m( <span style="color: #008000;">'bottom, height -&gt; top'</span>, diff )
+<span class="linenr">23: </span>
+<span class="linenr">24: </span>  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constraint: aspect == width / height</span>
+<span class="linenr">25: </span>  .c( <span style="color: #008000;">'width, height, aspect'</span> )
+<span class="linenr">26: </span>  .m( <span style="color: #008000;">'height, aspect -&gt; width'</span>, prod )
+<span class="linenr">27: </span>  .m( <span style="color: #008000;">'width, height -&gt; aspect'</span>, quot )
+<span class="linenr">28: </span>  .m( <span style="color: #008000;">'width, aspect -&gt; height'</span>, quot )
+<span class="linenr">29: </span>
+<span class="linenr">30: </span>  .end();
+<span class="linenr">31: </span>
+<span class="linenr">32: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">33: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr"> 2: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'left'</span> ) ),
+<span class="linenr"> 3: </span>            model:   model.left,
+<span class="linenr"> 4: </span>            toModel: hd.toNum()
+<span class="linenr"> 5: </span>           }
+<span class="linenr"> 6: </span>         );
+<span class="linenr"> 7: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'right'</span> ) ),
+<span class="linenr"> 8: </span>            model:   model.right,
+<span class="linenr"> 9: </span>            toModel: hd.toNum()
+<span class="linenr">10: </span>           }
+<span class="linenr">11: </span>         );
+<span class="linenr">12: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'width'</span> ) ),
+<span class="linenr">13: </span>            model:   model.width,
+<span class="linenr">14: </span>            toModel: hd.toNum()
+<span class="linenr">15: </span>           }
+<span class="linenr">16: </span>         );
+<span class="linenr">17: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'top'</span> ) ),
+<span class="linenr">18: </span>            model:   model.top,
+<span class="linenr">19: </span>            toModel: hd.toNum()
+<span class="linenr">20: </span>           }
+<span class="linenr">21: </span>         );
+<span class="linenr">22: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'bottom'</span> ) ),
+<span class="linenr">23: </span>            model:   model.bottom,
+<span class="linenr">24: </span>            toModel: hd.toNum()
+<span class="linenr">25: </span>           }
+<span class="linenr">26: </span>         );
+<span class="linenr">27: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'height'</span> ) ),
+<span class="linenr">28: </span>            model:   model.height,
+<span class="linenr">29: </span>            toModel: hd.toNum()
+<span class="linenr">30: </span>           }
+<span class="linenr">31: </span>         );
+<span class="linenr">32: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'aspect'</span> ) ),
+<span class="linenr">33: </span>            model:   model.aspect,
+<span class="linenr">34: </span>            toModel: hd.toNum()
+<span class="linenr">35: </span>           }
+<span class="linenr">36: </span>         );
+<span class="linenr">37: </span>} );
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<table style="text-align: right">
+  <tr>
+    <td>
+      Left:  <input type="text" id="left"/><br/>
+      Right: <input type="text" id="right"/><br/>
+      Width: <input type="text" id="width"/><br/>
+    </td>
+    <td>
+      Top:    <input type="text" id="top"/><br/>
+      Bottom: <input type="text" id="bottom"/><br/>
+      Height: <input type="text" id="height"/><br/>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align:center">
+      Aspect Ratio: <input type="text" id="aspect"/>
+    </td>
+  </tr>
+</table>
+</div>
+<script type="text/javascript">
+(function() {
+// Helper functions
+function sum ( x, y ) { return x + y; }
+function diff( x, y ) { return x - y; }
+function prod( x, y ) { return x * y; }
+function quot( x, y ) { return x / y; }
+
+var model = new hd.ModelBuilder()
+  .variables( 'left, right, width, top, bottom, height, aspect', 
+              {left: 0, right: 100, top: 60, bottom: 140}
+  )
+
+  // Constraint: width == right - left
+  .c( 'left, right, width' )
+  .m( 'left, width -> right', sum  )
+  .m( 'right, left -> width', diff )
+  .m( 'right, width -> left', diff )
+
+  // Constraint: height == bottom - top
+  .c( 'top, bottom, height' )
+  .m( 'top, height -> bottom', sum  )
+  .m( 'bottom, top -> height', diff )
+  .m( 'bottom, height -> top', diff )
+
+  // Constraint: aspect == width / height
+  .c( 'width, height, aspect' )
+  .m( 'height, aspect -> width', prod )
+  .m( 'width, height -> aspect', quot )
+  .m( 'width, aspect -> height', quot )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'left' ) ),
+            model:   model.left,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'right' ) ),
+            model:   model.right,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'width' ) ),
+            model:   model.width,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'top' ) ),
+            model:   model.top,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'bottom' ) ),
+            model:   model.bottom,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'height' ) ),
+            model:   model.height,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'aspect' ) ),
+            model:   model.aspect,
+            toModel: hd.toNum()
+           }
+         );
+} );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+The seven variables of this UI are tied together by three different
+interconnected constraints.  Editing one variable can result in several
+different variables changing so that all values are consistent with one
+another.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> Updating the constraint system</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+Whenever you modify any of the variables of the system, HotDrink assumes any
+constraints which use those variables are no longer satisfied.  It then
+performs two tasks.  The first is to decide which variable (or variables)
+should be updated.  The second is to use a method (or methods) you provided to
+calculate a new value for that variable (or variables).
+</p>
+
+<p>
+Deciding which variables to update is not a trivial task.  Consider: the
+variable <code>left</code> is modified, so HotDrink decides to update the <code>width</code>
+variable so that <code>width == right - left</code>.  But now the constraint <code>aspect ==
+width / height</code> is no longer satisfied, so HotDrink must update one of those
+variables as well.  Thus, the effects of a single edit can cascade to multiple
+variables.  HotDrink must consider the entire constraint system and decide
+which variables will be used to update which other variables.  This plan for
+how to update is called a <i>dataflow</i>.
+</p>
+
+<p>
+Often there is more than one possible dataflow which could work.  In this
+case, HotDrink will <i>generally</i> select the dataflow which preserves variables
+that have been more recently edited by the user.  (In certain unusual cases
+the behavior is slightly more complicated, but this rule of thumb is close
+enough for now.)  We believe this is generally what the user wants, as the
+values more recently edited are more likely to reflect the user's current
+intent.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> Declaring multiple variables at once</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+As you can see on <a href="#coderef-vs"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-vs');" onmouseout="CodeHighlightOff(this, 'coderef-vs');">line 8</a> of the view-model source, this example uses an
+alternative approach to declaring variables.  The <code>variables</code> builder member
+function takes two parameters.  The first is a string containing a
+comma-delimited list of variables to create.  The second is an object used as
+a map to provide initial values for variables.  If a variable does not contain
+an entry in the map, it is treated as uninitialized, and therefore given the
+value <code>undefined</code>.
+</p>
+
+<p>
+Note that the variables are created in the order in which they appear in the
+string.  This is significant as the order in which variables are created
+determines the initial editing order for the variables, and thus affects the
+initial dataflow selected by the system.  Initializing a variable is treated
+as an edit; creating an uninitialized variable is not treated as an edit.
+Thus, the system will initially pick a dataflow that writes to uninitialized
+variables; If any initialized variables need to be overwritten, the system
+will choose to overwrite the variables created <i>earlier</i>, since those will be
+considered less-recently edited.
+</p>
+
+<p>
+The <code>variables</code> member function returns the builder.  The abbreviation for
+<code>variables</code> is <code>vs</code>; we will use this abbreviation in the remainder of the
+examples.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-4" class="outline-3">
+<h3 id="sec-3-4"><span class="section-number-3">3.4</span> Reusing functions</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+Notice that we can reuse the same function for multiple methods.  In this
+example, we defined four simple mathematical functions at the top, then simply
+used the appropriate function for each method.  Again, the values passed as
+arguments will come from the variables specified in the signature.
+</p>
+
+<p>
+In fact, if your constraints really are trivial equations such as this, there
+is an even easier way to specify them.  We'll discuss that in the section
+"<a href="#sec-8">Shortcut: equations</a>".
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Input/output variables</h2>
+<div class="outline-text-2" id="text-4">
+</div><div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1"><span class="section-number-3">4.1</span> The example</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"display:inline-block; text-align:right"</span>&gt;
+<span class="linenr">2: </span>  Begin: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"begin"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">3: </span>  End:   &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"end"</span>/&gt;
+<span class="linenr">4: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>Veiw-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr"> 2: </span>  .v( <span style="color: #008000;">'begin'</span>, 10 ).v( <span style="color: #008000;">'end'</span>, 20 )
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>   <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Constraint: begin &lt; end</span>
+<span class="linenr"> 5: </span>  .c( <span style="color: #008000;">'begin, end'</span> )
+<span class="linenr"> 6: </span>  .m( <span style="color: #008000;">'begin, end -&gt; end'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">begin</span>, <span style="color: #BA36A5;">end</span> ) {
+<span class="linenr"> 7: </span>    <span style="color: #0000FF;">return</span> end &lt; begin + 1 ? begin + 1 : end;
+<span class="linenr"> 8: </span>  } )
+<span class="linenr"> 9: </span>  .m( <span style="color: #008000;">'begin, end -&gt; begin'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">begin</span>, <span style="color: #BA36A5;">end</span> ) {
+<span class="linenr">10: </span>    <span style="color: #0000FF;">return</span> begin &gt; end - 1 ? end - 1 : begin;
+<span class="linenr">11: </span>  } )
+<span class="linenr">12: </span>
+<span class="linenr">13: </span>  .end();
+<span class="linenr">14: </span>
+<span class="linenr">15: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>;
+<span class="linenr">16: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr"> 2: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'begin'</span> ) ),
+<span class="linenr"> 3: </span>            model:   model.begin,
+<span class="linenr"> 4: </span>            toModel: hd.toNum()
+<span class="linenr"> 5: </span>           }
+<span class="linenr"> 6: </span>         );
+<span class="linenr"> 7: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'end'</span> ) ),
+<span class="linenr"> 8: </span>            model:   model.end,
+<span class="linenr"> 9: </span>            toModel: hd.toNum()
+<span class="linenr">10: </span>           }
+<span class="linenr">11: </span>         );
+<span class="linenr">12: </span>} );
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div style="display:inline-block; text-align:right">
+  Begin: <input type="text" id="begin"/><br/>
+  End:   <input type="text" id="end"/>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+  .v( 'begin', 10 ).v( 'end', 20 )
+
+   // Constraint: begin < end
+  .c( 'begin, end' )
+  .m( 'begin, end -> end', function( begin, end ) {
+    return end < begin + 1 ? begin + 1 : end;
+  } )
+  .m( 'begin, end -> begin', function( begin, end ) {
+    return begin > end - 1 ? end - 1 : begin;
+  } )
+
+  .end();
+
+var system = new hd.ConstraintSystem;
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'begin' ) ),
+            model:   model.begin,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'end' ) ),
+            model:   model.end,
+            toModel: hd.toNum()
+           }
+         );
+} );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+The constraint here is acutally an inequality: <code>begin &lt;= end + 1</code>.  If you set one
+variable so that the inequality holds, then the other variable is not
+modified.  However, if you make the inequality false, then the other variable
+is changed just enough to make the inequality true.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2"><span class="section-number-3">4.2</span> The meaning of I/O parameters</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+When a method uses a variable for both input and output, the value given as
+input is the <i>previous</i> value of the variable &#x2014; the value it had after the
+last time we enforced the constraint.  The value returned is the <i>next</i> value
+of the variable.
+</p>
+
+<p>
+This may seem obvious, but it's an important point because, as a rule,
+dependency cycles are not allowed.  A dependency cycle would be something like
+this:  the value of <code>a</code> depends on <code>b</code>, the value of <code>b</code> depends on <code>c</code>, and
+the value of <code>c</code> depends on <code>a</code>.  You cannot solve such a system because
+there's nowhere to start: every variable depends on something else.
+</p>
+
+<p>
+I/O parameters do <i>not</i> create dependency cycles because they effectively
+reference two different variables: the pre-update variable and the post-update
+variable.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3"><span class="section-number-3">4.3</span> Caveat</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+Methods in HotDrink are generally assumed to not have side effects.  That is,
+HotDrink assumes that if the parameters have not changed since the last time
+the function was executed, that there is no reason to execute it again; it
+will simply produce the same results.  Another way of saying this is: if
+HotDrink executes a method to enforce one of your constraints, then
+immediately executing the method again should have no effect.
+</p>
+
+<p>
+You should write your methods with this in mind.  The methods given above
+respect this assumption:  executing them immediately after they have just been
+executed has no effect.  However, you should avoid methods like this:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">rt.builder( <span style="color: #008000;">"n -&gt; n"</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">n</span> ) {
+  <span style="color: #0000FF;">return</span> n + 1;
+} )
+</pre>
+</div>
+
+<p>
+This method gives different results every time it is run, and may lead to
+unexpected behavior.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> Multiple output variables</h2>
+<div class="outline-text-2" id="text-5">
+</div><div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1"><span class="section-number-3">5.1</span> The example</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"display:inline-block; text-align:right"</span>&gt;
+<span class="linenr">2: </span>  First Quarter:  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"q1"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">3: </span>  Second Quarter: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"q2"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">4: </span>  Third Quarter:  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"q3"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">5: </span>  Fourth Quarter: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"q4"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">6: </span>  &lt;<span style="color: #006699;">hr</span>/&gt;
+<span class="linenr">7: </span>  Full Year:      &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"year"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">8: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr"> 2: </span>  .vs( <span style="color: #008000;">'q1, q2, q3, q4, year'</span>, {q1: 10, q2: 30, q3: 60, q4: 100} )
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>  .c( <span style="color: #008000;">'q1, q2, q3, q4, year'</span> )
+<span class="linenr"> 5: </span>  .m( <span style="color: #008000;">'q1, q2, q3, q4 -&gt; year'</span>,
+<span class="linenr"> 6: </span>      <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">q1</span>, <span style="color: #BA36A5;">q2</span>, <span style="color: #BA36A5;">q3</span>, <span style="color: #BA36A5;">q4</span> ) {
+<span class="linenr"> 7: </span>        <span style="color: #0000FF;">return</span> q1 + q2 + q3 + q4;
+<span class="linenr"> 8: </span>      }
+<span class="linenr"> 9: </span>   )
+<span id="coderef-multi" class="coderef-off"><span class="linenr">10: </span>  .m( <span style="color: #008000;">'year, q1, q2, q3, q4 -&gt; q1, q2, q3, q4'</span>,</span>
+<span class="linenr">11: </span>      <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">year</span>, <span style="color: #BA36A5;">q1</span>, <span style="color: #BA36A5;">q2</span>, <span style="color: #BA36A5;">q3</span>, <span style="color: #BA36A5;">q4</span> ) {
+<span class="linenr">12: </span>        <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">diff</span> = (year - q1 - q2 - q3 - q4) / 4;
+<span class="linenr">13: </span>        <span style="color: #0000FF;">return</span> [q1 + diff, q2 + diff, q3 + diff, q4 + diff ];
+<span class="linenr">14: </span>      }
+<span class="linenr">15: </span>  )
+<span class="linenr">16: </span>
+<span class="linenr">17: </span>  .end();
+<span class="linenr">18: </span>
+<span class="linenr">19: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">20: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr"> 2: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'q1'</span> ) ),
+<span class="linenr"> 3: </span>            model:   model.q1,
+<span class="linenr"> 4: </span>            toModel: hd.toNum()
+<span class="linenr"> 5: </span>           }
+<span class="linenr"> 6: </span>         );
+<span class="linenr"> 7: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'q2'</span> ) ),
+<span class="linenr"> 8: </span>            model:   model.q2,
+<span class="linenr"> 9: </span>            toModel: hd.toNum()
+<span class="linenr">10: </span>           }
+<span class="linenr">11: </span>         );
+<span class="linenr">12: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'q3'</span> ) ),
+<span class="linenr">13: </span>            model:   model.q3,
+<span class="linenr">14: </span>            toModel: hd.toNum()
+<span class="linenr">15: </span>           }
+<span class="linenr">16: </span>         );
+<span class="linenr">17: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'q4'</span> ) ),
+<span class="linenr">18: </span>            model:   model.q4,
+<span class="linenr">19: </span>            toModel: hd.toNum()
+<span class="linenr">20: </span>           }
+<span class="linenr">21: </span>         );
+<span class="linenr">22: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'year'</span> ) ),
+<span class="linenr">23: </span>            model:   model.year,
+<span class="linenr">24: </span>            toModel: hd.toNum()
+<span class="linenr">25: </span>           }
+<span class="linenr">26: </span>         );
+<span class="linenr">27: </span>} );
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div style="display:inline-block; text-align:right">
+  First Quarter:  <input type="text" id="q1"/><br/>
+  Second Quarter: <input type="text" id="q2"/><br/>
+  Third Quarter:  <input type="text" id="q3"/><br/>
+  Fourth Quarter: <input type="text" id="q4"/><br/>
+  <hr/>
+  Full Year:      <input type="text" id="year"/><br/>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+  .vs( 'q1, q2, q3, q4, year', {q1: 10, q2: 30, q3: 60, q4: 100} )
+
+  .c( 'q1, q2, q3, q4, year' )
+  .m( 'q1, q2, q3, q4 -> year',
+      function( q1, q2, q3, q4 ) {
+        return q1 + q2 + q3 + q4;
+      }
+   )
+  .m( 'year, q1, q2, q3, q4 -> q1, q2, q3, q4', 
+      function( year, q1, q2, q3, q4 ) {
+        var diff = (year - q1 - q2 - q3 - q4) / 4;
+        return [q1 + diff, q2 + diff, q3 + diff, q4 + diff ];
+      }
+  )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'q1' ) ),
+            model:   model.q1,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'q2' ) ),
+            model:   model.q2,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'q3' ) ),
+            model:   model.q3,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'q4' ) ),
+            model:   model.q4,
+            toModel: hd.toNum()
+           }
+         );
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'year' ) ),
+            model:   model.year,
+            toModel: hd.toNum()
+           }
+         );
+} );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This is a straightforward constraint: the value for the year is the sum of the
+values for the four quarters.  However, data can only flow two ways in this
+constraint.  If any one of the quarters is modified, then the year is updated.
+If the year is modified, then we take the difference and distribute it evenly
+among the four quarters, thus satisfying the constraint.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5-2" class="outline-3">
+<h3 id="sec-5-2"><span class="section-number-3">5.2</span> Multiple return values</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+For functions which must calculate values for multiple variables, we employ a
+very simple convention:  the function returns an array of values.  We will use
+the methods signature to decide which variables each element of the array
+should be assigned to.  So, for the method on <a href="#coderef-multi"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-multi');" onmouseout="CodeHighlightOff(this, 'coderef-multi');">line 10</a> of the view-model
+section, the first element of the array will go to <code>q1</code>, the second to <code>q2</code>,
+and so on.
+</p>
+
+<p>
+Note that your function should return an array <i>only</i> if the method outputs to
+multiple variables.  Methods which output to a single variable should always
+return a single value.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> Shortcut:  declarative binding</h2>
+<div class="outline-text-2" id="text-6">
+</div><div id="outline-container-sec-6-1" class="outline-3">
+<h3 id="sec-6-1"><span class="section-number-3">6.1</span> The example</h3>
+<div class="outline-text-3" id="text-6-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span id="coderef-root" class="coderef-off"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex6"</span>&gt;</span>
+<span id="coderef-editx" class="coderef-off"><span class="linenr">2: </span>  X: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"{mkview: hd.Edit, model: x}"</span>/&gt;</span>
+<span id="coderef-textx" class="coderef-off"><span class="linenr">3: </span>           <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"{mkview: hd.Text, model: x}"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;</span>
+<span id="coderef-edity" class="coderef-off"><span class="linenr">4: </span>  Y: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"{mkview: hd.Edit, model: y, toModel: hd.toNum()}"</span>/&gt;</span>
+<span id="coderef-texty" class="coderef-off"><span class="linenr">5: </span>           <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"{mkview: hd.Text, model: y}"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;</span>
+<span class="linenr">6: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr">2: </span>    .v( <span style="color: #008000;">'x'</span>, <span style="color: #008000;">'Hello, again!'</span> ).v( <span style="color: #008000;">'y'</span>, 3 ).end();
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex6'</span> ) );
+<span id="coderef-bindTo" class="coderef-off"><span class="linenr">3: </span>} );</span>
+</pre>
+</div>
+
+<p>
+<i>Results</i>
+</p>
+
+<div class="results">
+<div id="ex6"> 
+  X: <input type="text" data-bind="{mkview: hd.Edit, model: x}"/> 
+           &rArr; <span data-bind="{mkview: hd.Text, model: x}"></span><br/> 
+  Y: <input type="text" data-bind="{mkview: hd.Edit, model: y, toModel: hd.toNum()}"/> 
+           &rArr; <span data-bind="{mkview: hd.Text, model: y}"></span>                 
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+    .v( 'x', 'Hello, again!' ).v( 'y', 3 ).end();
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex6' ) );
+} ); 
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This is the same as the first example, except that it uses declarative binding
+specifications.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2" class="outline-3">
+<h3 id="sec-6-2"><span class="section-number-3">6.2</span> Automatic binding function</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+By now you've probably noticed that the binding section tends to be repetitive
+and boring.  HotDrink offers two shortcuts to help alleviate this.  The first,
+shown here, is allowing binding specifications to be embedded in the HTML.
+There are two steps required for this.
+</p>
+</div>
+
+<ol class="org-ol"><li><a id="sec-6-2-1"></a>Add binding specifications<br  /><div class="outline-text-4" id="text-6-2-1">
+<p>
+The first step is to add markup in the HTML to describe how elements should be
+bound.  To indicate that you wish to bind a variable to the node for an HTML
+tag, simply add a <code>data-bind</code> attribute to the tag with the code for the
+binding specification.  At run-time, HotDrink will evaluate this attribute
+string as JavaScript code to take the result as the binding specification
+object.
+</p>
+
+<p>
+Note, however, one slight change to this binding specification.  In previous
+examples our view object was a view adapter which encapsulated some DOM node
+in the tree.  When you embed a binding specification in the HTML, HotDrink
+assumes that a view adapter needs to be created for the DOM node.  Thus, it
+looks for an attribute named "<code>mkview</code>".  This should be a constructor or
+factory function which takes a single DOM node parameter.  HotDrink will use
+this constructor or factory to create the view object, like so.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">specification.view = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">specification.mkview</span>( domNode );
+</pre>
+</div>
+
+<p>
+Also notice that, in the binding specification, you may refer to the variable
+by it's name in the model; e.g., the binding specification in <a href="#coderef-editx"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-editx');" onmouseout="CodeHighlightOff(this, 'coderef-editx');">line 2</a> of
+the view section says "<code>target: x</code>" instead of "<code>target: rt.model.x</code>".
+HotDrink will attempt to look up any variables referenced in the model you
+pass to the binding function (see below); if it cannot find it in the model,
+it will treat it as a global variable.
+</p>
+</div>
+</li>
+
+<li><a id="sec-6-2-2"></a>Call the binding function<br  /><div class="outline-text-4" id="text-6-2-2">
+<p>
+The second step is to call the HotDrink function to performs the binding.  You
+can do this as follows.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">hd.performDeclaredBindings( mod, document.getElementById( <span style="color: #008000;">'ex6'</span> ),  );
+</pre>
+</div>
+
+<p>
+This function takes two parameters: a model to use, and a DOM node at which to
+start searching.  This function will search the DOM node passed to it and any
+DOM nodes under it for elements with a <code>data-bind</code> attribute.  When it finds
+one, it evaluate the binding specification as described above and then pass it
+to <code>hd.bind</code>.
+</p>
+
+<p>
+In the example above, HotDrink would examine all tags contained by the <code>&lt;div&gt;</code>
+tag in <a href="#coderef-root"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-root');" onmouseout="CodeHighlightOff(this, 'coderef-root');">line 1</a> of the view.  It would evaluate the binding specifications
+for each of the four tags with <code>data-bind</code> attributes.  Then it will attempt
+to bind according to each of those specifications.
+</p>
+
+<p>
+The second parameter is optional; it defaults to <code>document.body</code> so that the
+entire document will be searched.  Note, however, that this could cause
+problems if you are binding different models to different parts of the
+document (for example, as we are in this document).
+</p>
+
+<p>
+As with manual binding, you must ensure that the nodes involved have been
+added to the DOM <i>before</i> calling <code>performDeclaredBindings</code>; therefore, it is
+advised to use the <code>window.onload</code> event or some alternative method of
+executing code after the DOM is fully ready.
+</p>
+</div>
+</li></ol>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Shortcut: binding specification factories</h2>
+<div class="outline-text-2" id="text-7">
+</div><div id="outline-container-sec-7-1" class="outline-3">
+<h3 id="sec-7-1"><span class="section-number-3">7.1</span> The example</h3>
+<div class="outline-text-3" id="text-7-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span id="coderef-root" class="coderef-off"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex7"</span>&gt;</span>
+<span id="coderef-editx" class="coderef-off"><span class="linenr">2: </span>  X: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.edit( x )"</span>/&gt;</span>
+<span id="coderef-textx" class="coderef-off"><span class="linenr">3: </span>           <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( x )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;</span>
+<span id="coderef-edity" class="coderef-off"><span class="linenr">4: </span>  Y: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( y )"</span>/&gt;</span>
+<span id="coderef-texty" class="coderef-off"><span class="linenr">5: </span>           <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( y )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;</span>
+<span class="linenr">6: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr">2: </span>    .v( <span style="color: #008000;">'x'</span>, <span style="color: #008000;">'Hello, again!'</span> ).v( <span style="color: #008000;">'y'</span>, 3 ).end();
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex7'</span> ) );
+<span id="coderef-bindTo" class="coderef-off"><span class="linenr">3: </span>} );</span>
+</pre>
+</div>
+
+<p>
+<i>Results</i>
+</p>
+
+<div class="results">
+<div id="ex7"> 
+  X: <input type="text" data-bind="hd.edit( x )"/> 
+           &rArr; <span data-bind="hd.text( x )"></span><br/> 
+  Y: <input type="text" data-bind="hd.num( y )"/> 
+           &rArr; <span data-bind="hd.text( y )"></span>                 
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+    .v( 'x', 'Hello, again!' ).v( 'y', 3 ).end();
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex7' ) );
+} ); 
+})()
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This is the same as the previous example, except the binding specification
+objects are created using factory functions.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-7-2" class="outline-3">
+<h3 id="sec-7-2"><span class="section-number-3">7.2</span> Factory functions</h3>
+<div class="outline-text-3" id="text-7-2">
+<p>
+Binding specification objects tend to be lengthy and follow the same basic
+patterns.  Since the <code>data-bind</code> attribute is simply evaluated as JavaScript
+code, we can use any JavaScript code we want to create these objects &#x2014; e.g.,
+call a factory function to create the object for us.
+</p>
+
+<p>
+HotDrink provides several factory functions for creating these objects.  There
+is nothing special about these factory functions, and you are encouraged to
+make your own.  For example, the function <code>hd.edit</code> looks basically like the
+following:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">hd.edit = <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">model</span>, <span style="color: #BA36A5;">toView</span>, <span style="color: #BA36A5;">toModel</span> ) {
+  <span style="color: #0000FF;">return</span> {mkview:  hd.Edit,
+          model:   model,
+          toView:  toView,
+          toModel: toModel
+         };
+}
+</pre>
+</div>
+
+<p>
+A full list of the factory functions can be found in the <a href="binding.html">Advanced Binding
+Concepts</a> how-to, but for now we point out the following three:
+</p>
+
+<ol class="org-ol">
+<li>The <code>hd.edit</code> factory creates the binding specification for a text edit
+box.
+</li>
+<li>The <code>hd.num</code> factory also creates a specification for a text edit box,
+but the value is converted to a number before passing it to the model.
+Note that this factory takes a second optional argument which is used to
+specify the number of digits after the decimal point.
+</li>
+<li>The <code>hd.text</code> factory creates the binding specification for replacing the
+contents of a tag with the value of a variable.
+</li>
+</ol>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-8" class="outline-2">
+<h2 id="sec-8"><span class="section-number-2">8</span> Shortcut: equations</h2>
+<div class="outline-text-2" id="text-8">
+</div><div id="outline-container-sec-8-1" class="outline-3">
+<h3 id="sec-8-1"><span class="section-number-3">8.1</span> The example</h3>
+<div class="outline-text-3" id="text-8-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">table</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"text-align: right"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex8"</span>&gt;
+<span class="linenr">2: </span>  &lt;<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr">3: </span>    Account Balance: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( balance, 2 )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">4: </span>    Minimum Percentage: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( min_rate, 3 )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">5: </span>    Minimum Payment: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( min_pay, 2 )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">6: </span>    &lt;<span style="color: #006699;">hr</span>/&gt;
+<span class="linenr">7: </span>    Payment Made: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( pay, 2 )"</span>/&gt;
+<span class="linenr">8: </span>  &lt;/<span style="color: #006699;">td</span>&gt;&lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">9: </span>&lt;/<span style="color: #006699;">table</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr"> 2: </span>  .vs( <span style="color: #008000;">'balance, min_rate, min_pay, pay'</span>, {balance: 4000, min_rate: 6.125} )
+<span class="linenr"> 3: </span>  .equation( <span style="color: #008000;">"min_pay == balance * min_rate / 100"</span> )
+<span class="linenr"> 4: </span>  .equation( <span style="color: #008000;">"pay &gt;= min_pay"</span> )
+<span class="linenr"> 5: </span>  .end();
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr"> 8: </span>system.addComponent( model );
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">11: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex8'</span> ) );
+<span class="linenr">12: </span>} );
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<table style="text-align: right" id="ex8">
+  <tr><td>
+    Account Balance: <input type="text" data-bind="hd.num( balance, 2 )"/><br/>
+    Minimum Percentage: <input type="text" data-bind="hd.num( min_rate, 3 )"/><br/>
+    Minimum Payment: <input type="text" data-bind="hd.num( min_pay, 2 )"/><br/>
+    <hr/>
+    Payment Made: <input type="text" data-bind="hd.num( pay, 2 )"/>
+  </td></tr>
+</table>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+  .vs( 'balance, min_rate, min_pay, pay', {balance: 4000, min_rate: 6.125} )
+  .equation( "min_pay == balance * min_rate / 100" )
+  .equation( "pay >= min_pay" )
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex8' ) );
+} );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+In this example we can calculate the minimum payment required on an account
+balance based on a given percentage of the balance.  We can also specify the
+actual payment made, though it must be higher than the minimum.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-8-2" class="outline-3">
+<h3 id="sec-8-2"><span class="section-number-3">8.2</span> Allowable equations</h3>
+<div class="outline-text-3" id="text-8-2">
+<p>
+HotDrink is <i>not</i> a program for solving mathematical equations.  However,
+simple equations like the ones in this example are common and are not hard to
+solve.  Therefore, as a convenience, HotDrink provides this shortcut method
+for creating constraints from <i>simple</i> equations.
+</p>
+
+<p>
+The equations which HotDrink can enforce are those in which (1) no variable
+appears in the equation more than once, and (2) the only operations are add
+(<code>+</code>), subtract (<code>-</code>), multiply (<code>*</code>), and divide (<code>/</code>).  This means, e.g., no
+exponents, no square roots, etc.
+</p>
+
+<p>
+Note that, despite the name, the <code>equation</code> member function can also parse
+inequalities.  Thus, the allowable comparison operators in an equation are
+<code>==</code>, <code>&lt;=</code>, and <code>&gt;=</code>.
+</p>
+
+<p>
+Examples of valid equations:
+</p>
+
+<ul class="org-ul">
+<li><code>width == right - left</code>
+</li>
+<li><code>aspect == width / height</code>
+</li>
+<li><code>surface == (2*width + 2*length) * height</code>
+</li>
+</ul>
+
+<p>
+Examples of invalid equations:
+</p>
+
+<ul class="org-ul">
+<li><code>perimeter = width + height + width + height</code>
+</li>
+<li><code>area == 3.14*radius^2</code>
+</li>
+<li><code>side == sqrt(area)</code>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-8-3" class="outline-3">
+<h3 id="sec-8-3"><span class="section-number-3">8.3</span> Implementation</h3>
+<div class="outline-text-3" id="text-8-3">
+<p>
+HotDrink implements these equations by parsing them and then, for each
+variable, constructing a function which solves for that variable.  Each of
+these functions becomes a method.  Thus, the constraint will have as many
+methods as there are variables, with each method updating exactly one
+variable.
+</p>
+
+<p>
+To be clear, the <code>equation</code> function's only advantage is that it saves you
+some typing; in the end you still get a regular constraint.  Therefore, in the
+example from section <a href="#sec-2">2</a>, replacing the constraint
+specification with <code>equation( "profit == income - expenses" )</code> would result in
+the <i>exact</i> same constraint.
+</p>
+
+<p>
+If, for any method, the solution involves a division by zero, then the
+variable will not be updated and the constraint will not be satisfied.
+</p>
+
+<p>
+As you probably expect by now, the <code>equation</code> member function returns the
+builder.  It can be abbreviated <code>eq</code>.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2015-03-04 Wed 16:27</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>

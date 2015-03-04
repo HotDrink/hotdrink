@@ -1,0 +1,1990 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Advanced Binding Concepts</title>
+<!-- 2015-03-04 Wed 16:27 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript" src="hotdrink.min.js"></script>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Advanced Binding Concepts</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Translators</a>
+<ul>
+<li><a href="#sec-1-1">1.1. The example</a></li>
+<li><a href="#sec-1-2">1.2. What translators do</a></li>
+<li><a href="#sec-1-3">1.3. Chaining translators</a></li>
+<li><a href="#sec-1-4">1.4. When translators fail</a></li>
+<li><a href="#sec-1-5">1.5. List of translators</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2. Creating translators from functions</a>
+<ul>
+<li><a href="#sec-2-1">2.1. The <code>fn</code> translator</a></li>
+<li><a href="#sec-2-2">2.2. Extra function parameters</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">3. View adapters</a>
+<ul>
+<li><a href="#sec-3-1">3.1. The example</a></li>
+<li><a href="#sec-3-2">3.2. What view adapters do</a></li>
+<li><a href="#sec-3-3">3.3. List of adapters</a></li>
+<li><a href="#sec-3-4">3.4. Factory functions</a></li>
+<li><a href="#sec-3-5">3.5. List of factories</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">4. Binding to variable properties</a>
+<ul>
+<li><a href="#sec-4-1">4.1. Variable properties</a></li>
+<li><a href="#sec-4-2">4.2. List of variable properties</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Translators</h2>
+<div class="outline-text-2" id="text-1">
+</div><div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> The example</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span>&gt;
+<span class="linenr">2: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"a_edit"</span>/&gt; <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"a_view"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">3: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"b_edit"</span>/&gt; <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"b_view"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">4: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"c_edit"</span>/&gt; <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"c_view"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">5: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"d_edit"</span>/&gt; <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"d_view"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">6: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"e_edit"</span>/&gt; <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"e_view"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">7: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"f_edit"</span>/&gt; <span style="color: #BA36A5;">&amp;rArr;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"f_view"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">8: </span>  &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"g_edit"</span>/&gt; <span style="color: #BA36A5;">&amp;nbsp;</span> &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"g_err"</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"color:red"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">9: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr">2: </span>    .v( <span style="color: #008000;">'a'</span>, 3.14159 )
+<span class="linenr">3: </span>    .v( <span style="color: #008000;">'b'</span>, 0.15 )
+<span class="linenr">4: </span>    .v( <span style="color: #008000;">'c'</span>, <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">Date</span>() )
+<span class="linenr">5: </span>    .v( <span style="color: #008000;">'d'</span>, <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">Date</span>().getTime() )
+<span class="linenr">6: </span>    .v( <span style="color: #008000;">'e'</span>, <span style="color: #008000;">'John Doe'</span> )
+<span class="linenr">7: </span>    .v( <span style="color: #008000;">'f'</span>, 7 )
+<span class="linenr">8: </span>    .v( <span style="color: #008000;">'g'</span>, <span style="color: #008000;">'hello'</span> )
+<span class="linenr">9: </span>    .end();
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr"> 2: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'a_edit'</span> ) ),
+<span class="linenr"> 3: </span>            model: model.a,
+<span class="linenr"> 4: </span>            toModel: hd.toNum(),
+<span class="linenr"> 5: </span>            toView: hd.fix( 2 )
+<span class="linenr"> 6: </span>           }
+<span class="linenr"> 7: </span>         );
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'a_view'</span> ) ),
+<span class="linenr">10: </span>            model: model.a
+<span class="linenr">11: </span>           }
+<span class="linenr">12: </span>         );
+<span class="linenr">13: </span>
+<span class="linenr">14: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'b_edit'</span> ) ),
+<span id="coderef-chain" class="coderef-off"><span class="linenr">15: </span>            model: model.b,</span>
+<span class="linenr">16: </span>            toModel: hd.chain( hd.toNum(),
+<span class="linenr">17: </span>                               hd.round( 0 ),
+<span class="linenr">18: </span>                               hd.scale( 0.01 ) ),
+<span class="linenr">19: </span>            toView: hd.chain( hd.scale( 100 ),
+<span class="linenr">20: </span>                              hd.fix( 0 )      ),
+<span class="linenr">21: </span>           }
+<span class="linenr">22: </span>         );
+<span class="linenr">23: </span>
+<span class="linenr">24: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'b_view'</span> ) ),
+<span class="linenr">25: </span>            model: model.b
+<span class="linenr">26: </span>           } );
+<span class="linenr">27: </span>
+<span class="linenr">28: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'c_edit'</span> ) ),
+<span class="linenr">29: </span>            model: model.c,
+<span class="linenr">30: </span>            toModel: hd.toDate(),
+<span class="linenr">31: </span>            toView: hd.dateToString()
+<span class="linenr">32: </span>           }
+<span class="linenr">33: </span>         );
+<span class="linenr">34: </span>
+<span class="linenr">35: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'c_view'</span> ) ),
+<span class="linenr">36: </span>            model: model.c
+<span class="linenr">37: </span>           }
+<span class="linenr">38: </span>         );
+<span class="linenr">39: </span>
+<span class="linenr">40: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'d_edit'</span> ) ),
+<span class="linenr">41: </span>            model: model.d,
+<span class="linenr">42: </span>            toModel: [hd.toDate(), hd.dateToMilliseconds()],
+<span class="linenr">43: </span>            toView: [hd.toDate(), hd.dateToDateString()]
+<span class="linenr">44: </span>           }
+<span class="linenr">45: </span>         );
+<span class="linenr">46: </span>
+<span class="linenr">47: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'d_view'</span> ) ),
+<span class="linenr">48: </span>            model: model.d
+<span class="linenr">49: </span>           }
+<span class="linenr">50: </span>         );
+<span class="linenr">51: </span>
+<span class="linenr">52: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'e_edit'</span> ) ),
+<span class="linenr">53: </span>            model: model.e,
+<span class="linenr">54: </span>            toModel: hd.def( <span style="color: #008000;">'Unknown'</span> )
+<span class="linenr">55: </span>           }
+<span class="linenr">56: </span>         );
+<span class="linenr">57: </span>
+<span class="linenr">58: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'e_view'</span> ) ),
+<span class="linenr">59: </span>            model: model.e
+<span class="linenr">60: </span>           }
+<span class="linenr">61: </span>         );
+<span class="linenr">62: </span>
+<span class="linenr">63: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'f_edit'</span> ) ),
+<span class="linenr">64: </span>            model: model.f,
+<span class="linenr">65: </span>            toModel: [hd.toNum(), hd.def( 1 )]
+<span class="linenr">66: </span>           }
+<span class="linenr">67: </span>         );
+<span class="linenr">68: </span>
+<span class="linenr">69: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'f_view'</span> ) ),
+<span class="linenr">70: </span>            model: model.f
+<span class="linenr">71: </span>           }
+<span class="linenr">72: </span>         );
+<span class="linenr">73: </span>
+<span class="linenr">74: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'g_edit'</span> ) ),
+<span class="linenr">75: </span>            model: model.g,
+<span class="linenr">76: </span>            toModel: [hd.req(), hd.msg( <span style="color: #008000;">"Don't forget me!"</span> )]
+<span class="linenr">77: </span>           }
+<span class="linenr">78: </span>         );
+<span class="linenr">79: </span>
+<span class="linenr">80: </span>  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'g_err'</span> ) ),
+<span class="linenr">81: </span>            model: model.g.error
+<span class="linenr">82: </span>           }
+<span class="linenr">83: </span>         );
+<span class="linenr">84: </span>} );
+</pre>
+</div>
+
+<p>
+<i>Results</i>
+</p>
+
+<div class="results">
+<div>
+  <input type="text" id="a_edit"/> &rArr; <span id="a_view"></span><br/>
+  <input type="text" id="b_edit"/> &rArr; <span id="b_view"></span><br/>
+  <input type="text" id="c_edit"/> &rArr; <span id="c_view"></span><br/>
+  <input type="text" id="d_edit"/> &rArr; <span id="d_view"></span><br/>
+  <input type="text" id="e_edit"/> &rArr; <span id="e_view"></span><br/>
+  <input type="text" id="f_edit"/> &rArr; <span id="f_view"></span><br/>
+  <input type="text" id="g_edit"/> &nbsp; <span id="g_err" style="color:red"></span><br/>
+</div>
+</div>
+<script type="text/javascript">
+(function () {
+var model = new hd.ModelBuilder()
+    .v( 'a', 3.14159 )
+    .v( 'b', 0.15 )
+    .v( 'c', new Date() )
+    .v( 'd', new Date().getTime() )
+    .v( 'e', 'John Doe' )
+    .v( 'f', 7 )
+    .v( 'g', 'hello' )
+    .end();
+window.addEventListener( 'load', function() {
+  hd.bind( {view: new hd.Edit( document.getElementById( 'a_edit' ) ),
+            model: model.a,
+            toModel: hd.toNum(),
+            toView: hd.fix( 2 )
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'a_view' ) ),
+            model: model.a
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'b_edit' ) ),
+            model: model.b, 
+            toModel: hd.chain( hd.toNum(),
+                               hd.round( 0 ),
+                               hd.scale( 0.01 ) ),
+            toView: hd.chain( hd.scale( 100 ),
+                              hd.fix( 0 )      ),
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'b_view' ) ),
+            model: model.b
+           } );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'c_edit' ) ),
+            model: model.c,
+            toModel: hd.toDate(),
+            toView: hd.dateToString()
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'c_view' ) ),
+            model: model.c
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'd_edit' ) ),
+            model: model.d,
+            toModel: [hd.toDate(), hd.dateToMilliseconds()],
+            toView: [hd.toDate(), hd.dateToDateString()]
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'd_view' ) ),
+            model: model.d
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'e_edit' ) ),
+            model: model.e,
+            toModel: hd.def( 'Unknown' )
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'e_view' ) ),
+            model: model.e
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'f_edit' ) ),
+            model: model.f,
+            toModel: [hd.toNum(), hd.def( 1 )]
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'f_view' ) ),
+            model: model.f
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'g_edit' ) ),
+            model: model.g,
+            toModel: [hd.req(), hd.msg( "Don't forget me!" )]
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'g_err' ) ),
+            model: model.g.error
+           }
+         );
+} );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This example uses several different translators to convert between the values
+edited by the user in the text box and the values stored in the view-model.
+The text next to the edit boxes is meant to give a better view of what is
+actually stored in the model.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> What translators do</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+A binding results in values being copied back and forth between the view and
+the view-model.  However, sometimes a little bit of work needs to be done in
+addition to the copying.  For example, one common task is converting the
+string value contained by the view to a different data type for use in the
+model, or vice-versa.
+</p>
+
+<p>
+To perform these sorts of tasks we use <i>translators</i>.  Inspired by Microsoft's
+<a href="https://rx.codeplex.com/">reactive extensions</a>, these are objects that can
+be inserted in between the view and the view-model and can operate on values
+as they are passed from one to the other.  Think of a chain of people passing packages
+from one destination to another.  Each person receives packages from the
+person behind him, has an opportunity to modify it, and then passes
+it to the next person in line.
+</p>
+
+<p>
+Every binding can potentially have two translators.  The translator labeled
+<code>toView</code> in the binding specification is responsible for translating from the
+value used by the model to the value used by the view; the translator labeled
+<code>toModel</code> in the binding specification is responsible for translating from the
+value used by the view to the value used by the model.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3"><span class="section-number-3">1.3</span> Chaining translators</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+The HotDrink binders assume there will at most one translator from the view to
+the view-model, and at most one translator from the view-model to the view.
+However, you can easily sneak in multiple translators by wrapping them in a
+chain translator.  A chain encapsulates a sequence of translators, making them
+look like a single translator.  When it receives a value, it translates it by
+running it through all the translators it contains.  Whatever is produced by
+the final translator becomes the value produced by the chain.
+</p>
+
+<p>
+You can see chains used in the following binding.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="chain">  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'b_edit'</span> ) ),
+<span id="coderef-chain" class="coderef-off">            model: model.b, (chain)</span>
+            toModel: hd.chain( hd.toNum(),
+                               hd.round( 0 ),
+                               hd.scale( 0.01 ) ),
+            toView: hd.chain( hd.scale( 100 ),
+                              hd.fix( 0 )      ),
+           }
+         );
+</pre>
+</div>
+
+<p>
+However, as a convenience to you, if the <code>bind</code> function finds that you have
+passed an array as either <code>toView</code> or <code>toModel</code>, it will use the contents of
+the array to create a chain.  This is simply a shortcut to make binding
+specifications a bit shorter.  You can see this shortcut is used in the
+following binding.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="array">  hd.bind( {view: <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'d_edit'</span> ) ),
+            model: model.d,
+            toModel: [hd.toDate(), hd.dateToMilliseconds()],
+            toView: [hd.toDate(), hd.dateToDateString()]
+           }
+         );
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4"><span class="section-number-3">1.4</span> When translators fail</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+As mentioned previously, translators pass a value from one to the next until it
+reaches the variable.  It is possible, however, for some translators to fail.
+For example, the translator which translates a string to a number will fail if
+the string does not parse as a valid number.  If an translator fails, then it
+produces an error value which will be passed along in place of the value for
+the variable.  For example, all translators provided by HotDrink produce a
+string containing an error message.
+</p>
+
+<p>
+Most translators simply pass along error values without modifying them.  It is
+possible, however, for an translator to modify the error value, or even convert
+the error value back into a variable value (see <a href="#msg">msg</a> and <a href="#def">def</a>.)  If an error
+value reaches the variable, it will be stored in the variable's <code>error</code>
+property, and the variable's value will not be changed.  If a valid value
+reaches the variable, then the variable's <code>error</code> property will be set to
+<code>null</code>.
+</p>
+
+<p>
+The <code>error</code> property can be bound to the view, allowing the error to be
+displayed.  For more information, see the section "<a href="#sec-4">Binding to variable
+properties</a>").
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-sec-1-5" class="outline-3">
+<h3 id="sec-1-5"><span class="section-number-3">1.5</span> List of translators</h3>
+<div class="outline-text-3" id="text-1-5">
+<p>
+Here are the translators provided by HotDrink.
+</p>
+</div>
+
+
+<ol class="org-ol"><li><a id="sec-1-5-1"></a><code>toNum</code><br  /><div class="outline-text-4" id="text-1-5-1">
+<p>
+Converts a value to number using JavaScript's <code>Number</code> constructor.  Fails if the
+result is <code>NaN</code>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-2"></a><code>toDate</code><br  /><div class="outline-text-4" id="text-1-5-2">
+<p>
+Converts a value to a <code>Date</code> object using JavaScript's <code>Date</code> constructor.  Fails if
+the resulting date's <code>getTime</code> method returns <code>NaN</code>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-3"></a><code>toStr</code><br  /><div class="outline-text-4" id="text-1-5-3">
+<p>
+Converts any value to string by invoking its <code>toString</code> method.  Generally
+not needed, as JavaScript will automatically do this any time it needs to
+coerce a value to string.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-4"></a><code>toJson</code><br  /><div class="outline-text-4" id="text-1-5-4">
+<p>
+Converts any value to string by invoking <code>JSON.stringify</code>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-5"></a><code>dateToString</code><br  /><div class="outline-text-4" id="text-1-5-5">
+<p>
+Converts a date object to a string using it's <code>toLocaleString</code> method.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-6"></a><code>dateToDateString</code><br  /><div class="outline-text-4" id="text-1-5-6">
+<p>
+Converts a date object to a string using it's <code>toLocaleDateString</code> method.
+</p>
+</div>
+</li>
+
+
+<li><a id="sec-1-5-7"></a><code>dateToTimeString</code><br  /><div class="outline-text-4" id="text-1-5-7">
+<p>
+Converts a date object to a string using it's <code>toLocaleTimeString</code> method.
+</p>
+</div>
+</li>
+
+
+<li><a id="sec-1-5-8"></a><code>dateToMilliseconds</code><br  /><div class="outline-text-4" id="text-1-5-8">
+<p>
+Converts a date object to a number of milliseconds using its <code>getTime</code> method.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-9"></a><code>fix( places )</code><br  /><div class="outline-text-4" id="text-1-5-9">
+<p>
+Converts a number to a string containing the specified number of places after
+the decimal point using JavaScript's <code>Number.toFixed</code>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-10"></a><code>prec( sigfigs )</code><br  /><div class="outline-text-4" id="text-1-5-10">
+<p>
+Converts a number to a string containing the specified number of significant
+figures using JavaScript's <code>Number.toPrecision</code>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-11"></a><code>exp( places )</code><br  /><div class="outline-text-4" id="text-1-5-11">
+<p>
+Converts a number to a string in scientific notation using the specified
+number of digits after the decimal point using JavaScript's <code>Number.toExponential</code>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-12"></a><code>round( places )</code><br  /><div class="outline-text-4" id="text-1-5-12">
+<p>
+Rounds a number to specified number of digits after the decimal point.  Note
+that this is different from <code>fix</code> because it produces a number, not a string.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-13"></a><code>scale( factor )</code><br  /><div class="outline-text-4" id="text-1-5-13">
+<p>
+Scales a number by a constant factor.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-14"></a><code>stabilize( time_ms )</code><br  /><div class="outline-text-4" id="text-1-5-14">
+<p>
+Wait specified number of milliseconds before passing along value; only pass
+along if no other value arrives in that time period.  Does not modify the
+value.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-15"></a><code>req()</code><br  /><div class="outline-text-4" id="text-1-5-15">
+<p>
+Results in error if value is <code>undefined</code>, <code>null</code>, or empty string.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-16"></a><a id="def"></a> <code>def( value )</code><br  /><div class="outline-text-4" id="text-1-5-16">
+<p>
+Replaces <code>undefined</code>, <code>null</code>, empty string, or error with given value.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-17"></a><a id="msg"></a> <code>msg( value )</code><br  /><div class="outline-text-4" id="text-1-5-17">
+<p>
+Replaces error with given value; can be used to customize error messages.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-18"></a><code>chain( ext, ... )</code><br  /><div class="outline-text-4" id="text-1-5-18">
+<p>
+Creates a single translator from a list of translators.
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-19"></a><code>fn( f )</code><br  /><div class="outline-text-4" id="text-1-5-19">
+<p>
+Creates an translator which calls function <code>f</code> on the value, then produces the
+return value as a result.  Discussed in next section.
+</p>
+</div>
+</li></ol>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Creating translators from functions</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">table</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex2"</span>&gt;
+<span class="linenr"> 2: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 3: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 4: </span>    &lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 5: </span>      &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( x )"</span>/&gt; <span style="color: #BA36A5;">&amp;gt;</span> 10 <span style="color: #BA36A5;">&amp;rArr;</span>
+<span id="coderef-usefn1" class="coderef-off"><span class="linenr"> 6: </span>      &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( x, hd.fn( gt10 ) )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;</span>
+<span class="linenr"> 7: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 8: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 9: </span>    &lt;<span style="color: #006699;">td</span>&gt;10 <span style="color: #BA36A5;">&amp;le;&amp;nbsp;</span>&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">10: </span>    &lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr">11: </span>      &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( y )"</span>/&gt; <span style="color: #BA36A5;">&amp;le;</span> 20 <span style="color: #BA36A5;">&amp;rArr;</span>
+<span id="coderef-usefn2" class="coderef-off"><span class="linenr">12: </span>      &lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"y_view"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( y, hd.fn( range, 10, 20 ) )"</span>&gt;&lt;<span style="color: #006699;">span</span>&gt;</span>
+<span class="linenr">13: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">14: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">15: </span>&lt;/<span style="color: #006699;">table</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr">2: </span>    .v( <span style="color: #008000;">'x'</span>, 3 )
+<span class="linenr">3: </span>    .v( <span style="color: #008000;">'y'</span>, 13 )
+<span class="linenr">4: </span>    .end();
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Global function</span>
+<span id="coderef-fn1" class="coderef-off"><span class="linenr"> 2: </span>gt10 = <span style="color: #0000FF;">function</span> gt10( <span style="color: #BA36A5;">x</span> ) {</span>
+<span class="linenr"> 3: </span>  <span style="color: #0000FF;">return</span> x &gt; 10 ? <span style="color: #008000;">'Yes!'</span> : <span style="color: #008000;">'No!'</span>;
+<span class="linenr"> 4: </span>}
+<span class="linenr"> 5: </span>
+<span class="linenr"> 6: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Global function</span>
+<span id="coderef-fn2" class="coderef-off"><span class="linenr"> 7: </span>range = <span style="color: #0000FF;">function</span> range( <span style="color: #BA36A5;">begin</span>, <span style="color: #BA36A5;">end</span>, <span style="color: #BA36A5;">x</span> ) {</span>
+<span class="linenr"> 8: </span>  <span style="color: #0000FF;">return</span> (x &gt;= begin &amp;&amp; x &lt;= end) ? <span style="color: #008000;">'Yes!'</span> : <span style="color: #008000;">'No!'</span>;
+<span class="linenr"> 9: </span>}
+<span class="linenr">10: </span>
+<span class="linenr">11: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">12: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex2'</span> ) );
+<span class="linenr">13: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Results</i>
+</p>
+
+<div class="results">
+<table id="ex2">
+  <tr>
+    <td></td>
+    <td>
+      <input type="text" data-bind="hd.num( x )"/> &gt; 10 &rArr;
+      <span data-bind="hd.text( x, hd.fn( gt10 ) )"></span> 
+    </td>
+  </tr><tr>
+    <td>10 &le;&nbsp;</td>
+    <td>
+      <input type="text" data-bind="hd.num( y )"/> &le; 20 &rArr;
+      <span id="y_view" data-bind="hd.text( y, hd.fn( range, 10, 20 ) )"><span> 
+    </td>
+  </tr>
+</table>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+    .v( 'x', 3 )
+    .v( 'y', 13 )
+    .end();
+// Global function
+gt10 = function gt10( x ) { 
+  return x > 10 ? 'Yes!' : 'No!';
+}
+
+// Global function
+range = function range( begin, end, x ) { 
+  return (x >= begin && x <= end) ? 'Yes!' : 'No!';
+}
+
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex2' ) );
+} )
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This example creates two translators from functions in order to translate the
+values displayed in the web page.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> The <code>fn</code> translator</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+Translators are actually objects which conform to a certain interface.  You can
+define your own translator types as JavaScript objects.  However, in cases
+where you need to do a simple translation, there's an easier way:
+</p>
+</div>
+
+<ol class="org-ol"><li><a id="sec-2-1-1"></a>Write a translation function<br  /><div class="outline-text-4" id="text-2-1-1">
+<p>
+A translation function is a function which takes the incoming value as a
+parameter, then returns the translated value as the result.  For example, the
+function <code>gt10</code> on <a href="#coderef-fn1"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-fn1');" onmouseout="CodeHighlightOff(this, 'coderef-fn1');">line 2</a> of the binding section takes a numeric value and
+translates it to the string "<code>Yes!</code>" if it is greater than 10, and the string
+"<code>No!</code>" otherwise.
+</p>
+
+<p>
+If your translation fails, your translation function should throw an
+error value as an exception.  This will be caught and passed on as an error
+value.
+</p>
+
+<p>
+Note that, if you want to, you can write an anonymous translation function
+directly into the binding specification.  The
+<a href="http://wiki.ecmascript.org/doku.php?id=harmony:specification_drafts">draft for EcmaScript 6</a> includes an arrow notation for anonymous functions,
+which would allow such inline functions to be even more convenient.
+</p>
+</div>
+</li>
+
+
+<li><a id="sec-2-1-2"></a>Use it in a <code>fn</code> translator<br  /><div class="outline-text-4" id="text-2-1-2">
+<p>
+The <code>hd.fn</code> translator takes a translation function as a parameter.  Then,
+when it receives a value, it invokes the translation function, and passes
+the result on.  We used the <code>gt10</code> function in the binding specification found
+in the view section on <a href="#coderef-usefn1"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-usefn1');" onmouseout="CodeHighlightOff(this, 'coderef-usefn1');">line 6</a>.  Thus, the value displayed in the
+<code>&lt;span&gt;</code> tag is not the numeric value of <code>x</code>, but the string returned by
+passing that to <code>gt10</code>.
+</p>
+</div>
+</li></ol>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Extra function parameters</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+You may want your translation function to take some extra parameters that
+configure its behavior.  For example, the function <code>range</code> in <a href="#coderef-fn2"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-fn2');" onmouseout="CodeHighlightOff(this, 'coderef-fn2');">line 7</a> of
+the binding section takes a <code>begin</code> and <code>end</code> parameter to specify the range
+to test.  Any extra parameters passed to <code>hd.fn</code> (after the function itself)
+will be passed directly to the function when it is called.  These extra
+parameters should be the first parameters of the function, with the value to
+be translated as the final parameter.  You can see this in <a href="#coderef-usefn2"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-usefn2');" onmouseout="CodeHighlightOff(this, 'coderef-usefn2');">line 12</a> of
+the view section.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> View adapters</h2>
+<div class="outline-text-2" id="text-3">
+</div><div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> The example</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span>&gt;
+<span class="linenr"> 2: </span>  td.fancy { color: #009; background: #9f9; }
+<span class="linenr"> 3: </span>  td.plain { color: #666; background: #eee; }
+<span class="linenr"> 4: </span>  td.assertive { font-weight: bold; text-transform: uppercase; }
+<span class="linenr"> 5: </span>&lt;/<span style="color: #006699;">style</span>&gt;
+<span class="linenr"> 6: </span>&lt;<span style="color: #006699;">table</span>&gt;
+<span class="linenr"> 7: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 8: </span>    &lt;<span style="color: #006699;">td</span>&gt;
+<span id="coderef-select" class="coderef-off"><span class="linenr"> 9: </span>      &lt;<span style="color: #006699;">select</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"edit_dropdown"</span>&gt;</span>
+<span class="linenr">10: </span>        &lt;<span style="color: #006699;">option</span>&gt;One&lt;/<span style="color: #006699;">option</span>&gt;&lt;<span style="color: #006699;">option</span>&gt;Two&lt;/<span style="color: #006699;">option</span>&gt;&lt;<span style="color: #006699;">option</span>&gt;Three&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">11: </span>      &lt;/<span style="color: #006699;">select</span>&gt;
+<span class="linenr">12: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">13: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"view_dropdown"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">14: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span id="coderef-value" class="coderef-off"><span class="linenr">15: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"edit_num1"</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"input"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;</span>
+<span class="linenr">16: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"view_num1"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">17: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">18: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">colspan</span>=<span style="color: #008000;">"2"</span>&gt;<span style="color: #BA36A5;">&amp;nbsp;</span>&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">19: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span id="coderef-edit" class="coderef-off"><span class="linenr">20: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"edit_num2"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;</span>
+<span class="linenr">21: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"view_num2"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">22: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">23: </span>    &lt;<span style="color: #006699;">td</span>&gt;
+<span id="coderef-checked" class="coderef-off"><span class="linenr">24: </span>      &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"edit_isenabled"</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"checkbox"</span>/&gt;</span>
+<span class="linenr">25: </span>      &lt;<span style="color: #006699;">label</span> <span style="color: #BA36A5;">for</span>=<span style="color: #008000;">"edit_isenabled"</span>&gt;Enabled&lt;/<span style="color: #006699;">label</span>&gt;
+<span class="linenr">26: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">27: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"view_isenabled"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">28: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">29: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">colspan</span>=<span style="color: #008000;">"2"</span>&gt;<span style="color: #BA36A5;">&amp;nbsp;</span>&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">30: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">31: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"view_css"</span> <span style="color: #BA36A5;">colspan</span>=<span style="color: #008000;">"2"</span>&gt;How do I look?&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">32: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">33: </span>    &lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr">34: </span>      &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"edit_isfancy"</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"checkbox"</span>/&gt;
+<span class="linenr">35: </span>      &lt;<span style="color: #006699;">label</span> <span style="color: #BA36A5;">for</span>=<span style="color: #008000;">"edit_isfancy"</span>&gt;Fancy&lt;/<span style="color: #006699;">label</span>&gt;
+<span class="linenr">36: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">37: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"view_isfancy"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">38: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">39: </span>    &lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr">40: </span>      &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"edit_isassertive"</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"checkbox"</span>/&gt;
+<span class="linenr">41: </span>      &lt;<span style="color: #006699;">label</span> <span style="color: #BA36A5;">for</span>=<span style="color: #008000;">"edit_isassertive"</span>&gt;Assertive&lt;/<span style="color: #006699;">label</span>&gt;
+<span class="linenr">42: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">43: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"view_isassertive"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">44: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">45: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">colspan</span>=<span style="color: #008000;">"2"</span>&gt;<span style="color: #BA36A5;">&amp;nbsp;</span>&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">46: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">47: </span>    &lt;<span style="color: #006699;">td</span>&gt;Time:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">48: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"view_time"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">49: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">50: </span>    &lt;<span style="color: #006699;">td</span>&gt;Mouse:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">51: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"view_mouse"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">52: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">53: </span>&lt;/<span style="color: #006699;">table</span>&gt;
+<span class="linenr">54: </span>&lt;/<span style="color: #006699;">table</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr"> 2: </span>  .v( <span style="color: #008000;">'dropdown'</span>,    <span style="color: #008000;">'Two'</span>        )
+<span class="linenr"> 3: </span>  .v( <span style="color: #008000;">'num1'</span>,        10           )
+<span class="linenr"> 4: </span>  .v( <span style="color: #008000;">'num2'</span>,        20           )
+<span class="linenr"> 5: </span>  .v( <span style="color: #008000;">'isenabled'</span>,   <span style="color: #8b1a1a;">true</span>         )
+<span class="linenr"> 6: </span>  .v( <span style="color: #008000;">'isfancy'</span>,     <span style="color: #8b1a1a;">true</span>         )
+<span class="linenr"> 7: </span>  .v( <span style="color: #008000;">'isassertive'</span>, <span style="color: #8b1a1a;">false</span>        )
+<span class="linenr"> 8: </span>  .v( <span style="color: #008000;">'time'</span>,        <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">Date</span>()   )
+<span class="linenr"> 9: </span>  .v( <span style="color: #008000;">'mouse'</span>,       {x: 0, y: 0} )
+<span class="linenr">10: </span>  .end();
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">  1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">  2: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Value</span>( document.getElementById( <span style="color: #008000;">'edit_dropdown'</span> ) ),
+<span class="linenr">  3: </span>            model: model.dropdown
+<span class="linenr">  4: </span>           }
+<span class="linenr">  5: </span>         );
+<span class="linenr">  6: </span>
+<span class="linenr">  7: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Value</span>( document.getElementById( <span style="color: #008000;">'edit_num1'</span> ) ),
+<span class="linenr">  8: </span>            model:   model.num1,
+<span class="linenr">  9: </span>            toModel: hd.toNum()
+<span class="linenr"> 10: </span>           }
+<span class="linenr"> 11: </span>         );
+<span class="linenr"> 12: </span>
+<span class="linenr"> 13: </span>  hd.bind( {view:    <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Edit</span>( document.getElementById( <span style="color: #008000;">'edit_num2'</span> ) ),
+<span class="linenr"> 14: </span>            model:   model.num2,
+<span class="linenr"> 15: </span>            toModel: hd.toNum()
+<span class="linenr"> 16: </span>           }
+<span class="linenr"> 17: </span>         );
+<span class="linenr"> 18: </span>
+<span class="linenr"> 19: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Enabled</span>( document.getElementById( <span style="color: #008000;">'edit_num2'</span> ) ),
+<span class="linenr"> 20: </span>            model: model.isenabled
+<span class="linenr"> 21: </span>           }
+<span class="linenr"> 22: </span>         );
+<span class="linenr"> 23: </span>
+<span class="linenr"> 24: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Checked</span>( document.getElementById( <span style="color: #008000;">'edit_isenabled'</span> ) ),
+<span class="linenr"> 25: </span>            model: model.isenabled
+<span class="linenr"> 26: </span>           }
+<span class="linenr"> 27: </span>         );
+<span class="linenr"> 28: </span>
+<span class="linenr"> 29: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Checked</span>( document.getElementById( <span style="color: #008000;">'edit_isfancy'</span> ) ),
+<span class="linenr"> 30: </span>            model: model.isfancy
+<span class="linenr"> 31: </span>           }
+<span class="linenr"> 32: </span>         );
+<span class="linenr"> 33: </span>
+<span class="linenr"> 34: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Checked</span>( document.getElementById( <span style="color: #008000;">'edit_isassertive'</span> ) ),
+<span class="linenr"> 35: </span>            model: model.isassertive
+<span class="linenr"> 36: </span>           }
+<span class="linenr"> 37: </span>         );
+<span class="linenr"> 38: </span>
+<span class="linenr"> 39: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.CssClass</span>( <span style="color: #008000;">'fancy'</span>,
+<span class="linenr"> 40: </span>                                    <span style="color: #008000;">'plain'</span>,
+<span class="linenr"> 41: </span>                                    document.getElementById( <span style="color: #008000;">'view_css'</span> ) ),
+<span class="linenr"> 42: </span>            model: model.isfancy
+<span class="linenr"> 43: </span>           }
+<span id="coderef-justtrue" class="coderef-off"><span class="linenr"> 44: </span>         );</span>
+<span class="linenr"> 45: </span>
+<span class="linenr"> 46: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.CssClass</span>( <span style="color: #008000;">'assertive'</span>,
+<span class="linenr"> 47: </span>                                    <span style="color: #8b1a1a;">null</span>,
+<span class="linenr"> 48: </span>                                    document.getElementById( <span style="color: #008000;">'view_css'</span> ) ),
+<span class="linenr"> 49: </span>            model: model.isassertive
+<span class="linenr"> 50: </span>           }
+<span id="coderef-truefalse" class="coderef-off"><span class="linenr"> 51: </span>         );</span>
+<span class="linenr"> 52: </span>
+<span class="linenr"> 53: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Time</span>( 1000 ),
+<span class="linenr"> 54: </span>            model: model.time
+<span class="linenr"> 55: </span>           }
+<span class="linenr"> 56: </span>         );
+<span class="linenr"> 57: </span>
+<span class="linenr"> 58: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.MousePosition</span>(),
+<span class="linenr"> 59: </span>            model: model.mouse
+<span class="linenr"> 60: </span>           }
+<span class="linenr"> 61: </span>         );
+<span class="linenr"> 62: </span>
+<span class="linenr"> 63: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'view_dropdown'</span> ) ),
+<span class="linenr"> 64: </span>            model: model.dropdown
+<span class="linenr"> 65: </span>           }
+<span class="linenr"> 66: </span>         );
+<span class="linenr"> 67: </span>
+<span class="linenr"> 68: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'view_num1'</span> ) ),
+<span class="linenr"> 69: </span>            model: model.num1
+<span class="linenr"> 70: </span>           }
+<span class="linenr"> 71: </span>         );
+<span class="linenr"> 72: </span>
+<span class="linenr"> 73: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'view_num2'</span> ) ),
+<span class="linenr"> 74: </span>            model: model.num2
+<span class="linenr"> 75: </span>           }
+<span class="linenr"> 76: </span>         );
+<span class="linenr"> 77: </span>
+<span class="linenr"> 78: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'view_isenabled'</span> ) ),
+<span class="linenr"> 79: </span>            model: model.isenabled
+<span class="linenr"> 80: </span>           }
+<span class="linenr"> 81: </span>         );
+<span class="linenr"> 82: </span>
+<span class="linenr"> 83: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'view_isfancy'</span> ) ),
+<span class="linenr"> 84: </span>            model: model.isfancy
+<span class="linenr"> 85: </span>           }
+<span class="linenr"> 86: </span>         );
+<span class="linenr"> 87: </span>
+<span class="linenr"> 88: </span>  hd.bind( {view:  <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'view_isassertive'</span> ) ),
+<span class="linenr"> 89: </span>            model: model.isassertive
+<span class="linenr"> 90: </span>           }
+<span class="linenr"> 91: </span>         );
+<span class="linenr"> 92: </span>
+<span class="linenr"> 93: </span>  hd.bind( {view:   <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'view_time'</span> ) ),
+<span class="linenr"> 94: </span>            model:  model.time,
+<span class="linenr"> 95: </span>            toView: hd.dateToTimeString()
+<span class="linenr"> 96: </span>           }
+<span class="linenr"> 97: </span>         );
+<span class="linenr"> 98: </span>
+<span class="linenr"> 99: </span>  hd.bind( {view:   <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Text</span>( document.getElementById( <span style="color: #008000;">'view_mouse'</span> ) ),
+<span class="linenr">100: </span>            model:  model.mouse,
+<span class="linenr">101: </span>            toView: hd.pointToString()
+<span class="linenr">102: </span>           }
+<span class="linenr">103: </span>         );
+<span class="linenr">104: </span>
+<span class="linenr">105: </span>} );
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<style type="text/css">
+  td.fancy { color: #009; background: #9f9; }
+  td.plain { color: #666; background: #eee; }
+  td.assertive { font-weight: bold; text-transform: uppercase; }
+</style>
+<table>
+  <tr>
+    <td>
+      <select id="edit_dropdown"> 
+        <option>One</option><option>Two</option><option>Three</option>
+      </select>
+    </td>
+    <td id="view_dropdown"></td>
+  </tr><tr>
+    <td><input id="edit_num1" type="input"/></td> 
+    <td id="view_num1"></td>
+  </tr><tr>
+    <td colspan="2">&nbsp;</td>
+  </tr><tr>
+    <td><input type="text" id="edit_num2"/></td> 
+    <td id="view_num2"></td>
+  </tr><tr>
+    <td>
+      <input id="edit_isenabled" type="checkbox"/> 
+      <label for="edit_isenabled">Enabled</label>
+    </td>
+    <td id="view_isenabled"></td>
+  </tr><tr>
+    <td colspan="2">&nbsp;</td>
+  </tr><tr>
+    <td id="view_css" colspan="2">How do I look?</td>
+  </tr><tr>
+    <td>
+      <input id="edit_isfancy" type="checkbox"/>
+      <label for="edit_isfancy">Fancy</label>
+    </td>
+    <td id="view_isfancy"></td>
+  </tr><tr>
+    <td>
+      <input id="edit_isassertive" type="checkbox"/>
+      <label for="edit_isassertive">Assertive</label>
+    </td>
+    <td id="view_isassertive"></td>
+  </tr><tr>
+    <td colspan="2">&nbsp;</td>
+  </tr><tr>
+    <td>Time:</td>
+    <td id="view_time"></td>
+  </tr><tr>
+    <td>Mouse:</td>
+    <td id="view_mouse"></td>
+  </tr>
+</table>
+</table>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+  .v( 'dropdown',    'Two'        )
+  .v( 'num1',        10           )
+  .v( 'num2',        20           )
+  .v( 'isenabled',   true         )
+  .v( 'isfancy',     true         )
+  .v( 'isassertive', false        )
+  .v( 'time',        new Date()   )
+  .v( 'mouse',       {x: 0, y: 0} )
+  .end();
+window.addEventListener( 'load', function() {
+  hd.bind( {view:  new hd.Value( document.getElementById( 'edit_dropdown' ) ),
+            model: model.dropdown
+           }
+         );
+
+  hd.bind( {view:    new hd.Value( document.getElementById( 'edit_num1' ) ),
+            model:   model.num1,
+            toModel: hd.toNum()
+           }
+         );
+
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'edit_num2' ) ),
+            model:   model.num2,
+            toModel: hd.toNum()
+           }
+         );
+
+  hd.bind( {view:  new hd.Enabled( document.getElementById( 'edit_num2' ) ),
+            model: model.isenabled
+           }
+         );
+
+  hd.bind( {view:  new hd.Checked( document.getElementById( 'edit_isenabled' ) ),
+            model: model.isenabled
+           }
+         );
+
+  hd.bind( {view:  new hd.Checked( document.getElementById( 'edit_isfancy' ) ),
+            model: model.isfancy
+           }
+         );
+
+  hd.bind( {view:  new hd.Checked( document.getElementById( 'edit_isassertive' ) ),
+            model: model.isassertive
+           }
+         );
+
+  hd.bind( {view:  new hd.CssClass( 'fancy',
+                                    'plain',
+                                    document.getElementById( 'view_css' ) ),
+            model: model.isfancy
+           }
+         ); 
+
+  hd.bind( {view:  new hd.CssClass( 'assertive',
+                                    null,
+                                    document.getElementById( 'view_css' ) ),
+            model: model.isassertive
+           }
+         ); 
+
+  hd.bind( {view:  new hd.Time( 1000 ),
+            model: model.time
+           }
+         );
+
+  hd.bind( {view:  new hd.MousePosition(),
+            model: model.mouse
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_dropdown' ) ),
+            model: model.dropdown
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_num1' ) ),
+            model: model.num1
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_num2' ) ),
+            model: model.num2
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_isenabled' ) ),
+            model: model.isenabled
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_isfancy' ) ),
+            model: model.isfancy
+           }
+         );
+
+  hd.bind( {view:  new hd.Text( document.getElementById( 'view_isassertive' ) ),
+            model: model.isassertive
+           }
+         );
+
+  hd.bind( {view:   new hd.Text( document.getElementById( 'view_time' ) ),
+            model:  model.time,
+            toView: hd.dateToTimeString()
+           }
+         );
+
+  hd.bind( {view:   new hd.Text( document.getElementById( 'view_mouse' ) ),
+            model:  model.mouse,
+            toView: hd.pointToString()
+           }
+         );
+
+} );
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+Variable values are displayed in the page so that you can see their values.
+The "enabled" check-box controls whether the text box is enabled.  The "fancy"
+and "assertive" check-boxes control the style of the preceding text.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> What view adapters do</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+As described in the <a href="basics.html">Basic HotDrink Usage</a> document, a binding connects an
+element of the view with an element of the model so that changes in one will
+be reflected in the other.  In order to do this, we need an object that
+represents the view and which supports the interface HotDrink expects.  This
+object is called a view adapter.  We will define the interfaces used in the
+<a href="program.html">Programming Guide</a>, but for now we simply list the adapters that we provide
+with HotDrink.
+</p>
+
+<p>
+There are two interfaces which a view adapter may use:  one for sending values
+to the view-model, and one for receiving values from the model.  We say that a
+adapter which only receives values is a <i>read-only</i> adapter, an adapter which
+only sends values is a <i>write-only</i> adapter, and an adapter which does both is
+a <i>read-write</i> adapter.
+</p>
+
+<p>
+Most adapter types take a single parameter upon construction:  an HTML DOM
+element node for the view element to be encapsulated.  There is currently only
+one that takes additional parameters; there are two which don't require a DOM
+element because they do not encapsulate a specific DOM node.
+</p>
+
+<p>
+This example showcases the adapters that are currently available in HotDrink.
+As the focus of HotDrink is on view-model behavior, the number of adapters we
+have developed is relatively small.  We expect to add to this collection as
+time goes on.  In the meantime, we have tried to make adding adapters to
+HotDrink as simple as possible so that, if we don't have the adapter you need,
+you can easily write it yourself.  For more information, see the HotDrink
+<a href="program.html">Programming Guide</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> List of adapters</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+Here are the adapters provided by HotDrink.
+</p>
+</div>
+
+<ol class="org-ol"><li><a id="sec-3-3-1"></a><code>Value( el )</code><br  /><div class="outline-text-4" id="text-3-3-1">
+<p>
+This adapter uses the value of the variable as the <code>value</code> property of the
+corresponding element.  This adapter is well suited for <code>&lt;select&gt;</code> tags, like
+the one on <a href="#coderef-select"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-select');" onmouseout="CodeHighlightOff(this, 'coderef-select');">line 9</a> of the view section.  You may also use it for
+text-editing inputs, as on <a href="#coderef-value"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-value');" onmouseout="CodeHighlightOff(this, 'coderef-value');">line 15</a> of the view section, though <code>bindEdit</code>
+is probably a better choice.
+</p>
+
+<p>
+This is a read-write adapter.
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-3-2"></a><code>Edit( el )</code><br  /><div class="outline-text-4" id="text-3-3-2">
+<p>
+This adapter also uses the value of the variable as the <code>value</code> property
+of the tag, but it has some additional behaviors to make it work well with text
+editing.  In particular:
+</p>
+
+<ul class="org-ul">
+<li>When the input is edited, the <code>edit</code> binding waits a fraction of a second
+before changing its variable in case any more changes are made.  If so, the
+binding discards the previous edit.  This is nice when the user is typing
+something &#x2014; to update the GUI after every keystroke would be distracting.
+</li>
+
+<li>If the value of the variable changes while the user is editing, the <code>edit</code>
+binding remembers the new value, but does not set it until the edit box
+loses focus.  This might happen, for example, if the binding converts the
+value to some canonical form.
+</li>
+</ul>
+
+<p>
+We used the edit binding for the text box in <a href="#coderef-edit"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-edit');" onmouseout="CodeHighlightOff(this, 'coderef-edit');">line 20</a> of the view section.
+Compare it's behavior to the value binding.  (Try typing "1e10" into both to
+see what happens.)
+</p>
+
+<p>
+This is a read-write adapter.
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-3-3"></a><code>Checked( el )</code><br  /><div class="outline-text-4" id="text-3-3-3">
+<p>
+This adapter uses a Boolean value as the <code>checked</code> property on a check-box.
+</p>
+
+<p>
+This is a read-write binding: checking or un-checking the check-box updates
+the variable.
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-3-4"></a><code>Enabled( el )</code><br  /><div class="outline-text-4" id="text-3-3-4">
+<p>
+This adapter uses a Boolean value to determine whether or not a widget is
+enabled &#x2014; a <code>true</code> value means enabled, a <code>false</code> value means disabled.
+Later on we'll show you how this can be used to automatically disable
+variables which become irrelevant.
+</p>
+
+<p>
+This is a read-only adapter: explicitly enabling or disabling the widget will
+<i>not</i> affect the value of the variable.
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-3-5"></a><code>CssClass( ontrue, onfalse, el )</code><br  /><div class="outline-text-4" id="text-3-3-5">
+<p>
+This adapter uses a Boolean value to determine whether or not the given CSS
+class name should be applied to the view element.  Notice that this
+constructor takes additional parameters.  If the boolean value is true, then
+the <code>ontrue</code> class will be added to the element.  If it is false, then the
+<code>onfalse</code> class will be added to the element.
+</p>
+
+<p>
+Both <code>ontrue</code> and <code>onfalse</code> may be <code>null</code>; if so, then the adapter simply will
+not add a class for the corresponding value.  You can see, the binding on <a href="#coderef-justtrue"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-justtrue');" onmouseout="CodeHighlightOff(this, 'coderef-justtrue');">line
+44</a> of the binding section specifies both, whereas the binding on <a href="#coderef-truefalse"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-truefalse');" onmouseout="CodeHighlightOff(this, 'coderef-truefalse');">line
+51</a> of the binding section only specifies a class to add when the
+value is true.
+</p>
+
+<p>
+This is a read-only binding: explicitly setting the element's class name will
+<i>not</i> update the variable.
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-3-6"></a><code>Text( el )</code><br  /><div class="outline-text-4" id="text-3-3-6">
+<p>
+This adapter replaces the contents of the tag with the value of the variable.
+Note that the value is treated as text, <i>not</i> as HTML; any HTML tags or
+entities in the value will simply be displayed as text.
+</p>
+
+<p>
+This is a read-only binding:  explicitly changing the contents of the tag will
+<i>not</i> update the variable.
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-3-7"></a><code>Time( update_ms )</code><br  /><div class="outline-text-4" id="text-3-3-7">
+<p>
+This adapter writes the current time to the variable every <code>update_ms</code>
+milliseconds.  The time is given as a JavaScript <code>Date</code> object.
+</p>
+
+<p>
+This is a write-only binding:  changing the contents of the variable will have
+no effect on the time.
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-3-8"></a><code>MousePosition()</code><br  /><div class="outline-text-4" id="text-3-3-8">
+<p>
+This adapter writes the current mouse position to the variable every time the
+mouse moves.  The position is given as a JavaScript object with an <code>x</code> and <code>y</code>
+property.
+</p>
+
+<p>
+This is a write-only binding:  changing the contents of the variable will have
+no effect on the mouse position.
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-3-9"></a><code>Position( el )</code><br  /><div class="outline-text-4" id="text-3-3-9">
+<p>
+This adapter takes a point (an object with an <code>x</code> and <code>y</code> property) and uses
+it to set the element's CSS <code>left</code> and <code>top</code> properties.  The adapter will
+also set the element's CSS <code>position</code> property to <code>absolute</code>.
+</p>
+
+<p>
+This is a read-only binding: changing the position or the style of the element
+will <i>not</i> update the variable.
+</p>
+</div>
+</li></ol>
+</div>
+
+<div id="outline-container-sec-3-4" class="outline-3">
+<h3 id="sec-3-4"><span class="section-number-3">3.4</span> Factory functions</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+As described in the <a href="basics.html">Basic HotDrink Usage</a> document, factory functions are
+simply helpers which generate binding specifications for you.  We have
+included factories for the specifications we think will be most common.
+However, you are encouraged to create and use your own if the provided
+factories do not meet your needs.
+</p>
+
+<p>
+When using declarative binding, the format of the <code>data-bind</code> attribute is a
+comma-delimited list of binding specifications.  In order to allow factory
+functions to generate multiple binding specifications, we make the following
+accommodation: the list of specifications will be <i>flattened</i> &#x2014; that is, if
+an array is found in the list, the contents of the array will be interpolated
+into the list in place of the array.  This flattening is repeated until there
+are no more arrays in the list; thus arrays can be arbitrarily nested.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-5" class="outline-3">
+<h3 id="sec-3-5"><span class="section-number-3">3.5</span> List of factories</h3>
+<div class="outline-text-3" id="text-3-5">
+</div><ol class="org-ol"><li><a id="sec-3-5-1"></a>value( model, toView?, toModel? )<br  /><div class="outline-text-4" id="text-3-5-1">
+<p>
+Use the <code>Value</code> adapter with optional <code>toView</code> and <code>toModel</code> arguments.
+</p>
+
+<pre class="results">
+hd.value( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+  ==
+{mkview:  hd.Value,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>,
+ toModel: <i>toModel</i>
+}
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-2"></a>edit( model, toView?, toModel? )<br  /><div class="outline-text-4" id="text-3-5-2">
+<p>
+Use the <code>Edit</code> adapter with optional <code>toView</code> and <code>toModel</code> arguments.
+</p>
+
+<pre class="results">
+hd.edit( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+  ==
+{mkview:  hd.Edit,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>,
+ toModel: <i>toModel</i>
+}
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-3"></a>number( model )<br  /><div class="outline-text-4" id="text-3-5-3">
+<p>
+Use the <code>Edit</code> adapter where the variable holds a number.  Note that no
+<code>toView</code> is needed, as JavaScript will automatically convert a number to a
+string when needed.
+</p>
+
+<pre class="results">
+hd.num( <i>model</i> )
+  ==
+{mkview:  hd.Edit,
+ model:   <i>model</i>,
+ toModel: hd.toNum()
+}
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-4"></a>number( model, places, toView?, toModel? )<br  /><div class="outline-text-4" id="text-3-5-4">
+<p>
+This overloaded form of <code>number</code> will round the number to a specified number
+of digits after the decimal point.  Note that the <code>toView</code> and <code>toModel</code>
+specified here should treat the view as if it is a number, not a string.  For
+example, the following specification will round to two places after the
+decimal point and the value showed in the view will be 100 times the value in
+the model.
+</p>
+
+<pre class="results">
+hd.num( <i>model</i>, 2, hd.scale( 100 ), hd.scale( 0.01 ) );
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-5"></a>date( model )<br  /><div class="outline-text-4" id="text-3-5-5">
+<p>
+Use the <code>Edit</code> adapter where the variable holds a <code>Date</code> object.
+</p>
+
+<pre class="results">
+hd.date( <i>model</i> )
+  ==
+{mkview:  hd.Edit,
+ model:   <i>model</i>,
+ toView:  hd.dateToDateStr(),
+ toModel: hd.toDate()
+}
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-6"></a>date( model, toView, toModel )<br  /><div class="outline-text-4" id="text-3-5-6">
+<p>
+This overloaded form of <code>date</code> allows an additional <code>toView</code> and <code>toModel</code>
+transformation.  Note that these transformations hsould treat the view as if
+it is a date, not a string.  For example, the following specification will let
+the user enter a date, but will store it in the model as the number of
+milliseconds after the epoch.
+</p>
+
+<pre class="results">
+hd.date( <i>model</i>, hd.dateToMilliseconds(), hd.toDate() );
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-7"></a>checked( model, toView?, toModel? )<br  /><div class="outline-text-4" id="text-3-5-7">
+<p>
+Use the <code>Checked</code> adapter with optional <code>toView</code> and <code>toModel</code> arguments.
+</p>
+
+<pre class="results">
+hd.checked( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+  ==
+{mkview:  hd.Checked,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>,
+ toModel: <i>toModel</i>
+}
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-8"></a>enabled( model, toView? )<br  /><div class="outline-text-4" id="text-3-5-8">
+<p>
+Use the <code>Enabled</code> adapter with optional <code>toView</code> argument.
+</p>
+
+<pre class="results">
+hd.enabled( <i>model</i>, <i>toView</i> )
+  ==
+{mkview:  hd.Enabled,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>
+}
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-9"></a>cssClass( model, ontrue, onfalse, toView? )<br  /><div class="outline-text-4" id="text-3-5-9">
+<p>
+Use the <code>CssClass</code> adapter with optional <code>toView</code> argument.
+</p>
+
+<p>
+Note that the <code>ontrue</code> and <code>onfalse</code> values are bound to the <code>CssClass</code>
+constructor to create a constructor requiring only a single argument.  If you
+don't want to specify a class for <code>ontrue</code> (or <code>onfalse</code>) you may use the
+empty string or <code>null</code>.
+</p>
+
+<pre class="results">
+hd.cssClass( <i>model</i>, <i>ontrue</i>, <i>onfalse</i>, <i>toView</i> )
+  ==
+{mkview:  hd.CssClass.bind( null, <i>ontrue</i>, <i>onfalse</i> ),
+ model:   <i>model</i>,
+ toView:  <i>toView</i>
+}
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-10"></a>cssClass( model )<br  /><div class="outline-text-4" id="text-3-5-10">
+<p>
+This overloaded form of <code>cssClass</code> takes a variable and generates multiple
+binding specifications which bind several CSS classes to various variable
+properties.  For more information on binding to variable properties, see the
+section "<a href="#sec-4">Binding to variable properties</a>".
+</p>
+
+<pre class="results">
+hd.cssClass( <i>variable</i> )
+  ==
+[cssClass( <i>variable</i>.source,        <span style="color: #a0522d;">'source'</span>,       <span style="color: #a0522d;">'derived'</span>         ),
+ cssClass( <i>variable</i>.pending,       <span style="color: #a0522d;">'pending'</span>,      <span style="color: #a0522d;">'complete'</span>        ),
+ cssClass( <i>variable</i>.constributing, <span style="color: #a0522d;">'contributing'</span>, <span style="color: #a0522d;">'noncontributing'</span> ),
+ cssClass( <i>variable</i>.error,         <span style="color: #a0522d;">'error'</span>,         <span style="color: #8b1a1a;">null</span>             )
+];
+</pre>
+</div>
+</li>
+
+
+<li><a id="sec-3-5-11"></a>text( model, toView? )<br  /><div class="outline-text-4" id="text-3-5-11">
+<p>
+Use the <code>Text</code> adapter with optional <code>toView</code> argument.
+</p>
+
+<pre class="results">
+hd.text( <i>model</i>, <i>toView</i> )
+  ==
+{mkview:  hd.Edit,
+ model:   <i>model</i>,
+ toView:  <i>toView</i>
+}
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-12"></a>editVar( model, toView?, toModel? )<br  /><div class="outline-text-4" id="text-3-5-12">
+<p>
+This single factory function is a shortcut for invoking three different
+factories on a variable.
+</p>
+
+<pre class="results">
+hd.editVar( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+ ==
+[hd.edit( <i>model</i>, <i>toView</i>, <i>toModel</i> ),
+ hd.cssClass( <i>model</i> ),
+ hd.enabled( <i>model</i>.relevant )
+]
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-13"></a>numVar( model, places?, toview?, toModel? )<br  /><div class="outline-text-4" id="text-3-5-13">
+<p>
+This single factory function is a shortcut for invoking three different
+factories on a variable.
+</p>
+
+<pre class="results">
+hd.numVar( <i>model</i>, <i>places</i>, <i>toView</i>, <i>toModel</i> )
+ ==
+[hd.num( <i>model</i>, <i>places</i>, <i>toView</i>, <i>toModel</i> ),
+ hd.cssClass( <i>model</i> ),
+ hd.enabled( <i>model</i>.relevant )
+]
+</pre>
+</div>
+</li>
+
+<li><a id="sec-3-5-14"></a>dateVar( model, toView?, toModel? )<br  /><div class="outline-text-4" id="text-3-5-14">
+<p>
+This single factory function is a shortcut for invoking three different
+factories on a variable.
+</p>
+
+<pre class="results">
+hd.dateVar( <i>model</i>, <i>toView</i>, <i>toModel</i> )
+ ==
+[hd.edit( <i>model</i>, <i>toView</i>, <i>toModel</i> ),
+ hd.cssClass( <i>model</i> ),
+ hd.enabled( <i>model</i>.relevant )
+]
+</pre>
+</div>
+</li></ol>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Binding to variable properties</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span>&gt;
+<span class="linenr"> 2: </span>  .source { background-color: #ffe; }
+<span class="linenr"> 3: </span>  .derived { background-color: #eee; }
+<span class="linenr"> 4: </span>  .error { border: 2px solid #f00; }
+<span class="linenr"> 5: </span>&lt;/<span style="color: #006699;">style</span>&gt;
+<span class="linenr"> 6: </span>&lt;<span style="color: #006699;">table</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex4"</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"text-align: right"</span>&gt;
+<span class="linenr"> 7: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 8: </span>    &lt;<span style="color: #006699;">td</span>&gt;Number:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 9: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( x ),</span>
+<span class="linenr">10: </span><span style="color: #008000;">           hd.cssClass( x.error, 'error' )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">11: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"color: red"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( x.error )"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">12: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">13: </span>    &lt;<span style="color: #006699;">td</span>&gt;<span style="color: #BA36A5;">&amp;nbsp;</span>&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">14: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">15: </span>    &lt;<span style="color: #006699;">td</span>&gt;Width:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">16: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( width ),</span>
+<span class="linenr">17: </span><span style="color: #008000;">           hd.cssClass( width.source, 'source', 'derived' )"</span>/&gt;&lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr">18: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">19: </span>    &lt;<span style="color: #006699;">td</span>&gt;Height:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">20: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( height ),</span>
+<span class="linenr">21: </span><span style="color: #008000;">           hd.cssClass( height.source, 'source', 'derived' )"</span>/&gt;&lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr">22: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">23: </span>    &lt;<span style="color: #006699;">td</span>&gt;Area:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">24: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( area ),</span>
+<span class="linenr">25: </span><span style="color: #008000;">           hd.cssClass( area.source, 'source', 'derived' )"</span>/&gt;&lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr">26: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">27: </span>&lt;/<span style="color: #006699;">table</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr">2: </span>  .v( <span style="color: #008000;">'x'</span>, 10 ).v( <span style="color: #008000;">'width'</span>, 8 ).v( <span style="color: #008000;">'height'</span>, 6 ).v( <span style="color: #008000;">'area'</span> )
+<span class="linenr">3: </span>  .eq( <span style="color: #008000;">'area == width * height'</span> )
+<span class="linenr">4: </span>  .end();
+<span class="linenr">5: </span>
+<span class="linenr">6: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">7: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex4'</span> ) );
+<span class="linenr">3: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<style type="text/css">
+  .source { background-color: #ffe; }
+  .derived { background-color: #eee; }
+  .error { border: 2px solid #f00; }
+</style>
+<table id="ex4" style="text-align: right">
+  <tr>
+    <td>Number:</td>
+    <td><input type="text" data-bind="hd.num( x ),
+           hd.cssClass( x.error, 'error' )"/></td>
+    <td style="color: red" data-bind="hd.text( x.error )"></td>
+  </tr><tr>
+    <td>&nbsp;</td>
+  </tr><tr>
+    <td>Width:</td>
+    <td><input type="text" data-bind="hd.num( width ),
+           hd.cssClass( width.source, 'source', 'derived' )"/><td>
+  </tr><tr>
+    <td>Height:</td>
+    <td><input type="text" data-bind="hd.num( height ),
+           hd.cssClass( height.source, 'source', 'derived' )"/><td>
+  </tr><tr>
+    <td>Area:</td>
+    <td><input type="text" data-bind="hd.num( area ),
+           hd.cssClass( area.source, 'source', 'derived' )"/><td>
+  </tr>
+</table>
+</div>
+<script type="text/javascript">
+var model = new hd.ModelBuilder()
+  .v( 'x', 10 ).v( 'width', 8 ).v( 'height', 6 ).v( 'area' )
+  .eq( 'area == width * height' )
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex4' ) );
+} )
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+Typing an invalid number into the first box gives it a red border and produces
+an error message.  The variables <i>width</i>, <i>height</i>, and <i>area</i>, are related by
+the constraint <code>area == width * height</code>.  Thus, data will always flow from two
+of these variables into the third.  The two source variables will be yellow,
+and the third &#x2014; which is derived from the other two &#x2014; will be gray.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1"><span class="section-number-3">4.1</span> Variable properties</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+You can bind to more than just a variable in the view-model; any object
+conforming to a certain interface can be bound to.  (We describe this
+interface later in the <a href="program.html">Programming Guide</a>).  Each variable contains several
+properties which conform to this interface, and thus can be bound to by the
+view.
+</p>
+
+<p>
+It is important to note that these properties are read-only.  Thus, they
+should only be used with read-only adapters, such as <code>text</code> and <code>cssClass</code>, and
+never with read-write adapters, such as <code>Edit</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2"><span class="section-number-3">4.2</span> List of variable properties</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+Although we list all properties here, some of them will not be fully explained
+here.  They will be, however, in other documentation.
+</p>
+</div>
+
+<ol class="org-ol"><li><a id="sec-4-2-1"></a>error<br  /><div class="outline-text-4" id="text-4-2-1">
+<p>
+This property contains any error that was generated the last time the variable
+was set &#x2014; whether by the view or by a method.  In particular, note that any
+exceptions thrown by translators will be stored in this property.
+</p>
+
+<p>
+If no error was generated for the variable, the value of this property will be
+<code>null</code>.  Note that, using normal JavaScript semantics, you may use this
+property as a Boolean value: an object or non-empty string will naturally
+evaluate to <code>true</code>, and <code>null</code> or the empty string will evaluate to <code>false</code>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-4-2-2"></a>source<br  /><div class="outline-text-4" id="text-4-2-2">
+<p>
+This Boolean property is true if the variable was a <i>source</i> (kept its value)
+during the last evaluation, and false if it was <i>derived</i> (received a new
+value from a method).
+</p>
+</div>
+</li>
+
+<li><a id="sec-4-2-3"></a>pending<br  /><div class="outline-text-4" id="text-4-2-3">
+<p>
+This Boolean property is true if the variable is currently waiting for an
+update from an asynchronous method, and false if it is not.  For more
+information, see <a href="async.html">Asynchronous Methods</a>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-4-2-4"></a>contributing<br  /><div class="outline-text-4" id="text-4-2-4">
+<p>
+This Boolean property is true if the value of the variable was used to compute
+an output variable, and false if it was not.  For more information, see <a href="async.html">Asynchronous Methods</a>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-4-2-5"></a>relevant<br  /><div class="outline-text-4" id="text-4-2-5">
+<p>
+This Boolean property is true if editing the variable may cause a change to an
+output variable, and false if not.  For more information, see <a href="async.html">Asynchronous Methods</a>.
+</p>
+</div>
+</li>
+
+<li><a id="sec-4-2-6"></a>value<br  /><div class="outline-text-4" id="text-4-2-6">
+<p>
+This property contains the current value of the variable.  There should be no
+reason to bind to this property, as it is the same as binding to the variable
+itself, except that it is read-only.  It is listed only for completeness.
+</p>
+</div>
+</li></ol>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2015-03-04 Wed 16:27</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,2073 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Asynchronous Methods</title>
+<!-- 2015-03-04 Wed 16:27 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript" src="hotdrink.min.js"></script>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Asynchronous Methods</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Asynchronous concepts</a>
+<ul>
+<li><a href="#sec-1-1">1.1. Asynchronous execution</a></li>
+<li><a href="#sec-1-2">1.2. Promises</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2. Asynchronous methods</a>
+<ul>
+<li><a href="#sec-2-1">2.1. The example</a></li>
+<li><a href="#sec-2-2">2.2. Activations and activating functions</a></li>
+<li><a href="#sec-2-3">2.3. Pending variables</a></li>
+<li><a href="#sec-2-4">2.4. Caveat</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">3. Lifting functions</a>
+<ul>
+<li><a href="#sec-3-1">3.1. The example</a></li>
+<li><a href="#sec-3-2">3.2. Using <code>liftFunction</code></a></li>
+<li><a href="#sec-3-3">3.3. The truth about "ordinary" methods</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">4. Partial lifting: returning promises</a>
+<ul>
+<li><a href="#sec-4-1">4.1. The example</a></li>
+<li><a href="#sec-4-2">4.2. A promise for a promise</a></li>
+<li><a href="#sec-4-3">4.3. Coordinating promises</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">5. Partial lifting: promise parameters</a>
+<ul>
+<li><a href="#sec-5-1">5.1. The example</a></li>
+<li><a href="#sec-5-2">5.2. Requesting input promises</a></li>
+<li><a href="#sec-5-3">5.3. Output variables</a></li>
+<li><a href="#sec-5-4">5.4. Contributing and relevant</a></li>
+<li><a href="#sec-5-5">5.5. Automatic disabling</a></li>
+<li><a href="#sec-5-6">5.6. Explicit control over usage</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">6. Helper: AJAX requests</a>
+<ul>
+<li><a href="#sec-6-1">6.1. The example</a></li>
+<li><a href="#sec-6-2">6.2. Simple AJAX wrappers</a></li>
+</ul>
+</li>
+<li><a href="#sec-7">7. Helper: web workers</a>
+<ul>
+<li><a href="#sec-7-1">7.1. The example</a></li>
+<li><a href="#sec-7-2">7.2. Simple web worker wrapper</a></li>
+<li><a href="#sec-7-3">7.3. Security restrictions</a></li>
+<li><a href="#sec-7-4">7.4. Worker pools</a></li>
+<li><a href="#sec-7-5">7.5. Killing workers</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Asynchronous concepts</h2>
+<div class="outline-text-2" id="text-1">
+</div><div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Asynchronous execution</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+When methods are executed <i>synchronously</i> it means that they are run
+one after another, and that each method must complete before the next method
+can begin.  This can be problematic if a
+method takes a long time to finish &#x2014; e.g., a method which needs to make a
+request to a server.  Such methods, if run synchronously, can cause the
+interface to "hang" or become unresponsive.
+</p>
+
+<p>
+When methods are executed <i>asynchronously</i>, the system does not wait for them
+to finish, but instead resumes normal operation while methods continue to run.
+Methods begin execution as soon as their inputs are ready and signal when they
+are completed.  In this way, the interface remains responsive even when
+methods take a long time to execute.
+</p>
+
+<p>
+Note that, in order to be useful, an asynchronous method requires some way of
+executing code "in the background" so that it does not tie up the main
+event-handling thread.  JavaScript provides several mechanisms in support of
+this.  For example, <a href="https://developer.mozilla.org/en-US/docs/AJAX">AJAX</a> allows asynchronous server requests, and <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/basic_usage">web workers</a>
+allow JavaScript to run on a different thread.  HotDrink is designed to work
+regardless of which mechanism you use for asynchronous code execution (though
+it does provide some light-weight wrappers to facilitate simple AJAX and web
+worker tasks &#x2014; see Sections <a href="#sec-6">6</a> and <a href="#sec-7">7</a>).
+This gives you the freedom to make use of whatever mechanism you wish to
+implement your methods.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> Promises</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+A <i>promise</i> represents a value that will be supplied later.  Promises are a
+common programming idiom for asynchronous programming.  HotDrink promises
+follow the <a href="https://promisesaplus.com/">Promises/A+</a> specification &#x2014; an open standard for interoperable
+JavaScript promises.  There are many good sources of documentation on using
+promises in JavaScript, therefore, we show only the basics here.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">"p" is a new promise</span>
+<span id="coderef-newpromise" class="coderef-off"><span class="linenr"> 2: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">p</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Promise</span>();</span>
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Schedule function "f1" to be called with the value of "p" once it's ready</span>
+<span class="linenr"> 5: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Returns a promise for the result of "f1" which we store in "q"</span>
+<span id="coderef-then" class="coderef-off"><span class="linenr"> 6: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">q</span> = p.then(</span>
+<span class="linenr"> 7: </span>  <span style="color: #0000FF;">function</span> <span style="color: #006699;">f1</span>( <span style="color: #BA36A5;">v</span> ) {
+<span class="linenr"> 8: </span>    <span style="color: #0000FF;">return</span> v + 10;
+<span class="linenr"> 9: </span>  }
+<span class="linenr">10: </span>);
+<span class="linenr">11: </span>
+<span class="linenr">12: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Schedule function "f2" to be called with the value of "q" once it's ready</span>
+<span class="linenr">13: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">This, too, returns a promise, but we ignore it</span>
+<span class="linenr">14: </span><span style="color: #8D8D84;">//   </span><span style="color: #8D8D84; font-style: italic;">(we're not interested in the result of f2)</span>
+<span id="coderef-then2" class="coderef-off"><span class="linenr">15: </span>q.then(</span>
+<span class="linenr">16: </span>  <span style="color: #0000FF;">function</span> <span style="color: #006699;">f2</span>( <span style="color: #BA36A5;">w</span> ) {
+<span class="linenr">17: </span>    console.log( <span style="color: #008000;">'Value: '</span> + w );
+<span class="linenr">18: </span>  }
+<span class="linenr">19: </span>);
+<span class="linenr">20: </span>
+<span class="linenr">21: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Give "p" a value</span>
+<span id="coderef-resolve" class="coderef-off"><span class="linenr">22: </span>p.resolve( 17 );</span>
+<span class="linenr">23: </span>
+<span class="linenr">24: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">This causes "f1" to be called with 17 as the argument...</span>
+<span class="linenr">25: </span><span style="color: #8D8D84;">//   </span><span style="color: #8D8D84; font-style: italic;">...which returns 27...</span>
+<span class="linenr">26: </span><span style="color: #8D8D84;">//   </span><span style="color: #8D8D84; font-style: italic;">...which resolves promise "q"...</span>
+<span class="linenr">27: </span><span style="color: #8D8D84;">//   </span><span style="color: #8D8D84; font-style: italic;">...which causes "f2" to be called with 27 as the argument...</span>
+<span class="linenr">28: </span><span style="color: #8D8D84;">//   </span><span style="color: #8D8D84; font-style: italic;">...resulting in "Value: 27" being printed to the log</span>
+</pre>
+</div>
+
+<p>
+Using promises involves three steps.
+</p>
+
+<ol class="org-ol">
+<li>Create a new promise object.  This is a simple construction using the <code>new</code>
+   operator, as shown in <a href="#coderef-newpromise"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-newpromise');" onmouseout="CodeHighlightOff(this, 'coderef-newpromise');">line 2</a>.
+</li>
+<li>Register one or more functions to be executed once the promise has been
+given a value.  (We call this <i>scheduling</i> the functions.)  This is done
+using the <code>then</code> function, as shown in <a href="#coderef-then"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-then');" onmouseout="CodeHighlightOff(this, 'coderef-then');">line 6</a>.  When you schedule a
+function, you get back a promise for the result of that function.  In this
+way you can chain together asynchronous calculations &#x2014; the value produced
+by one will be passed to the next.  You can see this on <a href="#coderef-then2"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-then2');" onmouseout="CodeHighlightOff(this, 'coderef-then2');">line 15</a> where
+we schedule <code>f2</code> to be run using the result of <code>f1</code>.
+</li>
+<li>Resolve the promise with a value.  This is done using the <code>resolve</code>
+   function, as shown in <a href="#coderef-resolve"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-resolve');" onmouseout="CodeHighlightOff(this, 'coderef-resolve');">line 22</a>.
+</li>
+</ol>
+
+<p>
+<i>Note:  It is not required that you give names to functions you schedule for
+promises; we only did so to make it easier to refer to them in other places.</i>
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Asynchronous methods</h2>
+<div class="outline-text-2" id="text-2">
+</div><div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> The example</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex1"</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"display:inline-block; text-align:right"</span>&gt;
+<span class="linenr">2: </span>  &lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span> scoped&gt;
+<span class="linenr">3: </span>    .pending { background: right center no-repeat url(spinner.gif); }
+<span class="linenr">4: </span>  &lt;/<span style="color: #006699;">style</span>&gt;
+<span id="coderef-numvar" class="coderef-off"><span class="linenr">5: </span>  Total Cost: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( total, 2 )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;</span>
+<span class="linenr">6: </span>  Tip Percentage: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( percent, 0 )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">7: </span>  Tip: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( tip, 2 )"</span> readonly/&gt;
+<span class="linenr">8: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr"> 2: </span>  .vs( <span style="color: #008000;">'total, percent, tip'</span>, {total: 50, percent: 20} )
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>  .c( <span style="color: #008000;">'total, percent, tip'</span> )
+<span id="coderef-fn" class="coderef-off"><span class="linenr"> 5: </span>  .asyncMethod( <span style="color: #008000;">'total, percent -&gt; tip'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">pTotal</span>, <span style="color: #BA36A5;">pPercent</span> ) {</span>
+<span id="coderef-mkprom" class="coderef-off"><span class="linenr"> 6: </span>    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">pTip</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Promise</span>();</span>
+<span class="linenr"> 7: </span>
+<span id="coderef-waitx" class="coderef-off"><span class="linenr"> 8: </span>    pTotal.then( <span style="color: #0000FF;">function</span> f1( <span style="color: #BA36A5;">total</span> ) {</span>
+<span id="coderef-waity" class="coderef-off"><span class="linenr"> 9: </span>      pPercent.then( <span style="color: #0000FF;">function</span> f2( <span style="color: #BA36A5;">percent</span> ) {</span>
+<span id="coderef-resz" class="coderef-off"><span class="linenr">10: </span>        setTimeout( <span style="color: #0000FF;">function</span>() { pTip.resolve( total * percent / 100 ); }, 3000 );</span>
+<span class="linenr">11: </span>      } );
+<span class="linenr">12: </span>    } );
+<span class="linenr">13: </span>
+<span id="coderef-retz" class="coderef-off"><span class="linenr">14: </span>    <span style="color: #0000FF;">return</span> pTip;</span>
+<span class="linenr">15: </span>  } )
+<span class="linenr">16: </span>
+<span class="linenr">17: </span>  .end();
+<span class="linenr">18: </span>
+<span class="linenr">19: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">20: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex1'</span> ) );
+<span class="linenr">3: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="ex1" style="display:inline-block; text-align:right">
+  <style type="text/css" scoped>
+    .pending { background: right center no-repeat url(spinner.gif); }
+  </style>
+  Total Cost: <input type="text" data-bind="hd.numVar( total, 2 )"/><br/> 
+  Tip Percentage: <input type="text" data-bind="hd.numVar( percent, 0 )"/><br/>
+  Tip: <input type="text" data-bind="hd.numVar( tip, 2 )" readonly/>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+  .vs( 'total, percent, tip', {total: 50, percent: 20} )
+
+  .c( 'total, percent, tip' )
+  .asyncMethod( 'total, percent -> tip', function( pTotal, pPercent ) { 
+    var pTip = new hd.Promise();  
+
+    pTotal.then( function f1( total ) { 
+      pPercent.then( function f2( percent ) { 
+        setTimeout( function() { pTip.resolve( total * percent / 100 ); }, 3000 ); 
+      } );
+    } );
+
+    return pTip; 
+  } )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex1' ) );
+} )
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This example implements a simple tip calculator.  If you modify the cost or the
+percentage, you will notice that there is a delay in calculating the tip.  We
+used an asynchronous method to allow the user interface to remain responsive
+even during this delay.
+</p>
+
+<p>
+Because the code for this asynchronous method is a little bulky, we have
+written only a single method for our constraint.  (That's why you cannot edit
+the tip directly:  the only option for solving the constraint is to calculate
+the tip.)  Later we will see how to make the code for asynchronous methods
+more compact.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2"><span class="section-number-3">2.2</span> Activations and activating functions</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+We refer to a single execution of a method as an <i>activation</i> of that method.
+The activation of a synchronous method corresponds to a single function call.
+For asynchronous methods this is no longer the case: the activation of an
+asynchronous method may involve multiple callback functions running in
+response to things such as Ajax calls, web workers, etc.  However, there must
+still be one single function which initiates the activation and which tells us
+how to get the results when it is finished.  We call this function the
+<i>activating function</i> for the method.
+</p>
+
+<p>
+We can create an asynchronous method using the <code>asyncMethod</code> member function
+of the model builder.  (Note that, as with other builder member functions, we
+can abbreviate this as simply <code>a</code>.)  The parameter to <code>asyncMethod</code> is the
+activating function for the method.
+</p>
+
+<p>
+Whereas the functions for synchronous methods take the values of input
+variables as parameters and return new values for output variables, activating
+functions take <i>promises</i> for the values of input variables as parameters, and
+return <i>promises</i> for new values for output variables.  Thus, the activating
+function for the method "<code>total, percent -&gt; tip</code>" (on <a href="#coderef-fn"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-fn');" onmouseout="CodeHighlightOff(this, 'coderef-fn');">line 5</a> of the
+view-model) takes two parameters: a promise for the value of <code>total</code> and a
+promise for the value of <code>percent</code>; and it returns a promise for a new value
+of <code>tip</code>.
+</p>
+
+<p>
+In general, then, an activating function should behave as follows:
+</p>
+
+<ol class="org-ol">
+<li>Take input promises as parameters.  Note that, on <a href="#coderef-fn"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-fn');" onmouseout="CodeHighlightOff(this, 'coderef-fn');">line 5</a> of the
+view-model source, we named our parameters \(pTotal\) and \(pPercent\) to
+remind us that these are promises, not values.
+</li>
+<li>Create promise(s) for the outputs of the method.  You can see this on
+<a href="#coderef-mkprom"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-mkprom');" onmouseout="CodeHighlightOff(this, 'coderef-mkprom');">line 6</a> of the view-model source.
+</li>
+<li>Schedule a function or functions to be run once the input promises have
+been resolved; these functions should compute values for the output
+promises.  You can see this in the view-model source.  We start by
+scheduling \(f1\) to run when \(x\) is ready (<a href="#coderef-waitx"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-waitx');" onmouseout="CodeHighlightOff(this, 'coderef-waitx');">line 8</a>); \(f1\) will schedule
+\(f2\) to run when \(y\) is ready (<a href="#coderef-waity"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-waity');" onmouseout="CodeHighlightOff(this, 'coderef-waity');">line 9</a>); and \(f2\) will calculate the
+result and resolve the promise we made for \(z\) (<a href="#coderef-resz"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-resz');" onmouseout="CodeHighlightOff(this, 'coderef-resz');">line 10</a>).  In order to
+make the delay noticeable, we use a three-second timer to resolve \(z\)
+instead of resolving right away.
+</li>
+<li>Return the output promise(s).  You can see this on <a href="#coderef-retz"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-retz');" onmouseout="CodeHighlightOff(this, 'coderef-retz');">line 14</a> of the
+view-model source.  As with ordinary methods, if there is more
+than one output you should return an array of promises.
+</li>
+</ol>
+
+<p>
+To reiterate, the activating function itself is <i>not</i> asynchronous.  Any
+function is inherently synchronous: once you start it, you must wait for it to
+finish.  Your activating function should <i>not</i> take long to run, or else the
+system will hang.  However, the purpose of the activating function is <i>not</i> to
+perform the work of the method; rather, its purpose is to <i>schedule</i> the work
+so that it will proceed on its own once the inputs are ready.  (In our example
+it is function \(f2\) where the actual work of the method is performed.)
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3"><span class="section-number-3">2.3</span> Pending variables</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+Every variable has a read-only Boolean property named <code>pending</code>.  This
+property is true when the variable's value is scheduled to be changed once a
+promise has been resolved.  The suggested use for this variable is with a CSS
+binding (e.g., the <code>hd.bindCssClass</code> binder) to give some sort of visual
+indication that this variable will be updated soon.
+</p>
+
+<p>
+The <code>hd.numVar</code> factory function we use, e.g., on <a href="#coderef-numvar"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-numvar');" onmouseout="CodeHighlightOff(this, 'coderef-numvar');">line 5</a> of the view,
+creates a binding which adds the <code>pending</code> CSS class to an element when the
+variable's <code>pending</code> property is true, and adds the <code>complete</code> CSS class when
+it is false.  We refer to this in the CSS block on <a href="#coderef-css"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-css');" onmouseout="CodeHighlightOff(this, 'coderef-css');">line 2</a> of the view to
+show a spinner when the variable is pending.
+</p>
+
+<p>
+For more information on binding specifications, see the <a href="binding.html">Advanced Binding
+Concepts</a> document.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-4" class="outline-3">
+<h3 id="sec-2-4"><span class="section-number-3">2.4</span> Caveat</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+There are some subtleties to writing your own asynchronous method that are
+beyond the scope of this document.  (We will discuss them later in our
+<a href="program.html">Programming Guide</a>.)  Thus, for the time being, we suggest you use HotDrink's
+function lifting mechanism to create activating functions for asynchronous
+methods.  We'll talk about that next.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Lifting functions</h2>
+<div class="outline-text-2" id="text-3">
+</div><div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> The example</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex2"</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"display:inline-block; text-align:right"</span>&gt;
+<span class="linenr">2: </span>  Dividend: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( n, 0 )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">3: </span>  Divisor: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( d, 0 )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">4: </span>  Quotient: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( q, 0 )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">5: </span>  Remainder: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( r, 0 )"</span>/&gt;
+<span class="linenr">6: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">divideRemainder</span>( <span style="color: #BA36A5;">n</span>, <span style="color: #BA36A5;">d</span> ) {
+<span class="linenr"> 2: </span>  <span style="color: #0000FF;">return</span> [Math.floor( n / d ), n % d];
+<span class="linenr"> 3: </span>}
+<span class="linenr"> 4: </span>
+<span class="linenr"> 5: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">multiplyRemainder</span>( <span style="color: #BA36A5;">d</span>, <span style="color: #BA36A5;">q</span>, <span style="color: #BA36A5;">r</span> ) {
+<span class="linenr"> 6: </span>  <span style="color: #0000FF;">return</span> q*d + r;
+<span class="linenr"> 7: </span>}
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr">11: </span>  .vs( <span style="color: #008000;">'n, d, q, r'</span>, {n: 50, q: 6} )
+<span class="linenr">12: </span>
+<span class="linenr">13: </span>  .c( <span style="color: #008000;">'n, d, q, r'</span> )
+<span id="coderef-out1" class="coderef-off"><span class="linenr">14: </span>  .a( <span style="color: #008000;">'n, d -&gt; q, r'</span>, hd.liftFunction( divideRemainder, 2 ) )</span>
+<span id="coderef-out2" class="coderef-off"><span class="linenr">15: </span>  .a( <span style="color: #008000;">'n, q -&gt; d, r'</span>, hd.liftFunction( divideRemainder, 2 ) )</span>
+<span id="coderef-out3" class="coderef-off"><span class="linenr">16: </span>  .a( <span style="color: #008000;">'d, q, r -&gt; n'</span>, hd.liftFunction( multiplyRemainder ) )</span>
+<span class="linenr">17: </span>
+<span class="linenr">18: </span>  .end();
+<span class="linenr">19: </span>
+<span class="linenr">20: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">21: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex2'</span> ) );
+<span class="linenr">3: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="ex2" style="display:inline-block; text-align:right">
+  Dividend: <input type="text" data-bind="hd.numVar( n, 0 )"/><br/>
+  Divisor: <input type="text" data-bind="hd.numVar( d, 0 )"/><br/>
+  Quotient: <input type="text" data-bind="hd.numVar( q, 0 )"/><br/>
+  Remainder: <input type="text" data-bind="hd.numVar( r, 0 )"/>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+function divideRemainder( n, d ) {
+  return [Math.floor( n / d ), n % d];
+}
+
+function multiplyRemainder( d, q, r ) {
+  return q*d + r;
+}
+
+
+var model = new hd.ModelBuilder()
+  .vs( 'n, d, q, r', {n: 50, q: 6} )
+
+  .c( 'n, d, q, r' )
+  .a( 'n, d -> q, r', hd.liftFunction( divideRemainder, 2 ) ) 
+  .a( 'n, q -> d, r', hd.liftFunction( divideRemainder, 2 ) ) 
+  .a( 'd, q, r -> n', hd.liftFunction( multiplyRemainder ) )  
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex2' ) );
+} )
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+Notice that all methods in this example are created as asynchronous methods.
+However, rather than writing our own activating functions, we lifted functions
+which operate on values.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> Using <code>liftFunction</code></h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+The purpose of <code>liftFunction</code> is to transform a function which operates on
+values into a function which operates on promises.  Thus, the parameter for
+<code>liftFunction</code> is a function which takes values and returns values, and the
+return value is a function which takes promises and returns promises.  This
+lifted function behaves as follows.
+</p>
+
+<ol class="org-ol">
+<li>Takes input promises as parameters.
+</li>
+<li>Creates output promises.
+</li>
+<li>Schedules a function to be run once all input promises are resolved.  This
+function will pass the input values to the original function (which was
+passed to <code>liftFunction</code>) and use the result to resolve the output promises.
+</li>
+<li>Returns the output promises.
+</li>
+</ol>
+
+<p>
+Note that such a function works perfectly as an activating function for an
+asynchronous method.  Thus, in effect, <code>liftFunction</code> can turn a synchronous
+method into an asynchronous method.
+</p>
+
+<p>
+The lifted function does not need to know ahead of time how many inputs to
+pass to the original function: it simply passes as many inputs as it receives
+promises.  However, it <i>does</i> need to know how many outputs the original
+function will return ahead of time: it must create output promises before it
+can examine the output of the original function.  By default, <code>liftFunction</code>
+creates a lifted function which has only one output.  If your lifted function
+will have more than one output, you must provide the number of outputs as the
+second parameter to <code>liftFunction</code>; you can see this on <a href="#coderef-out1"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-out1');" onmouseout="CodeHighlightOff(this, 'coderef-out1');">line 14</a> and <a href="#coderef-out2"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-out2');" onmouseout="CodeHighlightOff(this, 'coderef-out2');">line
+15</a> of the view-model source.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> The truth about "ordinary" methods</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+It's time to come clean.  Up to now we've been discussing asynchronous methods
+as if they were somehow different from other methods.  In fact, if you're
+going to allow some methods to be asynchronous, then they must all be
+asynchronous (because if one method is going to take a while to execute, then
+other methods are going to have to be prepared to wait until it is done).
+</p>
+
+<p>
+The truth of the matter is, <i>all</i> methods in HotDrink are asynchronous
+methods.  The only difference between creating a method with the <code>method</code>
+builder function and creating a method with the <code>asyncMethod</code> builder
+function is that the <code>method</code> builder function will use <code>liftFunction</code> to
+create an activating function for your method, whereas <code>asyncMethod</code> assumes
+you have given it the activating function.
+</p>
+
+<p>
+Thus, in the example above, we could have saved ourselves some trouble and
+defined our view-model as follows.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr">2: </span>  .vs( <span style="color: #008000;">'n, d, q, r'</span>, {n: 50, q: 6} )
+<span class="linenr">3: </span>
+<span class="linenr">4: </span>  .c( <span style="color: #008000;">'n, d, q, r'</span> )
+<span class="linenr">5: </span>  .m( <span style="color: #008000;">'n, d -&gt; q, r'</span>, divideRemainder )
+<span class="linenr">6: </span>  .m( <span style="color: #008000;">'n, q -&gt; d, r'</span>, divideRemainder )
+<span class="linenr">7: </span>  .m( <span style="color: #008000;">'q, r, d -&gt; n'</span>, multiplyRemainder )
+<span class="linenr">8: </span>
+<span class="linenr">9: </span>  .end();
+</pre>
+</div>
+
+<p>
+This produces <i>exactly the same</i> view-model as the source in the example.
+(Note that we do not need to specify the number of outputs here, as the model
+builder can deduce it from the signature.)  Thus, there really is no reason to
+call <code>liftFunction</code> directly; it is simpler just to use the <code>method</code>
+(a.k.a. <code>m</code>) member function.
+</p>
+
+<p>
+And so, we've come full circle.  It turns out we've been writing asynchronous
+methods all along and didn't realize it.  However, now that we know what's
+really going on with our methods, let's discuss a few tricks that we can do.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Partial lifting: returning promises</h2>
+<div class="outline-text-2" id="text-4">
+</div><div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1"><span class="section-number-3">4.1</span> The example</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr">1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex3"</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"display:inline-block; text-align:right"</span>&gt;
+<span id="coderef-css" class="coderef-off"><span class="linenr">2: </span>  &lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span> scoped&gt;</span>
+<span class="linenr">3: </span>    .pending { background: right center no-repeat url(spinner.gif); }
+<span class="linenr">4: </span>  &lt;/<span style="color: #006699;">style</span>&gt;
+<span class="linenr">5: </span>  Width: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( w )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">6: </span>  Height: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( h )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">7: </span>  Area: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( a )"</span>/&gt;&lt;<span style="color: #006699;">br</span>/&gt;
+<span class="linenr">8: </span>  Perimeter: &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( p )"</span>/&gt;
+<span class="linenr">9: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span id="coderef-delprom" class="coderef-off"><span class="linenr"> 1: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">delayedPromise</span>( <span style="color: #BA36A5;">val</span> ) {</span>
+<span class="linenr"> 2: </span>  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">p</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Promise</span>();
+<span class="linenr"> 3: </span>  setTimeout( <span style="color: #0000FF;">function</span>() { p.resolve( val ) }, 5000 );
+<span class="linenr"> 4: </span>  <span style="color: #0000FF;">return</span> p;
+<span class="linenr"> 5: </span>}
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr"> 8: </span>  .vs( <span style="color: #008000;">'w, h, a, p'</span>, {w: 80, h: 60} )
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span>  .c( <span style="color: #008000;">'w, h, a'</span> )
+<span class="linenr">11: </span>  .m( <span style="color: #008000;">'w, h -&gt; a'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">w</span>, <span style="color: #BA36A5;">h</span> ) { <span style="color: #0000FF;">return</span> w*h; } )
+<span class="linenr">12: </span>  .m( <span style="color: #008000;">'a, h -&gt; w'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">h</span> ) { <span style="color: #0000FF;">return</span> delayedPromise( a/h ); } )
+<span class="linenr">13: </span>  .m( <span style="color: #008000;">'a, w -&gt; h'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">w</span> ) { <span style="color: #0000FF;">return</span> delayedPromise( a/w ); } )
+<span class="linenr">14: </span>
+<span class="linenr">15: </span>  .c( <span style="color: #008000;">'w, h, p'</span> )
+<span class="linenr">16: </span>  .m( <span style="color: #008000;">'w, h -&gt; p'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">w</span>, <span style="color: #BA36A5;">h</span> ) { <span style="color: #0000FF;">return</span> 2*w + 2*h; } )
+<span class="linenr">17: </span>  .m( <span style="color: #008000;">'p, h -&gt; w'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">p</span>, <span style="color: #BA36A5;">h</span> ) { <span style="color: #0000FF;">return</span> delayedPromise( p/2 - h ); } )
+<span class="linenr">18: </span>  .m( <span style="color: #008000;">'p, w -&gt; h'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">p</span>, <span style="color: #BA36A5;">w</span> ) { <span style="color: #0000FF;">return</span> delayedPromise( p/2 - w ); } )
+<span class="linenr">19: </span>
+<span class="linenr">20: </span>  .end();
+<span class="linenr">21: </span>
+<span class="linenr">22: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">23: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex3'</span> ) );
+<span class="linenr">3: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="ex3" style="display:inline-block; text-align:right">
+  <style type="text/css" scoped> 
+    .pending { background: right center no-repeat url(spinner.gif); }
+  </style>
+  Width: <input type="text" data-bind="hd.numVar( w )"/><br/>
+  Height: <input type="text" data-bind="hd.numVar( h )"/><br/>
+  Area: <input type="text" data-bind="hd.numVar( a )"/><br/>
+  Perimeter: <input type="text" data-bind="hd.numVar( p )"/>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+function delayedPromise( val ) { 
+  var p = new hd.Promise();
+  setTimeout( function() { p.resolve( val ) }, 5000 );
+  return p;
+}
+
+var model = new hd.ModelBuilder()
+  .vs( 'w, h, a, p', {w: 80, h: 60} )
+
+  .c( 'w, h, a' )
+  .m( 'w, h -> a', function( w, h ) { return w*h; } )
+  .m( 'a, h -> w', function( a, h ) { return delayedPromise( a/h ); } )
+  .m( 'a, w -> h', function( a, w ) { return delayedPromise( a/w ); } )
+
+  .c( 'w, h, p' )
+  .m( 'w, h -> p', function( w, h ) { return 2*w + 2*h; } )
+  .m( 'p, h -> w', function( p, h ) { return delayedPromise( p/2 - h ); } )
+  .m( 'p, w -> h', function( p, w ) { return delayedPromise( p/2 - w ); } )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex3' ) );
+} )
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This example enforces the expected relations between the width, height, area,
+and perimeter of a rectangle.  However, any calculation of width or height is
+delayed by five seconds.  Note that, during this delay, you may continue to
+edit values in the form.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2"><span class="section-number-3">4.2</span> A promise for a promise</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+Notice that all methods in the example are created using the <code>method</code> builder
+function, and yet some of them return promises as if they were activating
+functions for asynchronous methods.  How does this work?
+</p>
+
+<p>
+According to the <a href="https://promisesaplus.com/">Promises/A+</a> specification, if you resolve a promise \(p\) using
+a second promise \(q\), the behavior is as follows: \(p\) remains in a pending
+state until \(q\) is resolved; as soon as \(q\) is resolved, then \(p\) will
+automatically be resolved using the same value as \(q\).
+</p>
+
+<p>
+Consider what this means for functions lifted with <code>liftFunction</code>.  When you
+lift a function, the return values of the original function are used to
+resolve the corresponding output promises of the lifted function.  Thus, if
+your original function returns a promise, that promise will be used to resolve
+the corresponding output promise &#x2014; and later when you resolve that promise,
+the output promise will automatically be resolved using the same value.
+</p>
+
+<p>
+Thus, the function for a synchronous method &#x2014; one which will be lifted with
+<code>liftFunction</code> &#x2014; can return a promise just as an activating function can.
+In both cases, the end result is the same:  whatever value eventually given to
+the promise will become the output of the method.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3"><span class="section-number-3">4.3</span> Coordinating promises</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+One common problem with implementing asynchronous behavior in a user interface
+is managing edits that are made before all asynchronous calculations have
+completed.  On the one hand, you don't want your interface to lock up,
+refusing to allow any user input until the current calculations have complete.
+But, on the other hand, you also don't want to start new calculations using
+stale values which are scheduled to be updated.
+</p>
+
+<p>
+Fortunately, this type of organization is completely handled for you by
+HotDrink. If you play around with the example above &#x2014; rapidly making edits
+to multiple fields &#x2014; you can see that the user interface remains fully
+responsive even as it waits on promises to be resolved.  When an edit is made
+to a HotDrink variable, HotDrink will immediately run the activating functions
+for all methods which should be executed in response.  (Remember, every method
+is asynchronous, so every method has a activating function.)  Later, once all
+input promises have been resolved, the actual work of the method will take
+place.
+</p>
+
+<p>
+Perhaps a helpful analogy would be water flowing through a pipeline.  Promises
+are like the pipes, defining where values will eventually be, and values are
+like the water flowing through the pipes.  The activating function for an
+asynchronous method constructs a small pipeline for the method: input pipes
+and output pipes are connected to some calculation, creating a pipeline
+suitable for conducting water at some point in the future.  HotDrink then
+connects those small pipelines into one large, continuous pipeline.  New
+pipelines can be added on to this, even before there is water in the pipes.
+Eventually the water will flow forward, filling all the pipes; how quickly the
+water comes does not affect the results.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> Partial lifting: promise parameters</h2>
+<div class="outline-text-2" id="text-5">
+</div><div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1"><span class="section-number-3">5.1</span> The example</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex4"</span>&gt;
+<span id="coderef-css" class="coderef-off"><span class="linenr"> 2: </span>  &lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span> scoped&gt;</span>
+<span class="linenr"> 3: </span>    .pending { background: #eee right center no-repeat url(spinner.gif); }
+<span class="linenr"> 4: </span>  &lt;/<span style="color: #006699;">style</span>&gt;
+<span class="linenr"> 5: </span>  &lt;<span style="color: #006699;">table</span>&gt;
+<span class="linenr"> 6: </span>    &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 7: </span>      &lt;<span style="color: #006699;">td</span>&gt;Quantity:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 8: </span>      &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( qty, 0 )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 9: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">10: </span>      &lt;<span style="color: #006699;">td</span>&gt;Unit price:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">11: </span>      &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( unit, 2 )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">12: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">13: </span>      &lt;<span style="color: #006699;">td</span>&gt;Subtotal:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">14: </span>      &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( sub, hd.fix( 2 ) )"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">15: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">16: </span>      &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">colspan</span>=<span style="color: #008000;">"2"</span>&gt;&lt;<span style="color: #006699;">hr</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">17: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">18: </span>      &lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr">19: </span>        &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"shipcheck"</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"checkbox"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.checked( doship )"</span>/&gt;
+<span class="linenr">20: </span>        &lt;<span style="color: #006699;">label</span> <span style="color: #BA36A5;">for</span>=<span style="color: #008000;">"shipcheck"</span>&gt;Ship to:&lt;/<span style="color: #006699;">label</span>&gt;
+<span class="linenr">21: </span>      &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">22: </span>      &lt;<span style="color: #006699;">td</span>&gt;
+<span id="coderef-enable" class="coderef-off"><span class="linenr">23: </span>        &lt;<span style="color: #006699;">select</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.value( state ), hd.enabled( state.relevant )"</span>&gt;</span>
+<span class="linenr">24: </span>          &lt;<span style="color: #006699;">option</span>&gt;Texas&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">25: </span>          &lt;<span style="color: #006699;">option</span>&gt;Oklahoma&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">26: </span>          &lt;<span style="color: #006699;">option</span>&gt;Arkansas&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">27: </span>          &lt;<span style="color: #006699;">option</span>&gt;Louisiana&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">28: </span>        &lt;/<span style="color: #006699;">select</span>&gt;
+<span class="linenr">29: </span>      &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">30: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">31: </span>      &lt;<span style="color: #006699;">td</span>&gt;Shipping:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">32: </span>      &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( ship, hd.fix( 2 ) ), hd.cssClass( ship )"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">33: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">34: </span>      &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">colspan</span>=<span style="color: #008000;">"2"</span>&gt;&lt;<span style="color: #006699;">hr</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">35: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">36: </span>      &lt;<span style="color: #006699;">td</span>&gt;Total:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">37: </span>      &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( total, hd.fix( 2 ) ), hd.cssClass( total )"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">38: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">39: </span>  &lt;/<span style="color: #006699;">table</span>&gt;
+<span class="linenr">40: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr"> 2: </span>  .vs( <span style="color: #008000;">'qty, unit, sub, doship, state, ship'</span>,
+<span class="linenr"> 3: </span>       {qty: 4, unit: 10, doship: <span style="color: #8b1a1a;">true</span>, state: <span style="color: #008000;">'Texas'</span>}
+<span class="linenr"> 4: </span>     )
+<span id="coderef-output" class="coderef-off"><span class="linenr"> 5: </span>  .outputVariable( <span style="color: #008000;">'total'</span> )</span>
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span>  .c( <span style="color: #008000;">'qty, unit, sub'</span> )
+<span class="linenr"> 8: </span>  .m( <span style="color: #008000;">'qty, unit -&gt; sub'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">qty</span>, <span style="color: #BA36A5;">unit</span> ) { <span style="color: #0000FF;">return</span> qty * unit; } )
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span>  .c( <span style="color: #008000;">'state, qty, ship'</span> )
+<span class="linenr">11: </span>  .m( <span style="color: #008000;">'state, qty -&gt; ship'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">state</span>, <span style="color: #BA36A5;">qty</span> ) {
+<span class="linenr">12: </span>    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">cost</span>;
+<span class="linenr">13: </span>    <span style="color: #0000FF;">switch</span> (state) {
+<span class="linenr">14: </span>    <span style="color: #0000FF;">case</span> <span style="color: #008000;">'Texas'</span>:     cost = 1; <span style="color: #0000FF;">break</span>;
+<span class="linenr">15: </span>    <span style="color: #0000FF;">case</span> <span style="color: #008000;">'Oklahoma'</span>:  cost = 2; <span style="color: #0000FF;">break</span>;
+<span class="linenr">16: </span>    <span style="color: #0000FF;">case</span> <span style="color: #008000;">'Arkansas'</span>:  cost = 3; <span style="color: #0000FF;">break</span>;
+<span class="linenr">17: </span>    <span style="color: #0000FF;">case</span> <span style="color: #008000;">'Louisiana'</span>: cost = 2; <span style="color: #0000FF;">break</span>;
+<span class="linenr">18: </span>    }
+<span class="linenr">19: </span>    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">p</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.Promise</span>();
+<span class="linenr">20: </span>    setTimeout( <span style="color: #0000FF;">function</span>() { p.resolve( qty * cost ); }, 2000 );
+<span class="linenr">21: </span>    <span style="color: #0000FF;">return</span> p;
+<span class="linenr">22: </span>  } )
+<span class="linenr">23: </span>
+<span class="linenr">24: </span>  .c( <span style="color: #008000;">'sub, doship, ship, total'</span> )
+<span id="coderef-asterisk" class="coderef-off"><span class="linenr">25: </span>  .m( <span style="color: #008000;">'sub, doship, *ship -&gt; total'</span>, <span style="color: #0000FF;">function</span> f3( <span style="color: #BA36A5;">sub</span>, <span style="color: #BA36A5;">doship</span>, <span style="color: #BA36A5;">pShip</span> ) {</span>
+<span class="linenr">26: </span>    <span style="color: #0000FF;">if</span> (doship) {
+<span id="coderef-then3" class="coderef-off"><span class="linenr">27: </span>      <span style="color: #0000FF;">return</span> pShip.then( <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">ship</span> ) {</span>
+<span class="linenr">28: </span>        <span style="color: #0000FF;">return</span> sub + ship;
+<span class="linenr">29: </span>      } );
+<span class="linenr">30: </span>    }
+<span class="linenr">31: </span>    <span style="color: #0000FF;">else</span> {
+<span class="linenr">32: </span>      <span style="color: #0000FF;">return</span> sub;
+<span class="linenr">33: </span>    }
+<span class="linenr">34: </span>  } )
+<span class="linenr">35: </span>
+<span class="linenr">36: </span>  .end();
+<span class="linenr">37: </span>
+<span class="linenr">38: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">39: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex4'</span> ) );
+<span class="linenr">3: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="ex4">
+  <style type="text/css" scoped> 
+    .pending { background: #eee right center no-repeat url(spinner.gif); }
+  </style>
+  <table>
+    <tr>
+      <td>Quantity:</td>
+      <td><input type="text" data-bind="hd.numVar( qty, 0 )"/></td>
+    </tr><tr>
+      <td>Unit price:</td>
+      <td><input type="text" data-bind="hd.numVar( unit, 2 )"/></td>
+    </tr><tr>
+      <td>Subtotal:</td>
+      <td data-bind="hd.text( sub, hd.fix( 2 ) )"></td>
+    </tr><tr>
+      <td colspan="2"><hr/></td>
+    </tr><tr>
+      <td>
+        <input id="shipcheck" type="checkbox" data-bind="hd.checked( doship )"/>
+        <label for="shipcheck">Ship to:</label>
+      </td>
+      <td>
+        <select data-bind="hd.value( state ), hd.enabled( state.relevant )"> 
+          <option>Texas</option>
+          <option>Oklahoma</option>
+          <option>Arkansas</option>
+          <option>Louisiana</option>
+        </select>
+      </td>
+    </tr><tr>
+      <td>Shipping:</td>
+      <td data-bind="hd.text( ship, hd.fix( 2 ) ), hd.cssClass( ship )"></td>
+    </tr><tr>
+      <td colspan="2"><hr/></td>
+    </tr><tr>
+      <td>Total:</td>
+      <td data-bind="hd.text( total, hd.fix( 2 ) ), hd.cssClass( total )"></td>
+    </tr>
+  </table>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+  .vs( 'qty, unit, sub, doship, state, ship',
+       {qty: 4, unit: 10, doship: true, state: 'Texas'}
+     )
+  .outputVariable( 'total' ) 
+
+  .c( 'qty, unit, sub' )
+  .m( 'qty, unit -> sub', function( qty, unit ) { return qty * unit; } )
+
+  .c( 'state, qty, ship' )
+  .m( 'state, qty -> ship', function( state, qty ) {
+    var cost;
+    switch (state) {
+    case 'Texas':     cost = 1; break;
+    case 'Oklahoma':  cost = 2; break;
+    case 'Arkansas':  cost = 3; break;
+    case 'Louisiana': cost = 2; break;
+    }
+    var p = new hd.Promise();
+    setTimeout( function() { p.resolve( qty * cost ); }, 2000 );
+    return p;
+  } )
+
+  .c( 'sub, doship, ship, total' )
+  .m( 'sub, doship, *ship -> total', function f3( sub, doship, pShip ) { 
+    if (doship) {
+      return pShip.then( function( ship ) { 
+        return sub + ship;
+      } );
+    }
+    else {
+      return sub;
+    }
+  } )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex4' ) );
+} )
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This example simulates a lengthy calculation: for example, determining
+shipping costs for an order.  In this example, shipping cost is a simple
+function which we have deliberately delayed with a timer; in a more realistic
+scenario, calculating shipping costs may require a call to a server resulting
+in a noticeable delay.
+</p>
+
+<p>
+Try editing the quantity.  Notice how behavior changes when the shipping cost
+is not used: the system no longer waits for shipping cost before calculating
+the total.  Furthermore, the drop-down box is disabled as it is no longer
+relevant.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5-2" class="outline-3">
+<h3 id="sec-5-2"><span class="section-number-3">5.2</span> Requesting input promises</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+In some cases you may want your method to wait on all but one or two input
+promises.  In such cases, you can request that the function lifting mechanism
+pass to your function, not the <i>value</i> of the promise, but the promise itself.
+This allows you to decide if and when you will wait on this promise.
+</p>
+
+<p>
+The full signature of <code>liftFunction</code> is as follows.  Note that the last two
+parameters are optional.
+</p>
+
+<div class="notes">
+<p>
+<code>liftFunction( fn, numOutputs, promiseMask )</code>
+</p>
+</div>
+
+<p>
+We explained the first two parameters in Section <a href="#sec-3">3</a>.  The
+final parameter, if provided, should be an array of Boolean values, one for
+each parameter, where <code>true</code> means to pass the corresponding parameter's
+promise directly, and <code>false</code> means to wait for the corresponding parameter's
+promise to resolve and pass its value.
+</p>
+
+<p>
+However, as we mentioned earlier, there's really no reason to call
+<code>liftFunction</code> directly; you should simply use the <code>method</code> builder member function
+which calls <code>liftFunction</code> for you.  To indicate to the model builder that you
+want to recieve a promise for a parameter, you place an asterisk ("<code>*</code>") in
+front of the parameter name in the method signature.  You can see this in the
+method declared in <a href="#coderef-asterisk"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-asterisk');" onmouseout="CodeHighlightOff(this, 'coderef-asterisk');">line 25</a> of the view-model.
+</p>
+
+<p>
+If you decide you need this parameter, you must use it's <code>then</code> method to schedule a
+function to be run when its value is ready.  On <a href="#coderef-then3"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-then3');" onmouseout="CodeHighlightOff(this, 'coderef-then3');">line 27</a> of the view-model
+we schedule a function to calculate the total using the shipping cost as soon
+as it is ready.  Remember that the return value for the <code>then</code> function is a
+promise for the return value of the function we scheduled.  We return this
+as the promise for the output of our method.
+</p>
+
+<p>
+Observe what happens if the checkbox for <code>doship</code> is unchecked: Since <code>doship</code>
+is false, we do not subscribe to the promise for <code>ship</code>.  Since we do not
+subscribe to that promise, we do not have to wait for it to be ready.  Thus,
+we can calculate the total cost before the shipping cost is even ready.  This is
+convenient when the calculation for shipping cost is so slow.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5-3" class="outline-3">
+<h3 id="sec-5-3"><span class="section-number-3">5.3</span> Output variables</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+Typically the purpose of a user interface is to allow the user to enter values
+for variables that will be used elsewhere in the program &#x2014; e.g., in the
+<i>model</i>.  (If you don't know what that is, see <a href="intro.html">Introduction to HotDrink</a>
+for an explanation of MVVM.)  We refer to these variables as <i>output</i>
+variables.
+</p>
+
+<p>
+It is possible that a user interface contains some additional variables &#x2014;
+variables which are not used elsewhere in the program, but are there to help
+the user calculate other variables which are.  We refer to these variables as
+<i>interface</i> variables.
+</p>
+
+<p>
+By default, HotDrink considers all variables as interface variables.  If this
+is not the case, then you will need to explicitly tell HotDrink which ones
+are.  You can change a single variable to an output variable using the
+<code>outputVariable</code> member function (abbreviated <code>ov</code>), or change a list of
+variables to output variables using the <code>outputVariables</code> member function
+(abbreviated <code>ovs</code>).  Similarly, you can change a single variable to an
+interface variable using the <code>outputVariable</code> member function (abbreviated
+<code>ov</code>), or change a list of variables to interface variables using the
+<code>outputVariables</code> member function (abbreviated <code>ovs</code>).
+</p>
+
+<p>
+The parameter for these functions is the name, or a comma-delimited list of
+the names, to be changed.  For example:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">builder.outputVariable( <span style="color: #008000;">'x'</span> );
+
+builder.interfaceVariables( <span style="color: #008000;">'x, y, z'</span> );
+</pre>
+</div>
+
+<p>
+As a convenience for you, these functions are overloaded so that, if there is
+no variable with the name given, they will create one first.  Just as with the
+<code>variable</code> and <code>variables</code> builder functions, you may specify an initial value
+for the variables as well.  Thus, on <a href="#coderef-output"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-output');" onmouseout="CodeHighlightOff(this, 'coderef-output');">line 5</a> of the
+view-model we both create a new variable named "output" and also mark the
+variable as an output variable.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5-4" class="outline-3">
+<h3 id="sec-5-4"><span class="section-number-3">5.4</span> Contributing and relevant</h3>
+<div class="outline-text-3" id="text-5-4">
+<p>
+There is another advantage to taking an input promise when you might not need
+its value: HotDrink can tell if a promise was never subscribed to, and can
+conclude that the corresponding input was not used.  As mentioned previously,
+interface variables are not used elsewhere in the program; thus, their only
+possible use is in calculating output variables.  HotDrink can check to see if
+these variables were, in fact, used this way.
+</p>
+
+<p>
+An interface variable is said to be <i>contributing</i> if, during the last time
+the constraint system was updated, its value was used to calculate the value
+of at least one output variable.  An interface variable is said to be
+<i>relevant</i> if editing it would have any effect on an output variable.  Every
+contributing variable is automatically relevant; however, a non-contributing
+variable can still be relevant if editing it would cause it to become
+contributing.
+</p>
+
+<p>
+Note that output variables are always both contributing and relevant.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5-5" class="outline-3">
+<h3 id="sec-5-5"><span class="section-number-3">5.5</span> Automatic disabling</h3>
+<div class="outline-text-3" id="text-5-5">
+<p>
+Every variable has two Boolean, read-only properties named <i>contributing</i> and
+a <i>relevant</i> that report whether the variable is contributing and relevant, respectively.
+HotDrink sets these properties; however, it does not use these properties for
+anything.  The recommended use is to bind to them in the interface to give
+useful information to the user.
+</p>
+
+<p>
+In particular, the <code>Enabled</code> view adapter automatically disables a
+user-interface element when the corresponding value is false.  In
+<a href="#coderef-enable"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-enable');" onmouseout="CodeHighlightOff(this, 'coderef-enable');">line 23</a> of the view source, we use this binder to
+automatically disable the state drop-down box whenever the corresponding
+variable is irrelevant.
+</p>
+
+<p>
+Note that the <code>hd.enabled</code> factory function creates an <code>hd.Enabled</code> binding
+specification.  Also, the <code>hd.*Var</code> factories (<code>hd.editVar</code>, <code>hd.numVar</code>,
+etc.) add a <code>hd.nabled</code> binding to their specifications.  For more information
+on binding specifications, see the <a href="binding.html">Advanced Binding
+Concepts</a> document.
+</p>
+
+<p>
+Let's walk through what happens when the "Ship to" checkbox is unchecked.
+</p>
+
+<ul class="org-ul">
+<li>The <code>doShip</code> variable becomes false.
+</li>
+
+<li>The method on <a href="#coderef-asterisk"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-asterisk');" onmouseout="CodeHighlightOff(this, 'coderef-asterisk');">line 25</a> of the view-model is evaluated, causing
+function <code>f3</code> to be executed.
+</li>
+
+<li>Function <code>f3</code> does not subscribe to the promise for <code>ship</code>.
+</li>
+
+<li>HotDrink notices that <code>ship</code> was not used, and is therefore
+non-contributing.
+</li>
+
+<li>Not only that, the method of <code>f3</code> is the <i>only</i> possible way that <code>ship</code>
+  could affect an output variable &#x2014; and <code>f3</code> is currently not using <code>ship</code>.
+</li>
+
+<li>HotDrink concludes that editing <code>ship</code> cannot affect an output variable, and
+is therefore irrelevant.
+</li>
+
+<li>The <code>bindEnabled</code> binding disables the drop-down box.
+</li>
+</ul>
+
+<p>
+Note the assumption that HotDrink makes:  if a parameter is unused, then
+changing it cannot make it become used.  That is certainly the case in
+function <code>f3</code>:  if <code>doship</code> is false, then it doesn't matter what value you give
+<code>ship</code> &#x2014; it's never going to be used.  The only way <code>ship</code> can be used is if
+<code>doship</code> changes.
+</p>
+
+<p>
+What if you have a parameter that you only use in certain cases?  For example,
+you use it if it's a positive number, but not if it's a negative number.  In
+that case, you must subscribe to the promise in order to see the number so
+that you can test whether it is positive or negative.  Since you subscribe to
+the promise, HotDrink will consider it used.  This is consistent with our
+definition of relevant:  the parameter is relevant because changing it could
+potentially affect the output (i.e. if you changed it to a positive number).
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5-6" class="outline-3">
+<h3 id="sec-5-6"><span class="section-number-3">5.6</span> Explicit control over usage</h3>
+<div class="outline-text-3" id="text-5-6">
+<p>
+HotDrink's default behavior is to consider a variable used if its promise was
+subscribed to, and unused if it was not.  For most cases, that is reasonable
+behavior.  However, it is possible that you might want to subscribe to a
+parameter without committing to use its value, or to skip subscribing to a
+promise but still treat it as being used.  In this case, you can explicitly
+set the usage of a parameter using the following two functions.
+</p>
+
+<ul class="org-ul">
+<li><code>hd.markUsed( promise )</code> marks a promise as being used, even if it was never
+subscribed to.
+</li>
+
+<li><code>hd.markUnused( promise )</code> marks a promise as being unused, even if it was
+subscribed to.
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> Helper: AJAX requests</h2>
+<div class="outline-text-2" id="text-6">
+</div><div id="outline-container-sec-6-1" class="outline-3">
+<h3 id="sec-6-1"><span class="section-number-3">6.1</span> The example</h3>
+<div class="outline-text-3" id="text-6-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">table</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex5"</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"text-align:right"</span>&gt;
+<span class="linenr"> 2: </span>  &lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span> scoped&gt;
+<span class="linenr"> 3: </span>    .pending { background: #eee right center no-repeat url(spinner.gif); }
+<span class="linenr"> 4: </span>    .noncontributing { background-color: #eee; }
+<span class="linenr"> 5: </span>  &lt;/<span style="color: #006699;">style</span>&gt;
+<span class="linenr"> 6: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 7: </span>    &lt;<span style="color: #006699;">td</span>&gt;Symbol:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 8: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"text-align:left"</span>&gt;
+<span class="linenr"> 9: </span>      &lt;<span style="color: #006699;">select</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.value( symbol ), hd.cssClass( symbol )"</span>&gt;
+<span class="linenr">10: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"FB"</span>&gt;Facebook&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">11: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"ADBE"</span>&gt;Adobe&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">12: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"MS"</span>&gt;Microsoft&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">13: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"YHOO"</span>&gt;Yahoo!&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">14: </span>      &lt;/<span style="color: #006699;">select</span>&gt;
+<span class="linenr">15: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">16: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">17: </span>    &lt;<span style="color: #006699;">td</span>&gt;Value:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">18: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( value, 2 )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">19: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">20: </span>    &lt;<span style="color: #006699;">td</span>&gt;Quantity:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">21: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( quantity, 0 )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">22: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">23: </span>    &lt;<span style="color: #006699;">td</span>&gt;Total:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">24: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( total, 2 )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">25: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">26: </span>&lt;/<span style="color: #006699;">table</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">fetch_stock_value</span>( <span style="color: #BA36A5;">symbol</span> ) {
+<span class="linenr"> 2: </span>  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">url</span> = <span style="color: #008000;">'http://query.yahooapis.com/v1/public/yql'</span>;
+<span class="linenr"> 3: </span>  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">params</span> = {
+<span class="linenr"> 4: </span>    q: <span style="color: #008000;">'select * from yahoo.finance.quotes where symbol="'</span> + symbol + <span style="color: #008000;">'"'</span>,
+<span class="linenr"> 5: </span>    format: <span style="color: #008000;">'json'</span>,
+<span class="linenr"> 6: </span>    env: <span style="color: #008000;">'store://datatables.org/alltableswithkeys'</span>,
+<span class="linenr"> 7: </span>    callback: <span style="color: #008000;">''</span>
+<span class="linenr"> 8: </span>  };
+<span class="linenr"> 9: </span>  <span style="color: #0000FF;">return</span> hd.ajaxJSON( url, params ).then( <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">data</span> ) {
+<span class="linenr">10: </span>    <span style="color: #0000FF;">return</span> Number( data.query.results.quote.LastTradePriceOnly );
+<span class="linenr">11: </span>  } );
+<span class="linenr">12: </span>}
+<span class="linenr">13: </span>
+<span class="linenr">14: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr">15: </span>  .vs( <span style="color: #008000;">'symbol, value, quantity'</span>, {symbol: <span style="color: #008000;">'ADBE'</span>, quantity: 10} )
+<span class="linenr">16: </span>  .ov( <span style="color: #008000;">'total'</span> )
+<span class="linenr">17: </span>
+<span class="linenr">18: </span>  .c( <span style="color: #008000;">'symbol, value'</span> )
+<span class="linenr">19: </span>  .m( <span style="color: #008000;">'symbol -&gt; value'</span>, fetch_stock_value )
+<span class="linenr">20: </span>  .m( <span style="color: #008000;">'symbol -&gt; symbol'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">x</span> ) { <span style="color: #0000FF;">return</span> x; } )
+<span class="linenr">21: </span>
+<span class="linenr">22: </span>  .eq( <span style="color: #008000;">'total == value * quantity'</span> )
+<span class="linenr">23: </span>
+<span class="linenr">24: </span>  .end();
+<span class="linenr">25: </span>
+<span class="linenr">26: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">27: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex5'</span> ) );
+<span class="linenr">3: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<table id="ex5" style="text-align:right">
+  <style type="text/css" scoped>
+    .pending { background: #eee right center no-repeat url(spinner.gif); }
+    .noncontributing { background-color: #eee; }
+  </style>
+  <tr>
+    <td>Symbol:</td>
+    <td style="text-align:left">
+      <select data-bind="hd.value( symbol ), hd.cssClass( symbol )">
+        <option value="FB">Facebook</option>
+        <option value="ADBE">Adobe</option>
+        <option value="MS">Microsoft</option>
+        <option value="YHOO">Yahoo!</option>
+      </select>
+    </td>
+  </tr><tr>
+    <td>Value:</td>
+    <td><input type="text" data-bind="hd.numVar( value, 2 )"/></td>
+  </tr><tr>
+    <td>Quantity:</td>
+    <td><input type="text" data-bind="hd.numVar( quantity, 0 )"/></td>
+  </tr><tr>
+    <td>Total:</td>
+    <td><input type="text" data-bind="hd.numVar( total, 2 )"/></td>
+  </tr>
+</table>
+</div>
+<script type="text/javascript">
+(function() {
+function fetch_stock_value( symbol ) {
+  var url = 'http://query.yahooapis.com/v1/public/yql';
+  var params = {
+    q: 'select * from yahoo.finance.quotes where symbol="' + symbol + '"',
+    format: 'json',
+    env: 'store://datatables.org/alltableswithkeys',
+    callback: ''
+  };
+  return hd.ajaxJSON( url, params ).then( function( data ) {
+    return Number( data.query.results.quote.LastTradePriceOnly );
+  } );
+}
+
+var model = new hd.ModelBuilder()
+  .vs( 'symbol, value, quantity', {symbol: 'ADBE', quantity: 10} )
+  .ov( 'total' )
+
+  .c( 'symbol, value' )
+  .m( 'symbol -> value', fetch_stock_value )
+  .m( 'symbol -> symbol', function( x ) { return x; } )
+
+  .eq( 'total == value * quantity' )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex5' ) );
+} )
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This example uses a Yahoo! web service to look up the stock price for the given
+symbol.  Selecting a new company results in a new stock price look up.  Note
+that editing the stock price directly causes the drop-down list to be grayed
+out, indicating that it is not being used.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2" class="outline-3">
+<h3 id="sec-6-2"><span class="section-number-3">6.2</span> Simple AJAX wrappers</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+AJAX refers to the technique of using JavaScript to make an asynchronous HTTP
+request to another server.  A full description of AJAX is beyond the scope of
+this document, but many such descriptions can be found online.
+</p>
+
+<p>
+There are many JavaScript frameworks which simplify the process of making an
+AJAX request, allowing the programmer a great deal of control over how the
+request is made and how the results of the request are processed.  HotDrink is
+not one of those frameworks.  However, we would like to make it easy for you
+to experiment with asynchronous methods that make AJAX requests, so we have
+included a wrapper for simple AJAX requests.  If you need more control over
+the request process, we recommend you look into other frameworks, or simply
+write your own wrapper.
+</p>
+
+<p>
+HotDrink provides the following functions.
+</p>
+</div>
+
+<ol class="org-ol"><li><a id="sec-6-2-1"></a><code>ajax( url, params )</code><br  /><div class="outline-text-4" id="text-6-2-1">
+<p>
+This function makes an asynchronous HTTP GET request to the provided URL.  If
+provided, the <code>params</code> should be an object used as a map of parameters to be
+included in the request; these will be added to the query string following
+the GET request protocol.
+</p>
+
+<p>
+The return value of this function is a promise which will be resolved with
+the <a href="https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest"><code>XMLHttpRequest</code></a> object once the request has been successfully completed.
+</p>
+</div>
+</li>
+
+<li><a id="sec-6-2-2"></a><code>ajaxXML( url, params )</code><br  /><div class="outline-text-4" id="text-6-2-2">
+<p>
+This function is identical to <code>ajax</code>, except that the returned promise will be
+resolved with the contents of the request as an XML DOM (i.e., the
+<code>responseXML</code> property of the <code>XMLHttpRequest</code> object).
+</p>
+</div>
+</li>
+
+<li><a id="sec-6-2-3"></a><code>ajaxText( url, params )</code><br  /><div class="outline-text-4" id="text-6-2-3">
+<p>
+This function is identical to <code>ajax</code>, except that the returned promise will be
+resolved with the contents of the request as a string (i.e. the
+<code>responseText</code> property of the <code>XMLHttpRequest</code> object).
+</p>
+</div>
+</li>
+
+<li><a id="sec-6-2-4"></a><code>ajaxJSON( url, params )</code><br  /><div class="outline-text-4" id="text-6-2-4">
+<p>
+This function is identical to <code>ajax</code>, except that the returned promise will be
+resolved with an object that is the result of parsing the contents of the
+request as JSON.
+</p>
+</div>
+</li></ol>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Helper: web workers</h2>
+<div class="outline-text-2" id="text-7">
+</div><div id="outline-container-sec-7-1" class="outline-3">
+<h3 id="sec-7-1"><span class="section-number-3">7.1</span> The example</h3>
+<div class="outline-text-3" id="text-7-1">
+<p>
+<i>View</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">div</span> <span style="color: #BA36A5;">id</span>=<span style="color: #008000;">"ex6"</span>&gt;
+<span class="linenr"> 2: </span>  &lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span> scoped&gt;
+<span class="linenr"> 3: </span>    .pending { background: #eee right center no-repeat url(spinner.gif); }
+<span class="linenr"> 4: </span>    .error { color: #900; }
+<span class="linenr"> 5: </span>  &lt;/<span style="color: #006699;">style</span>&gt;
+<span class="linenr"> 6: </span>  &lt;<span style="color: #006699;">table</span> <span style="color: #BA36A5;">style</span>=<span style="color: #008000;">"text-align:right"</span>&gt;
+<span class="linenr"> 7: </span>    &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 8: </span>      &lt;<span style="color: #006699;">td</span>&gt;Start position:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 9: </span>      &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( start )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">10: </span>      &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">class</span>=<span style="color: #008000;">"error"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( start.error )"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">11: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">12: </span>      &lt;<span style="color: #006699;">td</span>&gt;End position:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">13: </span>      &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( end )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">14: </span>      &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">class</span>=<span style="color: #008000;">"error"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( end.error )"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">15: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;&lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">16: </span>      &lt;<span style="color: #006699;">td</span>&gt;Length:&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">17: </span>      &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( length )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">18: </span>      &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">class</span>=<span style="color: #008000;">"error"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( length.error )"</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">19: </span>    &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">20: </span>  &lt;/<span style="color: #006699;">table</span>&gt;
+<span class="linenr">21: </span>&lt;/<span style="color: #006699;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+<i>View-Model</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+<span class="linenr"> 2: </span>  .vs( <span style="color: #008000;">'start, end, length'</span>, {start: 10, end: 25} )
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>  .c( <span style="color: #008000;">'start, end, length'</span> )
+<span id="coderef-worker" class="coderef-off"><span class="linenr"> 5: </span>  .m( <span style="color: #008000;">'start, length -&gt; end'</span>, hd.worker( <span style="color: #008000;">'worker.js'</span>, <span style="color: #008000;">'slowSum'</span> ) )</span>
+<span class="linenr"> 6: </span>  .m( <span style="color: #008000;">'end, length -&gt; start'</span>, hd.worker( <span style="color: #008000;">'worker.js'</span>, <span style="color: #008000;">'slowDiff'</span> ) )
+<span class="linenr"> 7: </span>  .m( <span style="color: #008000;">'end, start -&gt; length'</span>, hd.worker( <span style="color: #008000;">'worker.js'</span>, <span style="color: #008000;">'slowDiff'</span> ) )
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span>  .end();
+<span class="linenr">10: </span>
+<span class="linenr">11: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+<span class="linenr">12: </span>system.addComponent( model );
+</pre>
+</div>
+
+<p>
+<i>Binding</i>
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( model, document.getElementById( <span style="color: #008000;">'ex6'</span> ) );
+<span class="linenr">3: </span>} )
+</pre>
+</div>
+
+<p>
+<i>Worker</i>  (file: worker.js)
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span id="coderef-import" class="coderef-off"><span class="linenr"> 1: </span>importScripts( <span style="color: #008000;">'fn-worker.js'</span> );</span>
+<span class="linenr"> 2: </span>
+<span class="linenr"> 3: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">slowSum</span>( <span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">b</span> ) {
+<span class="linenr"> 4: </span>  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">n</span>;
+<span class="linenr"> 5: </span>  <span style="color: #0000FF;">if</span> (b &lt; 0) {
+<span class="linenr"> 6: </span>    n = -1;
+<span class="linenr"> 7: </span>    b = -b;
+<span class="linenr"> 8: </span>  }
+<span class="linenr"> 9: </span>  <span style="color: #0000FF;">else</span> {
+<span class="linenr">10: </span>    n = 1;
+<span class="linenr">11: </span>  }
+<span class="linenr">12: </span>  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> = 0; i &lt; b; ++i, ++n) {
+<span class="linenr">13: </span>    a += n - i;
+<span class="linenr">14: </span>  }
+<span class="linenr">15: </span>  <span style="color: #0000FF;">return</span> a;
+<span class="linenr">16: </span>}
+<span class="linenr">17: </span>
+<span class="linenr">18: </span><span style="color: #0000FF;">function</span> <span style="color: #006699;">slowDiff</span>( <span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">b</span> ) {
+<span class="linenr">19: </span>  <span style="color: #0000FF;">return</span> slowSum( a, -b );
+<span class="linenr">20: </span>}
+</pre>
+</div>
+
+<p>
+<i>Result</i>
+</p>
+
+<div class="results">
+<div id="ex6">
+  <style type="text/css" scoped>
+    .pending { background: #eee right center no-repeat url(spinner.gif); }
+    .error { color: #900; }
+  </style>
+  <table style="text-align:right">
+    <tr>
+      <td>Start position:</td>
+      <td><input type="text" data-bind="hd.numVar( start )"/></td>
+      <td class="error" data-bind="hd.text( start.error )"></td>
+    </tr><tr>
+      <td>End position:</td>
+      <td><input type="text" data-bind="hd.numVar( end )"/></td>
+      <td class="error" data-bind="hd.text( end.error )"></td>
+    </tr><tr>
+      <td>Length:</td>
+      <td><input type="text" data-bind="hd.numVar( length )"/></td>
+      <td class="error" data-bind="hd.text( length.error )"></td>
+    </tr>
+  </table>
+</div>
+</div>
+<script type="text/javascript">
+(function() {
+var model = new hd.ModelBuilder()
+  .vs( 'start, end, length', {start: 10, end: 25} )
+
+  .c( 'start, end, length' )
+  .m( 'start, length -> end', hd.worker( 'worker.js', 'slowSum' ) ) 
+  .m( 'end, length -> start', hd.worker( 'worker.js', 'slowDiff' ) )
+  .m( 'end, start -> length', hd.worker( 'worker.js', 'slowDiff' ) )
+
+  .end();
+
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( model, document.getElementById( 'ex6' ) );
+} )
+})();
+</script>
+
+<p>
+<i>Notes</i>
+</p>
+
+<div class="notes">
+<p>
+This example uses an extremely poor algorithm for addition which is very
+slow for large numbers.  (Try entering "1e9" for all values.)  Yet, because
+the slow process is performed on a web worker with an asynchronous method, it
+can never cause the interface to become unresponsive.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-7-2" class="outline-3">
+<h3 id="sec-7-2"><span class="section-number-3">7.2</span> Simple web worker wrapper</h3>
+<div class="outline-text-3" id="text-7-2">
+<p>
+A <i>web worker</i> is a thread created by the web browser which can run JavaScript
+code.  A web worker runs in parallel with the user-interface thread, meaning
+it won't block the user interface, making it unresponsive.  As with AJAX, a
+full description of web workers is beyond the scope of this document, and
+readers are encouraged to look online for more information.
+</p>
+
+<p>
+And, just as HotDrink is not a full-featured AJAX framework, neither is it a
+full-featured web worker framework.  However, we would like to make it easy
+for you to experiment with asynchronous methods run in web workers, so we have
+included a wrapper for running functions on web workers.  If you need more
+control over the process, we recommend you look into other frameworks, or
+simply write your own wrapper.
+</p>
+
+<p>
+To use HotDrink's wrapper requires two steps.
+</p>
+</div>
+
+<ol class="org-ol"><li><a id="sec-7-2-1"></a>Place the JavaScript functions to be executed by the worker in a separate file.<br  /><div class="outline-text-4" id="text-7-2-1">
+<p>
+As you can see on <a href="#coderef-import"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-import');" onmouseout="CodeHighlightOff(this, 'coderef-import');">line 1</a> of the worker source, the first line of this
+separate file should be this:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">importScripts( <span style="color: #008000;">'fn-worker.js'</span> );
+</pre>
+</div>
+
+<p>
+This line causes the JavaScript code in the file <a href="fn-worker.js"><code>fn-worker.js</code></a> to be included
+in your web worker.  This file is included with HotDrink, and provides the
+framework necessary for communication with the main thread.
+</p>
+
+<p>
+Remember that the functions in your web worker will not have access to the
+user interface, nor to any libraries being used in the main thread.  If you
+want to use other JavaScript libraries, you will need to import them using the
+<code>importScript</code> function.
+</p>
+</div>
+</li>
+
+<li><a id="sec-7-2-2"></a>Use <code>hd.worker</code> to create a wrapper which will invoke the worker<br  /><div class="outline-text-4" id="text-7-2-2">
+<p>
+The function <code>hd.worker</code> takes two string parameters: the URL for the file
+containing the worker code, and the name of the function.  Note that the URL
+may be relative to your main file.
+</p>
+
+<p>
+The <code>hd.worker</code> function returns a new function which behaves as follows:
+when called, it initiates a web worker to execute your function, passes the
+parameters it received to the web worker, then returns a promise for the
+result.  When the function on the web worker completes, its return value is
+passed back to the main thread and then used to resolve the output promise.
+</p>
+
+<p>
+This function is just right for use as a method; you can see it used as a
+method on <a href="#coderef-worker"class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-worker');" onmouseout="CodeHighlightOff(this, 'coderef-worker');">line 5</a> of the view-model source.
+</p>
+</div>
+</li></ol>
+</div>
+
+<div id="outline-container-sec-7-3" class="outline-3">
+<h3 id="sec-7-3"><span class="section-number-3">7.3</span> Security restrictions</h3>
+<div class="outline-text-3" id="text-7-3">
+<p>
+There are several security restrictions where the worker file must be located.
+Again, a full description of web worker security is beyond the scope of this
+document; in brief, the worker code must come from the <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy">same origin</a> as your
+main file.
+</p>
+
+<p>
+Note, however, that most web browsers do not, by default, allow code from web
+workers to come directly from the file system; thus, web workers require a web
+server to work.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-7-4" class="outline-3">
+<h3 id="sec-7-4"><span class="section-number-3">7.4</span> Worker pools</h3>
+<div class="outline-text-3" id="text-7-4">
+<p>
+We could create a new web worker for every method call; however, that would
+introduce a lot of overhead.  Not only that, most browsers place a limit on
+the number of web workers that can be running at one time.  At the other
+extreme, we could create a single web worker and use it for every method call;
+however, that requires waiting for one function to finish before initiating
+the next.
+</p>
+
+<p>
+The typical compromise to this dilemma is to create a <i>pool</i> of workers.  When
+a new method needs to be executed, we attempt to find an unused worker in the
+pool.  If we find one, we use it to execute the method; if we cannot find one,
+we wait until one becomes available.  This is the approach HotDrink takes.
+</p>
+
+<p>
+HotDrink keeps a separate pool for each worker source file.  (So, in our
+example, there is a single pool for the "<code>worker.js</code>" source file.)  Each pool
+has a maximum number of allowable workers.  HotDrink creates a new worker only
+when there are none available in the pool, and the pool has not yet reached is
+maximum size.
+</p>
+
+<p>
+The default maximum size for a worker pool is twenty &#x2014; that number seems to
+work well with the browsers we tested on.  If you decide you would like to
+change the maximum for a pool, you can use the <code>hd.setMaxWorkers</code> function to
+do so.  This function takes two parameters: the source file for the pool to
+modify, and the value for the new maximum.
+</p>
+
+<p>
+In the example for this section, we could set the maximum number of web
+workers spawned to three like so:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">hd.setMaxWorkers( <span style="color: #008000;">'worker.js'</span>, 3 )
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-7-5" class="outline-3">
+<h3 id="sec-7-5"><span class="section-number-3">7.5</span> Killing workers</h3>
+<div class="outline-text-3" id="text-7-5">
+<p>
+Sometimes the output of a method becomes irrelevant before it has even been
+produced.  For example, suppose a method was scheduled to calculate the value
+for a variable, but before it could complete, the user edited that variable
+directly.  Now the output of the method no longer matters: it has been
+replaced with the user's edit.
+</p>
+
+<p>
+HotDrink can detect when these situations occur and react to them.  We will
+save the full details of how this works for another document, but for now we
+want to point out that, if the output of a method running on a web worker
+becomes irrelevant, HotDrink's worker wrapper will kill the worker.
+</p>
+
+<p>
+This behavior is necessary to ensure that the user interface will never become
+unresponsive:  if we did not do this, then it would be possible for the worker
+pool to become exhausted with web workers which were not returning but whose
+output are no longer needed.
+</p>
+
+<p>
+However, to suddenly kill a thread with no warning is generally considered to
+be unsafe: the thread may have been in the middle of doing something important
+and need to clean up before exiting.  If this is the case for your thread,
+then you should not use the web worker wrapper provided with HotDrink; you
+should write your own instead.  To do this, check out the Programming Guide.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2015-03-04 Wed 16:27</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>

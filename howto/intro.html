@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Introduction to HotDrink</title>
+<!-- 2015-03-04 Wed 16:27 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript" src="hotdrink.min.js"></script>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Introduction to HotDrink</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Overview of basic concepts</a>
+<ul>
+<li><a href="#sec-1-1">1.1. Constraint systems</a></li>
+<li><a href="#sec-1-2">1.2. MVVM</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2. Including HotDrink in your web page</a></li>
+<li><a href="#sec-3">3. Important HotDrink objects</a>
+<ul>
+<li><a href="#sec-3-1">3.1. The model</a></li>
+<li><a href="#sec-3-2">3.2. The model builder</a></li>
+<li><a href="#sec-3-3">3.3. The constraint system</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Overview of basic concepts</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+HotDrink is a GUI framework library which implements many useful interface
+behaviors, thereby making it easier to write robust, helpful user interfaces.
+</p>
+
+<p>
+To make use of these behaviors, all that is required of the programmer is to
+define the relationships between the various pieces of data in the interface:
+how does one piece of data affect others?  Thus, HotDrink supports a
+declarative programming style: instead of spelling out everything the
+interface should do and when it should do be done, the programmer simply
+describes the interface and lets HotDrink figure out the rest.
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Constraint systems</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+The heart of the HotDrink library is a <i>constraint system</i>.  A constraint
+system manages relations among variables in the user interface.  A <i>relation</i>
+is anything you want to be true about the values of your variables.  For
+example, given three variables, \(x\), \(y\), and \(z\), you may want to enforce
+that \(x = y + z\), or that \(x \le y \le z\).
+</p>
+
+<p>
+The constraint system in HotDrink is a <i>dataflow</i> constraint system.  The
+purpose of a dataflow constraint system is to decide which variables should be
+used to update other variables &#x2014; that is, it decides in which direction the
+data flows.  Then the system updates variables using functions that you, the
+programmer, have provided.
+</p>
+
+<p>
+The constraint system in HotDrink is also a <i>multi-way</i> constraint system.
+This means data can flow in more than one direction.  A multi-way constraint
+system allows for more flexible interfaces because, potentially, all values
+can be edited.  HotDrink uses the current dataflow, not only to update
+variables, but also to understand how data is being used so that it can react
+appropriately.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> MVVM</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+Applications written with HotDrink follow the Model-View-ViewModel
+(a.k.a. MVVM) design pattern.  This pattern divides the application as
+follows:
+</p>
+
+<ul class="org-ul">
+<li>The <i>view</i> is responsible for presentation and capturing interactions with
+the user.  It arranges everything on the screen and provides events which
+can be used to know when the user does something.  For our purposes, the
+view is your HTML, along with any toolkits you may use to generate HTML.
+We'll show you some bits and snippets of HTML in this tutorial to help you
+understand the examples, but we're not really going to explain it &#x2014; we're
+going to assume that you already know HTML, and that you know how to
+construct your web page.
+</li>
+
+<li>The <i>view-model</i> is responsible for managing your interface.  That means
+supplying any data which is to be presented by the view, as well as
+responding to things the user does.  The whole purpose of HotDrink is to be
+a view-model: updating the dataflow in response to what the user does, and
+updating variables in response to the dataflow.  The only thing that you,
+the programmer, need to do for the view-model is write JavaScript code to
+describe the constraint system for your interface.  We'll show you how to do
+that below.
+</li>
+
+<li>Another important part of an MVVM application is <i>binding</i>.  Binding is the
+process of connecting elements of the view with data in the view-model.
+Binding is sometimes treated as part of the view &#x2014; that's why there's no
+"B" in "MVVM" &#x2014; but we treat it as its own part of the application.  With
+HotDrink, you can bind manually using JavaScript, or you can bind
+automatically by making annotations in your HTML.  We'll show you both
+techniques below.
+</li>
+
+<li>The <i>model</i> is basically responsible for everything else: whatever it is
+your application is actually supposed to <i>do</i>.  Your model does not need to
+know anything about the user interface, it just needs to know how to go
+about the business of whatever your application is for in the first place.
+Generally your model will be code that runs on the server in response to
+requests made by the user.  How you write that code is up to you; we're
+going to ignore the model and focus here on the interface.
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Including HotDrink in your web page</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+To use HotDrink, all you need is the file <a href="hotdrink.min.js"><code>hotdrink.min.js</code></a> that came with
+this tutorial.  Alternatively, if you downloaded the source tree, follow the
+build instructions to compile your own <code>hotdrink.min.js</code>.
+</p>
+
+<p>
+To add the HotDrink library to your web page, add the following <code>&lt;script&gt;</code>
+tag to the <code>&lt;head&gt;</code> section of your HTML.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html">&lt;<span style="color: #006699;">script</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/javascript"</span> <span style="color: #BA36A5;">src</span>=<span style="color: #008000;">"hotdrink.min.js"</span>&gt;&lt;/<span style="color: #006699;">script</span>&gt;
+</pre>
+</div>
+
+<p>
+Make sure the <code>src</code> attribute contains the correct path to your
+<code>hotdrink.min.js</code> file.  Note that, in order for the examples in this
+tutorial to work, the file <code>hotdrink.min.js</code> must be located in the same
+directory as this HTML file.
+</p>
+
+<p>
+HotDrink itself does not rely on any other JavaScript frameworks.  However, it
+should be compatible with any other frameworks you wish to use (JQuery, Dojo,
+MooTools, etc.).  The only global symbol it exports is <code>hd</code>, and all of its
+interactions with the DOM are via cooperative API functions,
+e.g. <a href="https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.addEventListener"><code>addEventListener</code></a>, etc.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Important HotDrink objects</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+There are three important objects which you will need to interact with when
+using HotDrink.
+</p>
+</div>
+
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> The model</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+The model is HotDrink's representation of the data in your interface.  It
+consists of variables, which hold data, and constraints, which define how
+those variables are related.  The model also serves as a naming mechanism,
+allowing you to easily access variables you have created.  When you create
+a variable, you give it a name; that variable is then stored as a property of
+the model under that name.  So, for example, if create a variable named <code>x</code>,
+that variable can be accessed as <code>model.x</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> The model builder</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+Building a model is a very detail-oriented task.  To make it more accessible,
+HotDrink contains a special object called the <i>model builder</i>, or sometimes
+simply <i>builder</i>, whose only purpose is to help you create a model.
+</p>
+
+<p>
+To use a model builder, simply create a new instance, then use its various
+member functions to add elements to the model.  (These member functions are
+described in detail in <a href="basics.html">Basic HotDrink Usage</a>.)  Use the <code>result</code> member
+function to retrieve the constructed model.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">builder</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>();
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">...invoke various builder member functions to build the model ...</span>
+
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = builder.end();
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> The constraint system</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+As we said in section <a href="#sec-1-1">1.1</a>, the heart of HotDrink is a
+constraint system.  The job of the constraint system is to enforce the
+constraints you defined when building the model.  However, note that a
+constraint system is separate from the model.  You can have a model without a
+constraint system; that simply means that no one is enforcing your constraints
+for you.  Or you may have multiple constraint systems and choose which one you
+want to add your model to.
+</p>
+
+<p>
+To use a constraint system, simply create a new instance, then register your
+model.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
+
+system.addComponent( model );
+</pre>
+</div>
+
+<p>
+If you later decide to remove the model from the constraint system, you may do
+so as follows.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">system.removeComponent( model );
+</pre>
+</div>
+
+<p>
+As those function names suggest, the full model for your application can
+actually consist of several different components, and new components can be
+added or removed at run-time.  For right now, however, we will assume there is
+only a single model component and treat it as the entire model.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2015-03-04 Wed 16:27</p>
+<p class="validation"></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+body {
+    width: 800px;
+}
+
+div.vat {
+  width: 6in;
+  border: 1px solid #008; border-radius: 4pt;
+  background: #eef;
+  padding: 8pt
+}
+
+.results {
+  border: 1px solid #ccc;
+  box-shadow: 3px 3px 3px #eee;
+  padding: 8pt;
+  margin: 1.2em
+}
+
+.notes {
+  padding: 0 8pt;
+  margin: 0 1.2em
+}
+
+.linenr { color: #999 }
+
+.org-ul li, .org-ol li { margin-bottom: 1em }
+
+pre.src { padding-top: 8pt }
+
+label.org-src-name { display: block; margin-bottom: -1em; margin-left: 1em; }

@@ -1,1 +1,0 @@
---browser --continue --devel --es5 --indent 2 --maxerr 23 --nomen --plusplus --sloppy --sub --undef --vars --white --predef DEBUG_BEGIN --predef DEBUG_END --quiet

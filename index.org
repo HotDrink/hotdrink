@@ -1,0 +1,127 @@
+#+TITLE: HotDrink Overview
+#+LANGUAGE: en
+#+OPTIONS: toc:nul author:nil creator:nil timestamp:nil
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
+
+HotDrink is a JavaScript library for User Interface programming.  Instead of
+requiring programmers to write explicit event handlers, HotDrink derives user
+interface behavior from a declarative specification of data dependencies.
+
+These specifications define ways in which some variables may affect other
+variables.  Consider, for example, for specifying a cropping region for an
+image.
+
+*Example:* [[file:examples/crop.html][Cropping region of an image]]
+
+This form contains several variables --- e.g., the left and right boundaries,
+the width of the region, and the aspect ratio of the region --- with many
+dependencies between these variables.  To use HotDrink to manage these
+dependencies requires two steps.
+
+First, you must define the variables and the dependencies, as follows.
+
+#+BEGIN_SRC js
+function  sum( a, b ) { return a + b; }
+function diff( a, b ) { return a - b; }
+function prod( a, b ) { return a * b; }
+function quot( a, b ) { return a / b; }
+
+var model = new hd.ModelBuilder()
+    .variables( {left: 0, top: 0, right: undefined, bottom: undefined,
+                 width: 200, height: 200, aspect: undefined} )
+
+    .constraint( 'left, right, width' )
+      .method( 'left, width -> right', sum  )
+      .method( 'right, width -> left', diff )
+      .method( 'right, left -> width', diff )
+
+    .constraint( 'top, bottom, height' )
+      .method( 'top, height -> bottom', sum  )
+      .method( 'bottom, height -> top', diff )
+      .method( 'bottom, top -> height', diff )
+
+    .constraint( 'height, width, aspect' )
+      .method( 'height, aspect -> width', prod )
+      .method( 'width, aspect -> height', quot )
+      .method( 'width, height -> aspect', quot )
+
+    .end();
+#+END_SRC
+
+Second, you must /bind/ the variables to the elements of the web page that
+represent those variables.  This can be done by adding an attribute to the tag
+to which you want to bind.
+
+#+BEGIN_SRC html
+<table>
+  <tr>
+    <td>Left:</td>
+    <td><input type="text" data-bind="hd.numVar( left )"/></td>
+    <td>Right:</td>
+    <td><input type="text" data-bind="hd.numVar( right )"/></td>
+    <td>Width:</td>
+    <td><input type="text" data-bind="hd.numVar( width )"/></td>
+    <td rowspan="2">Aspect:</td>
+    <td rowspan="2"><input type="text" data-bind="hd.numVar( aspect )"/></td>
+  </tr>
+  <tr>
+    <td>Top:</td>
+    <td><input type="text" data-bind="hd.numVar( top )"/></td>
+    <td>Bottom:</td>
+    <td><input type="text" data-bind="hd.numVar( bottom )"/></td>
+    <td>Height:</td>
+    <td><input type="text" data-bind="hd.numVar( height )"/></td>
+  </tr>
+</table>
+#+END_SRC
+
+Using these two specifications, HotDrink is able to ensure that all data
+dependencies are automatically upheld.
+
+Not only can HotDrink enforce data dependencies, but it can also use them as
+the basis for other useful user interface behaviors.  Consider, for example, a
+travel expense report form.
+
+*Example:* [[file:examples/expense.html][Travel expense report]]
+
+Not only does HotDrink enforce the dependencies between the variables in this
+form, but it also detects when variables are no longer affecting the output of
+the form and disables the corresponding widgets.  This behavior does not
+require any additional work on the part of the programmer.
+
+HotDrink is designed to handle asynchronous dependencies.  This means, for
+example, dependencies can be based on Ajax calls or web workers.  Consider an
+application for calculating stock prices.
+
+*Example:* [[file:examples/stocks.html][Stock price checker]]
+
+The data dependency between the stock symbol and the stock price is enforced
+by means of an Ajax call to a web service.  This dependency can be enforced
+regardless of how long it takes the Ajax request to be completed.  In fact,
+HotDrink ensures that any sequence of edits will always eventually end in the
+same results, regardless of how long it takes to enforce the dependencies.
+
+To illustrate this, consider a simple example involving three circles.
+
+*Example:* [[file:examples/drag1.html][Dragging circles]]
+
+We define a simple data dependency between the centers of these circles that
+ensures that they will always remain a certain distance apart.  This creates
+the illusion that they are pushing each other around the screen.  Watch what
+happens when we deliberately slow this dependency down.
+
+*Example:* [[file:examples/drag2.html][Dragging circles slowed down]]
+
+By adding a delay to the calculation, we have made the effect much slower.
+However, the end result of any particular movement is always the same as if
+the effects were immediate.  This illustrates how HotDrink ensures data
+consistency despite any delays that data dependencies introduce.
+
+*Example:* [[file:examples/drag3.html][Dragging circles slowed down with shadows]]
+
+To make it clear what HotDrink is doing, consider a third example with six
+points:  three for circles, and three for shadows.  Since the shadows cannot
+be edited (i.e. cannot be dragged) they make it clear how HotDrink remembers
+all previous positions and uses them in the calculations.
+
+To learn more about HotDrink, please see [[file:howto/][How to use HotDrink]].

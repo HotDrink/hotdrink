@@ -1,0 +1,118 @@
+<html>
+  <head>
+    <title>HotDrink Example</title>
+    <style type="text/css">
+      fieldset{ width: 600px; }
+      td { padding: 0 0.6ex; }
+      select{ background: #fff; width: 120px }
+      input { width: 120px; }
+      .nc { background: #eee; }
+      .pending { background-position: right center;
+                 background-repeat: no-repeat;
+                 background-image: url(spinner.gif); }
+    </style>
+    <script type="text/javascript" src="hotdrink.min.js"></script>
+    <script type="text/javascript">
+
+      function id( x ) { return x; }
+
+      function fetch_stock_value(symbol) {
+        var url = 'http://query.yahooapis.com/v1/public/yql';
+        var params = {
+          q: 'select * from yahoo.finance.quotes where symbol="' + symbol + '"',
+          format: 'json',
+          env: 'store://datatables.org/alltableswithkeys',
+          callback: ''
+        };
+        return hd.ajaxJSON( url, params ).then( function( data ) {
+          return Number( data.query.results.quote['LastTradePriceOnly'] );
+        } );
+      }
+
+      var model = new hd.ModelBuilder()
+          .variables( "symbol, favorite, value, number",
+                      {number: 10, favorite: "ADBE"}
+                    )
+          .outputVariable( 'total' )
+          .constraint( 'favorite, symbol' )
+            .method( 'favorite -> symbol', id )
+            .method( 'favorite -> favorite', id )
+
+          .constraint( 'symbol, value' )
+            .method( 'symbol -> value', fetch_stock_value )
+            .method( 'symbol -> symbol', id )
+
+          .constraint( 'value, number, total' )
+            .method( 'value, number -> total',
+                     function( value, number ) { return value * number; }
+                   )
+            .method( 'total, value -> number',
+                     function( total, value ) { return total / value; }
+                   )
+            .method( 'total, number -> value',
+                     function( total, number ) { return total / number; }
+                   )
+
+          .end();
+
+      var system = new hd.ConstraintSystem();
+      system.addComponent( model );
+
+      window.addEventListener( 'load', function() {
+        hd.performDeclaredBindings( model );
+      } );
+    </script>
+  </head>
+  <body>
+    <p>
+      This is an example stock price calculator.
+    </p>
+    <p>
+      Stock prices are retrieved asynchronously using Ajax and a Yahoo! web
+      service.  Note that editing <i>Symbol</i> or <i>Value</i> will result in
+      certain inputs not being used; unused inputs will be greyed-out but not
+      disabled.
+    </p>
+    <fieldset>
+      <legend>Stocks:</legend>
+
+      <table>
+        <tr>
+          <td><label class="al">Favorites:</label></td>
+          <td>
+            <select data-bind="hd.value( favorite ), hd.cssClass( favorite.contributing, '', 'nc' )">
+              <option value="FB">Facebook</option>
+              <option value="ADBE">Adobe</option>
+              <option value="MS">Microsoft</option>
+              <option value="YHOO">Yahoo!</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="symbol" class="al">Symbol:</label></td>
+          <td>
+            <input type="text" data-bind="hd.edit( symbol ), hd.cssClass( symbol.contributing, '', 'nc' )"/>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="value" class="al">Value:</label></td>
+          <td>
+            <input type="text" data-bind="hd.num( value, 2 ), hd.cssClass( value )"></input><br/>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="number" class="al">Number:</label></td>
+          <td>
+            <input type="text" data-bind="hd.num( number, 2 ), hd.cssClass( number )"></input>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="total">Total:</label></td>
+          <td>
+            <input type="text" data-bind="hd.num( total, 2 ), hd.cssClass( total )"></input>
+          </td>
+        </tr>
+      </table>
+    </fieldset>
+  </body>
+</html>

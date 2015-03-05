@@ -1,10 +1,313 @@
-<html>
-  <head>
-  </head>
-  <body>
-    <h1>Welcome to HotDrink</h1>
-    <p>
-      We encourage you to checkout <a href="howto/">our documentation</a>.
-    </p>
-  </body>
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>HotDrink Overview</title>
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">HotDrink Overview</h1>
+<p>
+HotDrink is a JavaScript library for User Interface programming.  Instead of
+requiring programmers to write explicit event handlers, HotDrink derives user
+interface behavior from a declarative specification of data dependencies.
+</p>
+
+<p>
+These specifications define ways in which some variables may affect other
+variables.  Consider, for example, for specifying a cropping region for an
+image.
+</p>
+
+<p>
+<b>Example:</b> <a href="examples/crop.html">Cropping region of an image</a>
+</p>
+
+<p>
+This form contains several variables &#x2014; e.g., the left and right boundaries,
+the width of the region, and the aspect ratio of the region &#x2014; with many
+dependencies between these variables.  To use HotDrink to manage these
+dependencies requires two steps.
+</p>
+
+<p>
+First, you must define the variables and the dependencies, as follows.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #0000FF;">function</span>  <span style="color: #006699;">sum</span>( <span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">b</span> ) { <span style="color: #0000FF;">return</span> a + b; }
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">diff</span>( <span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">b</span> ) { <span style="color: #0000FF;">return</span> a - b; }
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">prod</span>( <span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">b</span> ) { <span style="color: #0000FF;">return</span> a * b; }
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">quot</span>( <span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">b</span> ) { <span style="color: #0000FF;">return</span> a / b; }
+
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>()
+    .variables( {left: 0, top: 0, right: <span style="color: #8b1a1a;">undefined</span>, bottom: <span style="color: #8b1a1a;">undefined</span>,
+                 width: 200, height: 200, aspect: <span style="color: #8b1a1a;">undefined</span>} )
+
+    .constraint( <span style="color: #008000;">'left, right, width'</span> )
+      .method( <span style="color: #008000;">'left, width -&gt; right'</span>, sum  )
+      .method( <span style="color: #008000;">'right, width -&gt; left'</span>, diff )
+      .method( <span style="color: #008000;">'right, left -&gt; width'</span>, diff )
+
+    .constraint( <span style="color: #008000;">'top, bottom, height'</span> )
+      .method( <span style="color: #008000;">'top, height -&gt; bottom'</span>, sum  )
+      .method( <span style="color: #008000;">'bottom, height -&gt; top'</span>, diff )
+      .method( <span style="color: #008000;">'bottom, top -&gt; height'</span>, diff )
+
+    .constraint( <span style="color: #008000;">'height, width, aspect'</span> )
+      .method( <span style="color: #008000;">'height, aspect -&gt; width'</span>, prod )
+      .method( <span style="color: #008000;">'width, aspect -&gt; height'</span>, quot )
+      .method( <span style="color: #008000;">'width, height -&gt; aspect'</span>, quot )
+
+    .end();
+</pre>
+</div>
+
+<p>
+Second, you must <i>bind</i> the variables to the elements of the web page that
+represent those variables.  This can be done by adding an attribute to the tag
+to which you want to bind.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html">&lt;<span style="color: #006699;">table</span>&gt;
+  &lt;<span style="color: #006699;">tr</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;Left:&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( left )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;Right:&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( right )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;Width:&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( width )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">rowspan</span>=<span style="color: #008000;">"2"</span>&gt;Aspect:&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">rowspan</span>=<span style="color: #008000;">"2"</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( aspect )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+  &lt;/<span style="color: #006699;">tr</span>&gt;
+  &lt;<span style="color: #006699;">tr</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;Top:&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( top )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;Bottom:&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( bottom )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;Height:&lt;/<span style="color: #006699;">td</span>&gt;
+    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.numVar( height )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+  &lt;/<span style="color: #006699;">tr</span>&gt;
+&lt;/<span style="color: #006699;">table</span>&gt;
+</pre>
+</div>
+
+<p>
+Using these two specifications, HotDrink is able to ensure that all data
+dependencies are automatically upheld.
+</p>
+
+<p>
+Not only can HotDrink enforce data dependencies, but it can also use them as
+the basis for other useful user interface behaviors.  Consider, for example, a
+travel expense report form.
+</p>
+
+<p>
+<b>Example:</b> <a href="examples/expense.html">Travel expense report</a>
+</p>
+
+<p>
+Not only does HotDrink enforce the dependencies between the variables in this
+form, but it also detects when variables are no longer affecting the output of
+the form and disables the corresponding widgets.  This behavior does not
+require any additional work on the part of the programmer.
+</p>
+
+<p>
+HotDrink is designed to handle asynchronous dependencies.  This means, for
+example, dependencies can be based on Ajax calls or web workers.  Consider an
+application for calculating stock prices.
+</p>
+
+<p>
+<b>Example:</b> <a href="examples/stocks.html">Stock price checker</a>
+</p>
+
+<p>
+The data dependency between the stock symbol and the stock price is enforced
+by means of an Ajax call to a web service.  This dependency can be enforced
+regardless of how long it takes the Ajax request to be completed.  In fact,
+HotDrink ensures that any sequence of edits will always eventually end in the
+same results, regardless of how long it takes to enforce the dependencies.
+</p>
+
+<p>
+To illustrate this, consider a simple example involving three circles.
+</p>
+
+<p>
+<b>Example:</b> <a href="examples/drag1.html">Dragging circles</a>
+</p>
+
+<p>
+We define a simple data dependency between the centers of these circles that
+ensures that they will always remain a certain distance apart.  This creates
+the illusion that they are pushing each other around the screen.  Watch what
+happens when we deliberately slow this dependency down.
+</p>
+
+<p>
+<b>Example:</b> <a href="examples/drag2.html">Dragging circles slowed down</a>
+</p>
+
+<p>
+By adding a delay to the calculation, we have made the effect much slower.
+However, the end result of any particular movement is always the same as if
+the effects were immediate.  This illustrates how HotDrink ensures data
+consistency despite any delays that data dependencies introduce.
+</p>
+
+<p>
+<b>Example:</b> <a href="examples/drag3.html">Dragging circles slowed down with shadows</a>
+</p>
+
+<p>
+To make it clear what HotDrink is doing, consider a third example with six
+points:  three for circles, and three for shadows.  Since the shadows cannot
+be edited (i.e. cannot be dragged) they make it clear how HotDrink remembers
+all previous positions and uses them in the calculations.
+</p>
+
+<p>
+To learn more about HotDrink, please see <a href="howto/">How to use HotDrink</a>.
+</p>
+</div>
+<div id="postamble" class="status">
+<p class="validation"></p>
+</div>
+</body>
 </html>

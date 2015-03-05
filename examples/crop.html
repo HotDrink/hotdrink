@@ -1,0 +1,76 @@
+<html>
+  <head>
+    <title>HotDrink Example</title>
+    <style type="text/css">
+      .source { background: #ffe; }
+    </style>
+    <script type="text/javascript" src="hotdrink.min.js"></script>
+    <script type="text/javascript">
+      {
+        function  sum( a, b ) { return a + b; }
+        function diff( a, b ) { return a - b; }
+        function prod( a, b ) { return a * b; }
+        function quot( a, b ) { return a / b; }
+
+        var model = new hd.ModelBuilder()
+            .variables( {left: 0, top: 0, right: undefined, bottom: undefined,
+                         width: 200, height: 200, aspect: undefined} )
+
+            .constraint( 'left, right, width' )
+              .method( 'left, width -> right', sum  )
+              .method( 'right, width -> left', diff )
+              .method( 'right, left -> width', diff )
+
+            .constraint( 'top, bottom, height' )
+              .method( 'top, height -> bottom', sum  )
+              .method( 'bottom, height -> top', diff )
+              .method( 'bottom, top -> height', diff )
+
+            .constraint( 'height, width, aspect' )
+              .method( 'height, aspect -> width', prod )
+              .method( 'width, aspect -> height', quot )
+              .method( 'width, height -> aspect', quot )
+
+            .end();
+
+        var system = new hd.ConstraintSystem();
+        system.addComponent( model );
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model );
+        } );
+      }
+    </script>
+  </head>
+  <body>
+    <p>
+      This is an example form for specifying the cropping region of an image.
+    </p>
+    <p>
+      Notice that editing one value updates other values so that all values
+      are consistent &mdash; i.e., <i>width</i> = <i>right</i>
+      - <i>left</i>, <i>height</i> = <i>bottom</i> - <i>top</i>,
+      and <i>aspect</i> = <i>width</i> / <i>height</i>.
+    </p>
+    <table style="margin-top:2em">
+      <tr>
+        <td>Left:</td>
+        <td><input type="text" data-bind="hd.numVar( left )"/></td>
+        <td>Right:</td>
+        <td><input type="text" data-bind="hd.numVar( right )"/></td>
+        <td>Width:</td>
+        <td><input type="text" data-bind="hd.numVar( width )"/></td>
+        <td rowspan="2">Aspect:</td>
+        <td rowspan="2"><input type="text" data-bind="hd.numVar( aspect )"/></td>
+      </tr>
+      <tr>
+        <td>Top:</td>
+        <td><input type="text" data-bind="hd.numVar( top )"/></td>
+        <td>Bottom:</td>
+        <td><input type="text" data-bind="hd.numVar( bottom )"/></td>
+        <td>Height:</td>
+        <td><input type="text" data-bind="hd.numVar( height )"/></td>
+      </tr>
+    </table>
+  </body>
+</html>

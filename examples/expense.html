@@ -1,0 +1,142 @@
+<html>
+  <head>
+    <title>HotDrink Example</title>
+    <style type="text/css">
+      fieldset { margin: 2em 0; width: 700px }
+      input:disabled { background: #ddd; opacity: .6; }
+    </style>
+    <script type="text/javascript" src="hotdrink.min.js"></script>
+    <script type="text/javascript">
+      function sum( a ) {
+        var total = 0;
+        for (var i = 0, l = a.length; i < l; ++i) {
+          total+= a[i];
+        }
+        return total;
+      }
+
+      var model = new hd.ModelBuilder()
+          .variables( 'miles, mpg, gallons, gas, travel',
+                      {miles: 500, mpg: 30, gas: 3.5}
+                    )
+          .equation( 'miles / gallons == mpg' )
+          .equation( 'gallons * gas == travel' )
+
+          .variables( 'checkin, checkout, nights, rate, hotel',
+                      {checkin: new Date().setHours( 0, 0, 0, 0 ), nights: 2, rate: 150}
+                    )
+          .equation( 'checkout - checkin == nights * 86400000')
+          .equation( 'nights * rate == hotel' )
+
+          .variables( 'food, tip, meals',
+                      {food: 55, tip: 0.15}
+                    )
+          .equation( 'food * (1 + tip) == meals' )
+
+          .variables( {usetravel: true, usehotel: true, usemeals: true} )
+          .outputVariable( 'total' )
+          .constraint( 'usetravel, travel, usehotel, hotel, usemeals, meals, total' )
+          .method( 'usetravel, *travel, usehotel, *hotel, usemeals, *meals -> total',
+            function( usetravel, travel, usehotel, hotel, usemeals, meals ) {
+              if (! usetravel) { travel = new hd.Promise( 0 ); }
+              if (! usehotel)  { hotel  = new hd.Promise( 0 ); }
+              if (! usemeals)  { meals  = new hd.Promise( 0 ); }
+              return hd.Promise.all( travel, hotel, meals ).then( sum );
+            }
+          )
+
+          .end();
+
+      var system = new hd.ConstraintSystem();
+      system.addComponent( model );
+
+      window.addEventListener( 'load', function() {
+        hd.performDeclaredBindings( model );
+      } );
+    </script>
+  </head>
+  <body>
+    <p>
+      This is an example travel expense report.
+    </p>
+    <p>
+      Notice that unchecking a section of the report not only excludes that
+      from the final calculations, it also disables the elements for that
+      section.  This happens automatically when HotDrink detects they are not
+      being used.
+    </p>
+    <fieldset>
+      <legend>
+        <input id="usetravel" type="checkbox" data-bind="hd.checked( usetravel )"/>
+        <label for="usetravel">Travel</label>
+      </legend>
+      <table>
+        <tr>
+          <td>Gallons:</td>
+          <td><input type="text" data-bind="hd.numVar( gallons, 2 )"/></td>
+          <td>Miles:</td>
+          <td><input type="text" data-bind="hd.numVar( miles, 2 )"/></td>
+          <td>MPG:</td>
+          <td><input type="text" data-bind="hd.numVar( mpg, 2 )"/></td>
+        </tr>
+        <tr>
+          <td>Gas Price:</td>
+          <td><input type="text" data-bind="hd.numVar( gas, 2 )"/></td>
+        </tr>
+        <tr>
+          <td>Total Cost:</td>
+          <td><input type="text" data-bind="hd.numVar( travel, 2 )"/></td>
+        </tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend>
+        <input id="usehotel" type="checkbox" data-bind="hd.checked( usehotel )"/>
+        <label for="usehotel">Hotel</label>
+      </legend>
+      <table>
+        <tr>
+          <td>Nights stayed:</td>
+          <td><input type="text" data-bind="hd.numVar( nights, 0 )"/></td>
+          <td>Check-in:</td>
+          <td><input type="text" data-bind="hd.dateVar( checkin,
+          hd.millisecondsToDate(), hd.dateToMilliseconds() )"/></td>
+          <td>Check-out:</td>
+          <td><input type="text" data-bind="hd.dateVar( checkout,
+          hd.millisecondsToDate(), hd.dateToMilliseconds() )"/></td>
+        </tr>
+        <tr>
+          <td>Room Price:</td>
+          <td><input type="text" data-bind="hd.numVar( rate, 2 )"/></td>
+        </tr>
+        <tr>
+          <td>Total Cost:</td>
+          <td><input type="text" data-bind="hd.numVar( hotel, 2 )"/></td>
+        </tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend>
+        <input id="usemeals" type="checkbox" data-bind="hd.checked( usemeals )"/>
+        <label for="usemeals">Meals</label>
+      </legend>
+      <table>
+        <tr>
+          <td>Meal Price:</td>
+          <td><input type="text" data-bind="hd.numVar( food, 2 )"></td>
+        </tr>
+        <tr>
+          <td>Tip:</td>
+          <td><input type="text" data-bind="hd.numVar( tip, 0, hd.scale(100), hd.scale(0.01) )"></td>
+        </tr>
+        <tr>
+          <td>Total Cost:</td>
+          <td><input type="text" data-bind="hd.numVar( meals, 2 )"></td>
+        </tr>
+      </table>
+    </fieldset>
+    <div>
+      <strong>Total Expenses:</strong> $<span data-bind="hd.text( total, hd.fix(2) )"></span>
+    </div>
+  </body>
+</html>

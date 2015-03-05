@@ -1,4 +1,4 @@
-#+TITLE: Welcome to HotDrink
+#+TITLE: How to use HotDrink
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>

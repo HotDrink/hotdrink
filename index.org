@@ -7,9 +7,7 @@ HotDrink is a JavaScript library for User Interface programming.  Instead of
 requiring programmers to write explicit event handlers, HotDrink derives user
 interface behavior from a declarative specification of data dependencies.
 
-These specifications define ways in which some variables may affect other
-variables.  Consider, for example, for specifying a cropping region for an
-image.
+Consider, for example, a form for specifying a cropping region for an image.
 
 *Example:* [[file:examples/crop.html][Cropping region of an image]]
 

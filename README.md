@@ -5,6 +5,12 @@ Instead of requiring programmers to write explicit event handlers, HotDrink
 derives user interface behavior from a declarative specification of data
 dependencies.
 
+For a brief overview on the functionality HotDrink provides, see the
+[HotDrink overview](http://hotdrink.github.io/hotdrink/).
+
+For a thorough introduction on how to use HotDrink, see
+[How to use HotDrink](http://hotdrink.github.io/hotdrink/howto/).
+
 You can find compiled versions of HotDrink on GitHub under
 [releases](https://github.com/HotDrink/hotdrink/releases).
 

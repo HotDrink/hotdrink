@@ -85,7 +85,7 @@ module hd.reactive {
      * If any parameter fails then we fail.
      */
     onParameterRejected( reason: any, index: number ) {
-      this.promise.reject( reason );
+      this.promise.reject( "Failed dependency" );
     }
 
     /*----------------------------------------------------------------

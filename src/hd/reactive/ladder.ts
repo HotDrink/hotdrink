@@ -28,6 +28,12 @@ module hd.reactive {
     }
 
     /*----------------------------------------------------------------
+     */
+    isCurrent() {
+      return this.promises[0].isFulfilled();
+    }
+
+    /*----------------------------------------------------------------
      * Get the most recent promise on the ladder.
      */
     currentPromise() {

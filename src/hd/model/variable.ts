@@ -141,7 +141,7 @@ module hd.model {
      * Observable: widget produces a value
      */
     onNext( value: any ): void {
-      if (this.ladder.isSettled() && this.value.hasValue( value )) {
+      if (this.ladder.isCurrent() && this.value.hasValue( value )) {
         this.changes.sendNext( {type: VariableEventType.touched, vv: this} );
       }
       else {
@@ -157,6 +157,7 @@ module hd.model {
       var p = new r.Promise();
       p.reject( error );
       this.makePromise( p );
+      this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
     }
 
     /*----------------------------------------------------------------

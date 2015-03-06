@@ -8,7 +8,7 @@
         line-height: 60px;
         text-align: center; vertical-align: middle;
         cursor: default;
-        user-select: none; -moz-user-select: none; -webkit-user-select: none;
+        user-select: none; -moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;
       }
     </style>
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
@@ -99,21 +99,21 @@
         ctx.arc( 30, 30, 29, 0, 6.3 );
         ctx.stroke();
         ctx.fill();
-        document.styleSheets[0].insertRule( ".puck { background: url(" + canvas.toDataURL() + ")", 0 );
+        document.styleSheets[0].insertRule( ".puck { background: url(" + canvas.toDataURL() + ") }", 0 );
         ctx.fillStyle = '#dde';
         ctx.strokeStyle = '#009';
         ctx.beginPath();
         ctx.arc( 30, 30, 29, 0, 6.3 );
         ctx.stroke();
         ctx.fill();
-        document.styleSheets[0].insertRule( ".puck.pending { background: url(" + canvas.toDataURL() + ")", 0 );
+        document.styleSheets[0].insertRule( ".puck.pending { background: url(" + canvas.toDataURL() + ") }", 0 );
         ctx.fillStyle = '#ddd';
         ctx.strokeStyle = '#999';
         ctx.beginPath();
         ctx.arc( 30, 30, 29, 0, 6.3 );
         ctx.stroke();
         ctx.fill();
-        document.styleSheets[0].insertRule( ".puck.shadow { background: url(" + canvas.toDataURL() + ")", 0 );
+        document.styleSheets[0].insertRule( ".puck.shadow { background: url(" + canvas.toDataURL() + ") }", 0 );
 
 
         ['p1', 'p2', 'p3'].forEach( function( id ) {

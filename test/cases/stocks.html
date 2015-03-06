@@ -52,8 +52,8 @@
         .method( '*favorite, useFav, symbol -> symbol',
                  function( f, u, s ) { return u ? f : s; }
                )
-        .method( '-> useFav',
-                 function() { return false; }
+        .method( 'favorite -> favorite, useFav',
+                 function( fav ) { return [fav, false]; }
                )
 
         .constraint( 'useSym, symbol, value' )
@@ -67,8 +67,8 @@
                    }
                  }
                )
-        .method( '-> useSym',
-                 function() { return false; }
+        .method( 'symbol -> symbol, useSym',
+                 function( sym ) { return [sym, false]; }
                )
 
         .constraint( 'value, number, total' )
@@ -104,7 +104,7 @@
         <tr>
           <td><label class="al">Favorites:</label></td>
           <td>
-            <select data-bind="hd.value( favorite ), hd.enabled( favorite.useful )">
+            <select data-bind="hd.value( favorite ), hd.enabled( favorite.relevant )">
               <option value="FB">Facebook</option>
               <option value="ADBE">Adobe</option>
               <option value="MS">Microsoft</option>
@@ -112,8 +112,8 @@
             </select>
           </td>
           <td>
-            <input type="checkbox" data-bind="hd.checked( useFav ), hd.enabled( useFav.useful )"/>
-            <label for="useFav" data-bind="hd.cssClass( useFav.useful, '', 'disable' )">use</label>
+            <input type="checkbox" data-bind="hd.checked( useFav ), hd.enabled( useFav.relevant )"/>
+            <label for="useFav" data-bind="hd.cssClass( useFav.relevant, '', 'disable' )">use</label>
           </td>
         </tr>
         <tr>

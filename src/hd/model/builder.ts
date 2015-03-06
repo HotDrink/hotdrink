@@ -184,7 +184,9 @@ module hd.model {
       this.endConstraint();
 
       if (arguments.length == 1 && typeof arguments[0] === 'string') {
-        arguments[0].trim().split( /\s*,\s*/ ).forEach( this.outputVariable, this );
+        arguments[0].trim().split( /\s*,\s*/ ).forEach( function( name: string ) {
+          this.outputVariable( name );
+        }, this );
       }
       else if (arguments.length > 1) {
         this.variables( arguments[0], arguments[1], true );
@@ -201,7 +203,9 @@ module hd.model {
       this.endConstraint();
 
       if (arguments.length == 1 && typeof arguments[0] === 'string') {
-        arguments[0].trim().split( /\s*,\s*/ ).forEach( this.interfaceVariable, this );
+        arguments[0].trim().split( /\s*,\s*/ ).forEach( function( name: string ) {
+          this.interfaceVariable( name )
+        }, this );
       }
       else if (arguments.length > 1) {
         this.variables( arguments[0], arguments[1], false );

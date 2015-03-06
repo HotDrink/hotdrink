@@ -30,10 +30,10 @@
       }
 
       var model = new hd.ModelBuilder()
-          .variables( "symbol, favorite, value, number",
+          .variables( "symbol, favorite, number",
                       {number: 10, favorite: "ADBE"}
                     )
-          .outputVariable( 'total' )
+          .outputVariables( 'total, value, number' )
           .constraint( 'favorite, symbol' )
             .method( 'favorite -> symbol', id )
             .method( 'favorite -> favorite', id )

@@ -1,3 +1,7 @@
+body {
+  font-family: Arial, Verdana, Helvetica, sans-serif;
+}
+
 div.vat {
   width: 6in;
   border: 1px solid #008; border-radius: 4pt;

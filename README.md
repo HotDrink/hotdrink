@@ -29,8 +29,8 @@ get a list of possible make targets.  They are:
 - `qunit` - QUnit tests; for testing purposes only
 - `howto` - Export how-to documentation; note, however, that you can find this
   on GitHub
-- all - all of the above
-- clean - remove all created files
+- `all` - all of the above
+- `clean` - remove all created files
 
 Build results may be found in the `scripts` directory, with the exception of
 the how-to, which is found in `docs/howto/publish`.

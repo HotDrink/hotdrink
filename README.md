@@ -19,20 +19,26 @@ You can find compiled versions of HotDrink on GitHub under
 Building is performed with the `make` tool.  Run `make` with no arguments to
 get a list of possible make targets.  They are:
 
-- hotdrink      - HotDrink library
-- hotdrink.min  - HotDrink library (minified)
-- qunit         - QUnit tests
-- compile-dfa   - DFA compiler
-- fn-worker     - Include file for a web worker
-- howto         - All how-to documentation
-- all           - all of the above
-- clean         - remove all created files
+- `hotdrink` - Compile the HotDrink library; this is probably the target you want
+- `hotdrink.min` - Compiled minified version of HotDrink library; same library, smaller file
+- `fn-worker` - Include file for HotDrink's web worker framework; only needed
+  if you want to write web workers using HotDrink's framework
+- `compile-dfa` - A DFA compiler for models; this tool can make a more efficient
+  constraint solver for certain types of constraint systems; it's unlikely
+  that you'll need this
+- `qunit` - QUnit tests; for testing purposes only
+- `howto` - Export how-to documentation; note, however, that you can find this
+  on GitHub
+- all - all of the above
+- clean - remove all created files
 
 Build results may be found in the `scripts` directory, with the exception of
 the how-to, which is found in `docs/howto/publish`.
 
 The following tools are required for building.
 
+- [The Node.js runtime](https://nodejs.org/) is necessary to run the following
+  tools
 - [The TypeScript compiler](http://www.typescriptlang.org/#Download) for compiling
   TypeScript files into JavaScript
 - [The mapcat tool](https://www.npmjs.com/package/mapcat) for concatenating

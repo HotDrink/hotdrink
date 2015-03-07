@@ -23,7 +23,7 @@ module hd.system {
   /*==================================================================
    * Execute a single method.
    */
-  export function execute( mm: m.Method, enable: e.EnablementManager ) {
+  export function execute( cid: string, mm: m.Method, enable: e.EnablementManager ) {
 
     var params: any[] = [];
     var paramLookup: u.Dictionary<r.Promise<any>> = {};
@@ -87,7 +87,7 @@ module hd.system {
         }
       }
 
-      enable.methodScheduled( mm.id, paramLookup, result );
+      enable.methodScheduled( cid, mm.id, paramLookup, result );
     }
     catch (e) {
       // TODO: Figure out what this means

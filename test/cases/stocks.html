@@ -16,6 +16,8 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
     {
+      function id( x ) { return x; }
+
       function delay( time_ms ) {
         return function( v ) {
           var p = new hd.Promise();
@@ -38,57 +40,64 @@
       }
 
       var model = new hd.ModelBuilder()
-        .variables( {value: undefined,
-                     number: 10,
-                     useSym: true,
-                     symbol: undefined,
-                     favorite: "ADBE",
-                     useFav: true
-                    }
-                  )
-        .outputVariable( 'total' )
+          .variables( 'favorite, symbol, value, number',
+                      {favorite: "ADBE", number: 10}
+                    )
+          .outputVariable( 'total' )
+          .constraint( 'value, number, total' )
+            .method( 'value, number -> total',
+                     function( value, number ) { return value * number; }
+                   )
+            .method( 'total, value -> number',
+                     function( total, value ) { return total / value; }
+                   )
+            .method( 'total, number -> value',
+                     function( total, number ) { return total / number; }
+                   )
+          .end();
 
-        .constraint( 'favorite, symbol, useFav' )
-        .method( '*favorite, useFav, symbol -> symbol',
-                 function( f, u, s ) { return u ? f : s; }
-               )
-        .method( 'favorite -> favorite, useFav',
-                 function( fav ) { return [fav, false]; }
-               )
 
-        .constraint( 'useSym, symbol, value' )
-        .method( '*symbol, useSym, value -> value',
-                 function( symbol, useSym, value ) {
-                   if (useSym) {
-                     return symbol.then( fetch_stock_value );
-                   }
-                   else {
-                     return value;
-                   }
-                 }
-               )
-        .method( 'symbol -> symbol, useSym',
-                 function( sym ) { return [sym, false]; }
-               )
+      var sym2val = new hd.ModelBuilder()
+          .variables( {symbol: model.symbol,
+                       value: model.value}
+                    )
+          .constraint( 'symbol, value' )
+            .method( 'symbol -> value', fetch_stock_value )
+          .end();
 
-        .constraint( 'value, number, total' )
-        .method( 'value, number -> total',
-                 function( value, number ) { return value * number; }
-               )
-        .method( 'total, value -> number',
-                 function( total, value ) { return total / value; }
-               )
-        .method( 'total, number -> value',
-                 function( total, number ) { return total / number; }
-               )
+      var fav2sym = new hd.ModelBuilder()
+          .variables( {favorite: model.favorite,
+                       symbol: model.symbol}
+                    )
+          .outputVariables( 'total, value' )
+          .constraint( 'favorite, symbol' )
+            .method( 'favorite -> symbol', id )
+          .end();
 
-        .end();
 
       var system = new hd.ConstraintSystem();
       system.addComponent( model );
+      system.addComponent( sym2val );
+      system.addComponent( fav2sym );
 
       window.addEventListener( 'load', function() {
         hd.performDeclaredBindings( model );
+        document.getElementById( 'useFav' ).onclick = function() {
+          if (this.checked) {
+            system.addComponent( fav2sym );
+          }
+          else {
+            system.removeComponent( fav2sym );
+          }
+        }
+        document.getElementById( 'useSym' ).onclick = function() {
+          if (this.checked) {
+            system.addComponent( sym2val );
+          }
+          else {
+            system.removeComponent( sym2val );
+          }
+        }
       } );
     }
     </script>
@@ -112,8 +121,8 @@
             </select>
           </td>
           <td>
-            <input type="checkbox" data-bind="hd.checked( useFav ), hd.enabled( useFav.relevant )"/>
-            <label for="useFav" data-bind="hd.cssClass( useFav.relevant, '', 'disable' )">use</label>
+            <input id="useFav" type="checkbox" checked data-bind="hd.enabled( symbol.relevant )"/>
+            <label for="useFav" data-bind="hd.cssClass( symbol.relevant, '', 'disable' )">use</label>
           </td>
         </tr>
         <tr>
@@ -122,7 +131,7 @@
             <input type="text" data-bind="hd.editVar( symbol )"\></input>
           </td>
           <td>
-            <input type="checkbox" data-bind="hd.checked( useSym )">
+            <input id="useSym" type="checkbox" checked>
             <label for="useSym">use</label>
           </td>
         </tr>

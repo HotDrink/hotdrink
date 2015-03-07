@@ -75,7 +75,7 @@ module hd.system {
     private pendingCount = 0;
 
     // Enablement
-    enable: e.EnablementManager;
+    enable: e.EnablementManager = new e.EnablementManager();
     outputVids: u.StringSet = {};
 
     /*----------------------------------------------------------------
@@ -87,7 +87,6 @@ module hd.system {
       if (plannerT) {
         this.planner = new plannerT( this.cgraph );
       }
-      this.enable = new e.EnablementManager( this.cgraph );
       this.enable.egraph.addObserver( this, this.onNextEgraph, null, null );
     }
 
@@ -165,9 +164,12 @@ module hd.system {
       if (cc.id in this.constraints) {
         delete this.constraints[cc.id];
 
-        cc.methods.forEach( this.removeMethod );
-        cc.variables.forEach( this.removeVariable ); // no effect if variable used
-                                                     // by another constraint
+        cc.methods.forEach( this.removeMethod, this );
+        cc.variables.forEach( this.removeVariable, this ); // no effect if variable used
+                                                           // by another constraint
+
+        this.sgraph.selectMethod( cc.id, null );
+        this.enable.methodScheduled( cc.id, null );
       }
     }
 
@@ -458,7 +460,7 @@ module hd.system {
     // Helper - activate method
     private
     execute( mid: string ) {
-      execute( this.methods[mid], this.enable );
+      execute( this.cgraph.constraintForMethod( mid ), this.methods[mid], this.enable );
     }
 
     /*----------------------------------------------------------------

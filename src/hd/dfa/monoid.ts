@@ -249,10 +249,6 @@ module hd.dfa {
   }
 
   /*==================================================================
-   */
-  var ids = new m.IdGenerator();
-
-  /*==================================================================
    * Create a unique descriptive id for a multi-constraint
    */
   function newCompositeConstraintId( cids: u.ArraySet<string> ) {
@@ -269,7 +265,7 @@ module hd.dfa {
       name = idparts.join( '' );
     }
 
-    return ids.makeId( name );
+    return m.makeId( name );
   }
 
   /*==================================================================
@@ -289,7 +285,7 @@ module hd.dfa {
       name = idparts.join( '' );
     }
 
-    return ids.makeId( name );
+    return m.makeId( name );
   }
 
 }

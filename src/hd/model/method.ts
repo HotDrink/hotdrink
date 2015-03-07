@@ -42,14 +42,13 @@ module hd.model {
     /*----------------------------------------------------------------
      * Initialize members
      */
-    constructor( id: string,
-                 name: string,
+    constructor( name: string,
                  inputVars: u.ArraySet<Variable>,
                  outputVars: u.ArraySet<Variable>,
                  fn: Function,
                  inputs: any[],
                  outputs: any[]                   ) {
-      this.id = id;
+      this.id = makeId( name );
       this.name = name;
       this.inputVars = inputVars;
       this.outputVars = outputVars;

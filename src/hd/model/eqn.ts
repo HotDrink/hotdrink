@@ -1,5 +1,7 @@
 module hd.model.eqn {
 
+  import u = hd.utility;
+
   /*==================================================================
    * Interface for any expression.
    */
@@ -129,7 +131,8 @@ module hd.model.eqn {
   export class Equation {
     constructor( public left: Expression,
                  public op: string,
-                 public right: Expression ) { }
+                 public right: Expression,
+                 public vars: u.Dictionary<string> ) { }
   }
 
   /*==================================================================
@@ -137,8 +140,10 @@ module hd.model.eqn {
    */
   export function parse( line: string ): Equation {
     var tokens: string[] =
-          line.match( /((\d+(\.\d*)?)|(\.\d+))([eE][+-]?\d+)?|[\w$]+|[<>=]=|\S/g )
+          line.match( /((\d+(\.\d*)?)|(\.\d+))([eE][+-]?\d+)?|[\w\.$]+|[<>=]=|\S/g )
     var position = 0;
+    var varcount = 0;
+    var varaliases: u.Dictionary<string> = {};
 
     var eq = parseEquation();
 
@@ -160,8 +165,12 @@ module hd.model.eqn {
       if (tok.match( /^\.?\d/ )) {
         return new Number( tok );
       }
-      else if (tok.match( /^[\w$]/ )) {
-        return new Variable( tok );
+      else if (tok.match( /^[\w\.$]+$/ )) {
+        if (tok in varaliases) {
+          throw "Encountered duplicate variable: '" + tok + "'";
+        }
+        varaliases[tok] = 'v' + (++varcount);
+        return new Variable( varaliases[tok] );
       }
       else if (tok === '-') {
         var expr = parseFactor();
@@ -225,7 +234,7 @@ module hd.model.eqn {
         throw "Expected equality but found '" + op + "'";
       }
       var right = parseExpression();
-      return new Equation( left, op, right );
+      return new Equation( left, op, right, varaliases );
     }
 
   }
@@ -234,9 +243,18 @@ module hd.model.eqn {
    * Generate JS code for body of function which solves for given
    * variable.
    */
-  export function fnBody( inputs: string[],
-                          output: string,
-                          eq: Equation      ): string {
+  export function makeFunction( inputs: string[],
+                                output: string,
+                                eq: Equation      ): Function {
+    var toId = function( name: string ) {
+      if (name in eq.vars) {
+        return eq.vars[name];
+      }
+      throw "Unknown variable '" + name + "'";
+    }
+
+    inputs = inputs.map( toId );
+    output = toId( output );
 
     var expr = solve( eq, output );
 
@@ -273,7 +291,10 @@ module hd.model.eqn {
         lines.push( '  return ' + expr.print() + ';' );
       }
 
-      return lines.join( '\n' );
+      var fnBody = lines.join( '\n' );
+      var args = (<string[]>[null]).concat( inputs );
+      args.push( fnBody );
+      return new (Function.bind.apply( Function, args ))();
     }
     else {
       return null;

@@ -1,0 +1,110 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+    {
+
+      function atmost( x, y ) {
+        if (x === undefined || x > y) {
+          return y;
+        }
+        return x;
+      }
+
+      function atleast( x, y ) {
+        if (x === undefined || x < y) {
+          return y;
+        }
+        return x;
+      }
+
+      function Item() {
+        new hd.ModelBuilder( this )
+          .variables( 'begin, end, length, $next', {length: 10} )
+          .equation( 'begin + length == end' )
+          .constraint( 'end, next.begin' )
+            .method( 'end, next.begin -> end', atmost )
+            .method( 'next.begin, end -> next.begin', atleast )
+          .end();
+      }
+
+      Item.prototype = Object.create( hd.Modelcule.prototype );
+
+      var system = new hd.ConstraintSystem();
+
+      var list;
+      var itemTmpl;
+      window.addEventListener( 'load', function() {
+        list = document.getElementById( 'list' );
+        itemTmpl = document.getElementById( 'item' );
+        itemTmpl.parentNode.removeChild( itemTmpl );
+        itemTmpl.removeAttribute( 'id' );
+        addItem(5);
+      } );
+
+      var head;
+      var tail;
+      function addItem( init ) {
+        var item = new Item();
+        if (init !== undefined) {
+          item.begin.onNext( init );
+        }
+        system.addComponent( item );
+        if (! head) {
+          head = item;
+        }
+        if (tail) {
+          tail.next = item;
+        }
+        tail = item;
+        var div = itemTmpl.cloneNode( true );
+        if (head === item) {
+          div.removeChild( div.lastElementChild );
+        }
+        else {
+          div.lastElementChild.onclick = removeItem.bind( null, item, div );
+        }
+        hd.performDeclaredBindings( item, div );
+        list.insertBefore( div, list.lastElementChild );
+        return item;
+      }
+
+      function removeItem( item, div ) {
+        var prev = head;
+        while (prev.next && prev.next !== item) {
+          prev = prev.next;
+        }
+        if (prev.next === item) {
+          prev.next = item.next;
+          item.next = null;
+          if (tail == item) {
+            tail = prev;
+          }
+          system.removeComponent( item );
+          div.parentNode.removeChild( div );
+        }
+      }
+    }
+    </script>
+    <style>
+      #item { display: none; }
+      .item { margin: 1em; }
+      .source { background-color: #ffd; }
+    </style>
+  </head>
+  <body>
+    <div id="list">
+      <div id="item" class="item">
+        Begin:
+        <input type="text" data-bind="hd.numVar( begin, 0 )"/>
+        End:
+        <input type="text" data-bind="hd.numVar( end, 0 )"/>
+        Length:
+        <input type="text" data-bind="hd.numVar( length, 0 )"/>
+        <button>Remove</button>
+      </div>
+      <button onclick="addItem()">Add</button>
+    </div>
+  </body>
+</html>

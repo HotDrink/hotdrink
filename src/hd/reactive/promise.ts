@@ -40,6 +40,7 @@ module hd.reactive {
   import u = hd.utility;
 
   export var PromisePriority = 2;
+  export var DroppedPriority = 1;
 
   /*==================================================================
    * A computation which depends on a promised value.  May optionally
@@ -328,7 +329,7 @@ module hd.reactive {
             if (plogger) {
               plogger.lostAllDependencies( this );
             }
-            this.ondropped.sendNext( this );
+            u.schedule( DroppedPriority, this.ondropped.sendNext, this.ondropped, this );
           }
 
           found = true;
@@ -448,7 +449,7 @@ module hd.reactive {
       // Clean up
       delete this.dependencies;
       this.sendCompleted();
-      this.ondropped.sendCompleted();
+      u.schedule( DroppedPriority, this.ondropped.sendCompleted, this.ondropped );
     }
 
     /*----------------------------------------------------------------
@@ -484,7 +485,7 @@ module hd.reactive {
         // Clean up
         delete this.dependencies;
         this.sendCompleted();
-        this.ondropped.sendCompleted();
+        u.schedule( DroppedPriority, this.ondropped.sendCompleted, this.ondropped );
       }
     }
 

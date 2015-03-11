@@ -155,7 +155,8 @@ module hd.reactive {
      */
     sendNext( value: T ): void {
       this['#observers'].slice( 0 ).forEach( function( observer: Observer<T> ) {
-        u.schedule( ObservablePriority, observer.onNext, observer, value );
+        observer.onNext( value );
+        //u.schedule( ObservablePriority, observer.onNext, observer, value );
       } );
     }
 
@@ -164,7 +165,8 @@ module hd.reactive {
      */
     sendError( error: any ): void {
       this['#observers'].slice( 0 ).forEach( function( observer: Observer<T> ) {
-        u.schedule( ObservablePriority, observer.onError, observer, error );
+        observer.onError( error );
+        //u.schedule( ObservablePriority, observer.onError, observer, error );
       } );
     }
 
@@ -173,7 +175,8 @@ module hd.reactive {
      */
     sendCompleted(): void {
       this['#observers'].slice( 0 ).forEach( function( observer: Observer<T> ) {
-        u.schedule( ObservablePriority, observer.onCompleted, observer );
+        observer.onCompleted();
+        //u.schedule( ObservablePriority, observer.onCompleted, observer );
       } );
       delete this['#observers'];
     }

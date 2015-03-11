@@ -30,7 +30,7 @@ module hd.reactive {
     /*----------------------------------------------------------------
      */
     isCurrent() {
-      return this.promises[0].isFulfilled();
+      return this.promises[this.promises.length - 1].isFulfilled();
     }
 
     /*----------------------------------------------------------------

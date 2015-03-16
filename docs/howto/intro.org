@@ -6,40 +6,43 @@
 
 * Overview of basic concepts
 
-HotDrink is a library for implementing GUIs declaratively---instead of
-writing event handlers that guide what should happen in a UI and when,
+HotDrink is a JavaScript library that provides rich User Interface (UI)
+behaviors for web applications.  HotDrink allows the programmer to implement
+UIs /declaratively/---instead of
+writing event handlers that control what should happen in a UI and when,
 the programmer specifies the relationships between various pieces of
-data in the UI, and leaves it to HotDrink to decide when and which
-relationships to enforce. HotDrink implements several UI behaviors
+data in the UI and ways in which those relationships may be enforced.
+From this description, HotDrink decides how and when to enforce relationships,
+and also implements several UI behaviors
 that can be reused with little effort.
 
 ** Constraint systems
 
 The heart of the HotDrink library is a /constraint system/.  A
-constraint system consists of /variables/ and /relations/ among the
-variables (/constraints/).  When all the relations are satisfied, the
-system is consistent. Changing the value of a variable may violate
-some of the constraints. Solving a constraint system means bringing it
-back to a consistent state, by changing the values of some of the
-variables so that all relations are again satisfied. The relations can be
-arbitrary predicates  over a set of variables, though
-often they are equalities.  For example, given three variables, $x$,
-$y$, and $z$, $x = y + z$ and $x \le y \le z$ are relations that might
-arise in practice in some user interface.
+constraint system manages /constraints/ given by the programmer.  Each
+constraint represents something that should be true concerning the values of
+HotDrink variables.  For example, given three variables, $x$, $y$, and $z$, you
+could create a constraint that $x = y + z$, or that $x \le y \le z$, or even that $z$
+is the result of a database query using $x$ and $y$.  When the
+constraint is true, we say it is /satisfied/.  HotDrink /enforces/ a
+constraint by modifying some of the variables involved so that the constraint is
+satisfied.
 
-The constraint system in HotDrink is a /dataflow/ constraint system;
-all relations between variables are expressed as sets of functions.
-These functions are called (constraint satisfaction) /methods/, and
-are written by the user of the library. Enforcing a constraint means
+The constraint system in HotDrink is a /dataflow/ constraint system, meaning
+constraints between variables are expressed as sets of functions.
+These functions are called /methods/ (short for /constraint satisfaction methods/), and
+are written by the programmer. HotDrink enforces a constraint by
 executing one of its methods.  HotDrink's constraint system is
-/multi-way/; there are many possible dataflows. It is left to the
-constraint system to determine which dataflow, i.e., sequence of
-methods, to use when solving the system.
+/multi-way/, meaning each constraint may have multiple methods, each representing
+a unique dataflow.  It is left to HotDrink to determine which method to execute
+from each constraint and thereby determine the dataflow for the entire system.
 
-In a HotDrink ``powered'' user interface, UI events perturb the
-constraint system by assigning to some of its variables. HotDrink
-responds by solving the constraint system, which leads to some other
-variables getting new values. The changed values then somehow
+In a HotDrink "powered" user interface, UI events are translated to changes
+to HotDrink variables.  These changes upset the constraint system, resulting
+in constraints which are no longer satisfied.  HotDrink
+responds by /solving/ the constraint system, executing selected methods in
+order to give other variables values that satisfy the constraint. These
+changed values are then somehow
 displayed or visualized to the user, as specified by the programmer.
 
 ** MVVM
@@ -51,20 +54,18 @@ follows:
 - The /view/ is responsible for presentation and capturing
   interactions with the user.  It arranges everything on the screen
   and provides events that indicate user actions.  For our purposes,
-  the view is specified in HTML, along with JavaScript that 
-  generate and modifies the HTML.  This tutorial shows bits and snippets of HTML, with 
+  the view is specified in HTML, along with JavaScript that
+  generates and modifies the HTML.  This tutorial shows bits and snippets of HTML, with
   some commentary to help understand the examples, but in general we assume familiarity
   with HTML, JavaScript, and constructing web pages.
 
 - The /view-model/ is responsible for managing the data presented in
   the view. This means supplying the data to the view to be displayed,
-  as well as responding to the actions by the user.  The purpose of
-  HotDrink is to help in implementing the view-model.  Concretely, the
-  user specifies the variables that constitute the data of the view
-  model, and the constraint system that determines the response to the
-  user actions.  HotDrink provides a small domain-specific language,
-  embedded in JavaScript, for defining constraint systems for user
-  interface view-models.
+  as well as responding to the actions made by the user.  The purpose of
+  HotDrink is to help the programmer implement the view-model through a specification
+  of the variables that hold the data of the view-model and the constraints to
+  be enforced.  The specification is made by the programmer using the HotDrink
+  API.
 
 - Another important part of an MVVM application are the /bindings/.  A
   binding connects elements in the view with variables in the
@@ -72,19 +73,24 @@ follows:
   view---that is why there is no "B" in "MVVM"---but we treat them as
   a distinct component of the pattern.  In HotDrink, bindings can be
   specified in JavaScript, or as annotations in HTML as part of the
-  view specification. We describe both techniques below.
+  view specification.
 
-- The /model/ is responsible for everything else---whatever the 
+- The /model/ is responsible for everything else---whatever the
   application is actually supposed to /do/.  The model does not need to
-  be aware of the user interface. Model can send requests to server, execute
-  on the server, etc. We discuss the model no further.
+  be aware of the user interface, and its interactions with it are generally
+  limited to initializing the data of the view-model and responding to
+  /commands/---requests for application behavior issued by the view-model.
+  Because the model has so little effect on the UI, we will discuss it no
+  further in this documentation.
 
 * Including HotDrink in your web page
 
 To use HotDrink, include the file [[file:hotdrink.min.js][=hotdrink.min.js=]] that came with
 this tutorial.  Alternatively, if you downloaded the source tree,
 follow the build instructions to compile your own =hotdrink.min.js=.
-In practice, add the following ~<script>~ tag to the ~<head>~ section
+
+More specifically, that means adding the following ~<script>~ tag to
+the ~<head>~ section
 of your HTML, with the appropriate path in the ~src~ attribute.  In
 order for the examples in this tutorial to work, the file
 =hotdrink.min.js= must be located in the same directory as this HTML
@@ -94,8 +100,8 @@ file.
 <script type="text/javascript" src="hotdrink.min.js"></script>
 #+END_SRC
 
-HotDrink does not rely on any other JavaScript frameworks. It should
-not conflict with other frameworks (JQuery, Dojo, MooTools, etc.).
+HotDrink does not rely on any other JavaScript frameworks, but neither should it
+conflict with other frameworks (JQuery, Dojo, MooTools, etc.).
 The only global symbol it exports is ~hd~, and all of its interactions
 with the DOM are via cooperative API functions, e.g.,
 [[https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.addEventListener][~addEventListener~]], etc.
@@ -114,17 +120,17 @@ variables that hold data, and constraints that define how those
 variables are related.  The model also serves as a naming mechanism for
 variables: when a variable is created, it is given a name, and stored
 as a property of the model under that name.
-That is, when defining the model ~model~,
+For example, when defining the model ~model~,
 a variable created with the name ~x~ is accessible as ~model.x~.
 
 ** The model builder
 
-The data structure representing models is rather complex, essentially
-a graph whose nodes are variables and methods, and edges the
-dependencies between them.  To help in constructing models, HotDrink
+The task of building a model is rather complex, involving calls to multiple
+functions with long signatures.  To help in constructing models, HotDrink
 contains an object called the /model builder/.  The model builder
-essentially defines a DSL for constructing constraint systems.  To use
-the language, create a new model builder instance, then use its
+essentially defines its own language (i.e., an /embedded domain-specific language/)
+for constructing constraint systems.  To use
+the language, create a new model builder instance, then call its
 various member functions to add elements to the model. These member
 functions are described in detail in [[file:basics.org][Basic HotDrink Usage]]. The
 ~end~ member function retrieves the constructed model.
@@ -141,7 +147,7 @@ var model = builder.end();
 
 As explained in Section [[Constraint systems]], the heart of HotDrink is a
 constraint system.  The task of the constraint system is to enforce the
-constraints of the model---the two are separate entities, however.
+constraints of the model.  However, the two are separate entities.
 A model can exist without a constraint system; that simply means that no one is enforcing its constraints.
 
 To use a constraint system, create a new instance, then register a model with a constraint system.

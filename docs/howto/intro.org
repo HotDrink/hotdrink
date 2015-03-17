@@ -6,42 +6,46 @@
 
 * Overview of basic concepts
 
-HotDrink is a JavaScript library that provides rich User Interface (UI)
-behaviors for web applications.  HotDrink allows the programmer to implement
-UIs /declaratively/---instead of
-writing event handlers that control what should happen in a UI and when,
+HotDrink is a JavaScript library that assists with GUI implementation.
+HotDrink allows you to program GUIs /declaratively/---instead of
+writing event handlers that control what should happen in a GUI and when,
 the programmer specifies the relationships between various pieces of
-data in the UI and ways in which those relationships may be enforced.
+data in the GUI and ways in which those relationships may be enforced.
 From this description, HotDrink decides how and when to enforce relationships,
-and also implements several UI behaviors
+and also implements several GUI behaviors
 that can be reused with little effort.
 
 ** Constraint systems
 
 The heart of the HotDrink library is a /constraint system/.  A
-constraint system manages /constraints/ given by the programmer.  Each
+constraint system manages variables and /constraints/ among those variables.  Each
 constraint represents something that should be true concerning the values of
-HotDrink variables.  For example, given three variables, $x$, $y$, and $z$, you
+HotDrink variables (i.e., a /relation/).
+For example, given three variables, $x$, $y$, and $z$, you
 could create a constraint that $x = y + z$, or that $x \le y \le z$, or even that $z$
 is the result of a database query using $x$ and $y$.  When the
 constraint is true, we say it is /satisfied/.  HotDrink /enforces/ a
 constraint by modifying some of the variables involved so that the constraint is
 satisfied.
 
-The constraint system in HotDrink is a /dataflow/ constraint system, meaning
-constraints between variables are expressed as sets of functions.
-These functions are called /methods/ (short for /constraint satisfaction methods/), and
-are written by the programmer. HotDrink enforces a constraint by
-executing one of its methods.  HotDrink's constraint system is
-/multi-way/, meaning each constraint may have multiple methods, each representing
-a unique dataflow.  It is left to HotDrink to determine which method to execute
-from each constraint and thereby determine the dataflow for the entire system.
+In HotDrink's constraint system, constraints between variables are expressed
+as sets of functions.  These functions are called /methods/ (short for
+/constraint satisfaction methods/) and are written by the programmer.  Each
+method is responsible for calculating new values for some of the constraint's
+variables so that the constraint will be satisfied.  To enforce all
+constraints, HotDrink executes one method from each constraint.  Together, the
+methods executed define a /dataflow/ --- a branching path showing which
+variables are used to update which other variables.  HotDrink has a
+/multi-way dataflow constraint system/, meaning there may be many possible
+dataflows depending on which methods are executed.  In general, HotDrink
+selects a dataflow that preserves variables the user has edited more recently.
 
-In a HotDrink "powered" user interface, UI events are translated to changes
-to HotDrink variables.  These changes upset the constraint system, resulting
+In a HotDrink \ldquo{}powered\rdquo{} user interface, GUI events are translated to changes
+to constraint system variables.  These changes result
 in constraints which are no longer satisfied.  HotDrink
-responds by /solving/ the constraint system, executing selected methods in
-order to give other variables values that satisfy the constraint. These
+responds by /solving/ the constraint system --- that is, selecting which methods
+to execute, and then executing them so that all constraints are again
+satisfied.  Solving can change the values of the system's variables; the
 changed values are then somehow
 displayed or visualized to the user, as specified by the programmer.
 
@@ -61,11 +65,8 @@ follows:
 
 - The /view-model/ is responsible for managing the data presented in
   the view. This means supplying the data to the view to be displayed,
-  as well as responding to the actions made by the user.  The purpose of
-  HotDrink is to help the programmer implement the view-model through a specification
-  of the variables that hold the data of the view-model and the constraints to
-  be enforced.  The specification is made by the programmer using the HotDrink
-  API.
+  as well as responding to user actions.  The purpose of
+  HotDrink is to help in implementing the view-model.
 
 - Another important part of an MVVM application are the /bindings/.  A
   binding connects elements in the view with variables in the
@@ -77,11 +78,8 @@ follows:
 
 - The /model/ is responsible for everything else---whatever the
   application is actually supposed to /do/.  The model does not need to
-  be aware of the user interface, and its interactions with it are generally
-  limited to initializing the data of the view-model and responding to
-  /commands/---requests for application behavior issued by the view-model.
-  Because the model has so little effect on the UI, we will discuss it no
-  further in this documentation.
+  be aware of the user interface; therefore we will not discuss it further in
+  this documentation.
 
 * Including HotDrink in your web page
 

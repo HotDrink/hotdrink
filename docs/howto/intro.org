@@ -18,9 +18,9 @@ that can be reused with little effort.
 ** Constraint systems
 
 The heart of the HotDrink library is a /constraint system/.  A
-constraint system manages variables and /constraints/ among those variables.  Each
-constraint represents something that should be true concerning the values of
-HotDrink variables (i.e., a /relation/).
+constraint system manages variables and /constraints/ among the variables.  Each
+constraint represents something that should be true concerning some of the
+variables (i.e., a /relation/ over those variables).
 For example, given three variables, $x$, $y$, and $z$, you
 could create a constraint that $x = y + z$, or that $x \le y \le z$, or even that $z$
 is the result of a database query using $x$ and $y$.  When the
@@ -36,7 +36,7 @@ variables so that the constraint will be satisfied.  To enforce all
 constraints, HotDrink executes one method from each constraint.  Together, the
 methods executed define a /dataflow/ --- a branching path showing which
 variables are used to update which other variables.  HotDrink has a
-/multi-way dataflow constraint system/, meaning there may be many possible
+/multi-way dataflow constraint system/, meaning there are many possible
 dataflows depending on which methods are executed.  In general, HotDrink
 selects a dataflow that preserves variables the user has edited more recently.
 

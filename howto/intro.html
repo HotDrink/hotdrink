@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Introduction to HotDrink</title>
-<!-- 2015-03-06 Fri 16:42 -->
+<!-- 2015-03-18 Wed 14:20 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <style type="text/css">
@@ -207,17 +207,14 @@ for the JavaScript code in this tag.
 <h2 id="sec-1"><span class="section-number-2">1</span> Overview of basic concepts</h2>
 <div class="outline-text-2" id="text-1">
 <p>
-HotDrink is a GUI framework library which implements many useful interface
-behaviors, thereby making it easier to write robust, helpful user interfaces.
-</p>
-
-<p>
-To make use of these behaviors, all that is required of the programmer is to
-define the relationships between the various pieces of data in the interface:
-how does one piece of data affect others?  Thus, HotDrink supports a
-declarative programming style: instead of spelling out everything the
-interface should do and when it should do be done, the programmer simply
-describes the interface and lets HotDrink figure out the rest.
+HotDrink is a JavaScript library that assists with GUI implementation.
+HotDrink allows you to program GUIs <i>declaratively</i>&#x2014;instead of
+writing event handlers that control what should happen in a GUI and when,
+the programmer specifies the relationships between various pieces of
+data in the GUI and ways in which those relationships may be enforced.
+From this description, HotDrink decides how and when to enforce relationships,
+and also implements several GUI behaviors
+that can be reused with little effort.
 </p>
 </div>
 
@@ -225,28 +222,41 @@ describes the interface and lets HotDrink figure out the rest.
 <h3 id="sec-1-1"><span class="section-number-3">1.1</span> Constraint systems</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
-The heart of the HotDrink library is a <i>constraint system</i>.  A constraint
-system manages relations among variables in the user interface.  A <i>relation</i>
-is anything you want to be true about the values of your variables.  For
-example, given three variables, \(x\), \(y\), and \(z\), you may want to enforce
-that \(x = y + z\), or that \(x \le y \le z\).
+The heart of the HotDrink library is a <i>constraint system</i>.  A
+constraint system manages variables and <i>constraints</i> among the variables.  Each
+constraint represents something that should be true concerning some of the
+variables (i.e., a <i>relation</i> over those variables).
+For example, given three variables, \(x\), \(y\), and \(z\), you
+could create a constraint that \(x = y + z\), or that \(x \le y \le z\), or even that \(z\)
+is the result of a database query using \(x\) and \(y\).  When the
+constraint is true, we say it is <i>satisfied</i>.  HotDrink <i>enforces</i> a
+constraint by modifying some of the variables involved so that the constraint is
+satisfied.
 </p>
 
 <p>
-The constraint system in HotDrink is a <i>dataflow</i> constraint system.  The
-purpose of a dataflow constraint system is to decide which variables should be
-used to update other variables &#x2014; that is, it decides in which direction the
-data flows.  Then the system updates variables using functions that you, the
-programmer, have provided.
+In HotDrink's constraint system, constraints between variables are expressed
+as sets of functions.  These functions are called <i>methods</i> (short for
+<i>constraint satisfaction methods</i>) and are written by the programmer.  Each
+method is responsible for calculating new values for some of the constraint's
+variables so that the constraint will be satisfied.  To enforce all
+constraints, HotDrink executes one method from each constraint.  Together, the
+methods executed define a <i>dataflow</i> &#x2014; a branching path showing which
+variables are used to update which other variables.  HotDrink has a
+<i>multi-way dataflow constraint system</i>, meaning there are many possible
+dataflows depending on which methods are executed.  In general, HotDrink
+selects a dataflow that preserves variables the user has edited more recently.
 </p>
 
 <p>
-The constraint system in HotDrink is also a <i>multi-way</i> constraint system.
-This means data can flow in more than one direction.  A multi-way constraint
-system allows for more flexible interfaces because, potentially, all values
-can be edited.  HotDrink uses the current dataflow, not only to update
-variables, but also to understand how data is being used so that it can react
-appropriately.
+In a HotDrink &ldquo;powered&rdquo; user interface, GUI events are translated to changes
+to constraint system variables.  These changes result
+in constraints which are no longer satisfied.  HotDrink
+responds by <i>solving</i> the constraint system &#x2014; that is, selecting which methods
+to execute, and then executing them so that all constraints are again
+satisfied.  Solving can change the values of the system's variables; the
+changed values are then somehow
+displayed or visualized to the user, as specified by the programmer.
 </p>
 </div>
 </div>
@@ -261,42 +271,34 @@ follows:
 </p>
 
 <ul class="org-ul">
-<li>The <i>view</i> is responsible for presentation and capturing interactions with
-the user.  It arranges everything on the screen and provides events which
-can be used to know when the user does something.  For our purposes, the
-view is your HTML, along with any toolkits you may use to generate HTML.
-We'll show you some bits and snippets of HTML in this tutorial to help you
-understand the examples, but we're not really going to explain it &#x2014; we're
-going to assume that you already know HTML, and that you know how to
-construct your web page.
+<li>The <i>view</i> is responsible for presentation and capturing
+interactions with the user.  It arranges everything on the screen
+and provides events that indicate user actions.  For our purposes,
+the view is specified in HTML, along with JavaScript that
+generates and modifies the HTML.  This tutorial shows bits and snippets of HTML, with
+some commentary to help understand the examples, but in general we assume familiarity
+with HTML, JavaScript, and constructing web pages.
 </li>
 
-<li>The <i>view-model</i> is responsible for managing your interface.  That means
-supplying any data which is to be presented by the view, as well as
-responding to things the user does.  The whole purpose of HotDrink is to be
-a view-model: updating the dataflow in response to what the user does, and
-updating variables in response to the dataflow.  The only thing that you,
-the programmer, need to do for the view-model is write JavaScript code to
-describe the constraint system for your interface.  We'll show you how to do
-that below.
+<li>The <i>view-model</i> is responsible for managing the data presented in
+the view. This means supplying the data to the view to be displayed,
+as well as responding to user actions.  The purpose of
+HotDrink is to help in implementing the view-model.
 </li>
 
-<li>Another important part of an MVVM application is <i>binding</i>.  Binding is the
-process of connecting elements of the view with data in the view-model.
-Binding is sometimes treated as part of the view &#x2014; that's why there's no
-"B" in "MVVM" &#x2014; but we treat it as its own part of the application.  With
-HotDrink, you can bind manually using JavaScript, or you can bind
-automatically by making annotations in your HTML.  We'll show you both
-techniques below.
+<li>Another important part of an MVVM application are the <i>bindings</i>.  A
+binding connects elements in the view with variables in the
+view-model.  The bindings are sometimes treated as part of the
+view&#x2014;that is why there is no "B" in "MVVM"&#x2014;but we treat them as
+a distinct component of the pattern.  In HotDrink, bindings can be
+specified in JavaScript, or as annotations in HTML as part of the
+view specification.
 </li>
 
-<li>The <i>model</i> is basically responsible for everything else: whatever it is
-your application is actually supposed to <i>do</i>.  Your model does not need to
-know anything about the user interface, it just needs to know how to go
-about the business of whatever your application is for in the first place.
-Generally your model will be code that runs on the server in response to
-requests made by the user.  How you write that code is up to you; we're
-going to ignore the model and focus here on the interface.
+<li>The <i>model</i> is responsible for everything else&#x2014;whatever the
+application is actually supposed to <i>do</i>.  The model does not need to
+be aware of the user interface; therefore we will not discuss it further in
+this documentation.
 </li>
 </ul>
 </div>
@@ -307,14 +309,18 @@ going to ignore the model and focus here on the interface.
 <h2 id="sec-2"><span class="section-number-2">2</span> Including HotDrink in your web page</h2>
 <div class="outline-text-2" id="text-2">
 <p>
-To use HotDrink, all you need is the file <a href="hotdrink.min.js"><code>hotdrink.min.js</code></a> that came with
-this tutorial.  Alternatively, if you downloaded the source tree, follow the
-build instructions to compile your own <code>hotdrink.min.js</code>.
+To use HotDrink, include the file <a href="hotdrink.min.js"><code>hotdrink.min.js</code></a> that came with
+this tutorial.  Alternatively, if you downloaded the source tree,
+follow the build instructions to compile your own <code>hotdrink.min.js</code>.
 </p>
 
 <p>
-To add the HotDrink library to your web page, add the following <code>&lt;script&gt;</code>
-tag to the <code>&lt;head&gt;</code> section of your HTML.
+More specifically, that means adding the following <code>&lt;script&gt;</code> tag to
+the <code>&lt;head&gt;</code> section
+of your HTML, with the appropriate path in the <code>src</code> attribute.  In
+order for the examples in this tutorial to work, the file
+<code>hotdrink.min.js</code> must be located in the same directory as this HTML
+file.
 </p>
 
 <div class="org-src-container">
@@ -324,18 +330,11 @@ tag to the <code>&lt;head&gt;</code> section of your HTML.
 </div>
 
 <p>
-Make sure the <code>src</code> attribute contains the correct path to your
-<code>hotdrink.min.js</code> file.  Note that, in order for the examples in this
-tutorial to work, the file <code>hotdrink.min.js</code> must be located in the same
-directory as this HTML file.
-</p>
-
-<p>
-HotDrink itself does not rely on any other JavaScript frameworks.  However, it
-should be compatible with any other frameworks you wish to use (JQuery, Dojo,
-MooTools, etc.).  The only global symbol it exports is <code>hd</code>, and all of its
-interactions with the DOM are via cooperative API functions,
-e.g. <a href="https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.addEventListener"><code>addEventListener</code></a>, etc.
+HotDrink does not rely on any other JavaScript frameworks, but neither should it
+conflict with other frameworks (JQuery, Dojo, MooTools, etc.).
+The only global symbol it exports is <code>hd</code>, and all of its interactions
+with the DOM are via cooperative API functions, e.g.,
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.addEventListener"><code>addEventListener</code></a>, etc.
 </p>
 </div>
 </div>
@@ -353,13 +352,15 @@ using HotDrink.
 <h3 id="sec-3-1"><span class="section-number-3">3.1</span> The model</h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
-The model is HotDrink's representation of the data in your interface.  It
-consists of variables, which hold data, and constraints, which define how
-those variables are related.  The model also serves as a naming mechanism,
-allowing you to easily access variables you have created.  When you create
-a variable, you give it a name; that variable is then stored as a property of
-the model under that name.  So, for example, if create a variable named <code>x</code>,
-that variable can be accessed as <code>model.x</code>.
+The model is HotDrink's representation of the data in your
+interface. Though we have named it the model, it is really the
+view-model of the MVVM pattern.  As described above, it consists of
+variables that hold data, and constraints that define how those
+variables are related.  The model also serves as a naming mechanism for
+variables: when a variable is created, it is given a name, and stored
+as a property of the model under that name.
+For example, when defining the model <code>model</code>,
+a variable created with the name <code>x</code> is accessible as <code>model.x</code>.
 </p>
 </div>
 </div>
@@ -368,18 +369,16 @@ that variable can be accessed as <code>model.x</code>.
 <h3 id="sec-3-2"><span class="section-number-3">3.2</span> The model builder</h3>
 <div class="outline-text-3" id="text-3-2">
 <p>
-Building a model is a very detail-oriented task.  To make it more accessible,
-HotDrink contains a special object called the <i>model builder</i>, or sometimes
-simply <i>builder</i>, whose only purpose is to help you create a model.
+The task of building a model is rather complex, involving calls to multiple
+functions with long signatures.  To help in constructing models, HotDrink
+contains an object called the <i>model builder</i>.  The model builder
+essentially defines its own language (i.e., an <i>embedded domain-specific language</i>)
+for constructing constraint systems.  To use
+the language, create a new model builder instance, then call its
+various member functions to add elements to the model. These member
+functions are described in detail in <a href="basics.html">Basic HotDrink Usage</a>. The
+<code>end</code> member function retrieves the constructed model.
 </p>
-
-<p>
-To use a model builder, simply create a new instance, then use its various
-member functions to add elements to the model.  (These member functions are
-described in detail in <a href="basics.html">Basic HotDrink Usage</a>.)  Use the <code>result</code> member
-function to retrieve the constructed model.
-</p>
-
 <div class="org-src-container">
 
 <pre class="src src-js"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">builder</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>();
@@ -397,18 +396,14 @@ function to retrieve the constructed model.
 <h3 id="sec-3-3"><span class="section-number-3">3.3</span> The constraint system</h3>
 <div class="outline-text-3" id="text-3-3">
 <p>
-As we said in section <a href="#sec-1-1">1.1</a>, the heart of HotDrink is a
-constraint system.  The job of the constraint system is to enforce the
-constraints you defined when building the model.  However, note that a
-constraint system is separate from the model.  You can have a model without a
-constraint system; that simply means that no one is enforcing your constraints
-for you.  Or you may have multiple constraint systems and choose which one you
-want to add your model to.
+As explained in Section <a href="#sec-1-1">1.1</a>, the heart of HotDrink is a
+constraint system.  The task of the constraint system is to enforce the
+constraints of the model.  However, the two are separate entities.
+A model can exist without a constraint system; that simply means that no one is enforcing its constraints.
 </p>
 
 <p>
-To use a constraint system, simply create a new instance, then register your
-model.
+To use a constraint system, create a new instance, then register a model with a constraint system.
 </p>
 
 <div class="org-src-container">
@@ -420,8 +415,7 @@ system.addComponent( model );
 </div>
 
 <p>
-If you later decide to remove the model from the constraint system, you may do
-so as follows.
+A model added to a constraint system can be later removed, if needed:
 </p>
 
 <div class="org-src-container">
@@ -433,15 +427,15 @@ so as follows.
 <p>
 As those function names suggest, the full model for your application can
 actually consist of several different components, and new components can be
-added or removed at run-time.  For right now, however, we will assume there is
-only a single model component and treat it as the entire model.
+added or removed at run-time.  For now we assume one component only and
+consider it as the entire model.
 </p>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2015-03-06 Fri 16:42</p>
+<p class="date">Created: 2015-03-18 Wed 14:20</p>
 <p class="validation"></p>
 </div>
 </body>

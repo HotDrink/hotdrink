@@ -140,7 +140,7 @@ any objects as long as they follow HotDrink's protocol for passing values
 between objects.  (We discuss this in much more detail in the [[file:program.org][Programming
 Guide]].)  Typically, the /model/ object will be a variable in the model, and
 the /view/ object will represent some element in the web page.  We refer to
-these view objects as /view adapters/ because they translate the various
+the view objects as /view adapters/ because they translate the various
 interfaces of different DOM elements into the standard interface used by
 HotDrink.
 

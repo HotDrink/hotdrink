@@ -17,13 +17,14 @@ module hd.system {
 
   import u = hd.utility;
   import r = hd.reactive;
+  import g = hd.graph;
   import m = hd.model;
   import e = hd.enable;
 
   /*==================================================================
    * Execute a single method.
    */
-  export function execute( mm: m.Method, enable: e.EnablementManager ) {
+  export function execute( mm: m.Method, graph: g.SolutionGraph, enable: e.EnablementManager ) {
 
     var params: any[] = [];
     var paramLookup: u.Dictionary<r.Promise<any>> = {};
@@ -37,6 +38,13 @@ module hd.system {
         var pvid = (<m.Variable>inputs[i]).id;
         // Make sure we've got a promise in the lookup
         if (! paramLookup[pvid]) {
+
+          var varDependencies = new g.DigraphWalker( sgraph )
+                .nodesUpstreamSameType( pvid );
+          var dependencies = varDependencies.map( function( vid: string ) {
+            return
+
+
           var oldp = (<m.Variable>inputs[i]).getPromise();
           var param = new r.Promise();
           if (r.plogger) {

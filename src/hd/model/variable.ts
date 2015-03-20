@@ -120,6 +120,17 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
+     * Get a promise to be forwarded with the current variable value.
+     */
+    getForwardedPromise( dependencies: u.ArraySet<r.Promise<any>> ): r.Promise<any> {
+      var p = this.ladder.getForwardedPromise( dependencies );
+      if (r.plogger) {
+        r.plogger.register( p, this.name, 'input parameter' );
+      }
+      return p;
+    }
+
+    /*----------------------------------------------------------------
      * Observer: subscribing to a variable == subscribing to its value
      */
     addObserver() {
@@ -141,7 +152,7 @@ module hd.model {
      * Observable: widget produces a value
      */
     onNext( value: any ): void {
-      if (this.ladder.isCurrent() && this.value.hasValue( value )) {
+      if (this.ladder.isSettled() && this.value.hasValue( value )) {
         this.changes.sendNext( {type: VariableEventType.touched, vv: this} );
       }
       else {

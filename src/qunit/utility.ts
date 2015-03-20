@@ -109,6 +109,14 @@ module hd.qunit {
     deepEqual( aset.clone( xs ), xs, "clone makes copy" );
 
     xs = [2, 4, 6];
+    ok( aset.areEqual( xs, [6, 2, 4] ), "set equal" );
+    ok( ! aset.areEqual( xs, [2, 4] ), "set not equal" );
+    ok( ! aset.areEqual( xs, [2, 4, 6, 8] ), "set not equal" );
+    ok( ! aset.areEqual( xs, [6, 2, 6] ), "set not equal" );
+    ok( aset.areDisjoint( xs, [3, 5, 7] ), "set disjoint" );
+    ok( ! aset.areDisjoint( xs, [6, 8] ), "set not disjoint" );
+    ok( ! aset.areDisjoint( xs, [3, 5, 7, 2] ), "set not disjoint" );
+
     var ys: u.ArraySet<number> = [4, 6, 8];
 
     deepEqual( aset.union( xs, ys ), [2, 4, 6, 8], "set union" );

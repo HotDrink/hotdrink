@@ -7,43 +7,6 @@ module hd.reactive {
   import u = hd.utility;
 
   /*==================================================================
-   * Used to assign blame for failure to original source
-   */
-  export
-  class Blame {
-    promises: Promise<any>[];
-
-    constructor( ...ps: (Promise<any>|Blame)[] );
-    constructor( ps: (Promise<any>|Blame)[] );
-    constructor() {
-      var init: (Promise<any>|Blame)[];
-      if (Array.isArray( arguments[0] )) {
-        init = arguments[0];
-      }
-      else {
-        init = <any>arguments;
-      }
-      this.promises = [];
-      for (var i = 0, l = init.length; i < l; ++i) {
-        if (init[i] instanceof Blame) {
-          this.promises.push.apply( this.promises, (<Blame>init[i]).promises );
-        }
-        else {
-          this.promises.push( <Promise<any>>init[i] );
-        }
-      }
-    }
-  }
-
-  /*==================================================================
-   * Record type used to keep track of a forwarded promise
-   */
-  interface Forward<T> {
-    promise: Promise<T>;
-    dependencies: u.ArraySet<Promise<any>>;
-  }
-
-  /*==================================================================
    * Everything to remember about one promise
    */
   interface LadderEntry<T> {
@@ -51,8 +14,7 @@ module hd.reactive {
     state: string;
     value?: T;
     reason?: any;
-    blame?: Blame;
-    forwards?: Foward<T>[];
+    forwards?: Promise<T>[];
   }
 
   /*==================================================================
@@ -61,59 +23,59 @@ module hd.reactive {
    * have fulfilled.  So, once a promise is fulfilled, any older
    * promises are dropped.
    *
-   * Invariant:  entries[0].state == 'fulfilled'
+   * Invariant:  entries[0].state == 'fulfilled' || entries[0].state == 'rejected'
    */
   export
   class PromiseLadder<T> extends BasicObservable<T> {
 
     private
-    entries: LadderEntry<T>;
+    entries: LadderEntry<T>[];
 
     /*----------------------------------------------------------------
      * Initialize
      */
-    constructor( init: T ) {
+    constructor() {
       super();
-      this.entries = [{promise: new Promise( init ),
+      this.entries = [{promise: new Promise<T>( undefined ),
                        state: 'fulfilled',
-                       value: init
+                       value: undefined
                       }
                      ];
     }
 
     /*----------------------------------------------------------------
-     * Is there any possibility the value will change?
+     * Is there any possibility the value will change (assuming no
+     * further promises are added)?
      */
     isSettled() {
       var i = this.entries.length - 1;
       while (this.entries[i].state === 'failed') {
         --i;
       }
-      return this.promises[i].state !== 'pending';
+      return this.entries[i].state !== 'pending';
     }
 
     /*----------------------------------------------------------------
      * Get the most recent promise on the ladder.
      */
     getCurrentPromise() {
-      return this.promises[this.promises.length - 1];
+      return this.entries[this.entries.length - 1].promise;
     }
 
     /*----------------------------------------------------------------
      * Get a promise forwarded from most recent promise
      */
-    getForwardedPromise( dependencies?: u.ArraySet<Promise<any>> ) {
-      var last = this.promises.length - 1;
-      var promise = new Promise<T>();
-      var forward: Forward<T> = {promise: promise, dependencies: dependencies};
+    getForwardedPromise() {
+      var last = this.entries.length - 1;
+      var forward = new Promise<T>();
 
       // Try to forward
       if (! this.tryToForward( forward, last )) {
-        promise.ondropped.addObserver( this,
+        forward.ondropped.addObserver( this,
                                        this.onForwardDropped,
                                        null,
                                        null,
-                                       this.promises[last]
+                                       this.entries[last].promise
                                      );
         // If fails, add to forward list
         if (! this.entries[last].forwards) {
@@ -124,7 +86,38 @@ module hd.reactive {
         }
       }
 
-      return promise;
+      return forward;
+    }
+
+    /*----------------------------------------------------------------
+     */
+    private
+    findPromiseIndex( p: Promise<T> ): number {
+      for (var i = 0, l = this.entries.length; i < l; ++i) {
+        if (this.entries[i].promise === p) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    /*----------------------------------------------------------------
+     * Find most recent entry to produce results.
+     * "Results" means either fulfilled, rejected, or pending with a
+     * notification.
+     */
+    private
+    getMostRecent(): number {
+      for (var i = this.entries.length - 1; i >= 0; --i) {
+        var entry = this.entries[i];
+        var state = entry.state;
+        if (state === 'fulfilled' ||
+            state === 'rejected' ||
+            (state === 'pending' && 'value' in entry)) {
+          break;
+        }
+      }
+      return i;
     }
 
     /*----------------------------------------------------------------
@@ -137,7 +130,7 @@ module hd.reactive {
       }
 
       // Add promise
-      this.promises.push( promise );
+      this.entries.push( {promise: promise, state: 'pending'} );
 
       // Subscribe
       promise.addDependency( this,
@@ -156,16 +149,9 @@ module hd.reactive {
       var i = this.findPromiseIndex( promise );
       if (i >= 0) {
         this.entries[i].state = 'fulfilled';
-        this.entries[k].value = value;
+        this.entries[i].value = value;
 
-        // Try to find a more recent valued promise
-        var j = i + 1, l = this.promises.length;
-        while (j < l && (this.entries[j].state === 'pending' ||
-                         this.entries[j].state === 'failed')   ) {
-          ++j;
-        }
-        if (j == l) {
-          // If none found, then this is the new ladder value
+        if (this.getMostRecent() == i) {
           this.sendNext( value );
         }
 
@@ -178,48 +164,56 @@ module hd.reactive {
      */
     private
     onPromiseRejected( reason: any, promise: Promise<T> ) {
-      var i = this.findPromiseIndex( promise );
-      if (i >= 0) {
-        if (reason instanceof Blame) {
+      var i = this.findPromiseIndex( promise );      if (i >= 0) {
+        // Special case:  if this promise produced a pending value for the ladder,
+        //                then failed, we must reproduce the most recent answer
+        var letOlderAnswerPassThrough =
+              (reason === undefined || reason === null) &&
+              ('value' in this.entries[i]);
+
+        if (reason === null || reason === undefined) {
           this.entries[i].state = 'failed';
-          this.entries[i].blame = reason;
         }
         else {
           this.entries[i].state = 'rejected';
           this.entries[i].reason = reason;
         }
 
-        // Try to find a more recent valued promise
-        var j = i + 1, l = this.promises.length;
-        while (j < l && (this.entries[j].state === 'failed' ||
-                         this.entries[j].state === 'pending'  )   ) {
-          ++j;
-        }
-        if (j == l) {
-          // If none found, then this is the new ladder value
+        var mostRecent = this.getMostRecent();
+        if (mostRecent == i) {
           this.sendError( reason );
+        }
+        else if (letOlderAnswerPassThrough && mostRecent < i) {
+          var allFailed = true;
+          for (var j = i - 1; j > mostRecent; --j) {
+            if (this.entries[j].state !== 'failed') {
+              allFailed = false;
+            }
+          }
+          if (allFailed) {
+            var entry = this.entries[mostRecent];
+            if (entry.state === 'rejected') {
+              this.sendNext( entry.reason );
+            }
+            else {
+              this.sendNext( entry.value );
+            }
+          }
         }
         this.updateForwardsStartingFrom( i );
       }
     }
 
     /*----------------------------------------------------------------
-     * Same as onPromiseFulfilled except no change to state
+     * Do work for promise notification
      */
     private
     onPromiseProgress( value: T, promise: Promise<T> ) {
       var i = this.findPromiseIndex( promise );
       if (i >= 0) {
-        this.entries[k].value = value;
+        this.entries[i].value = value;
 
-        // Try to find a more recent valued promise
-        var j = i + 1, l = this.promises.length;
-        while (j < l && (this.entries[j].state === 'pending' ||
-                         this.entries[j].state === 'failed')   ) {
-          ++j;
-        }
-        if (j == l) {
-          // If none found, then this is the new ladder value
+        if (this.getMostRecent() == i) {
           this.sendNext( value );
         }
 
@@ -231,11 +225,11 @@ module hd.reactive {
      * Forwarded promise no longer needed
      */
     private
-    onForwardDropped( forwardedPromise: Promise<T>, promise: Promise<T> ) {
+    onForwardDropped( forward: Promise<T>, promise: Promise<T> ) {
       var i = this.findPromiseIndex( promise );
-      var forwards;
-      if (i >= 0 && (forwards = this.entries[i].forwards)) {
-        var j = forwards.indexOf( forwardedPromise );
+      var forwards = this.entries[i].forwards;
+      if (i >= 0 && forwards) {
+        var j = forwards.indexOf( forward );
         if (j >= 0) {
           if (forwards.length == 1) {
             this.entries[i].forwards = undefined;
@@ -277,14 +271,14 @@ module hd.reactive {
       var forwards = this.entries[target].forwards;
 
       if (forwards) {
-        var remaining: Forward<T>[] = [];
+        var remaining: Promise<T>[] = [];
         for (var i = 0, l = forwards.length; i < l; ++i) {
           if (! this.tryToForward( forwards[i], start )) {
             remaining.push( forwards[i] );
           }
         }
 
-        this.forwardLists[listNum] = remaining.length == 0 ? undefined : remaining;
+        this.entries[target].forwards = remaining.length == 0 ? undefined : remaining;
       }
     }
 
@@ -293,33 +287,25 @@ module hd.reactive {
      * forward was settled.
      */
     private
-    tryToForward( forward: Forward<T>, i: number ): boolean {
+    tryToForward( forward: Promise<T>, i: number ): boolean {
       var entry = this.entries[i];
 
       if (entry.state === 'fulfilled') {
-        forward.promise.resolve( entry.value );
+        forward.resolve( entry.value );
         return true;
       }
 
-      if (entries.state === 'rejected') {
-        forward.promise.reject( entry.reason );
+      if (entry.state === 'rejected') {
+        forward.reject( entry.reason );
         return true;
       }
 
-      if (entries.state === 'failed') {
-        var rejectedDependencies =
-              u.arraySet.intersect( entries.blame.promises, forward.dependencies );
-        if (rejectedDependencies.length > 0) {
-          forward.promise.reject( new Blame( rejectedDependencies ) );
-          return true;
-        }
-        else {
-          return this.tryToForward( forward, i - 1 );
-        }
+      if (entry.state === 'failed') {
+        return this.tryToForward( forward, i - 1 );
       }
 
-      if (entries.state === 'pending' && 'value' in status) {
-        forward.promise.notify( status.value );
+      if (entry.state === 'pending' && 'value' in entry) {
+        forward.notify( entry.value );
       }
       return false;
     }
@@ -330,34 +316,37 @@ module hd.reactive {
      */
     private
     dropUnneededPromises() {
-      // The bottom of the list must always be a fulfilled promise,
-      //   so keep track of the last one we encounter
-      var last = 0;
-      var i = 1, l = this.promises.length;
-      while (i < l && (! this.promises[i].isPending() || ! this.forwardLists[i])) {
-        if (this.promises[i].isFulfilled()) {
-          last = i;
+      var last = this.entries.length - 1;
+      var removeAnswered = false;
+      var removePending = false;
+      for (var i = last; i >= 0; --i) {
+        var entry = this.entries[i];
+        var state = entry.state;
+        if (state === 'fulfilled' || state === 'rejected') {
+          if (removeAnswered) {
+            this.entries.splice( i, 1 );
+          }
+          removeAnswered = true;
+          removePending = true;
         }
-        ++i;
-      }
-
-      // See if there are promises to be dropped
-      if (last > 0) {
-        // Unsubscribe from any we may still be subscribed to
-        for (var j = 0; j < last; ++j) {
-          var p = this.promises[j];
-          if (p.isPending()) {
-            p.ondropped.removeObserver( this );
-            p.removeDependency( this );
+        else {
+          if (entry.forwards) {
+            removeAnswered = false;
+          }
+          else if (state === 'failed') {
+            if (i != last) {
+              this.entries.splice( i, 1 );
+            }
+          }
+          else if (state === 'pending') {
+            if (removePending) {
+              this.entries.splice( i, 1 );
+            }
           }
         }
-        // And drop them
-        this.promises.splice( 0, last );
-        this.forwardLists.splice( 0, last );
       }
     }
 
   }
 
-  (<any>PromiseLadder.prototype).onPromiseProgress = (<any>PromiseLadder.prototype).onPromiseFulfilled;
 }

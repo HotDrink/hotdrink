@@ -5,6 +5,16 @@
  *   3. Run the planner to get a new solution graph
  *   4. Run the evaluator to produce new values
  */
+module hd.config {
+  export
+  var defaultPlannerType: hd.plan.PlannerType = hd.plan.QuickPlanner;
+
+  export
+  enum Forward { never, onSelfLoopFailure, onAllFailure }
+
+  export
+  var forwardingPolicy = Forward.never;
+}
 
 module hd.system {
 
@@ -14,14 +24,10 @@ module hd.system {
   import g = hd.graph;
   import p = hd.plan;
   import e = hd.enable;
+  import c = hd.config;
 
   // scheduling priority for responding to state changes
   export var SystemUpdatePriority = 1;
-
-  /*==================================================================
-   * Planner type to be used if no planner is set explicitly
-   */
-  export var defaultPlannerType = p.QuickPlanner;
 
   /*==================================================================
    * Update strategies
@@ -48,7 +54,7 @@ module hd.system {
     private planner: p.Planner;
     getPlanner() {
       if (! this.planner) {
-        this.planner = new defaultPlannerType( this.cgraph );
+        this.planner = new c.defaultPlannerType( this.cgraph );
       }
       return this.planner;
     }
@@ -81,7 +87,7 @@ module hd.system {
     /*----------------------------------------------------------------
      * Initialize members
      */
-    constructor( plannerT: p.PlannerType = defaultPlannerType,
+    constructor( plannerT: p.PlannerType = c.defaultPlannerType,
                  cgraphT: g.ConstraintGraphType = g.CachingConstraintGraph ) {
       this.cgraph = new cgraphT();
       if (plannerT) {
@@ -227,7 +233,7 @@ module hd.system {
         this.cgraph.addMethod( stayMethodId, stayConstraintId, [], [vv.id] );
 
         // Set stay to optional
-        if (vv.value.get() === undefined) {
+        if (! vv.pending.get() && vv.value.get() === undefined) {
           this.getPlanner().setMinStrength( stayConstraintId );
         }
         else {
@@ -474,60 +480,60 @@ module hd.system {
 
           // Make sure we've got a promise in the lookup
           if (! paramLookup[pvid]) {
-            var vidDependencies = new g.DigraphWalker( this.sgraph.graph )
-                  .nodesUpstreamSameType( pvid );
-            var dependencies = vidDependencies.map( function( vid: string ) {
-              return this.variables[vid].getPromise();
-            }, this );
-
-            var param = (<m.Variable>inputs[i]).getForwardedPromise( dependencies );
+            var param: r.Promise<any>;
+            if (c.forwardingPolicy === c.Forward.never) {
+              param = (<m.Variable>inputs[i]).getCurrentPromise();
+            }
+            else {
+              param = (<m.Variable>inputs[i]).getForwardedPromise();
+            }
             paramLookup[pvid] = param;
-        }
-        params.push( paramLookup[pvid] );
-      }
-      else {
-        // If it's a constant, we create a satisfied promise
-        var p = new r.Promise( inputs[i] );
-        if (r.plogger) {
-          r.plogger.register( p, inputs[i], 'constant parameter' );
-        }
-        params.push( p );
-      }
-    }
-
-    try {
-      // Invoke the method
-      var result = mm.fn.apply( null, params );
-
-      // Ensure result is an array
-      if (mm.outputs.length == 1) {
-        result = [result];
-      }
-      else if (! Array.isArray( result )) {
-        throw new TypeError( 'Multi-output method did not return array' );
-      }
-      else {
-        result = result.slice( 0 );
-      }
-
-      // Set output promises
-      var outputs = mm.outputs;
-      for (var i = 0, l = outputs.length; i < l; ++i) {
-        // An output is either a variable or null
-        if (outputs[i] instanceof m.Variable) {
-          if (r.plogger) {
-            r.plogger.register( result[i], (<m.Variable>outputs[i]).name, 'output parameter' );
           }
-          (<m.Variable>outputs[i]).makePromise( result[i] );
+          params.push( paramLookup[pvid] );
+        }
+        else {
+          // If it's a constant, we create a satisfied promise
+          var p = new r.Promise( inputs[i] );
+          if (r.plogger) {
+            r.plogger.register( p, inputs[i], 'constant parameter' );
+          }
+          params.push( p );
         }
       }
 
-      this.enable.methodScheduled( mm.id, paramLookup, result );
-    }
-    catch (e) {
-      // TODO: Figure out what this means
-      console.error( e );
-    }
+      try {
+        // Invoke the method
+        var result = mm.fn.apply( null, params );
+
+        // Ensure result is an array
+        if (mm.outputs.length == 1) {
+          result = [result];
+        }
+        else if (! Array.isArray( result )) {
+          throw new TypeError( 'Multi-output method did not return array' );
+        }
+        else {
+          result = result.slice( 0 );
+        }
+
+        // Set output promises
+        var outputs = mm.outputs;
+        for (var i = 0, l = outputs.length; i < l; ++i) {
+          // An output is either a variable or null
+          if (outputs[i] instanceof m.Variable) {
+            if (r.plogger) {
+              r.plogger.register( result[i], (<m.Variable>outputs[i]).name, 'output parameter' );
+            }
+            (<m.Variable>outputs[i]).makePromise( result[i] );
+          }
+        }
+
+        this.enable.methodScheduled( mm.id, paramLookup, result );
+      }
+      catch (e) {
+        // TODO: Figure out what this means
+        console.error( e );
+      }
     }
 
     /*----------------------------------------------------------------

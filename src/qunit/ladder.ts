@@ -34,9 +34,7 @@ module hd.qunit {
   }
 
   class ObservableTest {
-    constructor( public expected: any[],
-                 public nextEq?: u.EqualityPredicate<any>,
-                 public errorEq: u.EqualityPredicate<any> = blameEqual ) { }
+    constructor( public expected: any[] ) { }
 
     onNext( value: any ) {
       var received = new Result( E.next, value );
@@ -49,12 +47,7 @@ module hd.qunit {
           ok( false, "received " + received + " when expecting " + expecting );
         }
         else {
-          if (this.nextEq) {
-            ok( this.nextEq( value, expecting.value ), "next received expected value" );
-          }
-          else {
-            equal( value, expecting.value, "next received expected value" );
-          }
+          equal( value, expecting.value, "next received expected value " + value );
         }
       }
     }
@@ -70,12 +63,7 @@ module hd.qunit {
           ok( false, "received " + received + " when expecting " + expecting );
         }
         else {
-          if (this.errorEq) {
-            ok( this.errorEq( error, expecting.error ), "error received expected value" );
-          }
-          else {
-            equal( error, expecting.error, "next received expected value" );
-          }
+          equal( error, expecting.error, "next received expected error " + error );
         }
       }
     }
@@ -91,112 +79,175 @@ module hd.qunit {
     }
   }
 
-  function blameEqual( b1: r.Blame, b2: r.Blame ): boolean {
-    if (! (b1 instanceof r.Blame) ||
-        ! (b2 instanceof r.Blame)   ) {
-      return b1 == b2;
-    }
-    return (u.arraySet.areEqual( b1.promises, b2.promises ));
+  function makeForwardTest( ladder: r.PromiseLadder<string>, results: [Result] ) {
+    var p = new r.Promise<string>();
+    ladder.addPromise( p );
+    ladder.getForwardedPromise().addObserver( new ObservableTest( results ) );
+    return p;
   }
 
   asyncTest( "promise ladder", function() {
 
-    expect( 32 );
+    expect( 54 );
 
-    var ladder = new r.PromiseLadder<number>( 4 );
-    ok( ladder.isSettled(), "Ladder created with fulfilled prmoise" );
+    var ladder = new r.PromiseLadder<string>();
+    ok( ladder.isSettled(), "Ladder created with fulfilled promise" );
 
-    var b = {
-      a: new r.Promise<number>(),
-      b: new r.Promise<number>(),
-      c: new r.Promise<number>()
-    };
+    var ps: r.Promise<string>[] = [];
 
-    var ps: r.Promise<number>[] = [];
+    /* For testing, we add fourteen promises to the ladder.  This table shows a
+     * timeline for how those promises are resolved, as well as the expected
+     * output for a promise forwarded from each of these, and the expected
+     * output for the ladder as a whole.
+     *
+     * X = failed, XX = rejected
+     * ========================================================================================================|  => A, XX, C, D, F, I, H
+     * 14: |    |    |    |    |    |    |    |    |    |    |    |    |    |    | X  |    |    |    |    |    |  => F, I, H
+     * 13: |    |    |    |    |    |    |    |    |    |    |    | F* |    |    |    |    |    | X  |    |    |  => F, I, H
+     * 12: |    |    |    |    |    |    |    |    | D* |    |    |    |    | G* |    |    | I* |    |    | X  |  => D, G, I, H
+     * 11: |    |    |    |    |    |    |    | C* |    |    |    |    |    |    |    | H  |    |    |    |    |  => C, H
+     * 10: |    |    |    |    |    |    |    |    |    |    | E  |    |    |    |    |    |    |    |    |    |  => E
+     *  9: |    |    |    |    |    |    | X  |    |    |    |    |    |    |    |    |    |    |    |    |    |  => XX
+     *  8: |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    | X  |    |  => XX
+     *  7: |    |    |    |    |    |    |    |    |    |    |    |    | X  |    |    |    |    |    |    |    |  => XX
+     *  6: |    |    |    |    |    | XX |    |    |    |    |    |    |    |    |    |    |    |    |    |    |  => XX
+     *  5: |    |    |    |    | X  |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |  => A
+     *  4: |    |    |    |    |    |    |    |    |    | X  |    |    |    |    |    |    |    |    |    |    |  => A
+     *  3: |    |    | X  |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |  => A
+     *  2: | X  |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |  => A
+     *  1: |    | A  |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |  => A
+     *  0: |    |    |    | B  |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |  => B
+     */
 
-    ps[0] = new r.Promise<number>();
-    ladder.addPromise( ps[0] );
-    strictEqual( ladder.currentPromise(), ps[0], "Promise added to ladder" );
-    var f = ladder.getForwardedPromise( [b.a, b.b] );
-    f.addObserver( new ObservableTest( [{event: E.next, value: 8},
-                                        {event: E.completed}
-                                       ]
-                                     )
-                 );
 
-    ps[1] = new r.Promise<number>();
-    ladder.addPromise( ps[1] );
-    f = ladder.getForwardedPromise( [b.a, b.b] );
-    f.addObserver( new ObservableTest( [{event: E.next, value: 6},
-                                        {event: E.next, value: 7},
-                                        {event: E.next, value: 8},
-                                        {event: E.completed}
-                                       ]
-                                     )
-                 );
-    f = ladder.getForwardedPromise( [b.a, b.c] );
-    f.addObserver( new ObservableTest( [{event: E.next, value: 6},
-                                        {event: E.next, value: 7},
-                                        {event: E.error, error: new r.Blame( b.c )},
-                                        {event: E.completed}
-                                       ]
-                                     )
-                 );
+    ps[0] = makeForwardTest( ladder, [new Result( E.next, "B" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+    strictEqual( ladder.getCurrentPromise(), ps[0], "Promise added to ladder" );
 
-    ps[2] = new r.Promise<number>();
-    ladder.addPromise( ps[2] );
-    strictEqual( ladder.currentPromise(), ps[2], "Promise added to ladder" );
-    f = ladder.getForwardedPromise( [b.c] );
-    f.addObserver( new ObservableTest( [{event: E.next, value: 5},
-                                        {event: E.next, value: 6},
-                                        {event: E.next, value: 7},
-                                        {event: E.error, error: new r.Blame( b.c )},
-                                        {event: E.completed}
-                                       ]
-                                     )
-                 );
-    f = ladder.getForwardedPromise( [b.b] );
-    f.addObserver( new ObservableTest( [{event: E.next, value: 5},
-                                        {event: E.error, error: new r.Blame( b.b )},
-                                        {event: E.completed}
-                                       ]
-                                     )
-                 );
+    ps[1] = makeForwardTest( ladder, [new Result( E.next, "A" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+    strictEqual( ladder.getCurrentPromise(), ps[1], "Promise added to ladder" );
 
-    ps[3] = new r.Promise<number>();
-    ladder.addPromise( ps[3] );
-    f = ladder.getForwardedPromise( [b.a] );
-    f.addObserver( new ObservableTest( [{event: E.error, error: new r.Blame( b.a )},
-                                        {event: E.completed}
-                                       ]
-                                     )
-                 );
-    f = ladder.getForwardedPromise( [] );
-    f.addObserver( new ObservableTest( [{event: E.next, value: 5},
-                                        {event: E.next, value: 6},
-                                        {event: E.next, value: 7},
-                                        {event: E.next, value: 8},
-                                        {event: E.completed}
-                                       ]
-                                     )
-                 );
+    ps[2] = makeForwardTest( ladder, [new Result( E.next, "A" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+
+    ps[3] = makeForwardTest( ladder, [new Result( E.next, "A" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+
+    ps[4] = makeForwardTest( ladder, [new Result( E.next, "A" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+
+    ps[5] = makeForwardTest( ladder, [new Result( E.next, "A" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+    strictEqual( ladder.getCurrentPromise(), ps[5], "Promise added to ladder" );
+
+    ps[6] = makeForwardTest( ladder, [new Result( E.error, "BAD" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+
+    ps[7] = makeForwardTest( ladder, [new Result( E.error, "BAD" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+
+    ps[8] = makeForwardTest( ladder, [new Result( E.error, "BAD" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+
+    ps[9] = makeForwardTest( ladder, [new Result( E.error, "BAD" ),
+                                      new Result( E.completed )
+                                     ]
+                           );
+
+    ps[10] = makeForwardTest( ladder, [new Result( E.next, "E" ),
+                                       new Result( E.completed )
+                                      ]
+                            );
+    strictEqual( ladder.getCurrentPromise(), ps[10], "Promise added to ladder" );
+
+    ps[11] = makeForwardTest( ladder, [new Result( E.next, "C" ),
+                                       new Result( E.next, "H" ),
+                                       new Result( E.completed )
+                                      ]
+                            );
+
+    ps[12] = makeForwardTest( ladder, [new Result( E.next, "D" ),
+                                       new Result( E.next, "G" ),
+                                       new Result( E.next, "I" ),
+                                       new Result( E.next, "H" ),
+                                       new Result( E.completed )
+                                      ]
+                            );
+
+    ps[13] = makeForwardTest( ladder, [new Result( E.next, "F" ),
+                                       new Result( E.next, "I" ),
+                                       new Result( E.next, "H" ),
+                                       new Result( E.completed )
+                                      ]
+                            );
+
+    ps[14] = makeForwardTest( ladder, [new Result( E.next, "F" ),
+                                       new Result( E.next, "I" ),
+                                       new Result( E.next, "H" ),
+                                       new Result( E.completed )
+                                      ]
+                            );
+    strictEqual( ladder.getCurrentPromise(), ps[14], "Promise added to ladder" );
 
     ok( ! ladder.isSettled(), "Ladder has pending promises" );
 
-    ladder.addObserver( new ObservableTest( [{event: E.next, value: 5},
-                                             {event: E.next, value: 7},
-                                             {event: E.next, value: 8}
+    ladder.addObserver( new ObservableTest( [new Result( E.next, "A" ),
+                                             new Result( E.error, "BAD" ),
+                                             new Result( E.next, "C" ),
+                                             new Result( E.next, "D" ),
+                                             new Result( E.next, "F" ),
+                                             new Result( E.next, "I" ),
+                                             new Result( E.next, "H" )
                                             ]
                                           )
                       );
 
-    ps[3].reject( new r.Blame( b.a ) );
-    ps[2].notify( 5 );
-    ps[1].notify( 6 );
-    ps[2].reject( new r.Blame( b.a, b.b ) );
-    ps[0].resolve( 8 );
-    ps[1].reject( new r.Blame( b.c ) );
+    // All observers set up, so away we go...
+    ps[ 2].reject();
+    ps[ 1].resolve( "A" );
+    ps[ 3].reject();
+    ps[ 0].resolve( "B" );
+    ps[ 5].reject();
+    ps[ 6].reject( "BAD" );
+    ps[ 9].reject();
+    ps[11].notify( "C" );
+    ps[12].notify( "D" );
+    ps[ 4].reject();
+    ps[10].resolve( "E" );
+    ps[13].notify( "F" );
+    ps[ 7].reject();
+    ps[12].notify( "G" );
+    ps[14].reject();
+    ps[11].resolve( "H" );
+    ps[12].notify( "I" );
+    ps[13].reject();
+    ps[ 8].reject();
+    ps[12].reject();
 
-    u.schedule( 3, start );
+
+    u.schedule( 3, function() {
+      equal( ps[14], ladder.getCurrentPromise(), "Failed promise remained on top of ladder" );
+      ok( ladder.isSettled(), "Ladder has no pending promises" );
+      start();
+    } );
   } )
 }

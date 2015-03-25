@@ -31,9 +31,6 @@ module hd.reactive {
     // The corresponding values produced by the input promises
     private values: any[] = [];
 
-    // Reasons for any failed input promises (any order)
-    private failed: Blame[];
-
     // How many input promises have been fulfilled
     private numFulfilled = 0;
 
@@ -77,12 +74,7 @@ module hd.reactive {
     onParameterFulfilled( value: any, index: number ) {
       this.values[index] = value;
       if (++this.numFulfilled == this.values.length) {
-        if (this.failed && this.failed.length > 0) {
-          this.promise.reject( new Blame( this.failed ) );
-        }
-        else {
-          this.promise.resolve( this.values );
-        }
+        this.promise.resolve( this.values );
       }
       else {
         this.promise.notify( this.values );
@@ -93,14 +85,7 @@ module hd.reactive {
      * If any parameter fails then we fail.
      */
     onParameterRejected( reason: any, index: number ) {
-      if (! this.failed) {
-        this.failed = [];
-      }
-      this.failed.push( reason );
-
-      if (++this.numFulfilled == this.values.length) {
-        this.promise.reject( new Blame( this.failed ) );
-      }
+      this.promise.reject( null );
     }
 
     /*----------------------------------------------------------------

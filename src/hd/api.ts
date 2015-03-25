@@ -1,3 +1,4 @@
+
 module hd {
 
   import u = hd.utility;
@@ -6,9 +7,6 @@ module hd {
   import m = hd.model;
   import s = hd.system;
   import b = hd.bindings;
-
-  // Planner for runtime when not specified
-  export var defaultPlannerType: p.PlannerType = p.QuickPlanner;
 
   /*==================================================================
    * Enablement functions

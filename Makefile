@@ -60,7 +60,7 @@ async_DEPS      := utility reactive
 hd_UNITS        := api
 hd_DEPS         := utility reactive model graph plan enable bind system
 
-qunit_UNITS     := qunit.d utility reactive graph ladder
+qunit_UNITS     := qunit.d utility reactive ladder graph
 qunit_DEPS      := utility reactive graph
 
 compile-dfa_LOC   := apps/

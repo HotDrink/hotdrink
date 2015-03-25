@@ -68,9 +68,9 @@ module hd.model {
       this.id = id;
       this.name = name;
 
-      this.value = new r.ObservableProperty( value, eq );
+      this.value = new r.ObservableProperty( undefined, eq );
       this.output = new r.ObservableProperty( !! output );
-      this.ladder = new r.PromiseLadder<any>( value );
+      this.ladder = new r.PromiseLadder<any>();
 
       // connect ladder to value
       this.ladder.addObserver( this,
@@ -78,6 +78,13 @@ module hd.model {
                                this.onLadderError,
                                null
                              );
+
+      if (value !== undefined) {
+        if (! (value instanceof r.Promise)) {
+          value = new r.Promise( value );
+        }
+        this.makePromise( value );
+      }
     }
 
     /*----------------------------------------------------------------
@@ -115,17 +122,17 @@ module hd.model {
     /*----------------------------------------------------------------
      * Get a promise for the variable's value.
      */
-    getPromise(): r.Promise<any> {
-      return this.ladder.currentPromise();
+    getCurrentPromise(): r.Promise<any> {
+      return this.ladder.getCurrentPromise();
     }
 
     /*----------------------------------------------------------------
      * Get a promise to be forwarded with the current variable value.
      */
-    getForwardedPromise( dependencies: u.ArraySet<r.Promise<any>> ): r.Promise<any> {
-      var p = this.ladder.getForwardedPromise( dependencies );
+    getForwardedPromise(): r.Promise<any> {
+      var p = this.ladder.getForwardedPromise();
       if (r.plogger) {
-        r.plogger.register( p, this.name, 'input parameter' );
+        r.plogger.register( p, this.name, ' forwarded' );
       }
       return p;
     }

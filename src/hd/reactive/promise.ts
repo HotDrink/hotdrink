@@ -448,7 +448,7 @@ module hd.reactive {
     /*----------------------------------------------------------------
      * Rejects the promise with specified reason.
      */
-    reject( reason: any ): void {
+    reject( reason?: any ): void {
       if (this.open) {
         this.rejectFirst( reason );
       }

@@ -37,6 +37,9 @@ module hd.model {
     // Error associated with this variable
     error = new r.ObservableProperty<any>( null );
 
+    // Is value stale?
+    stale = new r.ObservableProperty( false );
+
     // Is the variable a source?
     source = new r.ObservableProperty( false );
 
@@ -115,6 +118,7 @@ module hd.model {
       this.ladder.addPromise( promise );
       if (this.pending.get() == false) {
         this.pending.set( true );
+        this.stale.set( false );
         this.changes.sendNext( {type: VariableEventType.pending, vv: this} );
       }
     }
@@ -159,13 +163,8 @@ module hd.model {
      * Observable: widget produces a value
      */
     onNext( value: any ): void {
-      if (this.ladder.isSettled() && this.value.hasValue( value )) {
-        this.changes.sendNext( {type: VariableEventType.touched, vv: this} );
-      }
-      else {
-        this.makePromise( new r.Promise( value ) );
-        this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
-      }
+      this.makePromise( new r.Promise( value ) );
+      this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
     }
 
     /*----------------------------------------------------------------
@@ -191,6 +190,7 @@ module hd.model {
     onLadderNext( value: any ) {
       this.value.hardSet( value );
       this.error.set( null );
+      this.stale.set( this.ladder.currentFailed() );
       if (this.ladder.isSettled()) {
         this.pending.set( false );
         this.changes.sendNext( {type: VariableEventType.settled, vv: this} );
@@ -201,7 +201,10 @@ module hd.model {
      * Ladder produced an error.
      */
     onLadderError( error: any ) {
-      this.error.set( error );
+      if (error !== null) {
+        this.error.set( error );
+      }
+      this.stale.set( this.ladder.currentFailed() );
       if (this.ladder.isSettled()) {
         this.pending.set( false );
         this.changes.sendNext( {type: VariableEventType.settled, vv: this} );

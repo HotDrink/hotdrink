@@ -47,7 +47,7 @@ module hd.qunit {
           ok( false, "received " + received + " when expecting " + expecting );
         }
         else {
-          equal( value, expecting.value, "next received expected value " + value );
+          equal( value, expecting.value, "next received expected value " + expecting.value );
         }
       }
     }
@@ -63,7 +63,7 @@ module hd.qunit {
           ok( false, "received " + received + " when expecting " + expecting );
         }
         else {
-          equal( error, expecting.error, "next received expected error " + error );
+          equal( error, expecting.error, "next received expected error " + expecting.error );
         }
       }
     }
@@ -88,7 +88,7 @@ module hd.qunit {
 
   asyncTest( "promise ladder", function() {
 
-    expect( 54 );
+    expect( 55 );
 
     var ladder = new r.PromiseLadder<string>();
     ok( ladder.isSettled(), "Ladder created with fulfilled promise" );
@@ -101,7 +101,7 @@ module hd.qunit {
      * output for the ladder as a whole.
      *
      * X = failed, XX = rejected
-     * ========================================================================================================|  => A, XX, C, D, F, I, H
+     * ========================================================================================================|  => A, XX, C, D, F, null, I, H
      * 14: |    |    |    |    |    |    |    |    |    |    |    |    |    |    | X  |    |    |    |    |    |  => F, I, H
      * 13: |    |    |    |    |    |    |    |    |    |    |    | F* |    |    |    |    |    | X  |    |    |  => F, I, H
      * 12: |    |    |    |    |    |    |    |    | D* |    |    |    |    | G* |    |    | I* |    |    | X  |  => D, G, I, H
@@ -215,6 +215,7 @@ module hd.qunit {
                                              new Result( E.next, "C" ),
                                              new Result( E.next, "D" ),
                                              new Result( E.next, "F" ),
+                                             new Result( E.error, null ),
                                              new Result( E.next, "I" ),
                                              new Result( E.next, "H" )
                                             ]

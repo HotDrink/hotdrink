@@ -414,11 +414,33 @@ module hd.system {
           // New constraints need to be evaluated
           cids.forEach( u.stringSet.add.bind( null, this.needEvaluating ) );
 
+          // Reevaluate any emerging source variables
+          if (c.forwardingPolicy === c.Forward.onAllFailure) {
+            this.sgraph.variables().forEach( this.reevaluateIfEmergingSource, this );
+          }
+
           // Update source statuses
           this.sgraph.variables().forEach( this.updateSourceStatus, this );
         }
 
         this.needEnforcing = {};
+      }
+    }
+
+
+    // Helper - check for source variables that
+    private
+    reevaluateIfEmergingSource( vid: string ) {
+      var vv = this.variables[vid];
+      var stayConstraintId = g.stayConstraint( vid );
+
+      // Evaluate if it's selected AND not previously a source
+      //   AND not currently scheduled for evaluation
+      if (this.sgraph.selectedForConstraint( stayConstraintId ) &&
+          ! vv.source.get() && ! this.needEvaluating[stayConstraintId]) {
+
+        vv.makePromise( vv.getForwardedPromise() );
+        this.needEvaluating[stayConstraintId] = true;
       }
     }
 
@@ -481,11 +503,12 @@ module hd.system {
           // Make sure we've got a promise in the lookup
           if (! paramLookup[pvid]) {
             var param: r.Promise<any>;
-            if (c.forwardingPolicy === c.Forward.never) {
-              param = (<m.Variable>inputs[i]).getCurrentPromise();
+            if (mm.outputs.indexOf( inputs[i] ) >= 0 &&
+                c.forwardingPolicy !== c.Forward.never ) {
+              param = (<m.Variable>inputs[i]).getForwardedPromise();
             }
             else {
-              param = (<m.Variable>inputs[i]).getForwardedPromise();
+              param = (<m.Variable>inputs[i]).getCurrentPromise();
             }
             paramLookup[pvid] = param;
           }

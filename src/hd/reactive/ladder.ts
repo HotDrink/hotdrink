@@ -56,6 +56,12 @@ module hd.reactive {
     }
 
     /*----------------------------------------------------------------
+     */
+    currentFailed() {
+      return this.entries[this.entries.length - 1].state === 'failed';
+    }
+
+    /*----------------------------------------------------------------
      * Get the most recent promise on the ladder.
      */
     getCurrentPromise() {
@@ -165,32 +171,14 @@ module hd.reactive {
     private
     onPromiseRejected( reason: any, promise: Promise<T> ) {
       var i = this.findPromiseIndex( promise );      if (i >= 0) {
-        // Special case:  if this promise produced a pending value for the ladder,
-        //                then failed, we must reproduce the most recent answer
-        var letOlderAnswerPassThrough =
-              (reason === undefined || reason === null) &&
-              ('value' in this.entries[i]);
-
+        // Differentiate between "rejected" and "failed"
         if (reason === null || reason === undefined) {
           this.entries[i].state = 'failed';
-        }
-        else {
-          this.entries[i].state = 'rejected';
-          this.entries[i].reason = reason;
-        }
 
-        var mostRecent = this.getMostRecent();
-        if (mostRecent == i) {
-          this.sendError( reason );
-        }
-        else if (letOlderAnswerPassThrough && mostRecent < i) {
-          var allFailed = true;
-          for (var j = i - 1; j > mostRecent; --j) {
-            if (this.entries[j].state !== 'failed') {
-              allFailed = false;
-            }
-          }
-          if (allFailed) {
+          // Special case 1:  this promise previously produced a notification;
+          //   thus, we need to fall-back to the previous answer
+          var mostRecent = this.getMostRecent();
+          if ('value' in this.entries[i] && mostRecent < i) {
             var entry = this.entries[mostRecent];
             if (entry.state === 'rejected') {
               this.sendNext( entry.reason );
@@ -199,7 +187,21 @@ module hd.reactive {
               this.sendNext( entry.value );
             }
           }
+          // Special case 2:  this promise is at the top of the ladder;
+          //   we need to let the variable know so that it can be marked stale
+          else if (i == this.entries.length - 1) {
+            this.sendError( null );
+          }
         }
+        else {
+          this.entries[i].state = 'rejected';
+          this.entries[i].reason = reason;
+
+          if (this.getMostRecent() == i) {
+            this.sendError( reason );
+          }
+        }
+
         this.updateForwardsStartingFrom( i );
       }
     }

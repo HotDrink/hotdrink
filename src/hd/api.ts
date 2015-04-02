@@ -32,7 +32,7 @@ module hd {
   export var ProxyObserver = r.ProxyObserver;
   export var BasicObservable = r.BasicObservable;
   export var Promise = r.Promise;
-  export var Extension = r.Extension;
+  export var Translator = r.Extension;
   export var liftFunction = r.liftFunction;
 
   export var dir = b.Direction;

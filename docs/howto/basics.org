@@ -4,6 +4,727 @@
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
+* Creating a constraint system
+
+The most fundamental part of a GUI written with HotDrink is the constraint
+system which represents data dependencies in your GUI.  This first example
+covers a lot of ground, including how to create a constraint system, how you
+can directly interact with it by getting and setting variables, and how the
+constraint system is updated.  The goal is to give you an exact understanding
+of what the constraint system does for you and how you may interact with it.
+
+We assume here that you have read the document [[file:intro.org][Introduction to HotDrink]] and
+are therefore familiar with the basic concept of a constraint system.
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/whatever.html :padline no
+<table>
+  <style type="text/css" scoped>
+    td { padding-right: 1ex; }
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+  </style>
+  <tr>
+    <th>List:</th>
+    <td><span id="listSpan1"></span></td>
+    <td><input type="button" value="Set" onclick="setList1()"/></td>
+  </tr>
+  <tr>
+    <th>Filter:</th>
+    <td><span id="filterSpan1"></span></td>
+    <td><input type="button" value="Set" onclick="setFilter1()"/></td>
+  </tr>
+</table>
+<br/>
+<input type="button" value="Get Result" onclick="getResult1()"/>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/whatever.js :padline no
+// Define the model
+var model = new hd.ModelBuilder() (ref:builder)
+    .variable( 'list', 'ebip, snad, ebna, naip, sneb, ipeb' ) (ref:varlist)
+    .variable( 'filter', 'na' ) (ref:varfilter)
+    .variable( 'result' ) (ref:varresult)
+
+    .constraint( 'list, filter, result' ) (ref:con)
+    .method( 'list, filter -> result', function( list, filter ) { (ref:mth1)
+      var words = list.trim().split( /\s*,\s*/ );
+      var filteredWords = words.filter( function( word ) {
+        return word.indexOf( filter ) > -1;
+      } );
+      return filteredWords.join( ', ' );
+    } )
+
+    .end(); (ref:end)
+
+// Create the constraint system
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+system.update(); (ref:update1)
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/whatever.js :padline no
+window.addEventListener( 'load', function() {
+  setSpan( 'listSpan1', model.list.get() );
+  setSpan( 'filterSpan1', model.filter.get() );
+} )
+
+function setSpan( id, value ) {
+  var span = document.getElementById( id );
+  while (span.lastChild) { span.removeChild( span.lastChild ); }
+  span.appendChild( document.createTextNode( value ) );
+}
+
+setList1 = function setList1() {
+  var list = window.prompt( 'List:', model.list.get() );
+  if (list !== null) {
+    model.list.set( list );
+    system.update(); (ref:update2)
+    setSpan( 'listSpan1', list );
+  }
+}
+
+setFilter1 = function setFilter1() {
+  var filter = window.prompt( 'Filter:', model.filter.get() );
+  if (filter !== null) {
+    model.filter.set( filter );
+    system.update(); (ref:update3)
+    setSpan( 'filterSpan1', filter );
+  }
+}
+
+getResult1 = function getResult1() {
+  alert( 'Result: ' + model.result.get() );
+}
+
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/whatever.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/whatever.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example shows a single constraint of three variables: /list/, /filter/,
+and /result/.  Each variable holds a string.  The value of /list/ is a
+comma-delimited list of words.  The value of /filter/ is any string.  The
+value of /result/ is the comma-delimited list of just those words in /list/
+which contain the string in /filter/.
+
+Note that this example deliberately avoids using any of HotDrink's binding
+code so that all interactions with the constraint system will be explicit.
+#+HTML: </div>
+
+
+** Working with the model builder
+
+Recall from [[file:intro.org][the introduction]] that there are two steps to creating a
+constraint system.  The first is to create the /model/ --- that is, the
+variables and constraints that make up the constraint system.  The second is
+to create a /constraint system/ object and add the model to it.  The
+constraint system object is responsible for enforcing the constraints found in
+the model.
+
+We create a model using a factory object called ~ModelBuilder~.  This object
+has member functions for creating the variables, constraints, and methods that
+compose the object.  The general strategy for constructing a model is: (1.)
+create a new builder object, (2.) use the builder member functions to
+construct the model, (3.) call the ~end~ builder member function to retrieve
+the completed model.  The code below illustrates how this might be done.
+
+#+BEGIN_SRC js
+// Create new builder object
+var builder = new hd.ModelBuilder();
+
+// Use methods to construct the model
+builder.variable( ... );
+builder.constraint( ... );
+builder.method( ... );
+...and so on...
+
+// Retrieve the completed model
+var model = builder.end();
+#+END_SRC
+
+However, most builder member functions return the same builder object with
+which they were invoked.  This allows a succinct programming style known as
+\ldquo{}chaining\rdquo in which the return value of one member function is used to
+immediately invoke the next member function.  You can see this style in the
+view-model of the example.  [[(builder)][Line (builder)]] creates a new
+~ModelBuilder~ object.  Rather than storing this builder in a variable, we
+simply begin invoking member functions on it.  [[(varlist)][Line (varlist)]]
+invokes the ~variable~ member function, which returns the anonymous builder.
+This return value is used by [[(varfilter)][line (varfilter)]] to invoke
+~variable~ again, which returns the builder again, and so on.  This continues
+until [[(end)][line (end)]], where the ~end~ member function is invoked on the
+still-anonymous builder to return the model that was constructed.  It is this
+model that is assigned to the ~model~ variable on [[(builder)][line
+(builder)]].
+
+Generally, creating a model involves the following steps.
+
+*** Creating variables
+
+Just as in a programming language, values in HotDrink are stored in variables.
+(Note, however, that HotDrink variables are /not/ the same as JavaScript
+variables --- HotDrink variables are actually JavaScript objects.)  Variables
+are created with the model builder using the ~variable~ member function and
+then stored in the model.  To create a variable you must specify a name; you
+may optionally specify an initial value.  As with JavaScript variables,
+uninitialized variables are given the value ~undefined~.  For example, [[(varlist)][line
+(varlist)]] of the view-model creates a variable named ~list~ which is
+initialized with a list of words, and [[(varresult)][line (varresult)]] creates a variable
+named ~result~ which is uninitialized.
+
+As mentioned previously, the return value of the ~variable~ function is the
+builder object itself in order to facilitate chaining.
+
+Builder member functions such as ~variable~ are used frequently when declaring
+a property model.  To make them easier to use, the model builder provides
+abbreviated names for many of them.  For example, you may refer to the
+~variable~ member function simply as ~v~.  This is perhaps slightly less
+readable, but much easier to type; we will use the abbreviated name ~v~ in the
+remainder of the examples.
+
+*** Creating constraints
+
+Recall from [[file:intro.org][the introduction]] that a constraint is simply
+something that should always be true concerning some of your variables ---
+i.e., a /relation/ over the variables.  In the example above, the relation is
+that ~result~ is just those words in ~list~ which contain the string in
+~filter~.
+
+To define a constraint, you must specify the variables involved.  To make this
+simple, the ~constraint~ member function of the model builder takes a string
+containing all of the variables' names in a comma delimited list.  In
+[[(con)][line (con)]] of the view-model we define a constraint for the
+variables ~list~, ~filter~, and ~result~.
+
+The return value of the ~constraint~ member function is the builder. The
+~constraint~ member function may be abbreviated as ~c~; we will use this
+abbreviation in the remainder of the examples.
+
+*** Creating methods
+
+Notice that, when you create a constraint, you do /not/ tell HotDrink what
+relation the constraint represents.  Instead, you define a constraint by
+providing /constraint satisfaction methods/, or just /methods/ for short.  A
+method is a function whose parameters are /some/ variables of the constraint,
+and which returns new values for /other/ variables of the constraint.  The
+purpose of a method is to provide new values for its output variables that
+will satisfy the constraint.
+
+The method creation function of the model builder, named ~method~, takes a
+signature and a function.  The signature is a string defining which variables
+are inputs and which are outputs; it has the form "/inputs/ ~->~ /outputs/",
+where both /inputs/ and /outputs/ are comma-delimited lists of variables.  For
+this example we provide only a single method, declared on [[(mth1)][line
+(mth1)]].  This method takes ~list~ and ~filter~ and uses them to calculate
+~result~.  You can have more than one method per constraint; we'll discuss
+this further in later examples.
+
+Note that in this example we provide an anonymous function as our method, but
+this is not a requirement; methods can be named functions defined elsewhere.
+Also note that it is not a requirement for function parameter names to match
+the variables which should be passed to them; in fact, HotDrink has no way of
+knowing what you named your parameters.  HotDrink will use the signature you
+provided to decide what variables to pass to the function.
+
+Whenever you call ~method~, the builder assumes you are adding a method to the
+most recently defined constraint.  As with the other builder member functions,
+the return value of ~method~ is the builder to facilitate chaining, and it may
+be abbreviated as ~m~; we will use this abbreviation in the remainder of the
+examples.
+
+*** Declaring the end
+
+You begin defining a new constraint using the ~constraint~ builder member
+function; you continue to add methods to it using ~method~.  However, the
+constraint will not actually be completed until you indicate that all methods
+belonging to the constraint have been created.  One way to do this is by
+calling the ~endConstraint~ builder member function.  After you call this
+function, the constraint is created and no further methods may be added to it.
+
+However, most builder member functions (such as ~variable~, ~constraint~,
+~end~, etc.) check to see if the builder has an unfinished constraint and, if
+so, call ~endConstraint~ for you.  Thus, most of the time there is no need to
+call ~endConstraint~ explicitly; it is only when you're doing something
+unusual with the builder must you be aware of it.  Just remember, your
+constraint has not been created until you call ~endConstraint~ or it is called
+for you.
+
+The ~endConstraint~ member function returns the builder object.  There is no
+abbreviation for ~endConstraint~.
+
+Similarly, to declare that you are done defining your model, you may call the
+~end~ builder member function.  This function finalizes the definition of your
+model.  Unlike other builder member functions, ~end~ returns the completed
+model instead of returning the builder.  There is no abbreviation for ~end~.
+
+** Interacting with variables
+
+Variables can be accessed via the model; for example, if your model is held in
+a variable named ~model~, then the variable ~list~ is accessed as
+~model.list~.  The value of variables can be retrieved using the variable's
+~get~ member function and modified using the variable's ~set~ member function.
+If a variable is registered with a constraint system (i.e., the variable is in
+a model that has been added to the constraint system), then changes to the
+variable's value will be noticed by the constraint system.
+
+In the example above, we use the ~get~ method to initialize the prompt when
+setting ~list~ or ~filter~, and we also use ~get~ to report the value of
+~result~.  We use ~set~ to update ~list~ or ~filter~ after the user has been
+prompted for a value.  The value of ~result~ is never set explicitly.
+Instead, it is updated by the constraint system whenever ~list~ or ~filter~ is
+modified.
+
+** Updating the constraint system
+
+To /update/ the constraint system means to respond to changes that have been
+made by enforcing any constraints which may no longer be satisfied.  There are
+two types of changes which require a constraint system update: adding new
+constraints to the system, and setting the value of a variable.  The
+constraint system notices when these events occur, and remembers the changes.
+However, the constraint system does not actually update until its ~update~
+member function is called.  This allows you to package several changes into a
+single update.  Notice where we call ~update~ in the example above.  We call
+it on [[(update1)][line (update1)]] after adding our model to the constraint
+system, and we call it on [[(update2)][line (update2)]] and [[(update3)][line
+(update3)]] after setting variables.
+
+If you would prefer, you can have the system automatically update after
+changes.  You may set the system to immediately update after every change, or
+to /schedule/ an update after every change --- meaning that it will set an
+immediate timer event (using ~window.setTimeout~) that will cause the system
+to update.  HotDrink will only schedule one update at a time; if it goes to
+schedule an update and finds that one is already scheduled, it will /not/
+schedule a second one.
+
+The update policies of the system is controlled by two member variables:
+~updateOnModelChange~ and ~updateOnVariableChange~.  These are enumerated
+types which may be set to one of ~hd.Update.None~, ~hd.Update.Immediate~, or
+~hd.Update.Scheduled~, as shown below.
+
+#+BEGIN_SRC js
+var system = new hd.ConstraintSystem();
+
+// Policy for when constraints are added to system
+system.updateOnModelChange = hd.Update.None;          // do not automatically update
+system.updateOnModelChange = hd.Update.Immediate;     // update immediately
+system.updateOnModelChange = hd.Update.Scheduled;     // schedule an update
+
+// Policy for when variables are modified
+system.updateOnVariableChange = hd.Update.None;       // do not automatically update
+system.updateOnVariableChange = hd.Update.Immediate;  // update immediately
+system.updateOnVariableChange = hd.Update.Scheduled;  // schedule an update
+#+END_SRC
+
+The default for both policies is ~hd.Updated.Scheduled~.  This policy is
+convenient in that it does not require explicit calls to ~update~, but it
+still allows multiple changes to be grouped together under a single update.
+The potential downside is that you loose precise control of when updates
+occur.  If this is a concern, then we recommend an alternate update policy.
+
+Thus, in the example above, we could remove all calls to ~system.update~ with
+no visible effect --- the constraint system will automatically schedule an
+update after every change.  In future examples we will omit calls to
+~system.update~.
+
+* Reacting to variable changes
+
+The previous example required clicking a button every time we wanted to see
+the results.  However, there is a way we can register to be notified every
+time the value of a variable changes.  Using this notification, we can show
+variable updates as soon as they are available.
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/observer.html :padline no
+<table>
+  <style type="text/css" scoped>
+    td { padding-right: 1ex; }
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+  </style>
+  <tr>
+    <th>List:</th>
+    <td><span id="listSpan2"></span></td>
+    <td><input type="button" value="Set" onclick="setList2()"/></td>
+  </tr>
+  <tr>
+    <th>Filter:</th>
+    <td><span id="filterSpan2"></span></td>
+    <td><input type="button" value="Set" onclick="setFilter2()"/></td>
+  </tr>
+  <tr>
+    <th>Result:</th>
+    <td><span id="resultSpan2"></span></td>
+  </tr>
+</table>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/observer.js :padline no
+// Define the model
+var model = new hd.ModelBuilder()
+    .v( 'list', 'ebip, snad, ebna, naip, sneb, ipeb' ) (ref:varlist)
+    .v( 'filter', 'na' )
+    .v( 'result' ) (ref:varresult)
+
+    .c( 'list, filter, result' ) (ref:con)
+    .m( 'list, filter -> result', function( list, filter ) {
+      var words = list.trim().split( /\s*,\s*/ );
+      var filteredWords = words.filter( function( word ) {
+        return word.indexOf( filter ) > -1;
+      } );
+      return filteredWords.join( ', ' );
+    } )
+
+    .end();
+
+// Create the constraint system
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/observer.js :padline no
+window.addEventListener( 'load', function() {
+  model.list.addObserverInit( {
+    onNext: function( v ) { setSpan( 'listSpan2', v ) },
+    onError: function( e ) { },
+    onCompleted: function() { }
+  } )
+
+  model.filter.addObserverInit( {
+    onNext: function( v ) { setSpan( 'filterSpan2', v ) },
+    onError: function( e ) { },
+    onCompleted: function() { }
+  } )
+
+  model.result.addObserverInit( {
+    onNext: function( v ) { setSpan( 'resultSpan2', v ) },
+    onError: function( e ) { },
+    onCompleted: function() { }
+  } )
+} )
+
+function setSpan( id, value ) {
+  var span = document.getElementById( id );
+  while (span.lastChild) { span.removeChild( span.lastChild ); }
+  span.appendChild( document.createTextNode( value ) );
+}
+
+setList2 = function setList2() {
+  var list = window.prompt( 'List:', model.list.get() );
+  if (list !== null) {
+    model.list.set( list );
+    setSpan( 'listSpan2', list );
+  }
+}
+
+setFilter2 = function setFilter2() {
+  var filter = window.prompt( 'Filter:', model.filter.get() );
+  if (filter !== null) {
+    model.filter.set( filter );
+    setSpan( 'filterSpan2', filter );
+  }
+}
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/observer.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/observer.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example uses the same constraint as the previous example.  The results
+are displayed in the web page, and automatically updated every time a variable
+changes.
+#+HTML: </div>
+
+** The Observer pattern
+
+The typical approach to event-based programming is to register a single
+callback function to be executed any time an event occurs.  This is sometimes
+known as the /observer pattern/ --- the observer provides a function to be
+called when an event occurs.  In HotDrink, however, we use a variation of the
+observer pattern inspired by Microsoft's [[https://rx.codeplex.com/][reactive extensions]].  In this
+pattern, an observer has three associated callbacks:  one to be called for
+normal event values, one for erroneous event values, and one without a value
+indicating that no more events will occur.  Thus, in HotDrink, an /observer/
+is any object which has the following three properties:
+
+- ~onNext( value )~ :: function called on normal event; takes value associated
+     with the event
+
+- ~onError( error )~ :: function called when error occurs; takes value
+     associated with the error
+
+- ~onCompleted()~ :: function called when no more events can occur
+
+
+* Automating variable updates
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/observable.html :padline no
+<table>
+  <style type="text/css" scoped>
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+    input.long { width: 100ex; }
+  </style>
+  <tr>
+    <th>List:</th>
+    <td><input type="text" id="listEdit3" class="long"/></td>
+  </tr>
+  <tr>
+    <th>Filter:</th>
+    <td><input type="text" id="filterEdit3" class="long"/></td>
+  </tr>
+  <tr>
+    <th>Result:</th>
+    <td><span id="resultSpan3"></span></td>
+  </tr>
+</table>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/observable.js :padline no
+// Define the model
+var model = new hd.ModelBuilder()
+    .v( 'list', 'ebip, snad, ebna, naip, sneb, ipeb' ) (ref:varlist)
+    .v( 'filter', 'na' )
+    .v( 'result' ) (ref:varresult)
+
+    .c( 'list, filter, result' ) (ref:con)
+    .m( 'list, filter -> result', function( list, filter ) {
+      var words = list.trim().split( /\s*,\s*/ );
+      var filteredWords = words.filter( function( word ) {
+        return word.indexOf( filter ) > -1;
+      } );
+      return filteredWords.join( ', ' );
+    } )
+
+    .end();
+
+// Create the constraint system
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/observable.js :padline no
+window.addEventListener( 'load', function() {
+  var listObservable = new hd.BasicObservable();
+  var listEdit = document.getElementById( 'listEdit3' );
+  listEdit.value = model.list.get();
+  listEdit.addEventListener( 'input', function() {
+    listObservable.sendNext( listEdit.value );
+  } );
+  listObservable.addObserver( model.list );
+
+  var filterObservable = new hd.BasicObservable();
+  var filterEdit = document.getElementById( 'filterEdit3' );
+  filterEdit.value = model.filter.get();
+  filterEdit.addEventListener( 'input', function() {
+    filterObservable.sendNext( filterEdit.value );
+  } );
+  filterObservable.addObserver( model.filter );
+
+  model.result.addObserverInit( {
+    onNext: function( v ) { setSpan( 'resultSpan3', v ) },
+    onError: function( e ) { },
+    onCompleted: function() { }
+  } )
+} )
+
+function setSpan( id, value ) {
+  var span = document.getElementById( id );
+  while (span.lastChild) { span.removeChild( span.lastChild ); }
+  span.appendChild( document.createTextNode( value ) );
+}
+
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/observable.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/observable.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example keeps the same constraint as the previous two examples.  However,
+rather than manually setting a variable with a button, this example
+automatically sets variables every time the corresponding edit box is changed.
+#+HTML: </div>
+
+* Translating values
+
+** The example
+
+/View/
+
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/translator.html :padline no
+<table>
+  <style type="text/css" scoped>
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+  </style>
+  <tr>
+    <th>Income:</th>
+    <td><input type="text" id="incomeEdit"/></td>
+  </tr>
+  <tr>
+    <th>Expenses:</th>
+    <td><input type="text" id="expensesEdit"/></td>
+  </tr>
+  <tr>
+    <th>Profit:</th>
+    <td><span id="profitSpan"></span></td>
+  </tr>
+</table>
+#+END_SRC
+
+/View-Model/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/translator.js :padline no
+// Define the model
+var model = new hd.ModelBuilder()
+    .v( 'income', 2000 )
+    .v( 'expenses', 480 )
+    .v( 'profit' )
+
+    .c( 'income, expenses, profit' )
+    .m( 'income, expenses -> profit', function( income, expenses ) {
+      return income - expenses;
+    } )
+
+    .end();
+
+// Create the constraint system
+var system = new hd.ConstraintSystem();
+system.addComponent( model );
+#+END_SRC
+
+/Binding/
+
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/translator.js :padline no
+window.addEventListener( 'load', function() {
+  var incomeObservable = new hd.BasicObservable();
+  var incomeEdit = document.getElementById( 'incomeEdit' );
+  incomeEdit.value = model.income.get();
+  incomeEdit.addEventListener( 'input', function() {
+    incomeObservable.sendNext( incomeEdit.value );
+  } );
+
+  var incomeTranslator = new hd.Translator();
+  incomeTranslator.onNext = stringToNumber;
+
+  incomeTranslator.addObserver( model.income );
+  incomeObservable.addObserver( incomeTranslator );
+
+  var expensesObservable = new hd.BasicObservable();
+  var expensesEdit = document.getElementById( 'expensesEdit' );
+  expensesEdit.value = model.expenses.get();
+  expensesEdit.addEventListener( 'input', function() {
+    expensesObservable.sendNext( expensesEdit.value );
+  } );
+
+  var expensesTranslator = new hd.Translator();
+  expensesTranslator.onNext = stringToNumber;
+
+  expensesTranslator.addObserver( model.expenses )
+  expensesObservable.addObserver( expensesTranslator );
+
+  var profitObserver = {
+    onNext: function( v ) { setSpan( 'profitSpan', v ) },
+    onError: function( e ) { },
+    onCompleted: function() { }
+  };
+
+  var profitTranslator = new hd.Translator();
+  profitTranslator.onNext = function( n ) {
+    this.sendNext( n.toFixed( 2 ) );
+  }
+
+  model.profit.addObserverInit( profitTranslator );
+  profitTranslator.addObserver( profitObserver );
+} )
+
+function stringToNumber( s ) {
+  var n = Number( s );
+  if (s == '' || isNaN( n )) {
+    this.sendError( "Invalid number" );
+  }
+  else {
+    this.sendNext( n );
+  }
+}
+
+function setSpan( id, value ) {
+  var span = document.getElementById( id );
+  while (span.lastChild) { span.removeChild( span.lastChild ); }
+  span.appendChild( document.createTextNode( value ) );
+}
+
+#+END_SRC
+
+/Result/
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/translator.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/translator.js html
+#+HTML: })();
+#+HTML: </script>
+
+/Notes/
+
+#+HTML: <div class="notes">
+This example keeps the same constraint as the previous two examples.  However,
+rather than manually setting a variable with a button, this example
+automatically sets variables every time the corresponding edit box is changed.
+#+HTML: </div>
+
+
 * Variables and binding
 
 ** The example
@@ -205,7 +926,7 @@ will /not/ be passed from the view to the model (or from the model to the
 view, depending on the direction).  Also, transformations may result in loss
 of formatting, since formatting is a property of the string.  (For example,
 try entering "1e3" into the edit box for Y.)
-
+x
 * Constraints and methods
 
 ** The example
@@ -227,18 +948,18 @@ var model = new hd.ModelBuilder()
   .v( 'income', 1500 ).v( 'expenses', 900 ).v( 'profit' )
 
   // Constraint:  profit == income - expenses
-  .constraint( 'income, expenses, profit' ) (ref:con)
-  .method( 'income, expenses -> profit', function( income, expenses ) { (ref:mth1)
+  .constraint( 'income, expenses, profit' )
+  .method( 'income, expenses -> profit', function( income, expenses ) {
     return income - expenses;
   } )
-  .method( 'profit, expenses -> income', function( profit, expenses ) { (ref:mth2)
+  .method( 'profit, expenses -> income', function( profit, expenses ) {
     return profit + expenses;
   } )
-  .method( 'income, profit -> expenses', function( income, profit ) { (ref:mth3)
+  .method( 'income, profit -> expenses', function( income, profit ) {
     return income - profit;
   } )
 
-  .end(); (ref:end)
+  .end();
 
 var system = new hd.ConstraintSystem();
 system.addComponent( model );
@@ -269,14 +990,14 @@ window.addEventListener( 'load', function() {
 
 /Result/
 
-#+HTML: <div class="results">
-#+INCLUDE: tangle/constraint.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-#+INCLUDE: tangle/constraint.js html
-#+HTML: })();
-#+HTML: </script>
+# #+HTML: <div class="results">
+# #+INCLUDE: tangle/constraint.html html
+# #+HTML: </div>
+# #+HTML: <script type="text/javascript">
+# #+HTML: (function() {
+# #+INCLUDE: tangle/constraint.js html
+# #+HTML: })();
+# #+HTML: </script>
 
 /Notes/
 
@@ -324,7 +1045,7 @@ methods: one on [[(mth1)][line (mth1)]], one on [[(mth2)][line (mth2)]], and one
 one of these methods takes two of the variables and calculates a new value for
 the third variable.
 
-The method-creation function of the model builder, named ~method~, takes a
+The method creation function of the model builder, named ~method~, takes a
 signature and a function.  The signature is a string defining which variables
 are inputs and which are outputs; it has the form "/inputs/ ~->~ /outputs/",
 where both /inputs/ and /outputs/ are comma-delimited lists of variables. In

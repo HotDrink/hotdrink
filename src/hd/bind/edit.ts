@@ -40,10 +40,8 @@ module hd.bindings {
       this.el = checkHtml( el, HTMLInputElement );
       this.stable = new r.Stabilizer( time_ms, flush );
 
-      var boundUpdate = this.update.bind( this );
-      el.addEventListener( 'input', boundUpdate );
-      el.addEventListener( 'change', boundUpdate );
-      el.addEventListener( 'blur', this.onBlur.bind( this ) );
+      el.addEventListener( 'input', this.update.bind( this ) );
+      el.addEventListener( 'change', this.onBlur.bind( this ) );
     }
 
     /*----------------------------------------------------------------
@@ -81,7 +79,6 @@ module hd.bindings {
       // are editing; it should wait and change when you are through editing
 
       if (this.initialized && this.el === document.activeElement) {
-        this.blurFrom = this.el.value;
         this.blurTo = value;
       }
       else
@@ -92,7 +89,7 @@ module hd.bindings {
             this.el.select();
           }
         }
-        this.blurFrom = this.blurTo = null;
+        this.blurTo = null;
       }
     }
 
@@ -100,12 +97,10 @@ module hd.bindings {
      * Perform any changes which were quashed during editing
      */
     onBlur() {
-      if (this.blurFrom === this.el.value &&
-          this.el.value != this.blurTo
-         ) {
+      if (this.blurTo !== null && this.el.value != this.blurTo) {
         this.el.value = this.blurTo;
       }
-      this.blurFrom = this.blurTo = null;
+      this.blurTo = null;
       this.initialized = false;
       this.stable.onNext( <any>flush );
     }

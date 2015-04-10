@@ -7,7 +7,7 @@ module hd.model {
   import r = hd.reactive;
 
   export
-  interface VariableTemplate {
+  interface VariableSpec {
     name: string;
     ref: boolean;
     value: any;
@@ -16,7 +16,7 @@ module hd.model {
   }
 
   export
-  interface MethodTemplate {
+  interface MethodSpec {
     inputs: string[];
     outputs: string[];
     fn: Function;
@@ -39,7 +39,7 @@ module hd.model {
    * Used by a model to keep track of what it contains.
    */
   export class ModelculeData {
-    instances: u.ArraySet<ConstraintInstance> = [];
+    templates: u.ArraySet<ConstraintTemplate> = [];
     constraints: u.ArraySet<Constraint> = [];
     changes = new r.BasicObservable<ModelculeEvent>();
   }
@@ -58,6 +58,12 @@ module hd.model {
    * model being contained in an object, as opposed to a gobal model.
    */
   export class Modelcule {
+
+    // The modelcule keeps its own records of what's inside of it in this
+    // property.  It's pseudo-private -- the application programmer
+    // shouldn't use it, but it may be used by other parts of the
+    // system.
+    '#hd_data': ModelculeData;  // initialized indirectly -- look below class definition
 
     // A modelcule serves as a generic container; the programmer can
     // assign variables and constraints to whatever properties he
@@ -113,18 +119,18 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Add variable to modelcule according to template.
+     * Add variable to modelcule according to spec.
      */
     static
-    addVariableTemplate( mod: Modelcule, tmpl: VariableTemplate, vv?: Variable ) {
-      if (tmpl.ref) {
-        Modelcule.defineProperty( mod, tmpl.name, vv );
+    addVariableSpec( mod: Modelcule, vspec: VariableSpec, vv?: Variable ) {
+      if (vspec.ref) {
+        Modelcule.defineProperty( mod, vspec.name, vv );
       }
       else {
         if (! vv) {
-          vv = new Variable( tmpl.name, tmpl.value, tmpl.eq, tmpl.output );
+          vv = new Variable( vspec.name, vspec.value, vspec.eq, vspec.output );
         }
-        mod[tmpl.name] = vv;
+        mod[vspec.name] = vv;
       }
     }
 
@@ -141,19 +147,14 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Add constraint to modelcule according to template.
+     * Add constraint to modelcule according to spec.
      */
     static
-    addConstraintTemplate( mod: Modelcule, tmpl: ConstraintTemplate ) {
-      var instance = new ConstraintInstance( mod, tmpl );
-      u.arraySet.addKnownDistinct( mod['#hd_data'].instances, instance );
+    addConstraintSpec( mod: Modelcule, cspec: ConstraintSpec ) {
+      var template = new ConstraintTemplate( mod, cspec );
+      u.arraySet.addKnownDistinct( mod['#hd_data'].templates, template );
     }
 
-    // The modelcule keeps its own records of what's inside of it in this
-    // property.  It's pseudo-private -- the application programmer
-    // shouldn't use it, but it may be used by other parts of the
-    // system.
-    '#hd_data': ModelculeData;  // initialized indirectly -- look beow class definition
   }
 
   /*==================================================================

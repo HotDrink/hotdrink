@@ -24,7 +24,7 @@ module hd.model {
     // If the last thing created was a constraint or a method in a
     // constraint, this will point to the constraint; otherwise it
     // will be null
-    last: ConstraintTemplate = null;
+    last: ConstraintSpec = null;
 
     /*----------------------------------------------------------------
      * Can either take an existing modelcule and expand on it, or create a
@@ -78,8 +78,8 @@ module hd.model {
         init = undefined;
       }
 
-      // Create the variable template
-      var template: VariableTemplate = {
+      // Create the variable spec
+      var spec: VariableSpec = {
         name: name,
         ref: indirect,
         value: init,
@@ -88,7 +88,7 @@ module hd.model {
       }
 
       // Add variable
-      Modelcule.addVariableTemplate( this.target, template, vv );
+      Modelcule.addVariableSpec( this.target, spec, vv );
 
       return this;
     }
@@ -242,14 +242,14 @@ module hd.model {
         return this;
       }
 
-      // Create method template
-      var template: MethodTemplate = {
+      // Create method spec
+      var spec: MethodSpec = {
         inputs: inputs,
         outputs: outputs,
         fn: async ? fn : r.liftFunction( fn, outputs.length, mask )
       };
 
-      u.arraySet.addKnownDistinct( this.last.methods, template );
+      u.arraySet.addKnownDistinct( this.last.methods, spec );
 
       return this;
     }
@@ -266,21 +266,21 @@ module hd.model {
         return this;
       }
 
-      // Create constraint template
-      var template: ConstraintTemplate = {
+      // Create constraint spec
+      var spec: ConstraintSpec = {
         variables: varNames,
         methods: []
       };
 
       // Record constraint
-      this.last = template;
+      this.last = spec;
 
       return this;
     }
 
     endConstraint(): ModelBuilder {
       if (this.last) {
-        Modelcule.addConstraintTemplate( this.target, this.last );
+        Modelcule.addConstraintSpec( this.target, this.last );
         this.last = null;
       }
       return this;
@@ -302,8 +302,8 @@ module hd.model {
           return this;
         }
 
-        // Create constraint template
-        var ctmpl: ConstraintTemplate = {
+        // Create constraint spec
+        var cspec: ConstraintSpec = {
           variables: varNames,
           methods: []
         };
@@ -324,19 +324,19 @@ module hd.model {
           // Build method function
           var fn = eqn.makeFunction( varNames, outName, equation );
 
-          // Create method template
-          var mtmpl: MethodTemplate = {
+          // Create method spec
+          var mspec: MethodSpec = {
             inputs: varNames,
             outputs: [outName],
             fn: r.liftFunction( fn )
           };
 
           // Add method to constraint
-          u.arraySet.addKnownDistinct( ctmpl.methods, mtmpl );
+          u.arraySet.addKnownDistinct( cspec.methods, mspec );
         }
 
         // Record constraint
-        Modelcule.addConstraintTemplate( this.target, ctmpl );
+        Modelcule.addConstraintSpec( this.target, cspec );
       }
       catch (e) {
         console.error( e );

@@ -1,6 +1,7 @@
 #+TITLE: How to use HotDrink
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
+#+INFOJS_OPT: sdepth:1 toc:nil
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
@@ -21,7 +22,6 @@ how-to documents.  Thus, you can see the results of the example code
 together with the code itself.  Note, however, that these examples will only
 work if the file [[file:hotdrink.min.js][=hotdrink.min.js=]] is in the same directory as the how-to.
 
-* List of documents
 
 1. [[file:intro.org][Introduction to HotDrink]] --- This document explains the basic concepts
    behind HotDrink and how to include it in your web application.  You should

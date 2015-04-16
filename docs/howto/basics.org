@@ -2,6 +2,7 @@
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="script.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
 * Creating a constraint system
@@ -18,8 +19,27 @@ are therefore familiar with the basic concept of a constraint system.
 
 ** The example
 
-/View/
+This example shows a single constraint of three variables: /list/, /filter/,
+and /result/.  Each variable holds a string.  The value of /list/ is a
+comma-delimited list of words.  The value of /filter/ is any string.  The
+value of /result/ is the comma-delimited list of just those words in /list/
+which contain the string in /filter/.
 
+Note that this example deliberately avoids using any of HotDrink's binding
+code so that all interactions with the constraint system will be explicit.
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/whatever.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/whatever.js html
+#+HTML: })();
+#+HTML: </script>
+
+*Source Code*
+
+#+CAPTION: /View/
 #+BEGIN_SRC html -n -r :exports code :tangle tangle/whatever.html :padline no
 <table>
   <style type="text/css" scoped>
@@ -41,8 +61,7 @@ are therefore familiar with the basic concept of a constraint system.
 <input type="button" value="Get Result" onclick="getResult1()"/>
 #+END_SRC
 
-/View-Model/
-
+#+CAPTION: /View-Model/
 #+BEGIN_SRC js -n -r :exports code :tangle tangle/whatever.js :padline no
 // Define the model
 var model = new hd.ModelBuilder() (ref:builder)
@@ -67,8 +86,7 @@ system.addComponent( model );
 system.update(); (ref:update1)
 #+END_SRC
 
-/Binding/
-
+#+CAPTION: /Binding/
 #+BEGIN_SRC js -n -r :exports code :tangle tangle/whatever.js :padline no
 window.addEventListener( 'load', function() {
   setSpan( 'listSpan1', model.list.get() );
@@ -102,33 +120,7 @@ setFilter1 = function setFilter1() {
 getResult1 = function getResult1() {
   alert( 'Result: ' + model.result.get() );
 }
-
 #+END_SRC
-
-/Result/
-
-#+HTML: <div class="results">
-#+INCLUDE: tangle/whatever.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-#+INCLUDE: tangle/whatever.js html
-#+HTML: })();
-#+HTML: </script>
-
-/Notes/
-
-#+HTML: <div class="notes">
-This example shows a single constraint of three variables: /list/, /filter/,
-and /result/.  Each variable holds a string.  The value of /list/ is a
-comma-delimited list of words.  The value of /filter/ is any string.  The
-value of /result/ is the comma-delimited list of just those words in /list/
-which contain the string in /filter/.
-
-Note that this example deliberately avoids using any of HotDrink's binding
-code so that all interactions with the constraint system will be explicit.
-#+HTML: </div>
-
 
 ** Working with the model builder
 

@@ -1,6 +1,7 @@
 #+TITLE: Introduction to HotDrink
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
+#+INFOJS_OPT: sdepth:1 home:index.html
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 

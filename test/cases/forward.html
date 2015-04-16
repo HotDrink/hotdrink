@@ -54,7 +54,8 @@
           hd.performDeclaredBindings( model );
         } );
 
-        //hd.config.forwardingPolicy = hd.config.Forward.onAllFailure;
+        system.forwardSelfLoops = hd.Forward.Yes;
+        system.forwardEmergingSources = hd.Forward.Yes;
       }
     </script>
     <style type="text/css">

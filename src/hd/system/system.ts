@@ -71,6 +71,9 @@ module hd.system {
     private needEnforcing: u.StringSet = {};
     private needEvaluating: u.StringSet = {};
 
+    // Touch dependencies
+    private touchDeps: u.Dictionary<u.ArraySet<string>> = {};
+
     // Number of pending variables
     private pendingCount = 0;
 
@@ -200,6 +203,94 @@ module hd.system {
     }
 
     /*----------------------------------------------------------------
+     * Touch dependencies
+     */
+
+    makeConstraintOptional( cc: m.Constraint ) {
+      this.getPlanner().setMinStrength( cc.id );
+    }
+
+    addTouchDependency( cc1: (m.Constraint|m.Variable),
+                        cc2: (m.Constraint|m.Variable) ) {
+      var cid1: string, cid2: string;
+      if (cc1 instanceof m.Variable) {
+        cid1 = g.stayConstraint( (<m.Variable>cc1).id );
+      }
+      else {
+        cid1 = (<m.Constraint>cc1).id;
+      }
+      if (cc2 instanceof m.Variable) {
+        cid2 = g.stayConstraint( (<m.Variable>cc2).id );
+      }
+      else {
+        cid2 = (<m.Constraint>cc2).id;
+      }
+
+      if (this.touchDeps[cid1]) {
+        u.arraySet.add( this.touchDeps[cid1], cid2 );
+      }
+      else {
+        this.touchDeps[cid1] = [cid2];
+      }
+    }
+
+    addTouchDependencies( cc1: (m.Constraint|m.Variable),
+                          cc2s: (m.Constraint|m.Variable)[] ) {
+      for (var i = 0, l = cc2s.length; i < l; ++i) {
+        this.addTouchDependency( cc1, cc2s[i] );
+      }
+    }
+
+    addTouchSet( ccs: (m.Constraint|m.Variable)[] ) {
+      for (var i = 0, l = ccs.length; i < l; ++i) {
+        for (var j = 0; j < l; ++j) {
+          if (i != j) {
+            this.addTouchDependency( ccs[i], ccs[j] );
+          }
+        }
+      }
+    }
+
+    removeTouchDependency( cc1: (m.Constraint|m.Variable),
+                           cc2: (m.Constraint|m.Variable) ) {
+      var cid1: string, cid2: string;
+      if (cc1 instanceof m.Variable) {
+        cid1 = g.stayConstraint( (<m.Variable>cc1).id );
+      }
+      else {
+        cid1 = (<m.Constraint>cc1).id;
+      }
+      if (cc2 instanceof m.Variable) {
+        cid2 = g.stayConstraint( (<m.Variable>cc2).id );
+      }
+      else {
+        cid2 = (<m.Constraint>cc2).id;
+      }
+
+      var deps = this.touchDeps[cid1];
+      if (deps) {
+        u.arraySet.remove( this.touchDeps[cid1], cid2 );
+      }
+    }
+
+    removeTouchDependencies( cc1: (m.Constraint|m.Variable),
+                             cc2s: (m.Constraint|m.Variable)[] ) {
+      for (var i = 0, l = cc2s.length; i < l; ++i) {
+        this.removeTouchDependency( cc1, cc2s[i] );
+      }
+    }
+
+    removeTouchSet( ccs: (m.Constraint|m.Variable)[] ) {
+      for (var i = 0, l = ccs.length; i < l; ++i) {
+        for (var j = 0; j < l; ++j) {
+          if (i != j) {
+            this.removeTouchDependency( ccs[i], ccs[j] );
+          }
+        }
+      }
+    }
+
+    /*----------------------------------------------------------------
      * Respond to variable changes
      */
 
@@ -296,27 +387,58 @@ module hd.system {
     }
 
     //--------------------------------------------
+    // Touch variable and all touch dependencies
+    private
+    doPromotions( originalVid: string ) {
+      var planner = this.getPlanner();
+      var descending = function( cid1: string, cid2: string ) {
+        return planner.compare( cid2, cid1 );
+      };
+
+      var promote: string[] = [];
+      var i = 0;
+      var visited: u.StringSet = {};
+      promote.push( originalVid );
+      visited[originalVid] = true;
+
+      while (i < promote.length) {
+        var vid = promote[i++];
+        var deps = this.touchDeps[vid];
+        if (deps) {
+          (<string[]>deps).sort( descending );
+          deps.forEach( function( dep: string ) {
+            if (! visited[dep]) {
+              promote.push( dep );
+              visited[dep] = true;
+            }
+          } );
+        }
+      }
+
+      for (--i; i >= 0; --i) {
+        var cid = promote[i];
+        planner.setMaxStrength( cid );
+        if (! this.sgraph ||
+            ! this.sgraph.selectedForConstraint( cid )) {
+          this.needEnforcing[cid] = true;
+        }
+      }
+    }
+
+    //--------------------------------------------
     // Promote variable
     variableTouched( vv: m.Variable ) {
       var stayConstraintId = g.stayConstraint( vv.id );
-      this.getPlanner().setMaxStrength( stayConstraintId );
-      if (! this.sgraph || ! this.sgraph.selectedForConstraint( stayConstraintId )) {
-        this.needEnforcing[stayConstraintId] = true;
-        this.variableUpdate();
-      }
+      this.doPromotions( stayConstraintId );
+      this.variableUpdate();
     }
 
     //--------------------------------------------
     // Promote variable and mark as changed
     variableChanged( vv: m.Variable ) {
       var stayConstraintId = g.stayConstraint( vv.id );
-      this.getPlanner().setMaxStrength( stayConstraintId );
-      if (! this.sgraph || ! this.sgraph.selectedForConstraint( stayConstraintId )) {
-        this.needEnforcing[stayConstraintId] = true;
-      }
-      else {
-        this.needEvaluating[stayConstraintId] = true;
-      }
+      this.doPromotions( stayConstraintId );
+      this.needEvaluating[stayConstraintId] = true;
       this.variableUpdate();
     }
 

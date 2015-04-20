@@ -34,7 +34,7 @@ module hd.plan {
      */
     getOptionals() {
       var cids = this.strengths.getOptionalsUnordered();
-      cids.sort( this.strengths.weaker.bind( this.strengths ) );
+      cids.sort( this.strengths.compare.bind( this.strengths ) );
       return cids;
     }
 
@@ -73,10 +73,9 @@ module hd.plan {
     }
 
     /*----------------------------------------------------------------
-     * Test whether first is stronger than second.
      */
-    isStronger( cid1: string, cid2: string ) {
-      return this.strengths.stronger( cid1, cid2 );
+    compare( cid1: string, cid2: string ): number {
+      return this.strengths.compare( cid1, cid2 );
     }
 
     /*----------------------------------------------------------------
@@ -246,7 +245,11 @@ module hd.plan {
       this.subcgraph = copyFromFull( this.subcgraph, cidToEnforce );
 
       // Find retractable constraints
-      this.retractableCids = new u.Heap<string>( strengths.weaker.bind( strengths ) );
+      this.retractableCids = new u.Heap<string>(
+        function( cid1: string, cid2: string ) {
+          return strengths.compare( cid1, cid2 ) < 0;
+        }
+      );
       this.retractableCids.pushAll(
         this.subcgraph.constraints().filter( this.isRetractable, this )
       );
@@ -389,7 +392,7 @@ module hd.plan {
       // Remember the strongest retracted
       if (mid === undefined &&
           (this.strongestRetractedCid === null ||
-           this.strengths.weaker( this.strongestRetractedCid, cid ))) {
+           this.strengths.compare( this.strongestRetractedCid, cid ) < 0)) {
         this.strongestRetractedCid = cid;
       }
     }
@@ -406,7 +409,7 @@ module hd.plan {
      * Simple predicate to see if a constraint is retractable.
      */
     private isRetractable( cid: string ): boolean {
-      return this.strengths.weaker( cid, this.cidToEnforce );
+      return this.strengths.compare( cid, this.cidToEnforce ) < 0;
     }
 
     /*----------------------------------------------------------------
@@ -479,8 +482,11 @@ module hd.plan {
       this.strengths = strengths;
 
       // Move the cids into a max-heap
-      this.cidsToEnforce =
-            new u.Heap<string>( strengths.stronger.bind( strengths ) );
+      this.cidsToEnforce = new u.Heap<string>(
+        function( cid1: string, cid2: string ) {
+          return strengths.compare( cid1, cid2 ) > 0;
+        }
+      );
       this.cidsToEnforce.pushAll( cidsToEnforce );
     }
 
@@ -558,7 +564,7 @@ module hd.plan {
       // Return the ones which are unenforced and weaker
       return u.stringSet.members( cids )
             .filter( function( cid: string ) {
-              return (this.strengths.weaker( cid, strongestRetracted ) &&
+              return (this.strengths.compare( cid, strongestRetracted ) < 0 &&
                       this.sgraph.selectedForConstraint( cid ) === undefined  );
             }, this );
     }

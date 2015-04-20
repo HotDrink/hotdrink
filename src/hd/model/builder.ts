@@ -295,8 +295,19 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a constraint to the property modelcule.
      */
-    constraint( signature: string ): ModelBuilder {
+    constraint( name: string, signature: string ): ModelBuilder;
+    constraint( signature: string ): ModelBuilder;
+    constraint(): ModelBuilder {
       this.endConstraint();
+
+      var name: string, signature: string;
+      if (arguments.length > 1) {
+        name = arguments[0];
+        signature = arguments[1];
+      }
+      else {
+        signature = arguments[0];
+      }
 
       var varNames = signature.trim().split( /\s*,\s*/ );
 
@@ -316,6 +327,12 @@ module hd.model {
 
       // Record constraint
       this.last = cc;
+
+      if (name) {
+        if (! this.invalidName( name ) && ! this.nameInUse( name )) {
+          Modelcule.defineProperty( this.target, name, this.last, false );
+        }
+      }
 
       return this;
     }

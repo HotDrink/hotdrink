@@ -199,7 +199,7 @@ module hd.reactive {
       if (! anyRelevant) {
         this.parameters.removeDependency( this );
         this.outputPromises.forEach( function( p: Promise<any> ) {
-          p.ondropped.removeObserver( this );
+          p.reject( null );
         } );
       }
     }

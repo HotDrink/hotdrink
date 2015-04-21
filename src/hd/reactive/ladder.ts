@@ -36,7 +36,12 @@ module hd.reactive {
      */
     constructor() {
       super();
-      this.entries = [{promise: new Promise<T>( undefined ),
+      var p = new Promise<T>();
+      if (plogger) {
+        plogger.register( p, 'ladder', 'ladder initialization' );
+      }
+      p.resolve( undefined );
+      this.entries = [{promise: p,
                        state: 'fulfilled',
                        value: undefined
                       }
@@ -71,9 +76,8 @@ module hd.reactive {
     /*----------------------------------------------------------------
      * Get a promise forwarded from most recent promise
      */
-    getForwardedPromise() {
+    forwardPromise( forward: Promise<T> ) {
       var last = this.entries.length - 1;
-      var forward = new Promise<T>();
 
       // Try to forward
       if (! this.tryToForward( forward, last )) {

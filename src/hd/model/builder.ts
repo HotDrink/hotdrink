@@ -226,6 +226,11 @@ module hd.model {
     method( signature: string, fn: Function, async = false ): ModelBuilder {
       var inputNames: string[], outputNames: string[];
 
+      if (! this.last) {
+        console.error( 'Builder function "method" called with no constraint' );
+        return this;
+      }
+
       var leftRight = signature.trim().split( /\s*->\s*/ );
       if (leftRight.length != 2) {
         console.error( 'Invalid method signature: "' + signature + '"' );

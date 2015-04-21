@@ -480,85 +480,12 @@ module hd.system {
               .filter( function( mid: string ) { return downstreamMids[mid]; } );
 
         // Evaluate methods
-        scheduledMids.forEach( this.activate, this );
+        scheduledMids.forEach( function( mid: string ) {
+          var ar = activate( this.methods[mid], this.forwardSelfLoops );
+          (<ConstraintSystem>this).enable.methodScheduled( mid, ar.inputs, ar.outputs );
+        }, this );
 
         this.needEvaluating = {};
-      }
-    }
-
-    /*----------------------------------------------------------------
-     */
-    private
-    activate( mid: string ) {
-
-      var mm = this.methods[mid];
-      var params: any[] = [];
-      var paramLookup: u.Dictionary<r.Promise<any>> = {};
-
-      // Collect input promises
-      var inputs = mm.inputs;
-      for (var i = 0, l = inputs.length; i < l; ++i) {
-        // An input is either a variable or a constant
-        if (inputs[i] instanceof m.Variable) {
-          // If it's a variable, we use the promise for its value
-          var pvid = (<m.Variable>inputs[i]).id;
-
-          // Make sure we've got a promise in the lookup
-          if (! paramLookup[pvid]) {
-            var param: r.Promise<any>;
-            if (mm.outputs.indexOf( inputs[i] ) >= 0 &&
-                this.forwardSelfLoops == Forward.Yes   ) {
-              param = (<m.Variable>inputs[i]).getForwardedPromise();
-            }
-            else {
-              param = (<m.Variable>inputs[i]).getCurrentPromise();
-            }
-            paramLookup[pvid] = param;
-          }
-          params.push( paramLookup[pvid] );
-        }
-        else {
-          // If it's a constant, we create a satisfied promise
-          var p = new r.Promise( inputs[i] );
-          if (r.plogger) {
-            r.plogger.register( p, inputs[i], 'constant parameter' );
-          }
-          params.push( p );
-        }
-      }
-
-      try {
-        // Invoke the method
-        var result = mm.fn.apply( null, params );
-
-        // Ensure result is an array
-        if (mm.outputs.length == 1) {
-          result = [result];
-        }
-        else if (! Array.isArray( result )) {
-          throw new TypeError( 'Multi-output method did not return array' );
-        }
-        else {
-          result = result.slice( 0 );
-        }
-
-        // Set output promises
-        var outputs = mm.outputs;
-        for (var i = 0, l = outputs.length; i < l; ++i) {
-          // An output is either a variable or null
-          if (outputs[i] instanceof m.Variable) {
-            if (r.plogger) {
-              r.plogger.register( result[i], (<m.Variable>outputs[i]).name, 'output parameter' );
-            }
-            (<m.Variable>outputs[i]).makePromise( result[i] );
-          }
-        }
-
-        this.enable.methodScheduled( mm.id, paramLookup, result );
-      }
-      catch (e) {
-        // TODO: Figure out what this means
-        console.error( e );
       }
     }
 

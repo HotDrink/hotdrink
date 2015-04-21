@@ -83,10 +83,18 @@ module hd.model {
                              );
 
       if (value !== undefined) {
-        if (! (value instanceof r.Promise)) {
-          value = new r.Promise( value );
+        var p: r.Promise<any>;
+        if (value instanceof r.Promise) {
+          p = <r.Promise<any>>value;
         }
-        this.makePromise( value );
+        else {
+          p = new r.Promise<any>();
+          if (r.plogger) {
+            r.plogger.register( p, this.name, "variable initialization" );
+          }
+          p.resolve( value );
+        }
+        this.makePromise( p );
       }
     }
 
@@ -134,10 +142,11 @@ module hd.model {
      * Get a promise to be forwarded with the current variable value.
      */
     getForwardedPromise(): r.Promise<any> {
-      var p = this.ladder.getForwardedPromise();
+      var p = new r.Promise<any>();
       if (r.plogger) {
-        r.plogger.register( p, this.name, ' forwarded' );
+        r.plogger.register( p, this.name + '#fwd', ' forwarded' );
       }
+      this.ladder.forwardPromise( p );
       return p;
     }
 
@@ -163,7 +172,12 @@ module hd.model {
      * Observable: widget produces a value
      */
     onNext( value: any ): void {
-      this.makePromise( new r.Promise( value ) );
+      var p = new r.Promise<any>();
+      if (r.plogger) {
+        r.plogger.register( p, this.name, 'variable update' );
+      }
+      p.resolve( value );
+      this.makePromise( p );
       this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
     }
 
@@ -172,6 +186,9 @@ module hd.model {
      */
     onError( error: any ): void {
       var p = new r.Promise();
+      if (r.plogger) {
+        r.plogger.register( p, this.name, 'variable update' );
+      }
       p.reject( error );
       this.makePromise( p );
       this.changes.sendNext( {type: VariableEventType.changed, vv: this} );

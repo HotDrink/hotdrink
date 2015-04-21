@@ -63,6 +63,14 @@ module hd.reactive {
       return this.outstanding;
     }
 
+    activation( inputs: Promise<any>[], outputs: Promise<any>[] ) {
+      console.log( 'Activation: ' +
+                   inputs.map( u.getId ).join( ', ' ) +
+                   ' -> ' +
+                   outputs.map( u.getId ).join( ', ' )
+                 );
+    }
+
   }
 
 }

@@ -40,11 +40,11 @@ module hd.enable {
     constructor( egraph:  EnablementLabels,
                  mid:     string,
                  inputs:  u.Dictionary<r.Promise<any>>,
-                 outputs: r.Promise<any>[]              ) {
+                 outputs: u.Dictionary<r.Promise<any>>  ) {
       this.egraph = egraph;
       this.mid = mid;
       this.inputVids = Object.keys( inputs );
-      this.outputCount = outputs.length;
+      this.outputCount = 0;
 
       // Watch dependency counts of all inputs
       for (var vid in inputs) {
@@ -52,8 +52,9 @@ module hd.enable {
       }
 
       // Watch all outputs
-      for (var i = 0, l = outputs.length; i < l; ++i) {
-        outputs[i].addObserver( this, null, null, this.onCompletedOutput );
+      for (var vid in outputs) {
+        outputs[vid].addObserver( this, null, null, this.onCompletedOutput );
+        ++this.outputCount;
       }
     }
 
@@ -126,7 +127,7 @@ module hd.enable {
      */
     methodScheduled( mid: string,
                      inputs: u.Dictionary<r.Promise<any>>,
-                     outputs: r.Promise<any>[]             ) {
+                     outputs: u.Dictionary<r.Promise<any>> ) {
       var cid = this.cgraph.constraintForMethod( mid );
       this.egraph.selectMethod( cid, mid );
       if (this.reporters[cid]) {

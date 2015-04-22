@@ -46,7 +46,7 @@ enable_UNITS    := egraph report check
 enable_DEPS     := utility reactive graph
 
 system_LOC      := hd/
-system_UNITS    := system topo activate
+system_UNITS    := system topo
 system_DEPS     := utility reactive graph model plan enable
 
 bind_LOC        := hd/

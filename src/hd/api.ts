@@ -47,7 +47,6 @@ module hd {
   export var ConstraintSystem = s.ConstraintSystem;
   export var ModelBuilder = m.ModelBuilder;
   export var Update = s.Update;
-  export var Forward = s.Forward;
 
   // Bindings
   export var Checked = b.Checked;

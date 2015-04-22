@@ -123,6 +123,14 @@ module hd.model {
      * Make a promise to set the variable's value later.
      */
     makePromise( promise: r.Promise<any> ) {
+      if (! (promise instanceof r.Promise)) {
+        var value: any = promise;
+        promise = new r.Promise<any>();
+        if (r.plogger) {
+          r.plogger.register( promise, this.name, 'variable update' );
+        }
+        promise.resolve( value );
+      }
       this.ladder.addPromise( promise );
       if (this.pending.get() == false) {
         this.pending.set( true );
@@ -172,12 +180,7 @@ module hd.model {
      * Observable: widget produces a value
      */
     onNext( value: any ): void {
-      var p = new r.Promise<any>();
-      if (r.plogger) {
-        r.plogger.register( p, this.name, 'variable update' );
-      }
-      p.resolve( value );
-      this.makePromise( p );
+      this.makePromise( value );
       this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
     }
 

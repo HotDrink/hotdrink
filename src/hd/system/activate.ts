@@ -11,11 +11,12 @@ module hd.system {
   }
 
   export
-  function activate( mm: m.Method,
-                     forwardSelfLoops: Forward ): ActivationRecord {
+  function activate( op: m.Operation,
+                     forwardSelfLoops?: Forward,
+                     internal?: boolean          ): ActivationRecord {
     var params: any[] = [];
-    var inputs = mm.inputs;
-    var outputs = mm.outputs;
+    var inputs = op.inputs;
+    var outputs = op.outputs;
 
     var inputLookup: u.Dictionary<r.Promise<any>> = {};
     var outputLookup: u.Dictionary<r.Promise<any>> = {};
@@ -49,16 +50,16 @@ module hd.system {
       params.push( param );
     }
 
-    // Invoke the method
+    // Invoke the operation
     try {
-      var result = mm.fn.apply( null, params );
+      var result = op.fn.apply( null, params );
 
       // Ensure result is an array
-      if (mm.outputs.length == 1) {
+      if (op.outputs.length == 1) {
         result = [result];
       }
       else if (! Array.isArray( result )) {
-        throw new TypeError( 'Multi-output method did not return array' );
+        throw new TypeError( 'Multi-output operation did not return array' );
       }
     }
     catch (e) {
@@ -78,7 +79,7 @@ module hd.system {
       if (outputs[i] instanceof m.Variable) {
         var vv = <m.Variable>outputs[i];
         if (outputLookup[vv.id]) {
-          console.error( 'Method attempting to output same variable twice' );
+          console.error( 'Operation attempting to output same variable twice' );
         }
         else {
           var p = <r.Promise<any>>result[i];
@@ -86,7 +87,12 @@ module hd.system {
           if (r.plogger) {
             r.plogger.register( p, vv.name, 'output parameter' );
           }
-          vv.makePromise( p );
+          if (internal) {
+            vv.makePromise( p );
+          }
+          else {
+            vv.onNext( p );
+          }
         }
       }
     }

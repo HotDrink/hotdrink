@@ -8,6 +8,9 @@
 module hd.config {
   export
   var defaultPlannerType: hd.plan.PlannerType = hd.plan.QuickPlanner;
+
+  export
+  var forwardEmergingSources = false;
 }
 
 module hd.system {
@@ -27,11 +30,6 @@ module hd.system {
    * Update strategies
    */
   export enum Update { None, Immediate, Scheduled }
-
-  /*==================================================================
-   * Forwarding strategies
-   */
-  export enum Forward { No, Yes }
 
   /*==================================================================
    * The constraint system
@@ -71,10 +69,6 @@ module hd.system {
     isUpdateScheduled = false;
     isUpdateNeeded = false;
     solved = new r.ObservableProperty( true );
-
-    // Forwarding strategy
-    forwardSelfLoops = Forward.No;
-    forwardEmergingSources = Forward.No;
 
     // Constraints added since the last plan
     private needEnforcing: u.StringSet = {};
@@ -418,7 +412,7 @@ module hd.system {
           cids.forEach( u.stringSet.add.bind( null, this.needEvaluating ) );
 
           // Reevaluate any emerging source variables
-          if (this.forwardEmergingSources == Forward.Yes) {
+          if (config.forwardEmergingSources) {
             this.sgraph.variables().forEach( this.reevaluateIfEmergingSource, this );
           }
 
@@ -481,7 +475,7 @@ module hd.system {
 
         // Evaluate methods
         scheduledMids.forEach( function( mid: string ) {
-          var ar = activate( this.methods[mid], this.forwardSelfLoops );
+          var ar = this.methods[mid].activate( true );
           (<ConstraintSystem>this).enable.methodScheduled( mid, ar.inputs, ar.outputs );
         }, this );
 

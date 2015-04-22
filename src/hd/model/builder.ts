@@ -217,24 +217,14 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Add a method to the current modelcule.
      */
-    asyncMethod( signature: string, fn: Function ): ModelBuilder {
-      return this.method( signature, fn, true );
-    }
-
-    method( signature: string, fn: Function, async = false ): ModelBuilder {
+    private
+    parseSignature( optype: string, signature: string ) {
       var inputNames: string[], outputNames: string[];
-
-      if (! this.last) {
-        console.error( 'Builder function "method" called with no constraint' );
-        return this;
-      }
-
       var leftRight = signature.trim().split( /\s*->\s*/ );
       if (leftRight.length != 2) {
-        console.error( 'Invalid method signature: "' + signature + '"' );
-        return this;
+        console.error( 'Invalid ' + optype + ' signature: "' + signature + '"' );
+        return null;
       }
       inputNames = leftRight[0] == '' ? [] : leftRight[0].split( /\s*,\s*/ );
       outputNames = leftRight[1] == '' ? [] : leftRight[1].split( /\s*,\s*/ );
@@ -253,7 +243,7 @@ module hd.model {
 
       if (inputNames.some( this.unknownName, this ) ||
           outputNames.some( this.unknownName, this )  ) {
-        return this;
+        return null;
       }
 
       var inputs = inputNames.map( u.toValueIn( this.target ) );
@@ -261,36 +251,64 @@ module hd.model {
 
       if (outputs.some( u.isNotType( Variable ) )) {
         // Not an error, but not a selectable method
+        console.warn( 'Igorning ' + optype + ' with non-variable output(s): ' + signature );
+        return null;
+      }
+
+      var isUnique = function( el: any, i: number, a: any[] ) {
+        return i == a.indexOf( el );
+      }
+      if (! outputs.every( isUnique )) {
+        console.error( 'Duplicate outputs in ' + optype + ' ' + signature );
+        return null;
+      }
+
+      var inputVars = u.arraySet.fromArray( inputs.filter( u.isType( Variable ) ) );
+
+      return {inputs: inputs,
+              outputs: outputs,
+              inputVars: inputVars,
+              mask: mask
+             };
+    }
+
+    /*----------------------------------------------------------------
+     * Add a method to the current modelcule.
+     */
+    asyncMethod( signature: string, fn: Function ): ModelBuilder {
+      return this.method( signature, fn, true );
+    }
+
+    method( signature: string, fn: Function, async = false ): ModelBuilder {
+      if (! this.last) {
+        console.error( 'Builder function "method" called with no constraint' );
         return this;
       }
+
+      var op = this.parseSignature( 'method', signature );
 
       var constraintVars = this.last.variables;
       var isNotConstraintVar = function( vv: Variable ) {
         return constraintVars.indexOf( vv ) < 0;
       };
 
-      var inputVars = u.arraySet.fromArray( inputs.filter( u.isType( Variable ) ) );
-      var outputVars = u.arraySet.fromArray( outputs.filter( u.isType( Variable ) ) );
-
-      if (inputVars.some( isNotConstraintVar )) {
+      if (op.inputVars.some( isNotConstraintVar )) {
         console.error( "Input does not belong to constraint in method " + signature );
         return this;
       }
-      if (outputVars.some( isNotConstraintVar )) {
+      if (op.outputs.some( isNotConstraintVar )) {
         console.error( "Output does not belong to constraint in method " + signature );
         return this;
       }
 
-      inputVars = u.arraySet.difference( constraintVars, outputVars );
-
       // Create method
       var mm = new Method( this.ids.makeId( signature ),
                            signature,
-                           inputVars,
-                           outputVars,
-                           async ? fn : r.liftFunction( fn, outputs.length, mask ),
-                           inputs,
-                           outputs
+                           async ? fn : r.liftFunction( fn, op.outputs.length, op.mask ),
+                           op.inputs,
+                           op.outputs,
+                           u.arraySet.difference( constraintVars, op.outputs ),
+                           op.outputs
                          );
       this.last.addMethod( mm );
 
@@ -395,10 +413,10 @@ module hd.model {
             // Create method
             var mm = new Method( this.ids.makeId( signature ),
                                  signature,
-                                 inputVars.filter( notOutput ),
-                                 [output],
                                  r.liftFunction( fn ),
                                  inputs,
+                                 [output],
+                                 inputVars.filter( notOutput ),
                                  [output]
                                );
 
@@ -419,23 +437,38 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    syncommand( name: string, args: string, fn: Function ) {
+    command( name: string, signature: string, fn: Function, async = false ) {
       this.endConstraint();
 
-      var argNames = args.trim().split( /\s*,\s*/ );
+      var op = this.parseSignature( 'command', signature );
 
-      if (argNames.some( this.unknownName, this )) {
-        return this;
-      }
+      var command =
+            new Command( this.ids.makeId( signature ),
+                         signature,
+                         async ? fn : r.liftFunction( fn, op.outputs.length, op.mask ),
+                         op.inputs,
+                         op.outputs
+                       );
 
-      var variables = argNames.map( u.toValueIn( this.target ) );
+      this.target[name] = command;
 
-      if (! variables.every( u.isType( Variable ) )) {
-        console.error( 'Command may only reference variables' );
-        return this;
-      }
+      return this;
+    }
 
-      var command = new SynchronousCommand( fn, variables );
+    /*----------------------------------------------------------------
+     */
+    syncommand( name: string, signature: string, fn: Function, async = false ) {
+      this.endConstraint();
+
+      var op = this.parseSignature( 'syncommand', signature );
+
+      var command =
+            new SynchronousCommand( this.ids.makeId( signature ),
+                                    signature,
+                                    async ? fn : r.liftFunction( fn, op.outputs.length, op.mask ),
+                                    op.inputs,
+                                    op.outputs
+                                  );
 
       this.target[name] = command;
 

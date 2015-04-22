@@ -134,11 +134,6 @@ module hd.reactive {
      * Add new promises to the ladder.
      */
     addPromise( promise: Promise<T> ) {
-      // Wrap alternate promise types in our own promise
-      if (! (promise instanceof Promise)) {
-        promise = new Promise<T>( <any>promise );
-      }
-
       // Add promise
       this.entries.push( {promise: promise, state: 'pending'} );
 

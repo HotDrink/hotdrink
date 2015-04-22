@@ -54,8 +54,8 @@
           hd.performDeclaredBindings( model );
         } );
 
-        system.forwardSelfLoops = hd.Forward.Yes;
-        system.forwardEmergingSources = hd.Forward.Yes;
+        hd.config.forwardSelfLoops = true;
+        hd.config.forwardEmergingSources = true;
       }
     </script>
     <style type="text/css">

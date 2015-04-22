@@ -156,9 +156,17 @@ module hd.reactive {
      * Comparison.
      */
     hasValue( value: T ): boolean {
-      return this.eq ? this.eq( this.value, value )
-                     : this.value === value;
-
+      if (this.eq) {
+        return this.eq( this.value, value );
+      }
+      else {
+        if (typeof value === "object") {
+          return false;
+        }
+        else {
+          return this.value === value;
+        }
+      }
     }
 
   }

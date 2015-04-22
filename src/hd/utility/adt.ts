@@ -166,6 +166,22 @@ module hd.utility {
     }
 
     /*----------------------------------------------------------------
+     * Test for disjoint arrays.
+     */
+    export function areDisjoint<T>( as: ArraySet<T>, bs: ArraySet<T> ): boolean {
+      return (<T[]>as).every( function( a: T ) {
+        return (<T[]>bs).indexOf( a ) == -1;
+      } );
+    }
+
+    /*----------------------------------------------------------------
+     * Test for equal arrays.
+     */
+    export function areEqual<T>( as: ArraySet<T>, bs: ArraySet<T> ): boolean {
+      return as.length == bs.length && isSubset( as, bs );
+    }
+
+    /*----------------------------------------------------------------
      * Build set from array (remove duplicates).
      */
     export function fromArray<T>( as: T[] ): ArraySet<T> {

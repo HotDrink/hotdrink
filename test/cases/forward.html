@@ -1,0 +1,96 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      {
+        var model = new hd.ModelBuilder()
+            .vs( {x: 5, y: 10, z: 20,
+                  b2: 5, a: 100, b: 8, c: undefined, d: undefined, answer: undefined} )
+
+            .c( 'x, y, z' )
+            .m( 'x, y, z -> x, y', function( x, y, z ) {
+              if (z < y) y = z;
+              if (y < x) x = y;
+              return [x, y]
+            } )
+            .m( 'x, y, z -> x, z', function( x, y, z ) {
+              if (z < y) z = y;
+              if (y < x) x = y;
+              return [x, z];
+            } )
+            .m( 'x, y, z -> y, z', function( x, y, z ) {
+              if (y < x) y = x;
+              if (z < y) z = y;
+              return [y, z];
+            } )
+
+            .equation( "b == b2 + 10" )
+
+            .c( "a, b, c, d" )
+            .m( "a, b -> c, d", function( a, b ) {
+              var c = Math.floor( a / b );
+              return [c, a - b*c]
+            } )
+            .m( "a, c -> b, d", function( a, c ) {
+              var b = Math.floor( a / c );
+              return [b, a - b*c];
+            } )
+            .m( "b, c, d -> a", function( b, c, d ) {
+              return b*c + d;
+            } )
+
+            .c( "c, d, answer" )
+            .m( "c, d -> answer", function( c, d ) {
+              return c + " remainder " + d
+            } )
+
+            .end();
+
+        var system = new hd.ConstraintSystem();
+        system.addComponent( model );
+
+        window.addEventListener( 'load', function() {
+          hd.performDeclaredBindings( model );
+        } );
+
+        hd.config.forwardSelfLoops = true;
+        hd.config.forwardEmergingSources = true;
+      }
+    </script>
+    <style type="text/css">
+      .error, .error.stale { color: #900; }
+      .stale { color: #999; }
+    </style>
+  </head>
+  <body>
+    <input type="text" data-bind="hd.numVar( x )"/>
+    &le;
+    <input type="text" data-bind="hd.numVar( y )"/>
+    &le;
+    <input type="text" data-bind="hd.numVar( z )"/>
+    <p>&nbsp;</p>
+    <table>
+      <tr>
+        <td>&nbsp;</td>
+        <td>
+          <input type="text" data-bind="hd.numVar( b2 )"/>
+          <div style="margin-top: 0.3em">+ 10</div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <input type="text" data-bind="hd.numVar( a )"/> &divide;
+        </td>
+        <td>
+          <input type="text" data-bind="hd.numVar( b )"/> =
+          <input type="text" data-bind="hd.numVar( c )"/> R
+          <input type="text" data-bind="hd.numVar( d )"/>
+        </td>
+      </tr>
+    </table>
+    <p>
+      The answer is <span data-bind="hd.text( answer ), hd.cssClass( answer )"></span>
+    </p>
+  </body>
+</html>

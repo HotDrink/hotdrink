@@ -46,7 +46,7 @@ enable_UNITS    := egraph report check
 enable_DEPS     := utility reactive graph
 
 system_LOC      := hd/
-system_UNITS    := system evaluate topo
+system_UNITS    := system topo
 system_DEPS     := utility reactive graph model plan enable
 
 bind_LOC        := hd/
@@ -60,7 +60,7 @@ async_DEPS      := utility reactive
 hd_UNITS        := api
 hd_DEPS         := utility reactive model graph plan enable bind system
 
-qunit_UNITS     := qunit.d utility reactive graph
+qunit_UNITS     := qunit.d utility reactive ladder graph
 qunit_DEPS      := utility reactive graph
 
 compile-dfa_LOC   := apps/

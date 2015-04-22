@@ -43,6 +43,14 @@ module hd.reactive {
   export var DroppedPriority = 1;
 
   /*==================================================================
+   */
+  export interface PromiseStatus<T> {
+    state: string;
+    value?: T;
+    reason?: any;
+  }
+
+  /*==================================================================
    * A computation which depends on a promised value.  May optionally
    * produce its own value.
    */
@@ -50,29 +58,6 @@ module hd.reactive {
     onFulfilled( value: T ): U;
     onRejected( reason: any ): U;
     onProgress( value: T ): void;
-  }
-
-  /*==================================================================
-   * Function to call a handler on a dependency.
-   */
-  function callHandler( handler: Function,
-                        dependency: Object,
-                        value: any,
-                        id: any,
-                        promise: Promise<any>
-                      ) {
-    try {
-      var result = handler.call( dependency, value, id );
-      if (promise) {
-        promise.resolve( result );
-      }
-    }
-    catch (e) {
-      console.warn( e );
-      if (promise) {
-        promise.reject( e );
-      }
-    }
   }
 
   /*==================================================================
@@ -130,7 +115,7 @@ module hd.reactive {
   /*==================================================================
    * Private enum for promise state
    */
-  enum State { Pending, Fulfilled, Rejected }
+  export enum State { Pending, Fulfilled, Rejected }
 
   export enum Usage { Unknown, Used, Unused, Delayed };
 
@@ -193,7 +178,11 @@ module hd.reactive {
       return this.state !== State.Pending;
     }
 
-    inspect() {
+    hasValue() {
+      return 'value' in this;
+    }
+
+    inspect(): PromiseStatus<T> {
       if (this.state === State.Fulfilled) {
         return {state: 'fulfilled', value: this.value};
       }
@@ -201,7 +190,12 @@ module hd.reactive {
         return {state: 'rejected', reason: this.reason};
       }
       else {
-        return {state: 'pending'};
+        if ('value' in this) {
+          return {state: 'pending', value: this.value}
+        }
+        else {
+          return {state: 'pending'};
+        }
       }
     }
 
@@ -455,7 +449,7 @@ module hd.reactive {
     /*----------------------------------------------------------------
      * Rejects the promise with specified reason.
      */
-    reject( reason: any ): void {
+    reject( reason?: any ): void {
       if (this.open) {
         this.rejectFirst( reason );
       }
@@ -465,6 +459,7 @@ module hd.reactive {
       if (this.state === State.Pending) {
         this.state = State.Rejected;
         this.reason = reason;
+        delete this.value;
 
         // Debug info
         if (plogger) {
@@ -515,6 +510,7 @@ module hd.reactive {
 
     private notifyFirst( value: T ): void {
       if (this.state == State.Pending) {
+        this.value = value;
         // Notify dependencies
         var dependencies = this.dependencies;
         u.schedule( PromisePriority, function() {
@@ -668,9 +664,35 @@ module hd.reactive {
   // Inherited empty dependency list
   Promise.prototype['dependencies'] = [];
 
+  /*================================================================--
+   * Add a callback to f to promise p.
+   */
   function signup( p: Promise<any>, i: number, f: Function ) {
     p.then( function( v: any ) {
       f( i, v );
     } )
+  }
+
+  /*==================================================================
+   * Function to call a handler on a dependency.
+   */
+  function callHandler( handler: Function,
+                        dependency: Object,
+                        value: any,
+                        id: any,
+                        promise: Promise<any>
+                      ) {
+    try {
+      var result = handler.call( dependency, value, id );
+      if (promise) {
+        promise.resolve( result );
+      }
+    }
+    catch (e) {
+      console.warn( e );
+      if (promise) {
+        promise.reject( e );
+      }
+    }
   }
 }

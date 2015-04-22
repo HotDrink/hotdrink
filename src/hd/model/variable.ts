@@ -37,6 +37,9 @@ module hd.model {
     // Error associated with this variable
     error = new r.ObservableProperty<any>( null );
 
+    // Is value stale?
+    stale = new r.ObservableProperty( false );
+
     // Is the variable a source?
     source = new r.ObservableProperty( false );
 
@@ -68,9 +71,9 @@ module hd.model {
       this.id = id;
       this.name = name;
 
-      this.value = new r.ObservableProperty( value, eq );
+      this.value = new r.ObservableProperty( undefined, eq );
       this.output = new r.ObservableProperty( !! output );
-      this.ladder = new r.PromiseLadder<any>( value );
+      this.ladder = new r.PromiseLadder<any>();
 
       // connect ladder to value
       this.ladder.addObserver( this,
@@ -78,6 +81,21 @@ module hd.model {
                                this.onLadderError,
                                null
                              );
+
+      if (value !== undefined) {
+        var p: r.Promise<any>;
+        if (value instanceof r.Promise) {
+          p = <r.Promise<any>>value;
+        }
+        else {
+          p = new r.Promise<any>();
+          if (r.plogger) {
+            r.plogger.register( p, this.name, "variable initialization" );
+          }
+          p.resolve( value );
+        }
+        this.makePromise( p );
+      }
     }
 
     /*----------------------------------------------------------------
@@ -105,9 +123,18 @@ module hd.model {
      * Make a promise to set the variable's value later.
      */
     makePromise( promise: r.Promise<any> ) {
+      if (! (promise instanceof r.Promise)) {
+        var value: any = promise;
+        promise = new r.Promise<any>();
+        if (r.plogger) {
+          r.plogger.register( promise, this.name, 'variable update' );
+        }
+        promise.resolve( value );
+      }
       this.ladder.addPromise( promise );
       if (this.pending.get() == false) {
         this.pending.set( true );
+        this.stale.set( false );
         this.changes.sendNext( {type: VariableEventType.pending, vv: this} );
       }
     }
@@ -115,8 +142,20 @@ module hd.model {
     /*----------------------------------------------------------------
      * Get a promise for the variable's value.
      */
-    getPromise(): r.Promise<any> {
-      return this.ladder.currentPromise();
+    getCurrentPromise(): r.Promise<any> {
+      return this.ladder.getCurrentPromise();
+    }
+
+    /*----------------------------------------------------------------
+     * Get a promise to be forwarded with the current variable value.
+     */
+    getForwardedPromise(): r.Promise<any> {
+      var p = new r.Promise<any>();
+      if (r.plogger) {
+        r.plogger.register( p, this.name + '#fwd', ' forwarded' );
+      }
+      this.ladder.forwardPromise( p );
+      return p;
     }
 
     /*----------------------------------------------------------------
@@ -141,13 +180,8 @@ module hd.model {
      * Observable: widget produces a value
      */
     onNext( value: any ): void {
-      if (this.ladder.isCurrent() && this.value.hasValue( value )) {
-        this.changes.sendNext( {type: VariableEventType.touched, vv: this} );
-      }
-      else {
-        this.makePromise( new r.Promise( value ) );
-        this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
-      }
+      this.makePromise( value );
+      this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
     }
 
     /*----------------------------------------------------------------
@@ -155,6 +189,9 @@ module hd.model {
      */
     onError( error: any ): void {
       var p = new r.Promise();
+      if (r.plogger) {
+        r.plogger.register( p, this.name, 'variable update' );
+      }
       p.reject( error );
       this.makePromise( p );
       this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
@@ -173,6 +210,7 @@ module hd.model {
     onLadderNext( value: any ) {
       this.value.hardSet( value );
       this.error.set( null );
+      this.stale.set( this.ladder.currentFailed() );
       if (this.ladder.isSettled()) {
         this.pending.set( false );
         this.changes.sendNext( {type: VariableEventType.settled, vv: this} );
@@ -183,7 +221,10 @@ module hd.model {
      * Ladder produced an error.
      */
     onLadderError( error: any ) {
-      this.error.set( error );
+      if (error !== null) {
+        this.error.set( error );
+      }
+      this.stale.set( this.ladder.currentFailed() );
       if (this.ladder.isSettled()) {
         this.pending.set( false );
         this.changes.sendNext( {type: VariableEventType.settled, vv: this} );

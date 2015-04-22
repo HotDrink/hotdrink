@@ -137,6 +137,10 @@ module hd.bindings {
                model: vv.source,
                dir: Direction.m2v
               },
+              {mkview: CssClass.bind( null, 'stale', 'current' ),
+               model: vv.stale,
+               dir: Direction.m2v
+              },
               {mkview: CssClass.bind( null, 'pending', 'complete' ),
                model: vv.pending,
                dir: Direction.m2v

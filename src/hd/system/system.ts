@@ -5,6 +5,13 @@
  *   3. Run the planner to get a new solution graph
  *   4. Run the evaluator to produce new values
  */
+module hd.config {
+  export
+  var defaultPlannerType: hd.plan.PlannerType = hd.plan.QuickPlanner;
+
+  export
+  var forwardEmergingSources = false;
+}
 
 module hd.system {
 
@@ -14,14 +21,10 @@ module hd.system {
   import g = hd.graph;
   import p = hd.plan;
   import e = hd.enable;
+  import c = hd.config;
 
   // scheduling priority for responding to state changes
   export var SystemUpdatePriority = 1;
-
-  /*==================================================================
-   * Planner type to be used if no planner is set explicitly
-   */
-  export var defaultPlannerType = p.QuickPlanner;
 
   /*==================================================================
    * Update strategies
@@ -48,7 +51,7 @@ module hd.system {
     private planner: p.Planner;
     getPlanner() {
       if (! this.planner) {
-        this.planner = new defaultPlannerType( this.cgraph );
+        this.planner = new c.defaultPlannerType( this.cgraph );
       }
       return this.planner;
     }
@@ -81,7 +84,7 @@ module hd.system {
     /*----------------------------------------------------------------
      * Initialize members
      */
-    constructor( plannerT: p.PlannerType = defaultPlannerType,
+    constructor( plannerT: p.PlannerType = c.defaultPlannerType,
                  cgraphT: g.ConstraintGraphType = g.CachingConstraintGraph ) {
       this.cgraph = new cgraphT();
       if (plannerT) {
@@ -227,7 +230,7 @@ module hd.system {
         this.cgraph.addMethod( stayMethodId, stayConstraintId, [], [vv.id] );
 
         // Set stay to optional
-        if (vv.value.get() === undefined) {
+        if (! vv.pending.get() && vv.value.get() === undefined) {
           this.getPlanner().setMinStrength( stayConstraintId );
         }
         else {
@@ -408,11 +411,33 @@ module hd.system {
           // New constraints need to be evaluated
           cids.forEach( u.stringSet.add.bind( null, this.needEvaluating ) );
 
+          // Reevaluate any emerging source variables
+          if (config.forwardEmergingSources) {
+            this.sgraph.variables().forEach( this.reevaluateIfEmergingSource, this );
+          }
+
           // Update source statuses
           this.sgraph.variables().forEach( this.updateSourceStatus, this );
         }
 
         this.needEnforcing = {};
+      }
+    }
+
+
+    // Helper - check for source variables that
+    private
+    reevaluateIfEmergingSource( vid: string ) {
+      var vv = this.variables[vid];
+      var stayConstraintId = g.stayConstraint( vid );
+
+      // Evaluate if it's selected AND not previously a source
+      //   AND not currently scheduled for evaluation
+      if (this.sgraph.selectedForConstraint( stayConstraintId ) &&
+          ! vv.source.get() && ! this.needEvaluating[stayConstraintId]) {
+
+        vv.makePromise( vv.getForwardedPromise() );
+        this.needEvaluating[stayConstraintId] = true;
       }
     }
 
@@ -449,16 +474,13 @@ module hd.system {
               .filter( function( mid: string ) { return downstreamMids[mid]; } );
 
         // Evaluate methods
-        scheduledMids.forEach( this.execute, this );
+        scheduledMids.forEach( function( mid: string ) {
+          var ar = this.methods[mid].activate( true );
+          (<ConstraintSystem>this).enable.methodScheduled( mid, ar.inputs, ar.outputs );
+        }, this );
 
         this.needEvaluating = {};
       }
-    }
-
-    // Helper - activate method
-    private
-    execute( mid: string ) {
-      execute( this.methods[mid], this.enable );
     }
 
     /*----------------------------------------------------------------

@@ -85,7 +85,7 @@ module hd.reactive {
      * If any parameter fails then we fail.
      */
     onParameterRejected( reason: any, index: number ) {
-      this.promise.reject( "Failed dependency" );
+      this.promise.reject( null );
     }
 
     /*----------------------------------------------------------------
@@ -199,7 +199,7 @@ module hd.reactive {
       if (! anyRelevant) {
         this.parameters.removeDependency( this );
         this.outputPromises.forEach( function( p: Promise<any> ) {
-          p.ondropped.removeObserver( this );
+          p.reject( null );
         } );
       }
     }

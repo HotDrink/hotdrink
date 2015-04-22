@@ -3,6 +3,19 @@ module hd.model {
   import r = hd.reactive;
 
   export
+  class Command extends Operation {
+
+    onNext() {
+      this.activate( false );
+    }
+
+    onError() { }
+
+    onCompleted() { }
+
+  }
+
+  export
   class None extends r.BasicObservable<boolean> {
 
     observables: r.ProxyObservable<any>[];
@@ -81,15 +94,20 @@ module hd.model {
   }
 
   export
-  class SynchronousCommand {
+  class SynchronousCommand extends Command {
 
     ready: r.Signal<boolean>;
 
-    constructor( public fn: Function, public args: Variable[] ) {
+    constructor( id: string,
+                 name: string,
+                 fn: Function,
+                 inputs: any[],
+                 outputs: any[] ) {
+      super( id, name, fn, inputs, outputs );
       var count = 0;
       var properties: r.Signal<any>[] = [];
-      for (var i = 0, l = args.length; i < l; ++i) {
-        var vv = args[i];
+      for (var i = 0, l = inputs.length; i < l; ++i) {
+        var vv = inputs[i];
         properties.push( vv.pending );
         properties.push( vv.error );
       }
@@ -98,7 +116,7 @@ module hd.model {
 
     onNext() {
       if (this.ready.get()) {
-        this.fn.apply( null, this.args.map( varValue ) );
+        this.activate( false );
       }
     }
 

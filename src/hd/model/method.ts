@@ -108,11 +108,13 @@ module hd.model {
         var result = this.fn.apply( null, params );
 
         // Ensure result is an array
-        if (this.outputs.length == 1) {
-          result = [result];
-        }
-        else if (! Array.isArray( result )) {
-          throw new TypeError( 'Multi-output operation did not return array' );
+        if (outputs.length > 0) {
+          if (outputs.length == 1) {
+            result = [result];
+          }
+          else if (! Array.isArray( result )) {
+            throw new TypeError( 'Multi-output activating function did not return array' );
+          }
         }
       }
       catch (e) {

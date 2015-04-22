@@ -152,11 +152,13 @@ module hd.reactive {
       var numOutputs = this.outputPromises.length;
       try {
         var result = this.fn.apply( null, value );
-        if (numOutputs == 1) {
-          result = [result];
-        }
-        else if (! Array.isArray( result )) {
-          throw new TypeError( 'Multi-output method did not return array' );
+        if (numOutputs > 0) {
+          if (numOutputs == 1) {
+            result = [result];
+          }
+          else if (! Array.isArray( result )) {
+            throw new TypeError( 'Multi-output lifted function did not return array' );
+          }
         }
 
         for (var i = 0; i < numOutputs; ++i) {

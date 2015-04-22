@@ -82,8 +82,8 @@ module hd.plan {
     /*----------------------------------------------------------------
      * Test whether first is stronger than second.
      */
-    isStronger( cid1: string, cid2: string ) {
-      return this.strengths.stronger( cid1, cid2 );
+    compare( cid1: string, cid2: string ): number {
+      return this.strengths.compare( cid1, cid2 );
     }
 
     /*----------------------------------------------------------------

@@ -18,7 +18,7 @@ module hd.system {
     // Data structures to keep track of free nodes
     var freeMids: string[] = [];
     var freeVids = new u.Heap<string>( function( a: string, b: string ) {
-      return planner.isStronger( g.stayConstraint( a ), g.stayConstraint( b ) );
+      return planner.compare( g.stayConstraint( a ), g.stayConstraint( b ) ) > 0;
     } );
 
     // In-degree of all nodes

@@ -1,0 +1,72 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <style type="text/css">
+      .derived { background: #ffe; }
+      .pending { background: right center no-repeat #eee url(spinner.gif); }
+      .error   { color: #905; }
+    </style>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+    {
+      function sum() {
+        var s = 0;
+        for (var i = 0, l = arguments.length; i < l; ++i) {
+          s += arguments[i];
+        }
+        return s;
+      }
+
+      function diff() {
+        var d = arguments[0];
+        for (var i = 1, l = arguments.length; i < l; ++i) {
+          d -= arguments[i];
+        }
+        return d;
+      }
+
+      var model = new hd.ModelBuilder()
+          .vs( "a, b, c, z", {a: 3, b: 4, c: 5} )
+
+          .c( "a, b, c, z" )
+          .m( "a, b, c -> z", sum )
+          .m( "z, a, b -> c", diff )
+          .m( "z, b, c -> a", diff )
+          .m( "z, c, a -> b", diff )
+
+          .v( 's', 'hello' )
+          .v( 't', 'goodbye' )
+
+          .c( "copy", "s, t" )
+          .m( "s -> t", function( x ) { return x; } )
+
+          .end();
+
+      var system = new hd.ConstraintSystem();
+      system.addComponent( model );
+      system.addTouchSet( [model.a, model.b, model.c] );
+      system.makeConstraintOptional( model.copy );
+      system.addTouchDependency( model.s, model.copy );
+
+      window.addEventListener( 'load', function() {
+        hd.performDeclaredBindings( model );
+      } );
+    }
+    </script>
+  </head>
+  <body>
+    <div style="width:200px">
+      <input type="text" data-bind="hd.num( a )"/><br/>
+      <input type="text" data-bind="hd.num( b )"/><br/>
+      <input type="text" data-bind="hd.num( c )"/><br/>
+      <hr/>
+      <input type="text" data-bind="hd.num( z )"/>
+    </div>
+    <p>&nbsp;</p>
+    <div style="width:200px">
+      <input type="text" data-bind="hd.edit( s )"/><br/>
+      <hr/>
+      <input type="text" data-bind="hd.edit( t )"/><br/>
+    </div>
+  </body>
+</html>

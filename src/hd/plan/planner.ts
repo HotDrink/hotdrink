@@ -72,7 +72,7 @@ module hd.plan {
     /*----------------------------------------------------------------
      * Test whether first is stronger than second.
      */
-    isStronger( cid1: string, cid2: string ): boolean;
+    compare( cid1: string, cid2: string ): number;
 
     /*----------------------------------------------------------------
      * Run planning algorithm; return true if planning succeeded.

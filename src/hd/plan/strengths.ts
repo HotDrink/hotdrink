@@ -60,32 +60,24 @@ module hd.plan {
     }
 
     /*----------------------------------------------------------------
-     * Less-than operator
+     * Comparison operator
      */
-    weaker( cid1: string, cid2: string ): boolean {
+    compare( cid1: string, cid2: string ): number {
       if (cid1 in this.strengths) {
         if (cid2 in this.strengths) {
-          return this.strengths[cid1] < this.strengths[cid2];
-        }
-        return true;
-      }
-      return false;
-    }
-
-    /*----------------------------------------------------------------
-     * Greater-than operator
-     */
-    stronger( cid1: string, cid2: string ): boolean {
-      if (cid1 in this.strengths) {
-        if (cid2 in this.strengths) {
-          return this.strengths[cid1] > this.strengths[cid2];
+          return this.strengths[cid1] - this.strengths[cid2];
         }
         else {
-          return false;
+          return -1;
         }
       }
       else {
-        return ! (cid2 in this.strengths);
+        if (cid2 in this.strengths) {
+          return 1;
+        }
+        else {
+          return 0;
+        }
       }
     }
 
@@ -145,22 +137,27 @@ module hd.plan {
     }
 
     /*----------------------------------------------------------------
-     * Greater-than operator
+     * Comparison operator
      */
-    stronger( cid1: T, cid2: T ): boolean {
+    compare( cid1: T, cid2: T ): number {
       var i1 = this.strengths.indexOf( cid1 );
       var i2 = this.strengths.indexOf( cid2 );
 
       if (i1 >= 0) {
         if (i2 >= 0) {
-          return i1 > i2;
+          return i1 - i2;
         }
         else {
-          return false;
+          return -1;
         }
       }
-      else {
-        return i2 < 0;
+      else{
+        if (i2 >= 0) {
+          return 1;
+        }
+        else {
+          return 0;
+        }
       }
     }
 

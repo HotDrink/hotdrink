@@ -259,11 +259,8 @@ module hd.model {
         return null;
       }
 
-      var inputVars = u.arraySet.fromArray( inputs.filter( u.isType( Variable ) ) );
-
       return {inputs: inputs,
               outputs: outputs,
-              inputVars: inputVars,
               priors: priors.length == 0 ? null : priors,
               masks: masks.length == 0 ? null : masks
              };
@@ -289,7 +286,7 @@ module hd.model {
         return constraintVars.indexOf( vv ) < 0;
       };
 
-      if (op.inputVars.some( isNotConstraintVar )) {
+      if (op.inputs.some( isNotConstraintVar )) {
         console.error( "Input does not belong to constraint in method " + signature );
         return this;
       }

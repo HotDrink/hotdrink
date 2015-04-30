@@ -12,10 +12,6 @@ module hd.model {
   import u = hd.utility;
   import r = hd.reactive;
 
-  export class PriorGen {
-    constructor( public variable: Variable ) { }
-  }
-
   export
   interface ActivationRecord {
     inputs: u.Dictionary<r.Promise<any>>;
@@ -46,7 +42,7 @@ module hd.model {
     // everything else will cause the corresponding output to be ignored.
     outputs: any[];
 
-    usePrior: boolean[];
+    usePriors: boolean[];
 
     /*----------------------------------------------------------------
      * Initialize members
@@ -56,13 +52,13 @@ module hd.model {
                  fn: Function,
                  inputs: any[],
                  outputs: any[],
-                 usePrior?: boolean[] ) {
+                 usePriors?: boolean[] ) {
       this.id = id;
       this.name = name;
       this.fn = fn;
       this.inputs = inputs;
       this.outputs = outputs;
-      this.usePrior = usePrior;
+      this.usePriors = usePriors;
     }
 
     /*----------------------------------------------------------------
@@ -74,60 +70,55 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    lookupPriors( priors: u.Dictionary<r.Promise<any>> ) {
-      if (this.usePrior) {
-        for (var i = 0, l = this.inputs.length; i < l; ++i) {
-          if (this.usePrior[i] && (this.inputs[i] instanceof Variable)) {
-            var vv = <Variable>this.inputs[i];
-            if (! priors[vv.id]) {
-              if (config.forwardPriorGens) {
-                priors[vv.id] = vv.getForwardedPromise();
-              }
-              else {
-                priors[vv.id] = vv.getCurrentPromise();
-              }
-            }
-          }
-        }
-      }
-    }
-
-    /*----------------------------------------------------------------
-     */
-    activate( priors: u.Dictionary<r.Promise<any>>,
-              internal?: boolean                    ): ActivationRecord {
+    activate( internal?: boolean ): ActivationRecord {
       var params: any[] = [];
 
+      var priorLookup: u.Dictionary<r.Promise<any>> = {};
       var inputLookup: u.Dictionary<r.Promise<any>> = {};
       var outputLookup: u.Dictionary<r.Promise<any>> = {};
 
       // Collect parameter promises
       for (var i = 0, l = this.inputs.length; i < l; ++i) {
+        var param: r.Promise<any>;
 
         // An input is either a variable or a constant
-        var prior: r.Promise<any>;
         if (this.inputs[i] instanceof Variable) {
-          // Check if this input should use a prior promise
-          if (this.usePrior && this.usePrior[i] &&
-              (prior = priors[(<Variable>this.inputs[i]).id])) {
-            params[i] = prior;
+          var vv = <Variable>this.inputs[i];
+
+          // Determine what promise to use for this variable
+          if (this.usePriors && this.usePriors[i]) {
+            if (! (param = priorLookup[vv.id])) {
+              if (config.forwardPriorGens) {
+                param = priorLookup[vv.id] = vv.getForwardedPromise();
+              }
+              else {
+                param = priorLookup[vv.id] = vv.getCurrentPromise();
+              }
+            }
           }
           else {
-            var vv = <Variable>this.inputs[i];
-            if (! (params[i] = inputLookup[vv.id])) {
-              params[i] = inputLookup[vv.id] = vv.getCurrentPromise();
+            if (! (param = inputLookup[vv.id])) {
+              // Make a dependent promise for parameter
+              param = inputLookup[vv.id] = new r.Promise();
+              var oldp = vv.getStagedPromise();
+              if (r.plogger) {
+                r.plogger.register( param, vv.name, 'input parameter' );
+              }
+              param.resolve( oldp );
+              param.ondropped.addObserver( oldp );
             }
           }
         }
         else {
           // If it's a constant, we create a satisfied promise
-          params[i] = new r.Promise();
+          param = new r.Promise();
           if (r.plogger) {
-            r.plogger.register( params[i], this.inputs[i], 'constant parameter' );
+            r.plogger.register( param, this.inputs[i], 'constant parameter' );
           }
-          params[i].resolve( this.inputs[i] );
+          param.resolve( this.inputs[i] );
         }
 
+        params.push( param );
       }
 
       // Invoke the operation
@@ -211,10 +202,10 @@ module hd.model {
                  fn: Function,
                  inputs: any[],
                  outputs: any[],
-                 usePrior: boolean[],
+                 usePriors: boolean[],
                  inputVars: u.ArraySet<Variable>,
                  outputVars: u.ArraySet<Variable> ) {
-      super( id, name, fn, inputs, outputs, usePrior );
+      super( id, name, fn, inputs, outputs, usePriors );
       this.inputVars = inputVars;
       this.outputVars = outputVars;
     }

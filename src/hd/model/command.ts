@@ -6,7 +6,7 @@ module hd.model {
   class Command extends Operation {
 
     onNext() {
-      this.activate( {}, false );
+      this.activate( false );
     }
 
     onError() { }
@@ -103,8 +103,8 @@ module hd.model {
                  fn: Function,
                  inputs: any[],
                  outputs: any[],
-                 usePrior?: boolean[] ) {
-      super( id, name, fn, inputs, outputs, usePrior );
+                 usePriors?: boolean[] ) {
+      super( id, name, fn, inputs, outputs, usePriors );
       var count = 0;
       var properties: r.Signal<any>[] = [];
       for (var i = 0, l = inputs.length; i < l; ++i) {
@@ -117,7 +117,7 @@ module hd.model {
 
     onNext() {
       if (this.ready.get()) {
-        this.activate( {}, false );
+        this.activate( false );
       }
     }
 

@@ -76,12 +76,10 @@ module hd.model {
                  output?: boolean             ): ModelBuilder {
       this.endConstraint();
 
-      var indirect = false;
-      var stripped = stripDollar( name );
-      if (stripped) {
-        indirect = true;
-        name = stripped;
-      }
+      var stripResult = strip( name, ['$'] );
+      if (! stripResult) { return null; }
+      var indirect = stripResult['$'];
+      name = stripResult['name'];
 
       if (this.invalidName( name ) || this.nameInUse( name )) { return this; }
 
@@ -229,16 +227,14 @@ module hd.model {
       inputNames = leftRight[0] == '' ? [] : leftRight[0].split( /\s*,\s*/ );
       outputNames = leftRight[1] == '' ? [] : leftRight[1].split( /\s*,\s*/ );
 
-      var mask: boolean[] = [];
+      var masks: boolean[] = [];
+      var priors: boolean[] = [];
       for (var i = 0, l = inputNames.length; i < l; ++i) {
-        var stripped = stripStar( inputNames[i] )
-        if (stripped) {
-          mask[i] = true;
-          inputNames[i] = stripped;
-        }
-      }
-      if (mask.length == 0) {
-        mask = null;
+        var stripResult = strip( inputNames[i], ['*', '!'] );
+        if (! stripResult) { return null; }
+        inputNames[i] = stripResult['name'];
+        masks[i] = stripResult['*'];
+        priors[i] = stripResult['!'];
       }
 
       if (inputNames.some( this.unknownName, this ) ||
@@ -268,7 +264,8 @@ module hd.model {
       return {inputs: inputs,
               outputs: outputs,
               inputVars: inputVars,
-              mask: mask
+              priors: priors.length == 0 ? null : priors,
+              masks: masks.length == 0 ? null : masks
              };
     }
 
@@ -304,9 +301,10 @@ module hd.model {
       // Create method
       var mm = new Method( this.ids.makeId( signature ),
                            signature,
-                           async ? fn : r.liftFunction( fn, op.outputs.length, op.mask ),
+                           async ? fn : r.liftFunction( fn, op.outputs.length, op.masks ),
                            op.inputs,
                            op.outputs,
+                           op.priors,
                            u.arraySet.difference( constraintVars, op.outputs ),
                            op.outputs
                          );
@@ -433,6 +431,7 @@ module hd.model {
                                  r.liftFunction( fn ),
                                  inputs,
                                  [output],
+                                 [],
                                  inputVars.filter( notOutput ),
                                  [output]
                                );
@@ -462,9 +461,10 @@ module hd.model {
       var command =
             new Command( this.ids.makeId( signature ),
                          signature,
-                         async ? fn : r.liftFunction( fn, op.outputs.length, op.mask ),
+                         async ? fn : r.liftFunction( fn, op.outputs.length, op.masks ),
                          op.inputs,
-                         op.outputs
+                         op.outputs,
+                         op.priors
                        );
 
       this.target[name] = command;
@@ -482,9 +482,10 @@ module hd.model {
       var command =
             new SynchronousCommand( this.ids.makeId( signature ),
                                     signature,
-                                    async ? fn : r.liftFunction( fn, op.outputs.length, op.mask ),
+                                    async ? fn : r.liftFunction( fn, op.outputs.length, op.masks ),
                                     op.inputs,
-                                    op.outputs
+                                    op.outputs,
+                                    op.priors
                                   );
 
       this.target[name] = command;
@@ -541,24 +542,26 @@ module hd.model {
   (<any>ModelBuilder).prototype['a'] = ModelBuilder.prototype.asyncMethod;
   (<any>ModelBuilder).prototype['eq'] = ModelBuilder.prototype.equation;
 
-
-  var initialStar = /^\s*\*\s*/;
-  function stripStar( name: string ) {
-    return strip( name, initialStar );
-  }
-
-  var initialDollar = /^\s*\$\s*/;
-  function stripDollar( name: string ) {
-    return strip( name, initialDollar );
-  }
-
-  function strip( name: string, re: RegExp ) {
-    if (re.test( name )) {
-      return name.replace( re, '' );
+  function strip( name: string, prefixes: string[] ) {
+    var result: u.Dictionary<any> = {};
+    var c = name.charAt( 0 );
+    while (! c.match( /\w/ )) {
+      if (prefixes.indexOf( c ) >= 0) {
+        if (result[c]) {
+          console.error( 'Duplicate variable prefix: ' + c );
+          return null;
+        }
+        result[c] = true;
+      }
+      else if (! c.match( /\s/ )) {
+        console.error( 'Invalid variable prefix: ' + c );
+        return null;
+      }
+      name = name.substring( 1 );
+      c = name.charAt( 0 );
     }
-    else {
-      return null;
-    }
+    result['name'] = name;
+    return result;
   }
 
 }

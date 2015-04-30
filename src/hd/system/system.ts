@@ -596,10 +596,16 @@ module hd.system {
               .filter( function( mid: string ) { return downstreamMids[mid]; } );
 
         // Evaluate methods
-        scheduledMids.forEach( function( mid: string ) {
-          var ar = this.methods[mid].activate( true );
-          (<ConstraintSystem>this).enable.methodScheduled( mid, ar.inputs, ar.outputs );
-        }, this );
+        var priors: u.Dictionary<r.Promise<any>> = {}
+        for (var i = 0, l = scheduledMids.length; i < l; ++i) {
+          var mid = scheduledMids[i];
+          this.methods[mid].lookupPriors( priors );
+        }
+        for (var i = 0, l = scheduledMids.length; i < l; ++i) {
+          var mid = scheduledMids[i];
+          var ar = this.methods[mid].activate( priors, true );
+          this.enable.methodScheduled( mid, ar.inputs, ar.outputs );
+        }
 
         this.needEvaluating = {};
       }

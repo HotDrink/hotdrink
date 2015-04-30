@@ -4,13 +4,17 @@
 
 module hd.config {
   export
-  var forwardSelfLoops = false;
+  var forwardPriorGens = false;
 }
 
 module hd.model {
 
   import u = hd.utility;
   import r = hd.reactive;
+
+  export class PriorGen {
+    constructor( public variable: Variable ) { }
+  }
 
   export
   interface ActivationRecord {
@@ -42,6 +46,8 @@ module hd.model {
     // everything else will cause the corresponding output to be ignored.
     outputs: any[];
 
+    usePrior: boolean[];
+
     /*----------------------------------------------------------------
      * Initialize members
      */
@@ -49,12 +55,14 @@ module hd.model {
                  name: string,
                  fn: Function,
                  inputs: any[],
-                 outputs: any[] ) {
+                 outputs: any[],
+                 usePrior?: boolean[] ) {
       this.id = id;
       this.name = name;
       this.fn = fn;
       this.inputs = inputs;
       this.outputs = outputs;
+      this.usePrior = usePrior;
     }
 
     /*----------------------------------------------------------------
@@ -66,41 +74,60 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    activate( internal?: boolean ): ActivationRecord {
+    lookupPriors( priors: u.Dictionary<r.Promise<any>> ) {
+      if (this.usePrior) {
+        for (var i = 0, l = this.inputs.length; i < l; ++i) {
+          if (this.usePrior[i] && (this.inputs[i] instanceof Variable)) {
+            var vv = <Variable>this.inputs[i];
+            if (! priors[vv.id]) {
+              if (config.forwardPriorGens) {
+                priors[vv.id] = vv.getForwardedPromise();
+              }
+              else {
+                priors[vv.id] = vv.getCurrentPromise();
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /*----------------------------------------------------------------
+     */
+    activate( priors: u.Dictionary<r.Promise<any>>,
+              internal?: boolean                    ): ActivationRecord {
       var params: any[] = [];
-      var inputs = this.inputs;
-      var outputs = this.outputs;
 
       var inputLookup: u.Dictionary<r.Promise<any>> = {};
       var outputLookup: u.Dictionary<r.Promise<any>> = {};
 
       // Collect parameter promises
-      for (var i = 0, l = inputs.length; i < l; ++i) {
-        var param: r.Promise<any>;
+      for (var i = 0, l = this.inputs.length; i < l; ++i) {
 
         // An input is either a variable or a constant
-        if (inputs[i] instanceof Variable) {
-          var vv = <Variable>inputs[i];
-          param = inputLookup[vv.id];
-          if (! param) {
-            if (outputs.indexOf( vv ) >= 0 && config.forwardSelfLoops) {
-              param = inputLookup[vv.id] = vv.getForwardedPromise();
-            }
-            else {
-              param = inputLookup[vv.id] = vv.getCurrentPromise();
+        var prior: r.Promise<any>;
+        if (this.inputs[i] instanceof Variable) {
+          // Check if this input should use a prior promise
+          if (this.usePrior && this.usePrior[i] &&
+              (prior = priors[(<Variable>this.inputs[i]).id])) {
+            params[i] = prior;
+          }
+          else {
+            var vv = <Variable>this.inputs[i];
+            if (! (params[i] = inputLookup[vv.id])) {
+              params[i] = inputLookup[vv.id] = vv.getCurrentPromise();
             }
           }
         }
         else {
           // If it's a constant, we create a satisfied promise
-          param = new r.Promise();
+          params[i] = new r.Promise();
           if (r.plogger) {
-            r.plogger.register( param, inputs[i], 'constant parameter' );
+            r.plogger.register( params[i], this.inputs[i], 'constant parameter' );
           }
-          param.resolve( inputs[i] );
+          params[i].resolve( this.inputs[i] );
         }
 
-        params.push( param );
       }
 
       // Invoke the operation
@@ -108,8 +135,8 @@ module hd.model {
         var result = this.fn.apply( null, params );
 
         // Ensure result is an array
-        if (outputs.length > 0) {
-          if (outputs.length == 1) {
+        if (this.outputs.length > 0) {
+          if (this.outputs.length == 1) {
             result = [result];
           }
           else if (! Array.isArray( result )) {
@@ -121,7 +148,7 @@ module hd.model {
         console.error( e );
         // Create failed promises for outputs
         result = [];
-        for (var i = 0, l = outputs.length; i < l; ++i) {
+        for (var i = 0, l = this.outputs.length; i < l; ++i) {
           var p = new r.Promise<any>();
           p.reject( null );
           result.push( p );
@@ -129,10 +156,10 @@ module hd.model {
       }
 
       // Set output promises
-      for (var i = 0, l = outputs.length; i < l; ++i) {
+      for (var i = 0, l = this.outputs.length; i < l; ++i) {
         // An output is either a variable or null
-        if (outputs[i] instanceof Variable) {
-          var vv = <Variable>outputs[i];
+        if (this.outputs[i] instanceof Variable) {
+          var vv = <Variable>this.outputs[i];
           if (outputLookup[vv.id]) {
             console.error( 'Operation attempting to output same variable twice' );
           }
@@ -184,9 +211,10 @@ module hd.model {
                  fn: Function,
                  inputs: any[],
                  outputs: any[],
+                 usePrior: boolean[],
                  inputVars: u.ArraySet<Variable>,
                  outputVars: u.ArraySet<Variable> ) {
-      super( id, name, fn, inputs, outputs );
+      super( id, name, fn, inputs, outputs, usePrior );
       this.inputVars = inputVars;
       this.outputVars = outputVars;
     }

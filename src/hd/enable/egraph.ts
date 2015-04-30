@@ -6,7 +6,6 @@ module hd.enable {
 
   import u = hd.utility;
   import r = hd.reactive;
-  import g = hd.graph;
 
   /*==================================================================
    * Label for an edge in the enablement graph.

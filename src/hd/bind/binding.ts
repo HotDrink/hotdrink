@@ -308,7 +308,7 @@ module hd.bindings {
         bindings.push( b );
       }
       catch (e) {
-        console.error( 'Invalid binding for ' + el, e );
+        console.error( 'Invalid binding "' + spec + '"', e );
       }
     } );
 

@@ -227,4 +227,10 @@ module hd.utility {
     return obj.id;
   }
 
+  /*------------------------------------------------------------------
+   */
+  export function doubleEqual( a: any, b: any ): boolean {
+    return a == b;
+  }
+
 }

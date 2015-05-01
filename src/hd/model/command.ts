@@ -31,17 +31,7 @@ module hd.model {
 
       var count = 0;
       for (var i = 0, l = observables.length; i < l; ++i) {
-        if (typeof (<r.Signal<any>>observables[i]).addObserverInit === 'function') {
-          (<r.Signal<any>>observables[i]).addObserverInit( this,
-                                                           this.onNext,
-                                                           null,
-                                                           null,
-                                                           count++
-                                                         );
-        }
-        else {
-          observables[i].addObserver( this, this.onNext, null, null, count++ );
-        }
+        observables[i].addObserver( this, this.onNext, null, null, count++ );
       }
     }
 
@@ -60,21 +50,21 @@ module hd.model {
       }
     }
 
-    addObserverInit( observer: r.Observer<boolean> ): r.Observer<boolean>;
-    addObserverInit( object: Object,
-                     onNext: (value: boolean) => void,
-                     onError: (error: any) => void,
-                     onCompleted: () => void           ): r.Observer<boolean>;
-    addObserverInit<U>( object: Object,
-                        onNext: (value: boolean, id?: U) => void,
-                        onError: (error: any, id?: U) => void,
-                        onCompleted: (id?: U) => void,
-                        id: U                                     ): r.Observer<boolean>;
-    addObserverInit( object: Object,
-                     onNext?: (value: boolean, id?: any) => void,
-                     onError?: (error: any, id?: any) => void,
-                     onCompleted?: (id?: any) => void,
-                     id?: any                                     ): r.Observer<boolean> {
+    addObserver( observer: r.Observer<boolean> ): r.Observer<boolean>;
+    addObserver( object: Object,
+                 onNext: (value: boolean) => void,
+                 onError: (error: any) => void,
+                 onCompleted: () => void           ): r.Observer<boolean>;
+    addObserver<U>( object: Object,
+                    onNext: (value: boolean, id?: U) => void,
+                    onError: (error: any, id?: U) => void,
+                    onCompleted: (id?: U) => void,
+                    id: U                                     ): r.Observer<boolean>;
+    addObserver( object: Object,
+                 onNext?: (value: boolean, id?: any) => void,
+                 onError?: (error: any, id?: any) => void,
+                 onCompleted?: (id?: any) => void,
+                 id?: any                                     ): r.Observer<boolean> {
       var added: r.Observer<boolean>;
       if (arguments.length === 1) {
         added = super.addObserver( <r.Observer<boolean>>object );
@@ -105,7 +95,7 @@ module hd.model {
                  outputs: any[] ) {
       super( id, name, fn, inputs, outputs );
       var count = 0;
-      var properties: r.Signal<any>[] = [];
+      var properties: r.ProxyObservable<any>[] = [];
       for (var i = 0, l = inputs.length; i < l; ++i) {
         var vv = inputs[i];
         properties.push( vv.pending );

@@ -54,6 +54,10 @@ module hd.bindings {
     return new r.HotSwap<any>( new m.Path( model, names ) );
   }
 
+  export function rw<T, U>( read: r.Observable<U>, write: r.Observer<T> ) {
+    return new r.ReadWrite( read, write );
+  }
+
   export function fn( f: Function, ...args: any[] ) {
     return new r.FunctionExtension( f, args );
   }

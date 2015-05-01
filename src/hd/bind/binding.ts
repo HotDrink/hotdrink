@@ -13,7 +13,6 @@ module hd.bindings {
     onError?: ( error: any ) => void;
     onCompleted?: () => void;
     addObserver?: (observer: r.Observer<any>) => void;
-    addObserverInit?: (observer: r.Observer<any>) => void;
     removeObserver?: (observer: r.Observer<any> ) => void;
   }
 
@@ -171,20 +170,10 @@ module hd.bindings {
     if (vb.dir != Direction.v2m) {
       if (vb.toView) {
         vb.toView.addObserver( <r.Observer<any>>vb.view );
-        if (typeof vb.model.addObserverInit === 'function') {
-          vb.model.addObserverInit( vb.toView );
-        }
-        else {
-          vb.model.addObserver( vb.toView );
-        }
+        vb.model.addObserver( vb.toView );
       }
       else {
-        if (typeof vb.model.addObserverInit === 'function') {
-          vb.model.addObserverInit( <r.Observer<any>>vb.view );
-        }
-        else {
-          vb.model.addObserver( <r.Observer<any>>vb.view );
-        }
+        vb.model.addObserver( <r.Observer<any>>vb.view );
       }
     }
     if (vb.dir != Direction.m2v) {

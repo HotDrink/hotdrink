@@ -21,21 +21,21 @@ module hd.model {
       return this.result
     }
 
-    addObserverInit( observer: r.Observer<any> ): r.Observer<any>;
-    addObserverInit( object: Object,
-                     onNext: (value: any) => void,
-                     onError: (error: any) => void,
-                     onCompleted: () => void        ): r.Observer<any>;
-    addObserverInit<U>( object: Object,
-                        onNext: (value: any, id?: U) => void,
-                        onError: (error: any, id?: U) => void,
-                        onCompleted: (id?: U) => void,
-                        id: U                                  ): r.Observer<any>;
-    addObserverInit( object: Object,
-                     onNext?: (value: any, id?: any) => void,
-                     onError?: (error: any, id?: any) => void,
-                     onCompleted?: (id?: any) => void,
-                     id?: any                                  ): r.Observer<any> {
+    addObserver( observer: r.Observer<any> ): r.Observer<any>;
+    addObserver( object: Object,
+                 onNext: (value: any) => void,
+                 onError: (error: any) => void,
+                 onCompleted: () => void        ): r.Observer<any>;
+    addObserver<U>( object: Object,
+                    onNext: (value: any, id?: U) => void,
+                    onError: (error: any, id?: U) => void,
+                    onCompleted: (id?: U) => void,
+                    id: U                                  ): r.Observer<any>;
+    addObserver( object: Object,
+                 onNext?: (value: any, id?: any) => void,
+                 onError?: (error: any, id?: any) => void,
+                 onCompleted?: (id?: any) => void,
+                 id?: any                                  ): r.Observer<any> {
 
       if (this.properties) {
         var added: r.Observer<any>;

@@ -93,6 +93,7 @@ module hd {
   export var path = b.path;
   export var pointToString = b.pointToString;
   export var prec = b.prec;
+  export var rw = b.rw;
   export var req = b.req;
   export var round = b.round;
   export var scale = b.scale;

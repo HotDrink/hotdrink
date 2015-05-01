@@ -192,33 +192,33 @@ module hd.reactive {
   /*==================================================================
    */
   export
-  interface SwapTarget<T> extends Signal<T>, Observer<T> { }
+  interface SwapTarget<T> extends ProxyObservable<T>, Observer<T> { }
 
   export
   class HotSwap<T> extends BasicObservable<T> {
 
-    source: Signal<SwapTarget<T>>;
+    source: ProxyObservable<SwapTarget<T>>;
     target: SwapTarget<T>;
     last: any;
 
-    constructor( source: Signal<SwapTarget<T>> ) {
+    constructor( source: ProxyObservable<SwapTarget<T>> ) {
       super();
       this.source = source;
       this.target = null;
-      source.addObserverInit( this, this.onNextTarget, null, null );
+      source.addObserver( this, this.onNextTarget, null, null );
     }
 
-    addObserverInit( observer: Observer<T> ): Observer<T>;
-    addObserverInit( object: Object,
-                     onNext: (value: T) => void,
-                     onError: (error: any) => void,
-                     onCompleted: () => void        ): Observer<T>;
-    addObserverInit<U>( object: Object,
-                        onNext: (value: T, id?: U) => void,
-                        onError: (error: any, id?: U) => void,
-                        onCompleted: (id?: U) => void,
-                        id: U                                  ): Observer<T>;
-    addObserverInit(): Observer<T> {
+    addObserver( observer: Observer<T> ): Observer<T>;
+    addObserver( object: Object,
+                 onNext: (value: T) => void,
+                 onError: (error: any) => void,
+                 onCompleted: () => void        ): Observer<T>;
+    addObserver<U>( object: Object,
+                    onNext: (value: T, id?: U) => void,
+                    onError: (error: any, id?: U) => void,
+                    onCompleted: (id?: U) => void,
+                    id: U                                  ): Observer<T>;
+    addObserver(): Observer<T> {
       var o = super.addObserver.apply( this, arguments );
       if (this.last) {
         o.onNext( this.last );
@@ -232,7 +232,7 @@ module hd.reactive {
       }
       this.target = target;
       if (this.target) {
-        target.addObserverInit( this, this.onTargetNext, this.onTargetError, this.onTargetCompleted );
+        target.addObserver( this, this.onTargetNext, this.onTargetError, this.onTargetCompleted );
       }
     }
 
@@ -266,6 +266,47 @@ module hd.reactive {
     onTargetCompleted() {
       this.sendCompleted();
       this.target = null;
+    }
+  }
+
+  /*==================================================================
+   */
+  export
+  class ReadWrite<T, U> extends Extension<T, U> {
+
+    constructor( private read: Observable<U>, private write: Observer<T> ) {
+      super()
+    }
+
+    addObserver( observer: Observer<U> ): Observer<U>;
+    addObserver( object: Object,
+                 onNext: (value: U) => void,
+                 onError: (error: any) => void,
+                 onCompleted: () => void        ): Observer<U>;
+    addObserver<U>( object: Object,
+                    onNext: (value: U, id?: U) => void,
+                    onError: (error: any, id?: U) => void,
+                    onCompleted: (id?: U) => void,
+                    id: U                                  ): Observer<U>;
+    addObserver() {
+      return this.read.addObserver.apply( this.read, arguments );
+    }
+
+    removeObserver( observer: Object ): boolean {
+      this.read.removeObserver( <any>observer );
+      return true;
+    }
+
+    onNext( value: T ) {
+      this.write.onNext( value );
+    }
+
+    onError( error: any ) {
+      this.write.onNext( error );
+    }
+
+    onCompleted() {
+      this.write.onCompleted();
     }
   }
 

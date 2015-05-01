@@ -48,7 +48,7 @@ module hd.enable {
 
       // Watch dependency counts of all inputs
       for (var vid in inputs) {
-        inputs[vid].usage.addObserverInit( this, this.onNextUsage, null, null, vid );
+        inputs[vid].usage.addObserver( this, this.onNextUsage, null, null, vid );
       }
 
       // Watch all outputs

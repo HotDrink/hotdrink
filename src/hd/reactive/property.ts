@@ -9,6 +9,11 @@ module hd.reactive {
 
   enum Scheduled { None, Init, Update };
 
+  export
+  interface Signal<T> extends ProxyObservable<T> {
+    get(): T;
+  }
+
   /*==================================================================
    * An observable value that belongs to an object.
    */
@@ -99,21 +104,21 @@ module hd.reactive {
      * On subscribing, automatically sends "next" notification with
      * current value.
      */
-    addObserverInit( observer: Observer<T> ): Observer<T>;
-    addObserverInit( object: Object,
-                     onNext: (value: T) => void,
-                     onError: (error: any) => void,
-                     onCompleted: () => void        ): Observer<T>;
-    addObserverInit<U>( object: Object,
-                        onNext: (value: T, id?: U) => void,
-                        onError: (error: any, id?: U) => void,
-                        onCompleted: (id?: U) => void,
-                        id: U                                  ): Observer<T>;
-    addObserverInit( object: Object,
-                     onNext?: (value: T, id?: any) => void,
-                     onError?: (error: any, id?: any) => void,
-                     onCompleted?: (id?: any) => void,
-                     id?: any                                  ): Observer<T> {
+    addObserver( observer: Observer<T> ): Observer<T>;
+    addObserver( object: Object,
+                 onNext: (value: T) => void,
+                 onError: (error: any) => void,
+                 onCompleted: () => void        ): Observer<T>;
+    addObserver<U>( object: Object,
+                    onNext: (value: T, id?: U) => void,
+                    onError: (error: any, id?: U) => void,
+                    onCompleted: (id?: U) => void,
+                    id: U                                  ): Observer<T>;
+    addObserver( object: Object,
+                 onNext?: (value: T, id?: any) => void,
+                 onError?: (error: any, id?: any) => void,
+                 onCompleted?: (id?: any) => void,
+                 id?: any                                  ): Observer<T> {
       var added: Observer<T>;
       if (arguments.length === 1) {
         added = super.addObserver( <Observer<T>>object );
@@ -138,14 +143,6 @@ module hd.reactive {
     }
 
     /*----------------------------------------------------------------
-     * Setter.  Sends a "next" notification no matter what.
-     */
-    hardSet( value: T ) {
-      this.value = value;
-      this.scheduleUpdate();
-    }
-
-    /*----------------------------------------------------------------
      * Getter.
      */
     get(): T {
@@ -160,12 +157,7 @@ module hd.reactive {
         return this.eq( this.value, value );
       }
       else {
-        if (typeof value === "object") {
-          return false;
-        }
-        else {
-          return this.value === value;
-        }
+        return false;
       }
     }
 

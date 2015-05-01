@@ -38,19 +38,19 @@ module hd.model {
     error = new r.ObservableProperty<any>( null );
 
     // Is value stale?
-    stale = new r.ObservableProperty( false );
+    stale = new r.ObservableProperty( false, u.doubleEqual );
 
     // Is the variable a source?
-    source = new r.ObservableProperty( false );
+    source = new r.ObservableProperty( false, u.doubleEqual );
 
     // Is the variable pending?
-    pending = new r.ObservableProperty( false );
+    pending = new r.ObservableProperty( false, u.doubleEqual );
 
     // Is the variable contributing to an output?
-    contributing = new r.ObservableProperty( u.Fuzzy.Yes );
+    contributing = new r.ObservableProperty( u.Fuzzy.Yes, u.doubleEqual );
 
     // Could the variable contribute to an output if edited?
-    relevant = new r.ObservableProperty( u.Fuzzy.Yes );
+    relevant = new r.ObservableProperty( u.Fuzzy.Yes, u.doubleEqual );
 
     // Publishes events when value is touched or changed
     changes = new r.BasicObservable<VariableEvent>();
@@ -72,7 +72,7 @@ module hd.model {
       this.name = name;
 
       this.value = new r.ObservableProperty( undefined, eq );
-      this.output = new r.ObservableProperty( !! output );
+      this.output = new r.ObservableProperty( !! output, u.doubleEqual );
       this.ladder = new r.PromiseLadder<any>();
 
       // connect ladder to value
@@ -165,10 +165,6 @@ module hd.model {
       return this.value.addObserver.apply( this.value, arguments );
     }
 
-    addObserverInit() {
-      return this.value.addObserverInit.apply( this.value, arguments );
-    }
-
     /*----------------------------------------------------------------
      * Observer: subscribing to a variable == subscribing to its value
      */
@@ -208,7 +204,7 @@ module hd.model {
      * Ladder produced a good value.
      */
     onLadderNext( value: any ) {
-      this.value.hardSet( value );
+      this.value.set( value );
       this.error.set( null );
       this.stale.set( this.ladder.currentFailed() );
       if (this.ladder.isSettled()) {

@@ -38,20 +38,6 @@ module hd.reactive {
     removeObserver( observer: Object ): void;
   }
 
-  export interface Signal<T> extends ProxyObservable<T> {
-    addObserverInit( observer: Observer<T> ): Observer<T>;
-    addObserverInit( object: Object,
-                     onNext: (value: T) => void,
-                     onError: (error: any) => void,
-                     onCompleted: () => void        ): Observer<T>;
-    addObserverInit<U>( object: Object,
-                        onNext: (value: T, id?: U) => void,
-                        onError: (error: any, id?: U) => void,
-                        onCompleted: (id?: U) => void,
-                        id: U                                  ): Observer<T>;
-    get() : T;
-  }
-
   /*==================================================================
    */
   export

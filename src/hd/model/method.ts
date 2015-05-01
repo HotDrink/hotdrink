@@ -4,7 +4,7 @@
 
 module hd.config {
   export
-  var forwardSelfLoops = false;
+  var forwardPriorGens = false;
 }
 
 module hd.model {
@@ -42,6 +42,8 @@ module hd.model {
     // everything else will cause the corresponding output to be ignored.
     outputs: any[];
 
+    usePriors: boolean[];
+
     /*----------------------------------------------------------------
      * Initialize members
      */
@@ -49,12 +51,14 @@ module hd.model {
                  name: string,
                  fn: Function,
                  inputs: any[],
-                 outputs: any[] ) {
+                 outputs: any[],
+                 usePriors?: boolean[] ) {
       this.id = id;
       this.name = name;
       this.fn = fn;
       this.inputs = inputs;
       this.outputs = outputs;
+      this.usePriors = usePriors;
     }
 
     /*----------------------------------------------------------------
@@ -68,26 +72,40 @@ module hd.model {
      */
     activate( internal?: boolean ): ActivationRecord {
       var params: any[] = [];
-      var inputs = this.inputs;
-      var outputs = this.outputs;
 
+      var priorLookup: u.Dictionary<r.Promise<any>> = {};
       var inputLookup: u.Dictionary<r.Promise<any>> = {};
       var outputLookup: u.Dictionary<r.Promise<any>> = {};
 
       // Collect parameter promises
-      for (var i = 0, l = inputs.length; i < l; ++i) {
+      for (var i = 0, l = this.inputs.length; i < l; ++i) {
         var param: r.Promise<any>;
 
         // An input is either a variable or a constant
-        if (inputs[i] instanceof Variable) {
-          var vv = <Variable>inputs[i];
-          param = inputLookup[vv.id];
-          if (! param) {
-            if (outputs.indexOf( vv ) >= 0 && config.forwardSelfLoops) {
-              param = inputLookup[vv.id] = vv.getForwardedPromise();
+        if (this.inputs[i] instanceof Variable) {
+          var vv = <Variable>this.inputs[i];
+
+          // Determine what promise to use for this variable
+          if (this.usePriors && this.usePriors[i]) {
+            if (! (param = priorLookup[vv.id])) {
+              if (config.forwardPriorGens) {
+                param = priorLookup[vv.id] = vv.getForwardedPromise();
+              }
+              else {
+                param = priorLookup[vv.id] = vv.getCurrentPromise();
+              }
             }
-            else {
-              param = inputLookup[vv.id] = vv.getCurrentPromise();
+          }
+          else {
+            if (! (param = inputLookup[vv.id])) {
+              // Make a dependent promise for parameter
+              param = inputLookup[vv.id] = new r.Promise();
+              var oldp = vv.getStagedPromise();
+              if (r.plogger) {
+                r.plogger.register( param, vv.name, 'input parameter' );
+              }
+              param.resolve( oldp );
+              param.ondropped.addObserver( oldp );
             }
           }
         }
@@ -95,9 +113,9 @@ module hd.model {
           // If it's a constant, we create a satisfied promise
           param = new r.Promise();
           if (r.plogger) {
-            r.plogger.register( param, inputs[i], 'constant parameter' );
+            r.plogger.register( param, this.inputs[i], 'constant parameter' );
           }
-          param.resolve( inputs[i] );
+          param.resolve( this.inputs[i] );
         }
 
         params.push( param );
@@ -108,8 +126,8 @@ module hd.model {
         var result = this.fn.apply( null, params );
 
         // Ensure result is an array
-        if (outputs.length > 0) {
-          if (outputs.length == 1) {
+        if (this.outputs.length > 0) {
+          if (this.outputs.length == 1) {
             result = [result];
           }
           else if (! Array.isArray( result )) {
@@ -121,7 +139,7 @@ module hd.model {
         console.error( e );
         // Create failed promises for outputs
         result = [];
-        for (var i = 0, l = outputs.length; i < l; ++i) {
+        for (var i = 0, l = this.outputs.length; i < l; ++i) {
           var p = new r.Promise<any>();
           p.reject( null );
           result.push( p );
@@ -129,10 +147,10 @@ module hd.model {
       }
 
       // Set output promises
-      for (var i = 0, l = outputs.length; i < l; ++i) {
+      for (var i = 0, l = this.outputs.length; i < l; ++i) {
         // An output is either a variable or null
-        if (outputs[i] instanceof Variable) {
-          var vv = <Variable>outputs[i];
+        if (this.outputs[i] instanceof Variable) {
+          var vv = <Variable>this.outputs[i];
           if (outputLookup[vv.id]) {
             console.error( 'Operation attempting to output same variable twice' );
           }
@@ -184,9 +202,10 @@ module hd.model {
                  fn: Function,
                  inputs: any[],
                  outputs: any[],
+                 usePriors: boolean[],
                  inputVars: u.ArraySet<Variable>,
                  outputVars: u.ArraySet<Variable> ) {
-      super( id, name, fn, inputs, outputs );
+      super( id, name, fn, inputs, outputs, usePriors );
       this.inputVars = inputVars;
       this.outputVars = outputVars;
     }

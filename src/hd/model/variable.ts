@@ -55,6 +55,10 @@ module hd.model {
     // Publishes events when value is touched or changed
     changes = new r.BasicObservable<VariableEvent>();
 
+    // Promise waiting to be assigned
+    private
+    staged: r.Promise<any> = null;
+
     // Any pending promises made for the variable
     private
     ladder: r.PromiseLadder<any>;
@@ -121,6 +125,9 @@ module hd.model {
 
     /*----------------------------------------------------------------
      * Make a promise to set the variable's value later.
+     *
+     * Broken into two stages:  make the promise, then commit the
+     * promise.
      */
     makePromise( promise: r.Promise<any> ) {
       if (! (promise instanceof r.Promise)) {
@@ -131,23 +138,38 @@ module hd.model {
         }
         promise.resolve( value );
       }
-      this.ladder.addPromise( promise );
-      if (this.pending.get() == false) {
-        this.pending.set( true );
-        this.stale.set( false );
-        this.changes.sendNext( {type: VariableEventType.pending, vv: this} );
+      this.staged = promise;
+    }
+
+    commitPromise() {
+      if (this.staged) {
+        this.ladder.addPromise( this.staged );
+        this.staged = null;
+        if (this.pending.get() == false) {
+          this.pending.set( true );
+          this.stale.set( false );
+          this.changes.sendNext( {type: VariableEventType.pending, vv: this} );
+        }
       }
     }
 
     /*----------------------------------------------------------------
-     * Get a promise for the variable's value.
+     * Get pending promise if there is one; current promise otherwise.
+     */
+    getStagedPromise(): r.Promise<any> {
+      return this.staged || this.ladder.getCurrentPromise();
+    }
+
+    /*----------------------------------------------------------------
+     * Get a promise for the variable's value (ignoring pending).
      */
     getCurrentPromise(): r.Promise<any> {
       return this.ladder.getCurrentPromise();
     }
 
     /*----------------------------------------------------------------
-     * Get a promise to be forwarded with the current variable value.
+     * Get a promise to be forwarded with the current variable value
+     * (ignoring pending).
      */
     getForwardedPromise(): r.Promise<any> {
       var p = new r.Promise<any>();

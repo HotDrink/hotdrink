@@ -596,10 +596,19 @@ module hd.system {
               .filter( function( mid: string ) { return downstreamMids[mid]; } );
 
         // Evaluate methods
-        scheduledMids.forEach( function( mid: string ) {
+        for (var i = 0, l = scheduledMids.length; i < l; ++i) {
+          var mid = scheduledMids[i];
           var ar = this.methods[mid].activate( true );
-          (<ConstraintSystem>this).enable.methodScheduled( mid, ar.inputs, ar.outputs );
-        }, this );
+          this.enable.methodScheduled( mid, ar.inputs, ar.outputs );
+        }
+
+        // Commit all output promises
+        var downstreamVids = new g.DigraphWalker( this.sgraph.graph )
+              .nodesDownstreamOtherType( mids );
+        for (var i = 0, l = downstreamVids.length; i < l; ++i) {
+          var vid = downstreamVids[i];
+          this.variables[vid].commitPromise();
+        }
 
         this.needEvaluating = {};
       }

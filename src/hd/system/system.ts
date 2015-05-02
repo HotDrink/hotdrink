@@ -321,7 +321,7 @@ module hd.system {
         this.cgraph.addMethod( stayMethodId, stayConstraintId, [], [vv.id] );
 
         // Set stay to optional
-        if (! vv.pending.get() && vv.value.get() === undefined) {
+        if (! (<any>vv).staged && ! vv.pending.get() && vv.value.get() === undefined) {
           this.getPlanner().setMinStrength( stayConstraintId );
         }
         else {

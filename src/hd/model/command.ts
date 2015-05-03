@@ -88,13 +88,12 @@ module hd.model {
 
     ready: r.Signal<boolean>;
 
-    constructor( id: string,
-                 name: string,
+    constructor( name: string,
                  fn: Function,
                  inputs: any[],
                  outputs: any[],
                  usePriors?: boolean[] ) {
-      super( id, name, fn, inputs, outputs, usePriors );
+      super( name, fn, inputs, outputs, usePriors );
       var count = 0;
       var properties: r.ProxyObservable<any>[] = [];
       for (var i = 0, l = inputs.length; i < l; ++i) {

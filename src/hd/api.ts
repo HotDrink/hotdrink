@@ -43,6 +43,8 @@ module hd {
   export var isObserver = b.isObserver;
   export var isExtension = b.isExtension;
 
+  export var Modelcule = m.Modelcule;
+
   // RunTime
   export var ConstraintSystem = s.ConstraintSystem;
   export var ModelBuilder = m.ModelBuilder;

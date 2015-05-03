@@ -3,7 +3,25 @@
  */
 module hd.model {
 
+  import u = hd.utility;
   import r = hd.reactive;
+
+  export
+  interface VariableTemplate {
+    name: string;
+    ref: boolean;
+    value: any;
+    eq: u.EqualityPredicate<any>;
+    output: boolean;
+  }
+
+  export
+  interface MethodTemplate {
+    inputs: string[];
+    priors: boolean[];
+    outputs: string[];
+    fn: Function;
+  }
 
   /*==================================================================
    * Interface for anything which needs to know when the model grows
@@ -22,7 +40,8 @@ module hd.model {
    * Used by a model to keep track of what it contains.
    */
   export class ModelculeData {
-    constraints: Constraint[] = [];
+    instances: u.ArraySet<ConstraintInstance> = [];
+    constraints: u.ArraySet<Constraint> = [];
     changes = new r.BasicObservable<ModelculeEvent>();
   }
 
@@ -50,60 +69,85 @@ module hd.model {
      * Create observable property to represent value
      */
     static
-    defineProperty<T>( m: Modelcule, name: string, value: T, property: boolean ) {
-      if (property) {
-        var prop = new r.ObservableProperty<T>( value )
-        Object.defineProperty( m, '$'+name, {configurable: true,
+    defineProperty<T>( mod: Modelcule, name: string, value?: T, eq?: u.EqualityPredicate<T> ) {
+      var prop = new r.ObservableProperty<T>( value, eq );
+      Object.defineProperty( mod, '$'+name, {configurable: true,
                                              enumerable: false,
                                              value: prop
                                             }
-                             );
-        Object.defineProperty( m, name, {configurable: true,
+                           );
+      Object.defineProperty( mod, name, {configurable: true,
                                          enumerable: true,
                                          get: prop.get.bind( prop ),
                                          set: prop.set.bind( prop )
                                         }
-                             );
-      }
-      else {
-        m[name] = value;
-      }
+                           );
     }
 
     /*----------------------------------------------------------------
      * Static getter for constraints
      */
     static
-    constraints( m: Modelcule ) {
-      return m['#hd_data'].constraints;
+    constraints( mod: Modelcule ) {
+      return mod['#hd_data'].constraints;
     }
 
     /*----------------------------------------------------------------
      * Static getter for changes
      */
     static
-    changes( m: Modelcule ) {
-      return m['#hd_data'].changes;
+    changes( mod: Modelcule ) {
+      return mod['#hd_data'].changes;
     }
 
     /*----------------------------------------------------------------
      * Add variable to modelcule, optionally storing it as a property.
      */
     static
-    addVariable( m: Modelcule, vv: Variable, name?: string, property?: boolean ) {
-      if (name) { Modelcule.defineProperty( m, name, vv, property ); }
+    addVariable( mod: Modelcule, vv: Variable, name: string, property?: boolean ) {
+      if (property) {
+        Modelcule.defineProperty( mod, name, vv );
+      }
+      else {
+        mod[name] = vv;
+      }
     }
 
     /*----------------------------------------------------------------
-     * Add constraint to model, optionally storing it as a property.
+     * Add variable to modelcule according to template.
      */
     static
-    addConstraint( m: Modelcule, cc: Constraint, name?: string, property?: boolean ) {
-      m['#hd_data'].constraints.push( cc );
-      if (name) { Modelcule.defineProperty( m, name, cc, property ); }
-      m['#hd_data'].changes.sendNext( {type: ModelculeEventType.addConstraint,
-                                       constraint: cc}
-                                    );
+    addVariableTemplate( mod: Modelcule, tmpl: VariableTemplate, vv?: Variable ) {
+      if (tmpl.ref) {
+        Modelcule.defineProperty( mod, tmpl.name, vv );
+      }
+      else {
+        if (! vv) {
+          vv = new Variable( tmpl.name, tmpl.value, tmpl.eq, tmpl.output );
+        }
+        mod[tmpl.name] = vv;
+      }
+    }
+
+    /*----------------------------------------------------------------
+     * Add constraint to modelcule.
+     */
+    static
+    addConstraint( mod: Modelcule, cc: Constraint ) {
+      u.arraySet.addKnownDistinct( mod['#hd_data'].constraints, cc );
+      mod['#hd_data'].changes.sendNext( {type: ModelculeEventType.addConstraint,
+                                         constraint: cc
+                                        }
+                                      );
+    }
+
+    /*----------------------------------------------------------------
+     * Add constraint to modelcule according to template.
+     */
+    static
+    addConstraintTemplate( mod: Modelcule, tmpl: ConstraintTemplate ) {
+      var instance = new ConstraintInstance( mod, tmpl );
+      u.arraySet.addKnownDistinct( mod['#hd_data'].instances, instance );
     }
 
     // The modelcule keeps its own records of what's inside of it in this

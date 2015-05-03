@@ -103,6 +103,10 @@ module hd.utility {
       }
     }
 
+    export function addKnownDistinct<T>( as: ArraySet<T>, value: T ) {
+      (<T[]>as).push( value );
+    }
+
     /*----------------------------------------------------------------
      * Remove element from set.
      * @returns true if element was removed, false if it was not

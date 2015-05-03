@@ -67,12 +67,11 @@ module hd.model {
      * Initialize members.  Optional EqualityPredicate is used to
      * determine when value has changed.
      */
-    constructor( id: string,
-                 name: string,
+    constructor( name: string,
                  value: any,
                  eq?: u.EqualityPredicate<any>,
                  output?: boolean               ) {
-      this.id = id;
+      this.id = makeId( name );
       this.name = name;
 
       this.value = new r.ObservableProperty( undefined, eq );

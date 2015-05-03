@@ -104,43 +104,36 @@ module hd.enable {
    */
   export class EnablementManager {
 
-    // The constraint graph
-    cgraph: g.ReadOnlyConstraintGraph;
-
     // The enablement graph
-    egraph: EnablementLabels;
+    egraph: EnablementLabels = new EnablementLabels();
 
     // The reporters
     reporters: u.Dictionary<EnableReporter> = {};
 
     /*----------------------------------------------------------------
-     * Initialize
-     */
-    constructor( cgraph: g.ReadOnlyConstraintGraph ) {
-      this.cgraph = cgraph;
-      this.egraph = new EnablementLabels();
-    }
-
-    /*----------------------------------------------------------------
      * Used to indicate a new method has been scheduled.  Updates
      * the enablement graph, creates new reporters, cancels old ones.
      */
-    methodScheduled( mid: string,
-                     inputs: u.Dictionary<r.Promise<any>>,
-                     outputs: u.Dictionary<r.Promise<any>> ) {
-      var cid = this.cgraph.constraintForMethod( mid );
+    methodScheduled( cid: string,
+                     mid: string,
+                     inputs?: u.Dictionary<r.Promise<any>>,
+                     outputs?: u.Dictionary<r.Promise<any>> ) {
       this.egraph.selectMethod( cid, mid );
       if (this.reporters[cid]) {
         this.reporters[cid].cancel();
+        if (! mid) {
+          delete this.reporters[cid];
+        }
       }
-      this.reporters[cid] =
-            new EnableReporter( this.egraph,
-                                mid,
-                                inputs,
-                                outputs
-                              );
+      if (mid) {
+        this.reporters[cid] =
+              new EnableReporter( this.egraph,
+                                  mid,
+                                  inputs,
+                                  outputs
+                                );
+      }
     }
-
   }
 
 }

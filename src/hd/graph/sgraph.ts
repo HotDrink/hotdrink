@@ -24,8 +24,8 @@ module hd.graph {
   export interface SolutionGraph extends ReadOnlyConstraintGraph {
     selectMethod( cid: string,
                   mid: string,
-                  inputs: u.ArraySet<string>,
-                  outputs: u.ArraySet<string> ): void;
+                  inputs?: u.ArraySet<string>,
+                  outputs?: u.ArraySet<string> ): void;
     selectedForConstraint( cid: string ): string;
   }
 
@@ -45,8 +45,8 @@ module hd.graph {
      */
     selectMethod( cid: string,
                   mid: string,
-                  inputs: u.ArraySet<string>,
-                  outputs: u.ArraySet<string> ) {
+                  inputs?: u.ArraySet<string>,
+                  outputs?: u.ArraySet<string> ) {
       if (! mid) { mid = null; }
 
       var oldmid = this.selectedForConstraint( cid );

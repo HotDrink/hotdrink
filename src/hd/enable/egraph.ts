@@ -37,14 +37,39 @@ module hd.enable {
      */
     selectMethod( cid: string, mid: string ) {
       var oldmid = this.selected[cid];
-      if (oldmid && oldmid != mid) {
-        delete this.labels[oldmid];
+      var labeled = false;
+      if (oldmid) {
+        var oldmidLabels = this.labels[oldmid];
+
+        // Check for any non-default labels for oldmid
+        for (var vid in oldmidLabels) {
+          if (oldmidLabels[vid] !== Label.AssumedRelevant) {
+            labeled = true;
+            break;
+          }
+        }
+
+        // Git rid of oldmid labels
+        if (mid == oldmid) {
+          if (labeled) {
+            this.labels[oldmid] = {};
+          }
+        }
+        else {
+          delete this.labels[oldmid];
+        }
       }
-      if (mid) {
+
+      // Initialize mid labels
+      if (mid && mid != oldmid) {
         this.labels[mid] = {};
       }
+
+      // Report only if method or labels changed
       this.selected[cid] = mid;
-      this.schedule();
+      if (oldmid !== mid || labeled) {
+        this.schedule();
+      }
     }
 
     /*----------------------------------------------------------------
@@ -74,15 +99,6 @@ module hd.enable {
           midLabels[vid] = label;
           this.schedule();
         }
-      }
-    }
-
-    /*----------------------------------------------------------------
-     * Remove all labels for a constraint.
-     */
-    removeConstraint( mids: string[] ) {
-      for (var i = 0, l = mids.length; i < l; ++i) {
-        delete mids[i];
       }
     }
 

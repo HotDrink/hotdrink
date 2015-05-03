@@ -81,7 +81,7 @@ module hd.system {
     private pendingCount = 0;
 
     // Enablement
-    enable: e.EnablementManager;
+    enable: e.EnablementManager = new e.EnablementManager();
     outputVids: u.StringSet = {};
 
     /*----------------------------------------------------------------
@@ -93,7 +93,6 @@ module hd.system {
       if (plannerT) {
         this.planner = new plannerT( this.cgraph );
       }
-      this.enable = new e.EnablementManager( this.cgraph );
       this.enable.egraph.addObserver( this, this.onNextEgraph, null, null );
     }
 
@@ -171,9 +170,12 @@ module hd.system {
       if (cc.id in this.constraints) {
         delete this.constraints[cc.id];
 
-        cc.methods.forEach( this.removeMethod );
-        cc.variables.forEach( this.removeVariable ); // no effect if variable used
-                                                     // by another constraint
+        cc.methods.forEach( this.removeMethod, this );
+        cc.variables.forEach( this.removeVariable, this ); // no effect if variableused
+                                                           // by another constraint
+
+        this.sgraph.selectMethod( cc.id, null );
+        this.enable.methodScheduled( cc.id, null );
       }
     }
 
@@ -599,7 +601,11 @@ module hd.system {
         for (var i = 0, l = scheduledMids.length; i < l; ++i) {
           var mid = scheduledMids[i];
           var ar = this.methods[mid].activate( true );
-          this.enable.methodScheduled( mid, ar.inputs, ar.outputs );
+          this.enable.methodScheduled( this.cgraph.constraintForMethod( mid ),
+                                       mid,
+                                       ar.inputs,
+                                       ar.outputs
+                                     );
         }
 
         // Commit all output promises

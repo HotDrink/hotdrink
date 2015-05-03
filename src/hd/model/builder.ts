@@ -21,41 +21,22 @@ module hd.model {
     // The modelcule we are building
     target: Modelcule;
 
-    // Used to generate unique ids
-    ids: IdGenerator;
-
     // If the last thing created was a constraint or a method in a
     // constraint, this will point to the constraint; otherwise it
     // will be null
-    last: Constraint = null;
+    last: ConstraintTemplate = null;
 
     /*----------------------------------------------------------------
      * Can either take an existing modelcule and expand on it, or create a
      * brand new modelcule.
      */
-    constructor( namespace: string, modelcule?: Modelcule );
-    constructor( modelcule?: Modelcule );
-    constructor() {
-      var namespace: string;
-      var modelcule: Modelcule;
-      if (arguments.length > 0) {
-        if (typeof arguments[0] === 'string') {
-          namespace= arguments[0];
-          if (arguments.length > 1) {
-            modelcule = arguments[1];
-          }
-        }
-        else {
-          modelcule = arguments[0];
-        }
-      }
+    constructor( modelcule?: Modelcule ) {
       if (modelcule) {
         this.target = modelcule;
       }
       else {
         this.target = new Modelcule();
       }
-      this.ids = new IdGenerator( namespace );
     }
 
     /*----------------------------------------------------------------
@@ -88,25 +69,24 @@ module hd.model {
         return this;
       }
 
-      // Create the variable if necessary
+      // Check to see if init is really the variable we should use
       var vv: Variable;
       if (init instanceof Variable) {
         vv = <any>init;
         init = undefined;
       }
-      else {
-        vv = new Variable( this.ids.makeId( name ), name, init, eq );
+
+      // Create the variable template
+      var template: VariableTemplate = {
+        name: name,
+        ref: indirect,
+        value: init,
+        eq: eq,
+        output: output
       }
 
-      if (output) {
-        vv.setOutput( true );
-      }
-      else {
-        vv.setOutput( false );
-      }
-
-      // Record variable
-      Modelcule.addVariable( this.target, vv, name, indirect );
+      // Add variable
+      Modelcule.addVariableTemplate( this.target, template, vv );
 
       return this;
     }
@@ -218,51 +198,29 @@ module hd.model {
      */
     private
     parseSignature( optype: string, signature: string ) {
-      var inputNames: string[], outputNames: string[];
+      var inputs: string[], outputs: string[];
       var leftRight = signature.trim().split( /\s*->\s*/ );
       if (leftRight.length != 2) {
         console.error( 'Invalid ' + optype + ' signature: "' + signature + '"' );
         return null;
       }
-      inputNames = leftRight[0] == '' ? [] : leftRight[0].split( /\s*,\s*/ );
-      outputNames = leftRight[1] == '' ? [] : leftRight[1].split( /\s*,\s*/ );
+      inputs = leftRight[0] == '' ? [] : leftRight[0].split( /\s*,\s*/ );
+      outputs = leftRight[1] == '' ? [] : leftRight[1].split( /\s*,\s*/ );
 
       var masks: boolean[] = [];
       var priors: boolean[] = [];
-      for (var i = 0, l = inputNames.length; i < l; ++i) {
-        var stripResult = strip( inputNames[i], ['*', '!'] );
+      for (var i = 0, l = inputs.length; i < l; ++i) {
+        var stripResult = strip( inputs[i], ['*', '!'] );
         if (! stripResult) { return null; }
-        inputNames[i] = stripResult['name'];
+        inputs[i] = stripResult['name'];
         masks[i] = stripResult['*'];
         priors[i] = stripResult['!'];
       }
 
-      if (inputNames.some( this.unknownName, this ) ||
-          outputNames.some( this.unknownName, this )  ) {
-        return null;
-      }
-
-      var inputs = inputNames.map( u.toValueIn( this.target ) );
-      var outputs = outputNames.map( u.toValueIn( this.target ) );
-
-      if (outputs.some( u.isNotType( Variable ) )) {
-        // Not an error, but not a selectable method
-        console.warn( 'Igorning ' + optype + ' with non-variable output(s): ' + signature );
-        return null;
-      }
-
-      var isUnique = function( el: any, i: number, a: any[] ) {
-        return i == a.indexOf( el );
-      }
-      if (! outputs.every( isUnique )) {
-        console.error( 'Duplicate outputs in ' + optype + ' ' + signature );
-        return null;
-      }
-
       return {inputs: inputs,
               outputs: outputs,
-              priors: priors.length == 0 ? null : priors,
-              masks: masks.length == 0 ? null : masks
+              masks: masks.length == 0 ? null : masks,
+              priors: priors.length == 0 ? null : priors
              };
     }
 
@@ -282,8 +240,8 @@ module hd.model {
       var op = this.parseSignature( 'method', signature );
 
       var constraintVars = this.last.variables;
-      var isNotConstraintVar = function( vv: Variable ) {
-        return constraintVars.indexOf( vv ) < 0;
+      var isNotConstraintVar = function( name: string ) {
+        return constraintVars.indexOf( name ) < 0;
       };
 
       if (op.inputs.some( isNotConstraintVar )) {
@@ -295,17 +253,14 @@ module hd.model {
         return this;
       }
 
-      // Create method
-      var mm = new Method( this.ids.makeId( signature ),
-                           signature,
-                           async ? fn : r.liftFunction( fn, op.outputs.length, op.masks ),
-                           op.inputs,
-                           op.outputs,
-                           op.priors,
-                           u.arraySet.difference( constraintVars, op.outputs ),
-                           op.outputs
-                         );
-      this.last.addMethod( mm );
+      // Create method template
+      var template: MethodTemplate = {
+        inputs: op.inputs,
+        outputs: op.outputs,
+        priors: op.priors,
+        fn: async ? fn : r.liftFunction( fn, op.outputs.length, op.masks )
+      };
+      u.arraySet.addKnownDistinct( this.last.methods, template );
 
       return this;
     }
@@ -329,26 +284,22 @@ module hd.model {
 
       var varNames = signature.trim().split( /\s*,\s*/ );
 
-      if (varNames.some( this.unknownName, this )) {
-        return this;
-      }
+      if (varNames.some( this.invalidPath, this )) {
+         return this;
+       }
 
-      var variables = varNames.map( u.toValueIn( this.target ) );
-
-      if (! variables.every( u.isType( Variable ) )) {
-        console.error( 'Constraint may only contain variables' );
-        return this;
-      }
-
-      // Create constraint
-      var cc = new Constraint( this.ids.makeId( signature ), signature, variables );
+      // Create constraint template
+      var template: ConstraintTemplate = {
+        variables: varNames,
+        methods: []
+      };
 
       // Record constraint
-      this.last = cc;
+      this.last = template;
 
       if (name) {
         if (! this.invalidName( name ) && ! this.nameInUse( name )) {
-          Modelcule.defineProperty( this.target, name, this.last, false );
+          Modelcule.defineProperty( this.target, name, this.last );
         }
       }
 
@@ -357,7 +308,7 @@ module hd.model {
 
     endConstraint(): ModelBuilder {
       if (this.last) {
-        Modelcule.addConstraint( this.target, this.last );
+        Modelcule.addConstraintTemplate( this.target, this.last );
         this.last = null;
       }
       return this;
@@ -372,77 +323,51 @@ module hd.model {
       // Parse the equation
       try {
         var equation = eqn.parse( eqString );
-      }
-      catch (err) {
-        console.error( err );
-        return this;
-      }
 
-      // Check variables
-      var varNames = eqString.match( /[a-zA-Z_$][\w$]*/g );
-
-      if (varNames.some( this.unknownName, this )) {
-        console.error( 'Unknown variables in equation: "' + eqString + '"' );
-        return this;
-      }
-
-      for (var i = 0, l = varNames.length; i < l; ++i) {
-        if (varNames.indexOf( varNames[i], i + 1 ) > -1) {
-          console.error( 'Duplicate variables in equation: "' + eqString + '"' );
+        // Check variables
+        var varNames = Object.keys( equation.vars );
+        if (varNames.some( this.invalidPath, this )) {
           return this;
         }
-      }
 
-      var variables = varNames.map( u.toValueIn( this.target ) );
-      var inputs = variables.slice( 0 );
-      var inputVars = inputs.filter( u.isType( Variable ) );
+        // Create constraint template
+        var ctmpl: ConstraintTemplate = {
+          variables: varNames,
+          methods: []
+        };
 
-      // Create constraint
-      var allNames = varNames.join( ', ' );
-      var cc = new Constraint( this.ids.makeId( allNames ), allNames, variables );
-
-      try {
-
-        var notOutput = function( vv: Variable ) {
-          return vv !== output;
+        var allNames = varNames.join( ',' );
+        var outName: string;
+        var notOutput = function( name: string ) {
+          return name !== outName;
         };
 
         for (var i = 0, l = varNames.length; i < l; ++i) {
-          // Partition input/output names
-          var outputName = varNames[i];
-          var output = this.target[outputName];
+          outName = varNames[i];
 
-          if (output instanceof Variable) {
-            // Make signature
-            var signature = allNames + ' -> ' + outputName;
+          // Make signature
+          var signature = allNames + ' -> ' + outName;
 
-            // Build method function
-            var fnBody = eqn.fnBody( varNames, outputName, equation );
-            var args = (<string[]>[null]).concat( varNames );
-            args.push( fnBody );
-            var fn = new (Function.bind.apply( Function, args ))();
+          // Build method function
+          var fn = eqn.makeFunction( varNames, outName, equation );
 
-            // Create method
-            var mm = new Method( this.ids.makeId( signature ),
-                                 signature,
-                                 r.liftFunction( fn ),
-                                 inputs,
-                                 [output],
-                                 [],
-                                 inputVars.filter( notOutput ),
-                                 [output]
-                               );
+          // Create method template
+          var mtmpl: MethodTemplate = {
+            inputs: varNames,
+            outputs: [outName],
+            priors: undefined,
+            fn: r.liftFunction( fn )
+          };
 
-            // Record method
-            cc.addMethod( mm );
-          }
+          // Add method to constraint
+          u.arraySet.addKnownDistinct( ctmpl.methods, mtmpl );
         }
 
         // Record constraint
-        Modelcule.addConstraint( this.target, cc );
+        Modelcule.addConstraintTemplate( this.target, ctmpl );
       }
       catch (e) {
-        console.error( 'Unable to create equation', e );
+        console.error( e );
       }
 
       return this;
@@ -456,8 +381,7 @@ module hd.model {
       var op = this.parseSignature( 'command', signature );
 
       var command =
-            new Command( this.ids.makeId( signature ),
-                         signature,
+            new Command( signature,
                          async ? fn : r.liftFunction( fn, op.outputs.length, op.masks ),
                          op.inputs,
                          op.outputs,
@@ -477,8 +401,7 @@ module hd.model {
       var op = this.parseSignature( 'syncommand', signature );
 
       var command =
-            new SynchronousCommand( this.ids.makeId( signature ),
-                                    signature,
+            new SynchronousCommand( signature,
                                     async ? fn : r.liftFunction( fn, op.outputs.length, op.masks ),
                                     op.inputs,
                                     op.outputs,
@@ -495,8 +418,25 @@ module hd.model {
      */
     private
     invalidName( name: string ): boolean {
-      if (! name.match( /^[a-zA-Z$][\w\d$]*$/ )) {
+      if (! name.match( /^[a-zA-Z][\w$]*$/ )) {
         console.error( 'Invalid modelcule field name: "' + name + '"' );
+        return true;
+      }
+      return false;
+    }
+
+    /*----------------------------------------------------------------
+     * Test for invalid variable path
+     */
+    private
+    invalidPath( path: string ): boolean {
+      if (! path.match( /^[a-zA-Z][\w$]*(\.[a-zA-Z][\w$]*)*$/ )) {
+        console.error( 'Invalid variable path: "' + path + '"' );
+        return true;
+      }
+      var first = path.split( '.' )[0];
+      if (! this.target.hasOwnProperty( first )) {
+        console.error( 'Unknown modelcule field "' + first + '"' );
         return true;
       }
       return false;
@@ -509,18 +449,6 @@ module hd.model {
     nameInUse( name: string ): boolean {
       if (this.target.hasOwnProperty( name )) {
         console.error( 'Cannot redefine modelcule field "' + name + '"' );
-        return true;
-      }
-      return false;
-    }
-
-    /*----------------------------------------------------------------
-     * Test if name not in modelcule
-     */
-    private
-    unknownName( name: string ): boolean {
-      if (! this.target.hasOwnProperty( name )) {
-        console.error( 'Unknown modelcule field "' + name + '"' );
         return true;
       }
       return false;

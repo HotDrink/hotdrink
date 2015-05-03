@@ -47,13 +47,12 @@ module hd.model {
     /*----------------------------------------------------------------
      * Initialize members
      */
-    constructor( id: string,
-                 name: string,
+    constructor( name: string,
                  fn: Function,
                  inputs: any[],
                  outputs: any[],
                  usePriors?: boolean[] ) {
-      this.id = id;
+      this.id = makeId( name );
       this.name = name;
       this.fn = fn;
       this.inputs = inputs;
@@ -197,15 +196,14 @@ module hd.model {
     /*----------------------------------------------------------------
      * Initialize members
      */
-    constructor( id: string,
-                 name: string,
+    constructor( name: string,
                  fn: Function,
                  inputs: any[],
                  outputs: any[],
                  usePriors: boolean[],
                  inputVars: u.ArraySet<Variable>,
                  outputVars: u.ArraySet<Variable> ) {
-      super( id, name, fn, inputs, outputs, usePriors );
+      super( name, fn, inputs, outputs, usePriors );
       this.inputVars = inputVars;
       this.outputVars = outputVars;
     }

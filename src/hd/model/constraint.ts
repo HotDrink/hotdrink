@@ -56,23 +56,23 @@ module hd.model {
    */
 
   export
-  interface ConstraintTemplate {
+  interface ConstraintSpec {
     variables: u.ArraySet<string>;
-    methods: u.ArraySet<MethodTemplate>;
+    methods: u.ArraySet<MethodSpec>;
   }
 
   export
-  class ConstraintInstance {
+  class ConstraintTemplate {
     mod: Modelcule;
-    template: ConstraintTemplate;
+    spec: ConstraintSpec;
     reffed: u.Dictionary<any> = {};
     paths: u.ArraySet<Path> = [];
     constraint: Constraint;
 
-    constructor( mod: Modelcule, template: ConstraintTemplate ) {
+    constructor( mod: Modelcule, spec: ConstraintSpec ) {
       this.mod = mod;
-      this.template = template;
-      template.variables.forEach( function( name: string ) {
+      this.spec = spec;
+      spec.variables.forEach( function( name: string ) {
         var path = new Path( mod, name.split( '.' ) );
         this.reffed[name] = path.get();
         if (! path.isConstant()) {
@@ -120,13 +120,13 @@ module hd.model {
 
     tryConstraint() {
       var variables =
-            u.arraySet.fromArray( this.template.variables.map( this.reffedValue, this ) );
+            u.arraySet.fromArray( this.spec.variables.map( this.reffedValue, this ) );
 
       var allgood = variables.every( function( x: any ) { return x; } );
 
       if (allgood) {
-        var cc = new Constraint( this.template.variables.join( ',' ), variables );
-        this.template.methods.forEach( function( mtempl: MethodTemplate ) {
+        var cc = new Constraint( this.spec.variables.join( ',' ), variables );
+        this.spec.methods.forEach( function( mtempl: MethodSpec ) {
           var outputs = <Variable[]>mtempl.outputs.map( this.reffedValue, this );
           var inputs = <any[]>mtempl.inputs.map( this.reffedValue, this );
           var priors = mtempl.priors;

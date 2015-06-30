@@ -7,13 +7,12 @@ module hd.model {
   import r = hd.reactive;
 
   export
-  enum VariableEventType { changed, touched, pending, settled, setOutput }
+  enum VariableEventType { changed, touched, pending, settled }
 
   export
   interface VariableEvent {
     type: VariableEventType;
     vv: Variable;
-    isOutput?: boolean;
   }
 
   /*==================================================================
@@ -28,29 +27,29 @@ module hd.model {
     // Human readable name for programmer
     name: string;
 
-    // Value
-    value : r.ObservableProperty<any>;
+    // Is the stay constraint created with max or min priority?
+    optional: Optional = Optional.Min;
 
-    // Is this an output variable?
-    output : r.ObservableProperty<boolean>;
+    // Value
+    value : r.ScheduledSignal<any>;
 
     // Error associated with this variable
-    error = new r.ObservableProperty<any>( null );
+    error = new r.ScheduledSignal<any>( null );
 
     // Is value stale?
-    stale = new r.ObservableProperty( false, u.doubleEqual );
+    stale = new r.ScheduledSignal( false, u.doubleEqual );
 
     // Is the variable a source?
-    source = new r.ObservableProperty( false, u.doubleEqual );
+    source = new r.ScheduledSignal( false, u.doubleEqual );
 
     // Is the variable pending?
-    pending = new r.ObservableProperty( false, u.doubleEqual );
+    pending = new r.ScheduledSignal( false, u.doubleEqual );
 
     // Is the variable contributing to an output?
-    contributing = new r.ObservableProperty( u.Fuzzy.Yes, u.doubleEqual );
+    contributing = new r.ScheduledSignal( u.Fuzzy.Yes, u.doubleEqual );
 
     // Could the variable contribute to an output if edited?
-    relevant = new r.ObservableProperty( u.Fuzzy.Yes, u.doubleEqual );
+    relevant = new r.ScheduledSignal( u.Fuzzy.Yes, u.doubleEqual );
 
     // Publishes events when value is touched or changed
     changes = new r.BasicObservable<VariableEvent>();
@@ -69,13 +68,11 @@ module hd.model {
      */
     constructor( name: string,
                  value: any,
-                 eq?: u.EqualityPredicate<any>,
-                 output?: boolean               ) {
+                 eq?: u.EqualityPredicate<any> ) {
       this.id = makeId( name );
       this.name = name;
 
-      this.value = new r.ObservableProperty( undefined, eq );
-      this.output = new r.ObservableProperty( !! output, u.doubleEqual );
+      this.value = new r.ScheduledSignal( undefined, eq );
       this.ladder = new r.PromiseLadder<any>();
 
       // connect ladder to value
@@ -85,7 +82,11 @@ module hd.model {
                                null
                              );
 
-      if (value !== undefined) {
+      if (value === undefined) {
+        this.optional = Optional.Min;
+      }
+      else {
+        this.optional = Optional.Max;
         var p: r.Promise<any>;
         if (value instanceof r.Promise) {
           p = <r.Promise<any>>value;
@@ -106,20 +107,6 @@ module hd.model {
      */
     toString(): string {
       return this.name;
-    }
-
-    /*----------------------------------------------------------------
-     * Set output property and generate change event
-     */
-    setOutput( isOutput: boolean ) {
-      isOutput = !! isOutput;
-      if (!this.output.hasValue( isOutput )) {
-        this.output.set( isOutput );
-        this.changes.sendNext( {type: VariableEventType.setOutput,
-                                vv: this,
-                                isOutput: isOutput}
-                             );
-      }
     }
 
     /*----------------------------------------------------------------
@@ -177,6 +164,18 @@ module hd.model {
       }
       this.ladder.forwardPromise( p );
       return p;
+    }
+
+    /*----------------------------------------------------------------
+     */
+    get(): any {
+      return this.value.get();
+    }
+
+    /*----------------------------------------------------------------
+     */
+    set( value: any ) {
+      this.onNext( value );
     }
 
     /*----------------------------------------------------------------

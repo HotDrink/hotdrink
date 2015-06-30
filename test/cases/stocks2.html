@@ -29,20 +29,22 @@
         } );
       }
 
-      var model = new hd.ModelBuilder()
+      var context = new hd.ContextBuilder()
         .variables( {number: 10,
                      symbol: undefined,
                      favorite: "ADBE",
+                     total: undefined,
+                     value: undefined,
                     }
                   )
-        .outputVariables( 'total, value' )
+        .outputs( 'total, value' )
         .constraint( 'favorite, symbol' )
           .method( 'favorite -> symbol', id )
-          .method( 'favorite -> favorite', id )
+          .method( '!favorite -> favorite', id )
 
         .constraint( 'symbol, value' )
           .method( 'symbol -> value', fetch_stock_value )
-          .method( 'symbol -> symbol', id )
+          .method( '!symbol -> symbol', id )
 
         .constraint( 'value, number, total' )
           .method( 'value, number -> total',
@@ -55,13 +57,13 @@
                    function( total, number ) { return total / number; }
                  )
 
-        .end();
+        .context();
 
-      var system = new hd.ConstraintSystem();
-      system.addComponent( model );
+      var pm = new hd.PropertyModel();
+      pm.addComponent( context );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( model );
+        hd.performDeclaredBindings( context );
       } );
     </script>
   </head>

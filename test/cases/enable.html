@@ -11,11 +11,11 @@
     <script type="text/javascript">
     {
       console.time( 'model' );
-      var model = new hd.ModelBuilder()
+      var context = new hd.ContextBuilder()
         .variables( {a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7,
                      h: 8, i: undefined, j: undefined,
-                     k: undefined, l: undefined, m: undefined } )
-        .outputVariable( 'z' )
+                     k: undefined, l: undefined, m: undefined, z: undefined } )
+        .output( 'z' )
         .equation( "i == 2*c" )
         .equation( "k == b+i" )
         .equation( "l == d+1" )
@@ -59,14 +59,14 @@
                  }
                )
 
-        .end();
+        .context();
       console.timeEnd( 'model' );
 
-      var system = new hd.ConstraintSystem();
-      system.addComponent( model );
+      var pm = new hd.PropertyModel();
+      pm.addComponent( context );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( model );
+        hd.performDeclaredBindings( context );
       } );
     }
     </script>

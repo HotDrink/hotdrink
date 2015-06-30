@@ -7,20 +7,20 @@ module hd.model {
   import r = hd.reactive;
 
   /*==================================================================
-   * An observable representing a particular property pat in a
-   * modelcule.
+   * An observable representing a particular property path in a
+   * context.
    */
   export
   class Path extends r.BasicObservable<any> {
 
-    // The modelcule at which to begin the search
-    start: Modelcule;
+    // The context at which to begin the search
+    start: Context;
 
     // The property path to follow
     path: string[];
 
     // Any observable properties subscribed to along the way
-    properties: r.ObservableProperty<any>[] = null;
+    properties: r.ProxySignal<any>[] = null;
 
     // The result at the end of the path
     result: any;
@@ -28,10 +28,10 @@ module hd.model {
     /*----------------------------------------------------------------
      * Perform initial search.
      */
-    constructor( start: Modelcule, path: string[] ) {
+    constructor( start: Context, path: string ) {
       super();
       this.start = start;
-      this.path = path;
+      this.path = path.split( '.' );
       this.followPath();
     }
 
@@ -75,17 +75,14 @@ module hd.model {
         else {
           added = super.addObserver( object, onNext, onError, onCompleted, id );
         }
-        if (added) {
-          added.onNext( this.result );
-        }
         return added;
       }
       else {
         if (arguments.length == 1) {
-          (<r.Observer<any>>object).onNext( this.result );
+          (<r.Observer<any>>object).onCompleted();
         }
         else {
-          onNext.call( object, this.result, id );
+          onCompleted.call( object, id );
         }
       }
     }
@@ -95,7 +92,7 @@ module hd.model {
      */
     cancel() {
       if (this.properties) {
-        this.properties.forEach( function( p: r.ObservableProperty<any> ) {
+        this.properties.forEach( function( p: r.ProxySignal<any> ) {
           p.removeObserver( this );
         }, this );
         this.properties = null;
@@ -107,20 +104,23 @@ module hd.model {
      */
     private
     followPath() {
-      var properties: r.ObservableProperty<any>[] = [];
+      var properties: r.ProxySignal<any>[] = [];
       var m = this.start;
-      for (var i = 0, l = this.path.length; m !== null && m !== undefined && i < l; ++i) {
+      for (var i = 0, l = this.path.length; typeof m === 'object' && m !== null && i < l; ++i) {
         var name = this.path[i];
         var propname = '$' + name;
         if (propname in m) {
           var p = m[propname];
-          p.addObserver( this );
+          p.addObserverChangesOnly( this );
           properties.push( p );
           m = p.get();
         }
         else {
           m = m[name];
         }
+      }
+      if (i < l) {
+        m = undefined;
       }
       if (m !== this.result) {
         this.result = m;

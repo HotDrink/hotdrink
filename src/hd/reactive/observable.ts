@@ -47,7 +47,7 @@ module hd.reactive {
                  public next_cb: (value: T, id?: any) => void,
                  public error_cb: (error: any, id?: any) => void,
                  public completed_cb: (id?: any) => void,
-                 public id: any                                   ) { }
+                 public id?: any                                  ) { }
 
     onNext( value: T ) {
       if (this.next_cb) {

@@ -7,25 +7,28 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var model = new hd.ModelBuilder()
+        var context = new hd.ContextBuilder()
             .v( 'x', 3 )
             .v( 'y', 7 )
-            .v( '$z' )
-            .end();
-        model.z = model.x;
+            .r( 'z' )
+            .context();
+        context.z = context.x;
+
+        var pm = new hd.PropertyModel();
+        pm.addComponent( context );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( model );
+          hd.performDeclaredBindings( context );
         } );
       }
 
       var flop = true;
       function flip() {
         if (flop) {
-          model.z = model.y;
+          context.z = context.y;
         }
         else {
-          model.z = model.x;
+          context.z = context.x;
         }
         flop = !flop;
       }

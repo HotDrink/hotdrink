@@ -4,20 +4,24 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var model = new hd.ModelBuilder()
+        var context = new hd.ContextBuilder()
             .variable( 'v', "hello" )
             .variable( 'w', 123 )
             .variable( 'x', new Date() )
             .variable( 'y', 456 )
             .variable( 'z', 7.89 )
             .variable( 'n', 10 )
-            .end();
+            .context();
 
-        var model2 = new hd.ModelBuilder().variable( 'x', 3 ).end();
+        var context2 = new hd.ContextBuilder().variable( 'x', 3 ).context();
+
+        var pm = new hd.PropertyModel();
+        pm.addComponents( context, context2 );
+        pm.update();
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( model, document.getElementById( 'one' ) );
-          hd.performDeclaredBindings( model2, document.getElementById( 'two' ) );
+          hd.performDeclaredBindings( context, document.getElementById( 'one' ) );
+          hd.performDeclaredBindings( context2, document.getElementById( 'two' ) );
         } );
       }
 

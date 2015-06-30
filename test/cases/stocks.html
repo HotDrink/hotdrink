@@ -39,11 +39,11 @@
         } );
       }
 
-      var model = new hd.ModelBuilder()
-          .variables( 'favorite, symbol, value, number',
+      var context = new hd.ContextBuilder()
+          .variables( 'favorite, symbol, value, number, total',
                       {favorite: "ADBE", number: 10}
                     )
-          .outputVariable( 'total' )
+          .output( 'total' )
           .constraint( 'value, number, total' )
             .method( 'value, number -> total',
                      function( value, number ) { return value * number; }
@@ -54,48 +54,39 @@
             .method( 'total, number -> value',
                      function( total, number ) { return total / number; }
                    )
-          .end();
+          .context();
 
 
-      var sym2val = new hd.ModelBuilder()
-          .variables( {symbol: model.symbol,
-                       value: model.value}
-                    )
+      var sym2val = new hd.ContextBuilder()
           .constraint( 'symbol, value' )
             .method( 'symbol -> value', fetch_stock_value )
-          .end();
+          .context( context );
 
-      var fav2sym = new hd.ModelBuilder()
-          .variables( {favorite: model.favorite,
-                       symbol: model.symbol}
-                    )
-          .outputVariables( 'total, value' )
+      var fav2sym = new hd.ContextBuilder()
           .constraint( 'favorite, symbol' )
             .method( 'favorite -> symbol', id )
-          .end();
+          .context( context );
 
 
-      var system = new hd.ConstraintSystem();
-      system.addComponent( model );
-      system.addComponent( sym2val );
-      system.addComponent( fav2sym );
+      var pm = new hd.PropertyModel();
+      pm.addComponents( context, sym2val, fav2sym );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( model );
+        hd.performDeclaredBindings( context );
         document.getElementById( 'useFav' ).onclick = function() {
           if (this.checked) {
-            system.addComponent( fav2sym );
+            pm.addComponent( fav2sym );
           }
           else {
-            system.removeComponent( fav2sym );
+            pm.removeComponent( fav2sym );
           }
         }
         document.getElementById( 'useSym' ).onclick = function() {
           if (this.checked) {
-            system.addComponent( sym2val );
+            pm.addComponent( sym2val );
           }
           else {
-            system.removeComponent( sym2val );
+            pm.removeComponent( sym2val );
           }
         }
       } );

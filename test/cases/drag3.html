@@ -13,29 +13,29 @@
     </style>
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
-      var system, mod;
+      var system, ctx;
       function init() {
 
-        mod = new hd.ModelBuilder()
+        ctx = new hd.ContextBuilder()
           .v( 'p1', {x: 200, y: 50} )
           .v( 'p2', {x: 150, y: 150} )
           .v( 'p3', {x: 50, y: 200} )
           .v( 'p1s', {x: 200, y: 50} )
           .v( 'p2s', {x: 150, y: 150} )
           .v( 'p3s', {x: 50, y: 200} )
-          .v( '$drag' )
+          .r( 'drag' )
 
           .c( 'p1, p2, p3, p1s, p2s, p3s' )
-          .m( 'p1, p2, p3 -> p1s, p2s, p3s, p2, p3', bump2delay )
-          .m( 'p2, p1, p3 -> p2s, p1s, p3s, p1, p3', bump2delay )
-          .m( 'p3, p1, p2 -> p3s, p1s, p2s, p1, p2', bump2delay )
+          .m( 'p1, !p2, !p3 -> p1s, p2s, p3s, p2, p3', bump2delay )
+          .m( 'p2, !p1, !p3 -> p2s, p1s, p3s, p1, p3', bump2delay )
+          .m( 'p3, !p1, !p2 -> p3s, p1s, p2s, p1, p2', bump2delay )
 
-          .end();
+          .context();
 
-        system = new hd.ConstraintSystem();
-        system.addComponent( mod );
-        hd.performDeclaredBindings( mod );
-        hd.bind( {view: hd.mousePosition(), model: hd.path( mod, 'drag' )} );
+        pm = new hd.PropertyModel();
+        pm.addComponents( ctx );
+        hd.performDeclaredBindings( ctx );
+        hd.bind( {view: hd.mousePosition(), model: hd.path( ctx, 'drag' )} );
 
         function copy( p ) {
           return {x: p.x, y: p.y}
@@ -91,30 +91,31 @@
           }
         }
 
-        var canvas = document.createElement( 'canvas' );
-        var ctx = canvas.getContext( '2d' );
-        ctx.fillStyle = '#eef';
-        ctx.strokeStyle = '#00f';
-        ctx.beginPath();
-        ctx.arc( 30, 30, 29, 0, 6.3 );
-        ctx.stroke();
-        ctx.fill();
-        document.styleSheets[0].insertRule( ".puck { background: url(" + canvas.toDataURL() + ") }", 0 );
-        ctx.fillStyle = '#dde';
-        ctx.strokeStyle = '#009';
-        ctx.beginPath();
-        ctx.arc( 30, 30, 29, 0, 6.3 );
-        ctx.stroke();
-        ctx.fill();
-        document.styleSheets[0].insertRule( ".puck.pending { background: url(" + canvas.toDataURL() + ") }", 0 );
-        ctx.fillStyle = '#ddd';
-        ctx.strokeStyle = '#999';
-        ctx.beginPath();
-        ctx.arc( 30, 30, 29, 0, 6.3 );
-        ctx.stroke();
-        ctx.fill();
-        document.styleSheets[0].insertRule( ".puck.shadow { background: url(" + canvas.toDataURL() + ") }", 0 );
-
+        (function() {
+          var canvas = document.createElement( 'canvas' );
+          var ctx = canvas.getContext( '2d' );
+          ctx.fillStyle = '#eef';
+          ctx.strokeStyle = '#00f';
+          ctx.beginPath();
+          ctx.arc( 30, 30, 29, 0, 6.3 );
+          ctx.stroke();
+          ctx.fill();
+          document.styleSheets[0].insertRule( ".puck { background: url(" + canvas.toDataURL() + ") }", 0 );
+          ctx.fillStyle = '#dde';
+          ctx.strokeStyle = '#009';
+          ctx.beginPath();
+          ctx.arc( 30, 30, 29, 0, 6.3 );
+          ctx.stroke();
+          ctx.fill();
+          document.styleSheets[0].insertRule( ".puck.pending { background: url(" + canvas.toDataURL() + ") }", 0 );
+          ctx.fillStyle = '#ddd';
+          ctx.strokeStyle = '#999';
+          ctx.beginPath();
+          ctx.arc( 30, 30, 29, 0, 6.3 );
+          ctx.stroke();
+          ctx.fill();
+          document.styleSheets[0].insertRule( ".puck.shadow { background: url(" + canvas.toDataURL() + ") }", 0 );
+        })();
 
         ['p1', 'p2', 'p3'].forEach( function( id ) {
           var el = document.getElementById( id );
@@ -123,11 +124,11 @@
         } );
 
         function mousedown( e ) {
-          mod.drag = mod[e.currentTarget.id];
+          ctx.drag = ctx[e.currentTarget.id];
         }
 
         function mouseup( e ) {
-          mod.drag = null;
+          ctx.drag = null;
         }
 
       }

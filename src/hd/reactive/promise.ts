@@ -144,7 +144,7 @@ module hd.reactive {
     private reason: any;
 
     // Promise usage
-    usage = new ObservableProperty( Usage.Unknown );
+    usage = new BasicSignal( Usage.Unknown );
 
     // Event fired when promise loses all observers
     ondropped = new BasicObservable<Promise<T>>();

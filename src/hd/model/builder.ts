@@ -1,14 +1,14 @@
 /*####################################################################
- * The ModelBuilder class.
+ * The ContextBuilder class.
  */
 module hd.model {
 
   import u = hd.utility;
   import r = hd.reactive;
 
-  /*==================================================================
-   * The purpose of the ModelBuilder is to make it easy for
-   * programmers to construct modelcules.
+  /*================================================================
+   * The ContextBuilder class represents our embedded-DSL for
+   * creating contexts.
    *
    * The various factory methods spend a lot of time validating
    * parameters and massaging them to fit the parameters of the actual
@@ -16,87 +16,73 @@ module hd.model {
    * all parameters have been validated and are in the expected
    * format.)
    */
-  export class ModelBuilder {
+  export
+  class ContextBuilder {
 
-    // The modelcule we are building
-    target: Modelcule;
+    // The spec we are building
+    private
+    target: ContextSpec = {
+      variables:   [],
+      nesteds:     [],
+      references:  [],
+      constraints: [],
+      commands:    [],
+      outputs:     [],
+      touchDeps:   []
+    };
 
     // If the last thing created was a constraint or a method in a
     // constraint, this will point to the constraint; otherwise it
     // will be null
     last: ConstraintSpec = null;
 
-    /*----------------------------------------------------------------
-     * Can either take an existing modelcule and expand on it, or create a
-     * brand new modelcule.
-     */
-    constructor( modelcule?: Modelcule ) {
-      if (modelcule) {
-        this.target = modelcule;
-      }
-      else {
-        this.target = new Modelcule();
-      }
-    }
+    usedLocs: u.Dictionary<boolean> = {};
 
     /*----------------------------------------------------------------
-     * Get the modelcule that was built.
+     * Get the spec constructed by this builder
      */
-
-    end() {
+    spec() {
       this.endConstraint();
       return this.target;
     }
 
     /*----------------------------------------------------------------
-     * Add a variable to the current modelcule.
+     * Get a context made according to the spec
      */
-    variable<T>( name: string,
+    context( init?: u.Dictionary<any> ) {
+      this.endConstraint();
+      var ctx = new Context( init );
+      Context.construct( ctx, this.target );
+      return ctx;
+    }
+
+    /*----------------------------------------------------------------
+     * Add a variable.
+     */
+    variable<T>( loc: string,
                  init?: T,
-                 eq?: u.EqualityPredicate<T>,
-                 output?: boolean             ): ModelBuilder {
+                 eq?: u.EqualityPredicate<T> ): ContextBuilder {
       this.endConstraint();
 
-      var stripResult = strip( name, ['$'] );
-      if (! stripResult) { return null; }
-      var indirect = stripResult['$'];
-      name = stripResult['name'];
-
-      if (this.invalidName( name ) || this.nameInUse( name )) { return this; }
+      if (this.invalidLoc( loc )) { return this; }
 
       if (eq && typeof eq !== 'function') {
-        console.error( 'Variable equality predicate must be a function' );
+        console.error( "Variable equality predicate must be a function" );
         return this;
       }
 
-      // Check to see if init is really the variable we should use
-      var vv: Variable;
-      if (init instanceof Variable) {
-        vv = <any>init;
-        init = undefined;
-      }
-
-      // Create the variable spec
-      var spec: VariableSpec = {
-        name: name,
-        ref: indirect,
-        value: init,
-        eq: eq,
-        output: output
-      }
-
-      // Add variable
-      Modelcule.addVariableSpec( this.target, spec, vv );
+      this.target.variables.push( { loc: loc, init: init, eq: eq} );
+      this.usedLocs[loc] = true;
 
       return this;
     }
 
     /*----------------------------------------------------------------
      * This convenience method allows the creation of a bunch of
-     * variables at once -- stored in an object as name/init pairs.
+     * variables at once.
      */
-    variables( varorder: string, vardefs?: u.Dictionary<any>, output?: boolean ): ModelBuilder;
-    variables( vardefs: u.Dictionary<any>, output?: boolean ): ModelBuilder;
+    variables( varorder: string, vardefs?: u.Dictionary<any> ): ContextBuilder;
+    variables( vardefs: u.Dictionary<any> ): ContextBuilder;
     variables() {
       this.endConstraint();
 
@@ -106,177 +92,99 @@ module hd.model {
       if (typeof arguments[0] === 'string') {
         varorder = arguments[0].trim().split( /\s*,\s*/ );
         vardefs = arguments[1] || {};
-        output = arguments[2];
       }
       else {
         vardefs = arguments[0];
         varorder = Object.keys( vardefs );
-        output = arguments[1];
       }
 
-      varorder.forEach( function( name: string ) {
-        this.variable( name, vardefs[name], undefined, output );
+      for (var i = 0, l = varorder.length; i < l; ++i) {
+        var loc = varorder[i];
+        this.variable( loc, vardefs[loc] );
+      }
+
+      return this;
+    }
+
+    /*----------------------------------------------------------------
+     * Add a nested context.
+     */
+    nested( loc: string, spec: ContextSpec ): ContextBuilder {
+      this.endConstraint();
+
+      if (this.invalidLoc( loc )) { return this; }
+
+      this.target.nesteds.push( {loc: loc, spec: spec} );
+      this.usedLocs[loc] = true;
+
+      return this;
+    }
+
+    /*----------------------------------------------------------------
+     * Add a reference.
+     */
+    reference( loc: string, eq?: u.EqualityPredicate<any> ): ContextBuilder {
+      this.endConstraint();
+
+      if (this.invalidLoc( loc )) { return this; }
+
+      this.target.references.push( {loc: loc, eq: eq} );
+      this.usedLocs[loc] = true;
+
+      return this;
+    }
+
+    /*----------------------------------------------------------------
+     * Convenience method for many references at once
+     */
+    references( locs: string ): ContextBuilder {
+      locs.trim().split( /\s*,\s*/ ).forEach( function( loc: string ) {
+        this.reference( loc )
       }, this );
-
-      return this;
-    }
-
-    /*----------------------------------------------------------------
-     * Add a variable to current model, marking it as output.
-     *   -OR-
-     * Mark existing variable as output
-     */
-    outputVariable<T>( name: string, init?: T, eq?: u.EqualityPredicate<T> ): ModelBuilder {
-      this.endConstraint();
-
-      if (arguments.length == 1 && this.target[name] instanceof Variable) {
-        (<Variable>this.target[name]).setOutput( true );
-      }
-      else {
-        this.variable( name, init, eq, true );
-      }
-      return this;
-    }
-
-    interfaceVariable<T>( name: string, init?: T, eq?: u.EqualityPredicate<T> ): ModelBuilder {
-      this.endConstraint();
-
-      if (arguments.length == 1 && this.target[name] instanceof Variable) {
-        (<Variable>this.target[name]).setOutput( false );
-      }
-      else {
-        this.variable( name, init, eq, false );
-      }
-      return this;
-    }
-
-    /*----------------------------------------------------------------
-     * This convenience method allows the creation of a bunch of
-     * output variables at once
-     *   -OR-
-     * Marking a group of existing variables as output
-     */
-    outputVariables( varorder: string, vardefs?: u.Dictionary<any> ): ModelBuilder;
-    outputVariables( vardefs: u.Dictionary<any> ): ModelBuilder;
-    outputVariables() {
-      this.endConstraint();
-
-      if (arguments.length == 1 && typeof arguments[0] === 'string') {
-        arguments[0].trim().split( /\s*,\s*/ ).forEach( function( name: string ) {
-          this.outputVariable( name );
-        }, this );
-      }
-      else if (arguments.length > 1) {
-        this.variables( arguments[0], arguments[1], true );
-      }
-      else {
-        this.variables( arguments[0], true );
-      }
-      return this;
-    }
-
-    interfaceVariables( varorder: string, vardefs?: u.Dictionary<any> ): ModelBuilder;
-    interfaceVariables( vardefs: u.Dictionary<any> ): ModelBuilder;
-    interfaceVariables<T>(): ModelBuilder {
-      this.endConstraint();
-
-      if (arguments.length == 1 && typeof arguments[0] === 'string') {
-        arguments[0].trim().split( /\s*,\s*/ ).forEach( function( name: string ) {
-          this.interfaceVariable( name )
-        }, this );
-      }
-      else if (arguments.length > 1) {
-        this.variables( arguments[0], arguments[1], false );
-      }
-      else {
-        this.variables( arguments[0], false );
-      }
       return this;
     }
 
     /*----------------------------------------------------------------
      */
     private
-    parseSignature( optype: string, signature: string ) {
+    parseSignature( description: string, signature: string ) {
       var inputs: string[], outputs: string[];
       var leftRight = signature.trim().split( /\s*->\s*/ );
       if (leftRight.length != 2) {
-        console.error( 'Invalid ' + optype + ' signature: "' + signature + '"' );
+        console.error( 'Invalid ' + description + ' signature: "' + signature + '"' );
         return null;
       }
       inputs = leftRight[0] == '' ? [] : leftRight[0].split( /\s*,\s*/ );
       outputs = leftRight[1] == '' ? [] : leftRight[1].split( /\s*,\s*/ );
 
-      var masks: boolean[] = [];
-      var priors: boolean[] = [];
+      var promiseFlags: boolean[] = [];
+      var priorFlags: boolean[] = [];
       for (var i = 0, l = inputs.length; i < l; ++i) {
         var stripResult = strip( inputs[i], ['*', '!'] );
         if (! stripResult) { return null; }
         inputs[i] = stripResult['name'];
-        masks[i] = stripResult['*'];
-        priors[i] = stripResult['!'];
+        if (stripResult['*']) { promiseFlags[i] = true; }
+        if (stripResult['!']) { priorFlags[i] = true; }
       }
 
       return {inputs: inputs,
-              outputs: outputs,
-              masks: masks.length == 0 ? null : masks,
-              priors: priors.length == 0 ? null : priors
+              promiseFlags: promiseFlags.length == 0 ? null : promiseFlags,
+              priorFlags: priorFlags.length == 0 ? null : priorFlags,
+              outputs: outputs
              };
-    }
-
-    /*----------------------------------------------------------------
-     * Add a method to the current modelcule.
-     */
-    asyncMethod( signature: string, fn: Function ): ModelBuilder {
-      return this.method( signature, fn, true );
-    }
-
-    method( signature: string, fn: Function, async = false ): ModelBuilder {
-      if (! this.last) {
-        console.error( 'Builder function "method" called with no constraint' );
-        return this;
-      }
-
-      var op = this.parseSignature( 'method', signature );
-
-      var constraintVars = this.last.variables;
-      var isNotConstraintVar = function( name: string ) {
-        return constraintVars.indexOf( name ) < 0;
-      };
-
-      if (op.inputs.some( isNotConstraintVar )) {
-        console.error( "Input does not belong to constraint in method " + signature );
-        return this;
-      }
-      if (op.outputs.some( isNotConstraintVar )) {
-        console.error( "Output does not belong to constraint in method " + signature );
-        return this;
-      }
-
-      // Create method spec
-      var spec: MethodSpec = {
-        inputs: op.inputs,
-        outputs: op.outputs,
-        priors: op.priors,
-        fn: async ? fn : r.liftFunction( fn, op.outputs.length, op.masks )
-      };
-
-      u.arraySet.addKnownDistinct( this.last.methods, spec );
-
-      return this;
     }
 
     /*----------------------------------------------------------------
      * Add a constraint to the property modelcule.
      */
-    constraint( name: string, signature: string ): ModelBuilder;
-    constraint( signature: string ): ModelBuilder;
-    constraint(): ModelBuilder {
+    constraint( loc: string, signature: string ): ContextBuilder;
+    constraint( signature: string ): ContextBuilder;
+    constraint(): ContextBuilder {
       this.endConstraint();
 
-      var name: string, signature: string;
+      var loc: string, signature: string;
       if (arguments.length > 1) {
-        name = arguments[0];
+        loc = arguments[0];
         signature = arguments[1];
       }
       else {
@@ -285,40 +193,136 @@ module hd.model {
 
       var varNames = signature.trim().split( /\s*,\s*/ );
 
-      if (varNames.some( this.invalidPath, this )) {
+      if (varNames.some( invalidPath, this )) {
          return this;
        }
 
-      // Create constraint spec
-      var spec: ConstraintSpec = {
-        variables: varNames,
-        methods: []
-      };
+      this.last = { variables: varNames, methods: [] };
 
-      // Record constraint
-      this.last = spec;
-
-      if (name) {
-        if (! this.invalidName( name ) && ! this.nameInUse( name )) {
-          Modelcule.defineProperty( this.target, name, this.last );
-        }
+      if (loc && ! this.invalidLoc( loc )) {
+        this.last.loc = loc;
+        this.usedLocs[this.last.loc] = true;
       }
 
       return this;
     }
 
-    endConstraint(): ModelBuilder {
+    // Complete the current constraint; no effect if no current constraint
+    endConstraint(): ContextBuilder {
       if (this.last) {
-        Modelcule.addConstraintSpec( this.target, this.last );
+        this.target.constraints.push( this.last );
         this.last = null;
       }
       return this;
     }
 
     /*----------------------------------------------------------------
+     * Add a method
+     */
+    method( signature: string, fn: Function, lift = true ): ContextBuilder {
+      if (! this.last) {
+        console.error( 'Builder function "method" called with no constraint' );
+        return this;
+      }
+
+      var p = this.parseSignature( 'method', signature );
+      if (p == null) { return this; }
+
+      // helper function to make sure variable belongs to constraint
+      var constraintVars = this.last.variables;
+      var isNotConstraintVar = function( name: string ) {
+        if (constraintVars.indexOf( name ) < 0) {
+          console.error( "Variable " + name +
+                         "does not belong to constraint in method " + signature );
+          return true;
+        }
+        else { return false; }
+
+      };
+
+      if (p.inputs.some( isNotConstraintVar ) || p.outputs.some( isNotConstraintVar ) ) {
+        return this;
+      }
+
+      u.arraySet.addKnownDistinct(
+        this.last.methods,
+        {inputs: p.inputs,
+         priorFlags: p.priorFlags,
+         outputs: p.outputs,
+         fn: lift ? r.liftFunction( fn, p.outputs.length, p.promiseFlags ) : fn}
+      );
+
+      return this;
+    }
+
+    /*----------------------------------------------------------------
+     */
+    command( loc: string,
+             signature: string,
+             fn: Function,
+             lift = true, sync = false ): ContextBuilder {
+      this.endConstraint();
+
+      if (this.invalidLoc( loc )) { return this; }
+
+      var p = this.parseSignature( 'method', signature );
+      if (p == null) { return this; }
+
+      if (p.inputs.some( invalidPath, this ) || p.outputs.some( invalidPath, this )) {
+        return this;
+      }
+
+      this.target.commands.push( {
+        loc: loc,
+        inputs: p.inputs,
+        priorFlags: p.priorFlags,
+        outputs: p.outputs,
+        fn: lift ? r.liftFunction( fn, p.outputs.length, p.promiseFlags ) : fn,
+        synchronous: sync
+      } );
+
+      return this;
+    }
+
+    //--------------------------------------------
+    syncommand( loc: string, signature: string, fn: Function, lift = true ): ContextBuilder {
+      return this.command( loc, signature, fn, lift, true );
+    }
+
+    /*----------------------------------------------------------------
+     * Add output designation
+     */
+    output( variable: string ): ContextBuilder {
+      if (invalidPath( variable )) {
+        return this;
+      }
+      this.target.outputs.push( {variable: variable} );
+      return this;
+    }
+
+    /*----------------------------------------------------------------
+     * Convenience method for many outputs at once
+     */
+    outputs( variables: string ): ContextBuilder {
+      variables.trim().split( /\s*,\s*/ ).forEach( this.output, this );
+      return this;
+    }
+
+    /*----------------------------------------------------------------
+     * Add a touch dependency
+     */
+    touchDep( from: string, to: string ): ContextBuilder {
+      if (invalidPath( from ) || invalidPath( to )) {
+        return this;
+      }
+      this.target.touchDeps.push( {from: from, to: to} );
+      return this;
+    }
+
+    /*----------------------------------------------------------------
      * Build constraint represented by simple equation.
      */
-    equation( eqString: string ): ModelBuilder {
+    equation( eqString: string ): ContextBuilder {
       this.endConstraint();
 
       // Parse the equation
@@ -327,7 +331,7 @@ module hd.model {
 
         // Check variables
         var varNames = Object.keys( equation.vars );
-        if (varNames.some( this.invalidPath, this )) {
+        if (varNames.some( invalidPath, this )) {
           return this;
         }
 
@@ -337,7 +341,6 @@ module hd.model {
           methods: []
         };
 
-        var allNames = varNames.join( ',' );
         var outName: string;
         var notOutput = function( name: string ) {
           return name !== outName;
@@ -346,17 +349,28 @@ module hd.model {
         for (var i = 0, l = varNames.length; i < l; ++i) {
           outName = varNames[i];
 
+          var inNames: string[];
+          var priorFlags: boolean[] = undefined;
+          if (equation.op === '==') {
+            inNames = varNames.filter( notOutput );
+          }
+          else {
+            inNames = varNames;
+            priorFlags = [];
+            priorFlags[i] = true;
+          }
+
           // Make signature
-          var signature = allNames + ' -> ' + outName;
+          var signature = inNames.join( ',' ) + '->' + outName;
 
           // Build method function
-          var fn = eqn.makeFunction( varNames, outName, equation );
+          var fn = eqn.makeFunction( inNames, outName, equation );
 
           // Create method spec
           var mspec: MethodSpec = {
-            inputs: varNames,
+            inputs: inNames,
             outputs: [outName],
-            priors: undefined,
+            priorFlags: priorFlags,
             fn: r.liftFunction( fn )
           };
 
@@ -365,7 +379,7 @@ module hd.model {
         }
 
         // Record constraint
-        Modelcule.addConstraintSpec( this.target, cspec );
+        this.target.constraints.push( cspec );
       }
       catch (e) {
         console.error( e );
@@ -375,99 +389,48 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     */
-    command( name: string, signature: string, fn: Function, async = false ) {
-      this.endConstraint();
-
-      var op = this.parseSignature( 'command', signature );
-
-      var command =
-            new Command( signature,
-                         async ? fn : r.liftFunction( fn, op.outputs.length, op.masks ),
-                         op.inputs,
-                         op.outputs,
-                         op.priors
-                       );
-
-      this.target[name] = command;
-
-      return this;
-    }
-
-    /*----------------------------------------------------------------
-     */
-    syncommand( name: string, signature: string, fn: Function, async = false ) {
-      this.endConstraint();
-
-      var op = this.parseSignature( 'syncommand', signature );
-
-      var command =
-            new SynchronousCommand( signature,
-                                    async ? fn : r.liftFunction( fn, op.outputs.length, op.masks ),
-                                    op.inputs,
-                                    op.outputs,
-                                    op.priors
-                                  );
-
-      this.target[name] = command;
-
-      return this;
-    }
-
-    /*----------------------------------------------------------------
-     * Test for invalid variable name
+     * Test for invalid property name
      */
     private
-    invalidName( name: string ): boolean {
-      if (! name.match( /^[a-zA-Z][\w$]*$/ )) {
-        console.error( 'Invalid modelcule field name: "' + name + '"' );
+    invalidLoc( loc: string ): boolean {
+      if (! loc.match( /^[a-zA-Z][\w$]*$/ )) {
+        console.error( 'Invalid context property name: "' + loc + '"' );
+        return true;
+      }
+      if (this.usedLocs[loc]) {
+        console.error( 'Cannot redefine context property: "' + loc + '"' );
         return true;
       }
       return false;
     }
-
-    /*----------------------------------------------------------------
-     * Test for invalid variable path
-     */
-    private
-    invalidPath( path: string ): boolean {
-      if (! path.match( /^[a-zA-Z][\w$]*(\.[a-zA-Z][\w$]*)*$/ )) {
-        console.error( 'Invalid variable path: "' + path + '"' );
-        return true;
-      }
-      var first = path.split( '.' )[0];
-      if (! this.target.hasOwnProperty( first )) {
-        console.error( 'Unknown modelcule field "' + first + '"' );
-        return true;
-      }
-      return false;
-    }
-
-    /*----------------------------------------------------------------
-     * Test if name already in modelcule
-     */
-    private
-    nameInUse( name: string ): boolean {
-      if (this.target.hasOwnProperty( name )) {
-        console.error( 'Cannot redefine modelcule field "' + name + '"' );
-        return true;
-      }
-      return false;
-    }
-
   }
 
-  (<any>ModelBuilder).prototype['v'] = ModelBuilder.prototype.variable;
-  (<any>ModelBuilder).prototype['vs'] = ModelBuilder.prototype.variables;
-  (<any>ModelBuilder).prototype['ov'] = ModelBuilder.prototype.outputVariable;
-  (<any>ModelBuilder).prototype['ovs'] = ModelBuilder.prototype.outputVariables;
-  (<any>ModelBuilder).prototype['iv'] = ModelBuilder.prototype.interfaceVariable;
-  (<any>ModelBuilder).prototype['ivs'] = ModelBuilder.prototype.interfaceVariables;
-  (<any>ModelBuilder).prototype['c'] = ModelBuilder.prototype.constraint;
-  (<any>ModelBuilder).prototype['m'] = ModelBuilder.prototype.method;
-  (<any>ModelBuilder).prototype['a'] = ModelBuilder.prototype.asyncMethod;
-  (<any>ModelBuilder).prototype['eq'] = ModelBuilder.prototype.equation;
+  (<any>ContextBuilder).prototype['v']   = ContextBuilder.prototype.variable;
+  (<any>ContextBuilder).prototype['vs']  = ContextBuilder.prototype.variables;
+  (<any>ContextBuilder).prototype['n']   = ContextBuilder.prototype.nested;
+  (<any>ContextBuilder).prototype['r']   = ContextBuilder.prototype.reference;
+  (<any>ContextBuilder).prototype['rs']  = ContextBuilder.prototype.references;
+  (<any>ContextBuilder).prototype['c']   = ContextBuilder.prototype.constraint;
+  (<any>ContextBuilder).prototype['m']   = ContextBuilder.prototype.method;
+  (<any>ContextBuilder).prototype['o']   = ContextBuilder.prototype.output;
+  (<any>ContextBuilder).prototype['os']  = ContextBuilder.prototype.outputs;
+  (<any>ContextBuilder).prototype['td']  = ContextBuilder.prototype.touchDep;
+  (<any>ContextBuilder).prototype['eq']  = ContextBuilder.prototype.equation;
 
+  /*==================================================================
+   * Test for invalid variable path
+   */
+  function invalidPath( path: string ): boolean {
+    if (! path.match( /^[a-zA-Z][\w$]*(\.[a-zA-Z][\w$]*)*$/ )) {
+      console.error( 'Invalid variable path: "' + path + '"' );
+      return true;
+    }
+    return false;
+  }
+
+  /*================================================================
+   * Strip one-character prefixes from front of names
+   */
   function strip( name: string, prefixes: string[] ) {
     var result: u.Dictionary<any> = {};
     var c = name.charAt( 0 );

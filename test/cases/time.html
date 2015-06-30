@@ -4,7 +4,7 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var model = new hd.ModelBuilder()
+        var context = new hd.ContextBuilder()
           .v( 'x', new Date() )
           .v( 'y', new Date() )
           .v( 'z' )
@@ -14,15 +14,15 @@
             return Math.round((x.getTime() - y.getTime()) / 1000);
           } )
 
-          .end();
+          .context();
 
-        var system = new hd.ConstraintSystem();
-        system.addComponent( model );
+        var pm = new hd.PropertyModel();
+        pm.addComponent( context );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( model );
+          hd.performDeclaredBindings( context );
           hd.bind( {view: new hd.Time( 1000 ),
-                    model: model.x
+                    model: context.x
                    }
                  );
         } );

@@ -41,7 +41,7 @@ module hd.qunit {
   }
 
   asyncTest( "observable property", function() {
-    expect( 3 );
+    expect( 4 );
 
     var xinit = 3;
     var xupdate = 6;
@@ -50,11 +50,11 @@ module hd.qunit {
     var yupdate2 = new Date( "August 28, 1993" );
 
     var o: any = {};
-    o.x = new r.ObservableProperty<number>( xinit );
-    o.y = new r.ObservableProperty<Date>( yinit, datesEqual );
+    o.x = new r.ScheduledSignal<number>( xinit );
+    o.y = new r.ScheduledSignal<Date>( yinit, datesEqual );
 
     var xcount = 0;
-    o.x.addObserverInit( null,
+    o.x.addObserver( null,
       function( n: number ) {
         switch (++xcount) {
         case 1:
@@ -63,10 +63,9 @@ module hd.qunit {
           break;
         case 2:
           equal( n, xupdate, "received x update value" );
-          o.x.set( xupdate );
           break;
         default:
-          ok( false, "received extra values" );
+          ok( false, "received extra x values" );
         }
       },
       null, null
@@ -77,18 +76,20 @@ module hd.qunit {
       function( d: Date ) {
         switch (++ycount) {
         case 1:
+          equal( d, yinit, "received y initial value" );
+          o.y.set( yinit );
+          o.y.set( yupdate );
+          break;
+        case 2:
           equal( d, yupdate, "received y update value" );
           o.y.set( yupdate2 );
           break;
         default:
-          ok( false, "received extra values" );
+          ok( false, "received extra y values" );
         }
       },
       null, null
     );
-
-    o.y.set( yinit );
-    o.y.set( yupdate );
 
     hd.utility.schedule( 4, function() {
       start();
@@ -187,7 +188,7 @@ module hd.qunit {
           .then( function( n3: number ) {
 
             equal( n3, 5, "promise pass-through worked" );
-            throw 6;
+            throw "Ignore: testing promise throwing (1)";
             return -6;
 
           } )
@@ -197,14 +198,14 @@ module hd.qunit {
           } )
           .catch( function( n4: number ) {
 
-            equal( n4, 6, "exception pass-through worked" );
-            throw 7;
+            equal( n4, "Ignore: testing promise throwing (1)", "exception pass-through worked" );
+            throw "Ignore: testing promise throwing (2)";
             return -7;
 
           } )
             .catch<number>( function( n5: number ) {
 
-              equal( n5, 7, "exception to exception worked" );
+              equal( n5, "Ignore: testing promise throwing (2)", "exception to exception worked" );
               var p3 = new r.Promise<number>();
               hd.utility.schedule( 0, function() { p3.resolve( 8 ); } );
               return p3;

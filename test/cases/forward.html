@@ -4,22 +4,22 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var model = new hd.ModelBuilder()
+        var context = new hd.ContextBuilder()
             .vs( {x: 5, y: 10, z: 20,
                   b2: 5, a: 100, b: 8, c: undefined, d: undefined, answer: undefined} )
 
             .c( 'x, y, z' )
-            .m( 'x, y, z -> x, y', function( x, y, z ) {
+            .m( '!x, !y, z -> x, y', function( x, y, z ) {
               if (z < y) y = z;
               if (y < x) x = y;
               return [x, y]
             } )
-            .m( 'x, y, z -> x, z', function( x, y, z ) {
+            .m( '!x, y, !z -> x, z', function( x, y, z ) {
               if (z < y) z = y;
               if (y < x) x = y;
               return [x, z];
             } )
-            .m( 'x, y, z -> y, z', function( x, y, z ) {
+            .m( 'x, !y, !z -> y, z', function( x, y, z ) {
               if (y < x) y = x;
               if (z < y) z = y;
               return [y, z];
@@ -45,13 +45,13 @@
               return c + " remainder " + d
             } )
 
-            .end();
+            .context();
 
-        var system = new hd.ConstraintSystem();
-        system.addComponent( model );
+        var pm = new hd.PropertyModel();
+        pm.addComponent( context );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( model );
+          hd.performDeclaredBindings( context );
         } );
 
         hd.config.forwardSelfLoops = true;

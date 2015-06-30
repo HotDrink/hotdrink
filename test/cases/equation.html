@@ -4,19 +4,19 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       function init() {
-        var model = new hd.ModelBuilder()
+        var context = new hd.ContextBuilder()
             .variables( 'width, height, area, perimeter, start, length, finish',
                         {height: 10, width: 8, start: 10, length: 10} )
             .equation( "area == width*height" )
             .equation( "perimeter == 2*width + 2*height" )
             .equation( "start + length <= finish" )
 
-            .end();
+            .context();
 
-        var system = new hd.ConstraintSystem();
-        system.addComponent( model );
+        var pm = new hd.PropertyModel();
+        pm.addComponent( context );
 
-        hd.performDeclaredBindings( model );
+        hd.performDeclaredBindings( context );
       }
     </script>
   </head>

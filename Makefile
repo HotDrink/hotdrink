@@ -30,7 +30,7 @@ graph_UNITS     := walker digraph cgraph sgraph stay
 graph_DEPS      := utility reactive
 
 model_LOC       := hd/
-model_UNITS     := ids variable method constraint model eqn builder path command
+model_UNITS     := ids variable method constraint context eqn builder path command
 model_DEPS      := utility reactive
 
 dfa_LOC         := hd/
@@ -60,8 +60,8 @@ async_DEPS      := utility reactive
 hd_UNITS        := api
 hd_DEPS         := utility reactive model graph plan enable bind system
 
-qunit_UNITS     := qunit.d utility reactive ladder graph
-qunit_DEPS      := utility reactive graph
+qunit_UNITS     := qunit.d utility reactive ladder graph model system
+qunit_DEPS      := $(hd_DEPS)
 
 compile-dfa_LOC   := apps/
 compile-dfa_UNITS := ../node.d output main

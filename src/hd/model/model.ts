@@ -1,72 +1,55 @@
 /*####################################################################
- * The Model class.
+ * The Context class.
  */
 module hd.model {
 
   import u = hd.utility;
   import r = hd.reactive;
 
-  export
-  interface VariableSpec {
-    name: string;
-    ref: boolean;
-    value: any;
-    eq: u.EqualityPredicate<any>;
-    output: boolean;
-  }
-
-  export
-  interface MethodSpec {
-    inputs: string[];
-    priors: boolean[];
-    outputs: string[];
-    fn: Function;
-  }
-
   /*==================================================================
-   * Interface for anything which needs to know when the model grows
+   * Interface for anything which needs to know when the context grows
    * (e.g. RunTime).
    */
   export
-  enum ModelculeEventType {addConstraint, removeConstraint}
+  enum ContextEventType {addConstraint, removeConstraint}
 
   export
-  interface ModelculeEvent {
-    type: ModelculeEventType;
+  interface ContextEvent {
+    type: ContextEventType;
     constraint?: Constraint;
   }
 
   /*==================================================================
-   * Used by a model to keep track of what it contains.
+   * Used by a context to keep track of what it contains.
    */
-  export class ModelculeData {
+  export class ContextData {
     templates: u.ArraySet<ConstraintTemplate> = [];
     constraints: u.ArraySet<Constraint> = [];
-    changes = new r.BasicObservable<ModelculeEvent>();
+    changes = new r.BasicObservable<ContextEvent>();
   }
 
   /*==================================================================
-   * A modelcule has two purposes.
+   * A context has two purposes.
    *
    * The first is to act as a container for variables and constraints,
-   * allowing a way to refer to them.  When ModelBuilder is given a
+   * allowing a way to refer to them.  When ContextBuilder is given a
    * name for, say, the input to a method, it looks the name up in the
-   * model.
+   * context.
    *
    * The second purpose is to server as a component -- a building
-   * block for composing large models.  That one I haven't quite
+   * block for composing large contexts.  That one I haven't quite
    * worked out yet.  Until I do, this at least enforces the idea of a
-   * model being contained in an object, as opposed to a gobal model.
+   * context being contained in an object, as opposed to a gobal context.
    */
-  export class Modelcule {
+  export class Context {
 
-    // The modelcule keeps its own records of what's inside of it in this
+    // The context keeps its own records of what's inside of it in this
     // property.  It's pseudo-private -- the application programmer
     // shouldn't use it, but it may be used by other parts of the
     // system.
-    '#hd_data': ModelculeData;  // initialized indirectly -- look below class definition
+    '#hd_data': ContextData;  // initialized indirectly -- look below class definition
 
-    // A modelcule serves as a generic container; the programmer can
+    // A context serves as a generic container; the programmer can
     // assign variables and constraints to whatever properties he
     // wants.
     [key: string]: any;
@@ -75,7 +58,7 @@ module hd.model {
      * Create observable property to represent value
      */
     static
-    defineProperty<T>( mod: Modelcule, name: string, value?: T, eq?: u.EqualityPredicate<T> ) {
+    defineProperty<T>( mod: Context, name: string, value?: T, eq?: u.EqualityPredicate<T> ) {
       var prop = new r.ObservableProperty<T>( value, eq );
       Object.defineProperty( mod, '$'+name, {configurable: true,
                                              enumerable: false,
@@ -94,7 +77,7 @@ module hd.model {
      * Static getter for constraints
      */
     static
-    constraints( mod: Modelcule ) {
+    constraints( mod: Context ) {
       return mod['#hd_data'].constraints;
     }
 
@@ -102,17 +85,17 @@ module hd.model {
      * Static getter for changes
      */
     static
-    changes( mod: Modelcule ) {
+    changes( mod: Context ) {
       return mod['#hd_data'].changes;
     }
 
     /*----------------------------------------------------------------
-     * Add variable to modelcule, optionally storing it as a property.
+     * Add variable to context, optionally storing it as a property.
      */
     static
-    addVariable( mod: Modelcule, vv: Variable, name: string, property?: boolean ) {
+    addVariable( mod: Context, vv: Variable, name: string, property?: boolean ) {
       if (property) {
-        Modelcule.defineProperty( mod, name, vv );
+        Context.defineProperty( mod, name, vv );
       }
       else {
         mod[name] = vv;
@@ -120,12 +103,12 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Add variable to modelcule according to spec.
+     * Add variable to context according to spec.
      */
     static
-    addVariableSpec( mod: Modelcule, vspec: VariableSpec, vv?: Variable ) {
+    addVariableSpec( mod: Context, vspec: VariableSpec, vv?: Variable ) {
       if (vspec.ref) {
-        Modelcule.defineProperty( mod, vspec.name, vv );
+        Context.defineProperty( mod, vspec.name, vv );
       }
       else {
         if (! vv) {
@@ -136,22 +119,22 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Add constraint to modelcule.
+     * Add constraint to context.
      */
     static
-    addConstraint( mod: Modelcule, cc: Constraint ) {
+    addConstraint( mod: Context, cc: Constraint ) {
       u.arraySet.addKnownDistinct( mod['#hd_data'].constraints, cc );
-      mod['#hd_data'].changes.sendNext( {type: ModelculeEventType.addConstraint,
+      mod['#hd_data'].changes.sendNext( {type: ContextEventType.addConstraint,
                                          constraint: cc
                                         }
                                       );
     }
 
     /*----------------------------------------------------------------
-     * Add constraint to modelcule according to spec.
+     * Add constraint to context according to spec.
      */
     static
-    addConstraintSpec( mod: Modelcule, cspec: ConstraintSpec ) {
+    addConstraintSpec( mod: Context, cspec: ConstraintSpec ) {
       var template = new ConstraintTemplate( mod, cspec );
       u.arraySet.addKnownDistinct( mod['#hd_data'].templates, template );
     }
@@ -160,15 +143,15 @@ module hd.model {
 
   /*==================================================================
    * I have the idea that, at some point, we may want to allow the
-   * programmer to create his own subclasses of Modelcule.
+   * programmer to create his own subclasses of Context.
    *
-   * Rather than require every model subclass to call the model
+   * Rather than require every context subclass to call the context
    * constructor, we define a getter that creates it the first time it
    * is accessed.
    */
-  Object.defineProperty( Modelcule.prototype, '#hd_data', {
+  Object.defineProperty( Context.prototype, '#hd_data', {
     get: function makeData() {
-      var data = new ModelculeData();
+      var data = new ContextData();
       Object.defineProperty( this, '#hd_data', {value: data} );
       return data;
     }

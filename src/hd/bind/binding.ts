@@ -218,11 +218,11 @@ module hd.bindings {
    * Entry point
    */
   export
-  function performDeclaredBindings(mod: m.Modelcule, el?: HTMLElement ): Binding[];
+  function performDeclaredBindings(ctx: m.Context, el?: HTMLElement ): Binding[];
   export
-  function performDeclaredBindings(mod: m.Modelcule, el: string ): Binding[];
+  function performDeclaredBindings(ctx: m.Context, el: string ): Binding[];
   export
-  function performDeclaredBindings(mod: m.Modelcule, el: any ): Binding[] {
+  function performDeclaredBindings(ctx: m.Context, el: any ): Binding[] {
     if (el) {
       if (typeof el === 'string') {
         el = document.getElementById( el );
@@ -233,7 +233,7 @@ module hd.bindings {
     }
     var bindings: Binding[] = [];
     if (el.nodeType === Node.ELEMENT_NODE) {
-      searchForBindings( el, mod, bindings );
+      searchForBindings( el, ctx, bindings );
     }
     else {
       console.error( "Invalid argument to performDeclaredBindings" );
@@ -246,18 +246,18 @@ module hd.bindings {
    * Recursive search function.
    */
   function searchForBindings( el: HTMLElement,
-                           modelcule: m.Modelcule,
-                           bindings: Binding[]     ) {
+                              ctx: m.Context,
+                              bindings: Binding[] ) {
 
     // Look for declarative binding specification
     var spec = el.getAttribute( 'data-bind' );
     if (spec) {
-      bindElement( spec, el, modelcule, bindings );
+      bindElement( spec, el, ctx, bindings );
     }
 
     for (var i = 0, l = el.childNodes.length; i < l; ++i) {
       if (el.childNodes[i].nodeType === Node.ELEMENT_NODE) {
-        searchForBindings( <HTMLElement>el.childNodes[i], modelcule, bindings );
+        searchForBindings( <HTMLElement>el.childNodes[i], ctx, bindings );
       }
     }
   }
@@ -267,8 +267,8 @@ module hd.bindings {
    */
   function bindElement( spec: string,
                         el: HTMLElement,
-                        modelcule: m.Modelcule,
-                        bindings: Binding[]     ) {
+                        ctx: m.Context,
+                        bindings: Binding[] ) {
 
     // Eval binding string as JS
     var functionBody = compile( spec );
@@ -277,7 +277,7 @@ module hd.bindings {
     }
     try {
       var elBindingsFn = new Function( functionBody );
-      var elNestedBindings: any[] = elBindingsFn.call( modelcule );
+      var elNestedBindings: any[] = elBindingsFn.call( ctx );
       var elBindings: Binding[] = [];
       flatten( elNestedBindings, elBindings );
     }

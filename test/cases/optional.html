@@ -25,7 +25,7 @@
         return d;
       }
 
-      var model = new hd.ModelBuilder()
+      var context = new hd.ContextBuilder()
           .vs( "a, b, c, z", {a: 3, b: 4, c: 5} )
 
           .c( "a, b, c, z" )
@@ -42,14 +42,14 @@
 
           .end();
 
-      var system = new hd.ConstraintSystem();
-      system.addComponent( model );
-      system.addTouchSet( [model.a, model.b, model.c] );
-      system.makeConstraintOptional( model.copy );
-      system.addTouchDependency( model.s, model.copy );
+      var pm = new hd.PropertyModel();
+      pm.addComponent( context );
+      pm.addTouchSet( [context.a, context.b, context.c] );
+      pm.makeConstraintOptional( context.copy );
+      pm.addTouchDependency( context.s, context.copy );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( model );
+        hd.performDeclaredBindings( context );
       } );
     }
     </script>

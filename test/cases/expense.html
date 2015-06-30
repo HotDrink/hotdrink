@@ -15,7 +15,7 @@
         return total;
       }
 
-      var model = new hd.ModelBuilder()
+      var context = new hd.ContextBuilder()
       .variables( {miles: 50, mpg: 30, gallons: undefined, gas: 3.5, travel: undefined} )
       .equation( 'miles / gallons == mpg' )
       .equation( 'gallons * gas == travel' )
@@ -28,8 +28,8 @@
       .variables( {food: 30, tip: 0.15, meals: undefined} )
       .equation( 'food * (1 + tip) == meals' )
 
-      .variables( {usetravel: true, usehotel: true, usemeals: true} )
-      .outputVariable( 'total' )
+      .variables( {usetravel: true, usehotel: true, usemeals: true, total: undefined} )
+      .output( 'total' )
       .constraint( 'usetravel, travel, usehotel, hotel, usemeals, meals, total' )
       .method( 'usetravel, *travel, usehotel, *hotel, usemeals, *meals -> total',
                function( usetravel, travel, usehotel, hotel, usemeals, meals ) {
@@ -40,13 +40,13 @@
                }
              )
 
-      .end();
+      .context();
 
-      var system = new hd.ConstraintSystem();
-      system.addComponent( model );
+      var pm = new hd.PropertyModel();
+      pm.addComponent( context );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( model );
+        hd.performDeclaredBindings( context );
       } );
     </script>
   </head>

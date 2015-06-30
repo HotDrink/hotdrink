@@ -19,9 +19,9 @@ module hd.model {
   }
 
   /*==================================================================
-   * An operation over variables in the property model
+   * An activation over variables in the property model
    */
-  export class Operation {
+  export class Activation {
 
     // Unique identifier; assigned by Factory
     id: string;
@@ -29,7 +29,7 @@ module hd.model {
     // Human readable name for programmer
     name: string;
 
-    // Function that implements this method
+    // Function that implements this activation
     fn: Function;
 
     // Inputs to pass to the function, in the order they should be passed
@@ -37,12 +37,11 @@ module hd.model {
     // else will be treated as constants to be passed to the function.
     inputs: any[];
 
-    // Outputs to write to, in the order they are returned form the function
-    // Variables in this list will be assigned their corresponding value;
-    // everything else will cause the corresponding output to be ignored.
-    outputs: any[];
+    // Parallel to inputs; true means input comes from prior generation
+    priorFlags: boolean[];
 
-    usePriors: boolean[];
+    // Outputs to write to, in the order they are returned form the function
+    outputs: Variable[];
 
     /*----------------------------------------------------------------
      * Initialize members
@@ -50,14 +49,14 @@ module hd.model {
     constructor( name: string,
                  fn: Function,
                  inputs: any[],
-                 outputs: any[],
-                 usePriors?: boolean[] ) {
+                 priorFlags: boolean[],
+                 outputs: Variable[] ) {
       this.id = makeId( name );
       this.name = name;
       this.fn = fn;
       this.inputs = inputs;
+      this.priorFlags = priorFlags;
       this.outputs = outputs;
-      this.usePriors = usePriors;
     }
 
     /*----------------------------------------------------------------
@@ -69,7 +68,8 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    activate( internal?: boolean ): ActivationRecord {
+    static
+    activate( act: Activation, external: boolean ): ActivationRecord {
       var params: any[] = [];
 
       var priorLookup: u.Dictionary<r.Promise<any>> = {};
@@ -77,31 +77,31 @@ module hd.model {
       var outputLookup: u.Dictionary<r.Promise<any>> = {};
 
       // Collect parameter promises
-      for (var i = 0, l = this.inputs.length; i < l; ++i) {
+      for (var i = 0, l = act.inputs.length; i < l; ++i) {
         var param: r.Promise<any>;
 
         // An input is either a variable or a constant
-        if (this.inputs[i] instanceof Variable) {
-          var vv = <Variable>this.inputs[i];
+        var input = act.inputs[i];
+        if (input instanceof Variable) {
 
           // Determine what promise to use for this variable
-          if (this.usePriors && this.usePriors[i]) {
-            if (! (param = priorLookup[vv.id])) {
+          if (act.priorFlags && act.priorFlags[i]) {
+            if (! (param = priorLookup[input.id])) {
               if (config.forwardPriorGens) {
-                param = priorLookup[vv.id] = vv.getForwardedPromise();
+                param = priorLookup[input.id] = input.getForwardedPromise();
               }
               else {
-                param = priorLookup[vv.id] = vv.getCurrentPromise();
+                param = priorLookup[input.id] = input.getCurrentPromise();
               }
             }
           }
           else {
-            if (! (param = inputLookup[vv.id])) {
+            if (! (param = inputLookup[input.id])) {
               // Make a dependent promise for parameter
-              param = inputLookup[vv.id] = new r.Promise();
-              var oldp = vv.getStagedPromise();
+              param = inputLookup[input.id] = new r.Promise();
+              var oldp = input.getStagedPromise();
               if (r.plogger) {
-                r.plogger.register( param, vv.name, 'input parameter' );
+                r.plogger.register( param, input.name, 'input parameter' );
               }
               param.resolve( oldp );
               param.ondropped.addObserver( oldp );
@@ -112,21 +112,21 @@ module hd.model {
           // If it's a constant, we create a satisfied promise
           param = new r.Promise();
           if (r.plogger) {
-            r.plogger.register( param, this.inputs[i], 'constant parameter' );
+            r.plogger.register( param, act.inputs[i], 'constant parameter' );
           }
-          param.resolve( this.inputs[i] );
+          param.resolve( act.inputs[i] );
         }
 
         params.push( param );
       }
 
-      // Invoke the operation
+      // Invoke the activation
       try {
-        var result = this.fn.apply( null, params );
+        var result = act.fn.apply( null, params );
 
         // Ensure result is an array
-        if (this.outputs.length > 0) {
-          if (this.outputs.length == 1) {
+        if (act.outputs.length > 0) {
+          if (act.outputs.length == 1) {
             result = [result];
           }
           else if (! Array.isArray( result )) {
@@ -138,7 +138,7 @@ module hd.model {
         console.error( e );
         // Create failed promises for outputs
         result = [];
-        for (var i = 0, l = this.outputs.length; i < l; ++i) {
+        for (var i = 0, l = act.outputs.length; i < l; ++i) {
           var p = new r.Promise<any>();
           p.reject( null );
           result.push( p );
@@ -146,25 +146,23 @@ module hd.model {
       }
 
       // Set output promises
-      for (var i = 0, l = this.outputs.length; i < l; ++i) {
-        // An output is either a variable or null
-        if (this.outputs[i] instanceof Variable) {
-          var vv = <Variable>this.outputs[i];
-          if (outputLookup[vv.id]) {
-            console.error( 'Operation attempting to output same variable twice' );
+      for (var i = 0, l = act.outputs.length; i < l; ++i) {
+        // An output is always a variable
+        var vv = act.outputs[i];
+        if (outputLookup[vv.id]) {
+          console.error( 'Activation attempting to output same variable twice' );
+        }
+        else {
+          var p = <r.Promise<any>>result[i];
+          outputLookup[vv.id] = p
+          if (r.plogger) {
+            r.plogger.register( p, vv.name, 'output parameter' );
+          }
+          if (external) {
+            vv.set( p );
           }
           else {
-            var p = <r.Promise<any>>result[i];
-            outputLookup[vv.id] = p
-            if (r.plogger) {
-              r.plogger.register( p, vv.name, 'output parameter' );
-            }
-            if (internal) {
-              vv.makePromise( p );
-            }
-            else {
-              vv.onNext( p );
-            }
+            vv.makePromise( p );
           }
         }
       }
@@ -176,22 +174,17 @@ module hd.model {
   }
 
   /*==================================================================
-   *  A method is an operation that is part of a constraint.  As such,
+   *  A method is an activation that is part of a constraint.  As such,
    *  it keeps track of input and output variables as they appear in
    *  the constraint graph.  Every input should be in inputVars, every
    *  output should be in outputVars.
    */
-  export class Method extends Operation {
+  export class Method extends Activation {
 
     // Set of variables used as input by this method.
     // Unlike "inputs" this list contains only variables
     //   and does not contain duplicates.
     inputVars: u.ArraySet<Variable>;
-
-    // Set of variables used as output by this method.
-    // Unlike "outputs" this list contains only variables
-    //   and does not contain duplicates.
-    outputVars: u.ArraySet<Variable>;
 
     /*----------------------------------------------------------------
      * Initialize members
@@ -199,13 +192,15 @@ module hd.model {
     constructor( name: string,
                  fn: Function,
                  inputs: any[],
-                 outputs: any[],
-                 usePriors: boolean[],
-                 inputVars: u.ArraySet<Variable>,
-                 outputVars: u.ArraySet<Variable> ) {
-      super( name, fn, inputs, outputs, usePriors );
+                 priorFlags: boolean[],
+                 outputs: Variable[],
+                 inputVars: u.ArraySet<Variable> ) {
+      super( name, fn, inputs, priorFlags, outputs );
       this.inputVars = inputVars;
-      this.outputVars = outputVars;
+    }
+
+    activate(): ActivationRecord {
+      return Activation.activate( this, false );
     }
   }
 

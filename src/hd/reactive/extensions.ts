@@ -192,20 +192,90 @@ module hd.reactive {
   /*==================================================================
    */
   export
-  interface SwapTarget<T> extends ProxyObservable<T>, Observer<T> { }
+  class HotSwapObservable<T> extends BasicObservable<T> {
+    source: Signal<T>;
+    proxy: ProxyObserver<T>;
+
+    constructor( source?: Signal<T> ) {
+      super();
+      this.proxy = new ProxyObserver<T>( this,
+                                         this.onSourceNext,
+                                         this.onSourceError,
+                                         this.onSourceCompleted );
+      this.source = source;
+      if (source) {
+        source.addObserver( this.proxy );
+      }
+    }
+
+    onSourceNext( value: T ) {
+      this.sendNext( value );
+    }
+
+    onSourceError( error: any ) {
+      this.sendError( error );
+    }
+
+    onSourceCompleted() {
+      this.sendCompleted();
+    }
+
+    onNext( source: Signal<T> ) {
+      if (this.source) {
+        this.source.removeObserver( this.proxy );
+      }
+      this.source = source;
+      if (source) {
+        source.addObserver( this.proxy );
+      }
+    }
+
+    onError() { }
+
+    onCompleted() { }
+  }
+
+  export
+  class HotSwapSignal<T> extends HotSwapObservable<T> {
+    get(): T {
+      return this.source ? this.source.get() : undefined;
+    }
+
+    onNext( source: Signal<T> ) {
+      var oldsource = this.source;
+      this.source = source;
+      if (oldsource) {
+        oldsource.removeObserver( this.proxy );
+      }
+      if (source) {
+        source.addObserver( this.proxy );
+      }
+      if (oldsource && ! source) {
+        this.sendNext( undefined );
+      }
+    }
+  }
+
+  /*==================================================================
+   */
+  export
+  interface SwapTarget<T> extends ProxySignal<T>, Observer<T> { }
 
   export
   class HotSwap<T> extends BasicObservable<T> {
 
-    source: ProxyObservable<SwapTarget<T>>;
+    source: ProxySignal<SwapTarget<T>>;
     target: SwapTarget<T>;
     last: any;
 
-    constructor( source: ProxyObservable<SwapTarget<T>> ) {
+    constructor( source: ProxySignal<SwapTarget<T>> ) {
       super();
       this.source = source;
       this.target = null;
       source.addObserver( this, this.onNextTarget, null, null );
+      if (source) {
+        this.onNextTarget( source.get() );
+      }
     }
 
     addObserver( observer: Observer<T> ): Observer<T>;
@@ -220,7 +290,7 @@ module hd.reactive {
                     id: U                                  ): Observer<T>;
     addObserver(): Observer<T> {
       var o = super.addObserver.apply( this, arguments );
-      if (this.last) {
+      if (this.last !== undefined) {
         o.onNext( this.last );
       }
       return o;

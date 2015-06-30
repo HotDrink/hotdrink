@@ -4,7 +4,7 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var model = new hd.ModelBuilder()
+        var context = new hd.ContextBuilder()
             .variable( 'height', 10 )
             .variable( 'width', 8 )
             .variable( 'area' )
@@ -26,13 +26,13 @@
                      }
                    )
 
-            .end();
+            .context();
 
-        var system = new hd.ConstraintSystem();
-        system.addComponent( model );
+        var pm = new hd.PropertyModel();
+        pm.addComponent( context );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( model )
+          hd.performDeclaredBindings( context )
         } );
       }
     </script>

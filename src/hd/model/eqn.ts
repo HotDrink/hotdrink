@@ -269,11 +269,11 @@ module hd.model.eqn {
         var d = expr.extractDivisor( name );
         if (d) {
           if (d instanceof Variable) {
-            lines.push( 'if (' + (<Variable>d).name + ' == 0) return ' + output + ';' );
+            lines.push( 'if (' + (<Variable>d).name + ' == 0) throw "Division by zero";' );
           }
           else {
             lines.push( 'var ' + name + ' = ' + d.print() + ';' );
-            lines.push( 'if (' + name + ' == 0) return ' + output + ';' );
+            lines.push( 'if (' + name + ' == 0) throw "Division by zero";' );
           }
         }
       }

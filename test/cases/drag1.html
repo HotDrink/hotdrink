@@ -15,23 +15,23 @@
     <script type="text/javascript">
       function init() {
 
-        var mod = new hd.ModelBuilder()
+        var ctx = new hd.ContextBuilder()
           .v( 'p1', {x: 200, y: 50} )
           .v( 'p2', {x: 150, y: 150} )
           .v( 'p3', {x: 50, y: 200} )
-          .v( '$drag' )
+          .r( 'drag' )
 
           .c( 'p1, p2, p3' )
-          .m( 'p1, p2, p3 -> p2, p3', bump2 )
-          .m( 'p2, p1, p3 -> p1, p3', bump2 )
-          .m( 'p3, p1, p2 -> p1, p2', bump2 )
+          .m( 'p1, !p2, !p3 -> p2, p3', bump2 )
+          .m( 'p2, !p1, !p3 -> p1, p3', bump2 )
+          .m( 'p3, !p1, !p2 -> p1, p2', bump2 )
 
-          .end();
+          .context();
 
-        var system = new hd.ConstraintSystem();
-        system.addComponent( mod );
-        hd.performDeclaredBindings( mod );
-        hd.bind( {view: hd.mousePosition(), model: hd.path( mod, 'drag' )} );
+        var pm = new hd.PropertyModel();
+        pm.addComponents( ctx );
+        hd.performDeclaredBindings( ctx );
+        hd.bind( {view: hd.mousePosition(), model: hd.path( ctx, 'drag' )} );
 
         function bump2( pa, pb, pc ) {
           var dx1 = pb.x - pa.x;
@@ -70,15 +70,17 @@
           }
         }
 
-        var canvas = document.createElement( 'canvas' );
-        var ctx = canvas.getContext( '2d' );
-        ctx.fillStyle = '#eef'
-        ctx.strokeStyle = '#00f'
-        ctx.beginPath();
-        ctx.arc( 30, 30, 29, 0, 6.3 );
-        ctx.stroke();
-        ctx.fill();
-        document.styleSheets[0].insertRule( ".puck { background: url(" + canvas.toDataURL() + ") }", 0 );
+        (function() {
+          var canvas = document.createElement( 'canvas' );
+          var ctx = canvas.getContext( '2d' );
+          ctx.fillStyle = '#eef'
+          ctx.strokeStyle = '#00f'
+          ctx.beginPath();
+          ctx.arc( 30, 30, 29, 0, 6.3 );
+          ctx.stroke();
+          ctx.fill();
+          document.styleSheets[0].insertRule( ".puck { background: url(" + canvas.toDataURL() + ") }", 0 );
+        })();
 
         ['p1', 'p2', 'p3'].forEach( function( id ) {
           var el = document.getElementById( id );
@@ -87,12 +89,12 @@
         } );
 
         function mousedown( e ) {
-          mod.drag = mod[e.currentTarget.id];
+          ctx.drag = ctx[e.currentTarget.id];
         }
 
         function mouseup( e ) {
-          if (mod.drag === mod[e.currentTarget.id]) {
-            mod.drag = null;
+          if (ctx.drag === ctx[e.currentTarget.id]) {
+            ctx.drag = null;
           }
         }
 

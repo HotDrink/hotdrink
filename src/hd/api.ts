@@ -43,12 +43,11 @@ module hd {
   export var isObserver = b.isObserver;
   export var isExtension = b.isExtension;
 
-  export var Modelcule = m.Modelcule;
+  export var Context = m.Context;
 
   // RunTime
-  export var ConstraintSystem = s.ConstraintSystem;
-  export var ModelBuilder = m.ModelBuilder;
-  export var Update = s.Update;
+  export var PropertyModel = s.PropertyModel;
+  export var ContextBuilder = m.ContextBuilder;
 
   // Bindings
   export var Checked = b.Checked;

@@ -26,25 +26,29 @@
         return x;
       }
 
+      var ItemSpec =
+          new hd.ContextBuilder( this )
+            .variables( 'begin, end, length', {length: 10} )
+            .references( 'next' )
+            .constraint( 'begin, length, end' )
+              .method( 'begin, length -> end', function( b, l ) {
+                return b + l;
+              } )
+              .method( 'end, length -> begin', function( e, l ) {
+                return e - l;
+              } )
+            .constraint( 'end, next.begin' )
+              .method( '!end, next.begin -> end', atmost )
+              .method( '!next.begin, end -> next.begin', atleast )
+            .spec();
+
       function Item() {
-        new hd.ModelBuilder( this )
-          .variables( 'begin, end, length, $next', {length: 10} )
-          .constraint( 'begin, length, end' )
-            .method( 'begin, length -> end', function( b, l ) {
-              return b + l;
-            } )
-            .method( 'end, length -> begin', function( e, l ) {
-              return e - l;
-            } )
-          .constraint( 'end, next.begin' )
-            .method( 'end, next.begin -> end', atmost )
-            .method( 'next.begin, end -> next.begin', atleast )
-          .end();
+        hd.Context.construct( this, ItemSpec );
       }
 
-      Item.prototype = Object.create( hd.Modelcule.prototype );
+      Item.prototype = Object.create( hd.Context.prototype );
 
-      var system = new hd.ConstraintSystem();
+      var pm = new hd.PropertyModel();
 
       var list;
       var itemTmpl;
@@ -63,7 +67,7 @@
         if (init !== undefined) {
           item.begin.onNext( init );
         }
-        system.addComponent( item );
+        pm.addComponent( item );
         if (! head) {
           head = item;
         }
@@ -94,7 +98,7 @@
           if (tail == item) {
             tail = prev;
           }
-          system.removeComponent( item );
+          pm.removeComponent( item );
           div.parentNode.removeChild( div );
         }
       }

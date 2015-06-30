@@ -263,7 +263,7 @@ module hd.plan {
      * Check to see if planning has succeeded yet.
      */
     targetConstraintSatisfied(): boolean {
-      return this.sgraph.selectedForConstraint( this.cidToEnforce ) !== undefined;
+      return this.sgraph.selectedForConstraint( this.cidToEnforce ) !== null;
     }
 
     /*----------------------------------------------------------------
@@ -295,7 +295,7 @@ module hd.plan {
 
         // Retract
         var retractCid = this.retractableCids.pop();
-        this.determineConstraint( retractCid, undefined );
+        this.determineConstraint( retractCid, null );
         this.enforceConstraintsForAnyFreeVariables();
 
       }
@@ -358,7 +358,7 @@ module hd.plan {
 
     /*----------------------------------------------------------------
      * Set constraint in the solution graph -- either to a selected
-     * method, or to undefined if it's being retracted
+     * method, or to null if it's being retracted
      */
     private determineConstraint( cid: string, mid: string ) {
 
@@ -390,7 +390,7 @@ module hd.plan {
             this.freeVarQueue.concat( <string[]>outputs.filter( this.isFreeVar, this ) );
 
       // Remember the strongest retracted
-      if (mid === undefined &&
+      if (mid === null &&
           (this.strongestRetractedCid === null ||
            this.strengths.compare( this.strongestRetractedCid, cid ) < 0)) {
         this.strongestRetractedCid = cid;
@@ -565,7 +565,7 @@ module hd.plan {
       return u.stringSet.members( cids )
             .filter( function( cid: string ) {
               return (this.strengths.compare( cid, strongestRetracted ) < 0 &&
-                      this.sgraph.selectedForConstraint( cid ) === undefined  );
+                      this.sgraph.selectedForConstraint( cid ) === null  );
             }, this );
     }
 

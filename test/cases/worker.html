@@ -4,7 +4,7 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var model = new hd.ModelBuilder()
+        var context = new hd.ContextBuilder()
           .v( 'start', 3 ).v( 'finish', 17 ).v( 'length' )
 
           .c( 'start, finish, length' )
@@ -12,13 +12,13 @@
           .m( 'finish, start -> length', hd.worker( 'worker.js', 'diff' ) )
           .m( 'finish, length -> start', hd.worker( 'worker.js', 'diff' ) )
 
-          .end();
+          .context();
 
-        var system = new hd.ConstraintSystem();
-        system.addComponent( model );
+        var pm = new hd.PropertyModel();
+        pm.addComponent( context );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( model );
+          hd.performDeclaredBindings( context );
         } );
       }
     </script>

@@ -49,9 +49,8 @@ module hd.bindings {
     }
   }
 
-  export function path( model: m.Modelcule, name: string ) {
-    var names = name.split( '.' );
-    return new r.HotSwap<any>( new m.Path( model, names ) );
+  export function path( model: m.Context, name: string ) {
+    return new r.HotSwap<any>( new m.Path( model, name ) );
   }
 
   export function rw<T, U>( read: r.Observable<U>, write: r.Observer<T> ) {

@@ -5,14 +5,17 @@ module hd.qunit {
   import u = hd.utility;
   import r = hd.reactive;
 
+  export const
   enum E { next, error, completed }
 
+  export
   class Result {
     event: E;
     value: any;
     error: any;
+    cb: Function;
 
-    constructor( event: E, arg?: any ) {
+    constructor( event: E, arg?: any, cb?: Function ) {
       this.event = event;
       if (event === E.next) {
         this.value = arg;
@@ -33,6 +36,7 @@ module hd.qunit {
     }
   }
 
+  export
   class ObservableTest {
     constructor( public expected: any[] ) { }
 
@@ -48,6 +52,9 @@ module hd.qunit {
         }
         else {
           equal( value, expecting.value, "next received expected value " + expecting.value );
+        }
+        if (expecting.cb) {
+          expecting.cb();
         }
       }
     }
@@ -65,6 +72,9 @@ module hd.qunit {
         else {
           equal( error, expecting.error, "next received expected error " + expecting.error );
         }
+        if (expecting.cb) {
+          expecting.cb();
+        }
       }
     }
 
@@ -75,6 +85,9 @@ module hd.qunit {
       else {
         var expecting = this.expected.shift();
         ok( expecting.event == E.completed, "received expected completed" );
+        if (expecting.cb) {
+          expecting.cb();
+        }
       }
     }
   }
@@ -82,7 +95,7 @@ module hd.qunit {
   function makeForwardTest( ladder: r.PromiseLadder<string>, results: [Result] ) {
     var p = new r.Promise<string>();
     ladder.addPromise( p );
-    ladder.getForwardedPromise().addObserver( new ObservableTest( results ) );
+    ladder.forwardPromise( new r.Promise<string>() ).addObserver( new ObservableTest( results ) );
     return p;
   }
 

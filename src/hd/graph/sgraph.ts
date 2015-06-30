@@ -71,7 +71,11 @@ module hd.graph {
      */
     selectedForConstraint( cid: string ) {
       var methods = this.methodsForConstraint( cid );
-      return methods ? methods[0] : null;
+      var method: string;
+      if (methods) {
+        method = methods[0];
+      }
+      return method ? method : null;
     }
   }
 

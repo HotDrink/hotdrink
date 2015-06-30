@@ -3,17 +3,21 @@ module hd.model {
   import r = hd.reactive;
 
   export
-  class Command extends Operation {
+  class Command extends Activation {
 
-    onNext() {
-      this.activate( false );
+    activate(): ActivationRecord {
+      return Activation.activate( this, true );
     }
+
+    onNext: () => void;
 
     onError() { }
 
     onCompleted() { }
 
   }
+
+  (<any>Command).prototype.onNext = Command.prototype.activate;
 
   export
   class None extends r.BasicObservable<boolean> {
@@ -91,9 +95,9 @@ module hd.model {
     constructor( name: string,
                  fn: Function,
                  inputs: any[],
-                 outputs: any[],
-                 usePriors?: boolean[] ) {
-      super( name, fn, inputs, outputs, usePriors );
+                 usePriors: boolean[],
+                 outputs: any[]        ) {
+      super( name, fn, inputs, usePriors, outputs );
       var count = 0;
       var properties: r.ProxyObservable<any>[] = [];
       for (var i = 0, l = inputs.length; i < l; ++i) {
@@ -104,15 +108,14 @@ module hd.model {
       this.ready = new None( properties );
     }
 
-    onNext() {
+    activate() {
       if (this.ready.get()) {
-        this.activate( false );
+        return Activation.activate( this, true );
+      }
+      else {
+        return null;
       }
     }
-
-    onError() { }
-
-    onCompleted() { }
 
   }
 

@@ -1,5 +1,5 @@
 /*********************************************************************
- * A ConstraintSystem's duties are
+ * A PropertyModel's duties are
  *   1. Translate a model into a constraint graph
  *   2. Watch the variables to see when they change
  *   3. Run the planner to get a new solution graph
@@ -27,14 +27,9 @@ module hd.system {
   export var SystemUpdatePriority = 1;
 
   /*==================================================================
-   * Update strategies
-   */
-  export enum Update { None, Immediate, Scheduled }
-
-  /*==================================================================
    * The constraint system
    */
-  export class ConstraintSystem {
+  export class PropertyModel {
 
     // The constraint graph
     private cgraph: g.ConstraintGraph;
@@ -61,28 +56,29 @@ module hd.system {
     methods:     u.Dictionary<m.Method>     = {};
     constraints: u.Dictionary<m.Constraint> = {};
 
-    // Update strategies
-    updateOnVariableChange = Update.Scheduled;
-    updateOnModelChange = Update.Scheduled;
-
-    // Flags for scheduled updates
+    // Update strategy
+    scheduleUpdateOnChange = true;
     isUpdateScheduled = false;
-    isUpdateNeeded = false;
-    solved = new r.ObservableProperty( true );
 
-    // Constraints added since the last plan
+    // Flag to report when system is solved (no pending variables)
+    solved = new r.ScheduledSignal( true );
+    private pendingCount = 0;
+
+    // Changes requiring an update
+    private needUpdating: u.ArraySet<m.Context> = [];
     private needEnforcing: u.StringSet = {};
     private needEvaluating: u.StringSet = {};
+
+    // Flage indicating when update is needed --
+    //   i.e. when one of the above elements is non-empty
+    private isUpdateNeeded = false;
 
     // Touch dependencies
     private touchDeps: u.Dictionary<u.ArraySet<string>> = {};
 
-    // Number of pending variables
-    private pendingCount = 0;
-
     // Enablement
     enable: e.EnablementManager = new e.EnablementManager();
-    outputVids: u.StringSet = {};
+    outputVids: u.Dictionary<number> = {};
 
     /*----------------------------------------------------------------
      * Initialize members
@@ -106,73 +102,232 @@ module hd.system {
         newPlanner.setOptionals( oldPlanner.getOptionals() );
       }
       this.planner = newPlanner;
-      this.cgraph.constraints().reduce( u.stringSet.build, this.needEnforcing );
-      this.modelUpdate();
+      this.cgraph.constraints().forEach( this.recordConstraintChange, this );
     }
 
     /*----------------------------------------------------------------
-     * Respond to model changes
+     * Add and remove elements to and from the property model
      */
 
     //--------------------------------------------
-    // Register modelcule
-    addComponent( modelcule: m.Modelcule ) {
-      if (modelcule instanceof m.ModelBuilder) {
-        console.error( 'ModelBuilder passed to addComponent - did you forget to call end()?' );
-        return;
+    // Add context
+    addComponents( ...contexts: m.Context[] ): void;
+    addComponents( contexts: m.Context[] ): void;
+    addComponents(): void {
+      var contexts: m.Context[] = [];
+      var q: m.Context[];
+      if (arguments.length == 1 && Array.isArray( arguments[0] )) {
+        q = arguments[0];
       }
-      // Add existing constraints
-      m.Modelcule.constraints( modelcule ).forEach( this.addConstraint, this );
-      // Watch for constraint changes
-      m.Modelcule.changes( modelcule ).addObserver( this, this.onNextModelculeEvent, null, null );
+      else {
+        q = Array.prototype.slice.call( arguments, 0 );
+      }
+      for (var i = 0, l = q.length; i < l; ++i) {
+        if (! (q[i] instanceof m.Context)) {
+          console.error( "Invalid component passed to PropertyModel.addComponents: " + q[i] );
+        }
+        else {
+          contexts.push( q[i] );
+        }
+      }
+
+      // Collect all contexts; subscribe to all
+      while (q.length > 0) {
+        var ctx = q.shift();
+        m.Context.changes( ctx ).addObserver( this, this.recordContextChange, null, null );
+        if (m.Context.hasUpdates( ctx )) {
+          this.recordContextChange( ctx );
+        }
+        var ns = m.Context.nesteds( ctx );
+        if (ns.length) {
+          contexts.push.apply( contexts, ns );
+          q.push.apply( q, ns );
+        }
+      }
+
+      // Add variables
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var vs = m.Context.variables( contexts[i] );
+        for (var j = 0, n = vs.length; j < n; ++j) {
+          this.addVariable( vs[j] );
+        }
+      }
+
+      // Add constraints
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var cs = m.Context.constraints( contexts[i] );
+        for (var j = 0, n = cs.length; j < n; ++j) {
+          this.addConstraint( cs[j] );
+        }
+      }
+
+      // Add outputs
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var os = m.Context.outputs( contexts[i] );
+        for (var j = 0, n = os.length; j < n; ++j) {
+          this.addOutput( os[j].variable );
+        }
+      }
+
+      // Add touch dependencies
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var ts = m.Context.touchDeps( contexts[i] );
+        for (var j = 0, n = ts.length; j < n; ++j) {
+          this.addTouchDependency( ts[j].from, ts[j].to );
+        }
+      }
+
     }
 
     //--------------------------------------------
-    // De-register modelcule
-    removeComponent( modelcule: m.Modelcule ) {
-      // Remove existing constraints
-      m.Modelcule.constraints( modelcule ).forEach( this.removeConstraint, this );
-      // Stop watching for changes
-      m.Modelcule.changes( modelcule ).removeObserver( this );
-    }
+    // Remove context
+    removeComponents( ...contexts: m.Context[] ): void;
+    removeComponents( contexts: m.Context[] ): void;
+    removeComponents(): void {
+      var contexts: m.Context[] = [];
+      var q: m.Context[];
+      if (arguments.length == 1 && Array.isArray( arguments[0] )) {
+        q = arguments[0];
+      }
+      else {
+        q = Array.prototype.slice.call( arguments, 0 );
+      }
+      for (var i = 0, l = q.length; i < l; ++i) {
+        if (! (q[i] instanceof m.Context)) {
+          console.error( "Invalid component passed to PropertyModel.addComponents: " + q[i] );
+        }
+        else {
+          contexts.push( q[i] );
+        }
+      }
 
-    // --------------------------------------------
-    // Dispatcher
-    onNextModelculeEvent( event: m.ModelculeEvent ) {
-      switch (event.type) {
-      case m.ModelculeEventType.addConstraint:
-        this.addConstraint( event.constraint );
-        break;
-      case m.ModelculeEventType.removeConstraint:
-        this.removeConstraint( event.constraint );
-        break;
+      // Collect all contexts; unsubscribe to all
+      while (q.length > 0) {
+        var ctx = q.shift();
+        m.Context.changes( ctx ).removeObserver( this );
+        this.removeContextRecords( ctx );
+        var ns = m.Context.nesteds( ctx );
+        if (ns.length) {
+          contexts.push.apply( contexts, ns );
+          q.push.apply( q, ns );
+        }
+      }
+
+      // Remove touch dependencies
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var ts = m.Context.touchDeps( contexts[i] );
+        for (var j = 0, n = ts.length; j < n; ++j) {
+          this.removeTouchDependency( ts[j].from, ts[j].to );
+        }
+      }
+
+      // Remove outputs
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var os = m.Context.outputs( contexts[i] );
+        for (var j = 0, n = os.length; j < n; ++j) {
+          this.removeOutput( os[j].variable );
+        }
+      }
+
+      // Remove constraints
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var cs = m.Context.constraints( contexts[i] );
+        for (var j = 0, n = cs.length; j < n; ++j) {
+          this.removeConstraint( cs[j] );
+        }
+      }
+
+      // Remove variables
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var vs = m.Context.variables( contexts[i] );
+        for (var j = 0, n = vs.length; j < n; ++j) {
+          this.removeVariable( vs[j] );
+        }
       }
     }
 
     //--------------------------------------------
-    // Add a new constraint
+    // Add variable
+    addVariable( vv: m.Variable ) {
+      if (! (vv.id in this.variables)) {
+        this.variables[vv.id] = vv;
+
+        // Watch for variable events
+        if (vv.pending.get()) {
+          ++this.pendingCount;
+        }
+        vv.changes.addObserver( this, this.onNextVariableChange, null, null );
+
+        // Create stay constraint
+        var stayMethodId = g.stayMethod( vv.id );
+        var stayConstraintId = g.stayConstraint( vv.id );
+
+        // Add variable+stay to existing graphs
+        this.cgraph.addVariable( vv.id );
+        this.cgraph.addMethod( stayMethodId, stayConstraintId, [], [vv.id] );
+
+        // Set stay to optional
+        if (vv.optional === m.Optional.Max) {
+          this.getPlanner().setMaxStrength( stayConstraintId );
+        }
+        else if (vv.optional === m.Optional.Min) {
+          this.getPlanner().setMinStrength( stayConstraintId );
+        }
+
+        // Mark stay constraint as changed
+        this.recordConstraintChange( stayConstraintId );
+      }
+    }
+
+    //--------------------------------------------
+    // Remove variable
+    removeVariable( vv: m.Variable ) {
+      if ((vv.id in this.variables) &&
+          this.cgraph.constraintsWhichUse( vv.id ).length == 0) {
+        var stayConstraintId = g.stayConstraint( vv.id );
+
+        // Remove all references
+        delete this.variables[vv.id];
+        delete this.outputVids[vv.id];
+        this.removeConstraintRecords( stayConstraintId );
+        vv.changes.removeObserver( this );
+
+        // Remove from graphs
+        this.cgraph.removeMethod( g.stayMethod( vv.id ) );
+        this.planner.removeOptional( stayConstraintId );
+        this.cgraph.removeVariable( vv.id );
+      }
+    }
+
+    //--------------------------------------------
+    // Add constraint
     addConstraint( cc: m.Constraint ) {
       if (! (cc.id in this.constraints)) {
         this.constraints[cc.id] = cc;
 
         cc.variables.forEach( this.addVariable, this );
         cc.methods.forEach( this.addMethod.bind( this, cc.id ) );
-      }
 
-      // Mark for update
-      this.needEnforcing[cc.id] = true;
-      this.modelUpdate();
+        if (cc.optional === m.Optional.Max) {
+          this.getPlanner().setMaxStrength( cc.id );
+        }
+        else if (cc.optional === m.Optional.Min) {
+          this.getPlanner().setMinStrength( cc.id );
+        }
+
+        // Mark for update
+        this.recordConstraintChange( cc.id );
+      }
     }
 
     //--------------------------------------------
-    // Remove existing constraint
+    // Remove constraint
     removeConstraint( cc: m.Constraint ) {
       if (cc.id in this.constraints) {
         delete this.constraints[cc.id];
+        this.removeConstraintRecords( cc.id );
 
         cc.methods.forEach( this.removeMethod, this );
-        cc.variables.forEach( this.removeVariable, this ); // no effect if variableused
-                                                           // by another constraint
 
         this.sgraph.selectMethod( cc.id, null );
         this.enable.methodScheduled( cc.id, null );
@@ -180,7 +335,7 @@ module hd.system {
     }
 
     //--------------------------------------------
-    // Add a new method
+    // Add method
     private
     addMethod( cid: string, mm: m.Method ) {
       if (! (mm.id in this.methods)) {
@@ -190,13 +345,13 @@ module hd.system {
         this.cgraph.addMethod( mm.id,
                                cid,
                                mm.inputVars.map( u.getId ),
-                               mm.outputVars.map( u.getId )
+                               mm.outputs.map( u.getId )
                              );
       }
     }
 
     //--------------------------------------------
-    // Remove existing method
+    // Remove method
     private
     removeMethod( mm: m.Method ) {
       if (mm.id in this.methods) {
@@ -207,28 +362,46 @@ module hd.system {
       }
     }
 
-    /*----------------------------------------------------------------
-     * Touch dependencies
-     */
-
-    makeConstraintOptional( cc: m.Constraint ) {
-      this.getPlanner().setMinStrength( cc.id );
+    //--------------------------------------------
+    // Add output
+    addOutput( out: m.Variable ) {
+      var id = out.id;
+      if (id in this.outputVids) {
+        ++this.outputVids[id];
+      }
+      else {
+        this.outputVids[id] = 1;
+      }
     }
 
+    //--------------------------------------------
+    // Remove output
+    removeOutput( out: m.Variable ) {
+      var id = out.id;
+      if (this.outputVids[id] > 1) {
+        --this.outputVids[id];
+      }
+      else {
+        delete this.outputVids[out.id];
+      }
+    }
+
+    //--------------------------------------------
+    // Add touch dependency
     addTouchDependency( cc1: (m.Constraint|m.Variable),
                         cc2: (m.Constraint|m.Variable) ) {
       var cid1: string, cid2: string;
       if (cc1 instanceof m.Variable) {
-        cid1 = g.stayConstraint( (<m.Variable>cc1).id );
+        cid1 = g.stayConstraint( cc1.id );
       }
       else {
-        cid1 = (<m.Constraint>cc1).id;
+        cid1 = cc1.id;
       }
       if (cc2 instanceof m.Variable) {
-        cid2 = g.stayConstraint( (<m.Variable>cc2).id );
+        cid2 = g.stayConstraint( cc2.id );
       }
       else {
-        cid2 = (<m.Constraint>cc2).id;
+        cid2 = cc2.id;
       }
 
       if (this.touchDeps[cid1]) {
@@ -256,6 +429,8 @@ module hd.system {
       }
     }
 
+    //--------------------------------------------
+    // Remove touch dependency
     removeTouchDependency( cc1: (m.Constraint|m.Variable),
                            cc2: (m.Constraint|m.Variable) ) {
       var cid1: string, cid2: string;
@@ -300,67 +475,6 @@ module hd.system {
      */
 
     //--------------------------------------------
-    // Add / register variable
-    addVariable( vv: m.Variable ) {
-      if (! (vv.id in this.variables)) {
-        this.variables[vv.id] = vv;
-
-        // Watch for variable events
-        if (vv.pending.get()) {
-          ++this.pendingCount;
-        }
-        if (vv.output.get()) {
-          this.outputVids[vv.id] = true;
-        }
-        vv.changes.addObserver( this, this.onNextVariableChange, null, null );
-
-        // Create stay constraint
-        var stayMethodId = g.stayMethod( vv.id );
-        var stayConstraintId = g.stayConstraint( vv.id );
-
-        // Add variable+stay to existing graphs
-        this.cgraph.addVariable( vv.id );
-        this.cgraph.addMethod( stayMethodId, stayConstraintId, [], [vv.id] );
-
-        // Set stay to optional
-        if (! (<any>vv).staged && ! vv.pending.get() && vv.value.get() === undefined) {
-          this.getPlanner().setMinStrength( stayConstraintId );
-        }
-        else {
-          this.getPlanner().setMaxStrength( stayConstraintId );
-        }
-
-        // Mark stay constraint as changed
-        this.needEnforcing[stayConstraintId] = true;
-        // this.modelUpdate();
-        // Technically we need an update to enforce the stay constraint
-        // Practically speaking, though, that's not going to have any effect
-        //   unless this variable's involved in another constraint, and
-        //   we'll call modelUpdate when that one's added
-      }
-    }
-
-    //--------------------------------------------
-    // Remove / de-register variable
-    removeVariable( vv: m.Variable ) {
-      if ((vv.id in this.variables) &&
-          this.cgraph.constraintsWhichUse( vv.id ).length == 0) {
-        // Remove all references
-        delete this.variables[vv.id];
-        delete this.outputVids[vv.id];
-        delete this.needEnforcing[stayConstraintId];
-        delete this.needEvaluating[stayConstraintId];
-        vv.changes.removeObserver( this );
-
-        // Remove from graphs
-        var stayConstraintId = g.stayConstraint( vv.id );
-        this.cgraph.removeMethod( g.stayMethod( vv.id ) );
-        this.planner.removeOptional( stayConstraintId );
-        this.cgraph.removeVariable( vv.id );
-      }
-    }
-
-    //--------------------------------------------
     // Dispatcher
     onNextVariableChange( event: m.VariableEvent ) {
       switch (event.type) {
@@ -372,9 +486,6 @@ module hd.system {
       case m.VariableEventType.changed:
         this.variableChanged( event.vv );
         break;
-
-      case m.VariableEventType.setOutput:
-        this.variableIsOutput( event.vv, event.isOutput );
 
       case m.VariableEventType.pending:
         ++this.pendingCount;
@@ -407,17 +518,21 @@ module hd.system {
       visited[originalVid] = true;
 
       while (i < promote.length) {
-        var vid = promote[i++];
-        var deps = this.touchDeps[vid];
-        if (deps) {
-          (<string[]>deps).sort( descending );
-          deps.forEach( function( dep: string ) {
-            if (! visited[dep]) {
-              promote.push( dep );
-              visited[dep] = true;
-            }
-          } );
+        var l = promote.length;
+        var sub: string[] = [];
+        while (i < l) {
+          var vid = promote[i++];
+          var deps = this.touchDeps[vid];
+          if (deps) {
+            deps.forEach( function( dep: string ) {
+              if (! visited[dep]) {
+                sub.push( dep );
+                visited[dep] = true;
+              }
+            } );
+          }
         }
+        promote.push.apply( promote, sub.sort( descending ) );
       }
 
       for (--i; i >= 0; --i) {
@@ -425,7 +540,7 @@ module hd.system {
         planner.setMaxStrength( cid );
         if (! this.sgraph ||
             ! this.sgraph.selectedForConstraint( cid )) {
-          this.needEnforcing[cid] = true;
+          this.recordConstraintChange( cid );
         }
       }
     }
@@ -435,7 +550,6 @@ module hd.system {
     variableTouched( vv: m.Variable ) {
       var stayConstraintId = g.stayConstraint( vv.id );
       this.doPromotions( stayConstraintId );
-      this.variableUpdate();
     }
 
     //--------------------------------------------
@@ -443,46 +557,63 @@ module hd.system {
     variableChanged( vv: m.Variable ) {
       var stayConstraintId = g.stayConstraint( vv.id );
       this.doPromotions( stayConstraintId );
-      this.needEvaluating[stayConstraintId] = true;
-      this.variableUpdate();
+      this.recordVariableChange( stayConstraintId );
+    }
+
+    /*----------------------------------------------------------------
+     * Changes to the model are recorded for the next update.  These
+     * functions add-to/remove-from those records.
+     */
+
+    //--------------------------------------------
+    // Context reference has changed; need to query for adds/drops
+    private
+    recordContextChange( ctx: m.Context ) {
+      u.arraySet.add( this.needUpdating, ctx );
+      this.recordChange();
     }
 
     //--------------------------------------------
-    variableIsOutput( vv: m.Variable, isOutput: boolean ) {
-      if (isOutput) {
-        this.outputVids[vv.id] = true;
-      }
-      else {
-        delete this.outputVids[vv.id];
-      }
+    // New or promoted constraint; need to replan so we can enforce
+    private
+    recordConstraintChange( ccid: string ) {
+      this.needEnforcing[ccid] = true;
+      this.recordChange();
     }
 
-    /*----------------------------------------------------------------
-     */
+    //--------------------------------------------
+    // Variable value has changed; need to evaluate downstream
     private
-    modelUpdate() {
+    recordVariableChange( stayid: string ) {
+      this.needEvaluating[stayid] = true;
+      this.recordChange();
+    }
+
+    //--------------------------------------------
+    // Record that update needed; schedule if appropriate
+    private
+    recordChange() {
       this.isUpdateNeeded = true;
       this.solved.set( false );
-      if (this.updateOnModelChange === Update.Immediate) {
-        this.update();
-      }
-      else if (this.updateOnModelChange === Update.Scheduled) {
+      if (this.scheduleUpdateOnChange) {
         this.scheduleUpdate();
       }
     }
 
-    /*----------------------------------------------------------------
-     */
+    //--------------------------------------------
+    // Remove any record of constraint
+    //
     private
-    variableUpdate() {
-      this.isUpdateNeeded = true;
-      this.solved.set( false );
-      if (this.updateOnVariableChange === Update.Immediate) {
-        this.update();
-      }
-      else if (this.updateOnVariableChange === Update.Scheduled) {
-        this.scheduleUpdate();
-      }
+    removeConstraintRecords( ccid: string ) {
+      delete this.needEnforcing[ccid];
+      delete this.needEvaluating[ccid];
+    }
+
+    //--------------------------------------------
+    // Remove any record of context
+    private
+    removeContextRecords( ctx: m.Context ) {
+      u.arraySet.remove( this.needUpdating, ctx );
     }
 
     /*----------------------------------------------------------------
@@ -506,11 +637,44 @@ module hd.system {
     update() {
       if (this.isUpdateNeeded) {
         this.isUpdateNeeded = false;
+        this.updateModel();
         this.plan();
         this.evaluate();
         if (this.pendingCount == 0) {
           this.solved.set( true );
         }
+      }
+    }
+
+    /*----------------------------------------------------------------
+     */
+    private
+    updateModel() {
+      for (var i = 0, l = this.needUpdating.length; i < l; ++i) {
+        var ctx = this.needUpdating[i];
+        var updates = m.Context.reportUpdates( ctx );
+        updates.removes.forEach( function( el: m.DynamicElement ) {
+          if (el instanceof m.Constraint) {
+            this.removeConstraint( el );
+          }
+          else if (el instanceof m.Output) {
+            this.removeOutput( el );
+          }
+          else if (el instanceof m.TouchDep) {
+            this.removeTouchDep( el );
+          }
+        }, this );
+        updates.adds.forEach( function( el: m.DynamicElement ) {
+          if (el instanceof m.Constraint) {
+            this.addConstraint( el );
+          }
+          else if (el instanceof m.Output) {
+            this.addOutput( el );
+          }
+          else if (el instanceof m.TouchDep) {
+            this.addTouchDep( el );
+          }
+        }, this );
       }
     }
 
@@ -584,9 +748,16 @@ module hd.system {
             .map( function( cid: string ) {
               return this.sgraph.selectedForConstraint( cid );
             }, this )
-            .filter( function( mid: string ) {
-              return !! mid;
-            } );
+            .filter( u.isNotNull );
+
+      var downstreamVids = new g.DigraphWalker( this.sgraph.graph )
+            .nodesDownstreamOtherType( mids );
+
+        // Commit initial edits
+        for (var i = 0, l = downstreamVids.length; i < l; ++i) {
+          var vid = downstreamVids[i];
+          this.variables[vid].commitPromise();
+        }
 
       if (mids.length > 0) {
         // Collect methods to be run
@@ -600,7 +771,7 @@ module hd.system {
         // Evaluate methods
         for (var i = 0, l = scheduledMids.length; i < l; ++i) {
           var mid = scheduledMids[i];
-          var ar = this.methods[mid].activate( true );
+          var ar = this.methods[mid].activate();
           this.enable.methodScheduled( this.cgraph.constraintForMethod( mid ),
                                        mid,
                                        ar.inputs,
@@ -609,8 +780,6 @@ module hd.system {
         }
 
         // Commit all output promises
-        var downstreamVids = new g.DigraphWalker( this.sgraph.graph )
-              .nodesDownstreamOtherType( mids );
         for (var i = 0, l = downstreamVids.length; i < l; ++i) {
           var vid = downstreamVids[i];
           this.variables[vid].commitPromise();
@@ -643,7 +812,7 @@ module hd.system {
             vv.contributing.set( u.Fuzzy.No );
             vv.relevant.set( e.relevancyCheck( this.cgraph,
                                                this.enable.egraph,
-                                               this.outputVids,
+                                               <any>this.outputVids,
                                                vid
                                              )
                            );
@@ -653,5 +822,8 @@ module hd.system {
     }
 
   }
+
+  (<any>PropertyModel).prototype.addComponent = PropertyModel.prototype.addComponents;
+  (<any>PropertyModel).prototype.removeComponent = PropertyModel.prototype.removeComponents;
 
 }

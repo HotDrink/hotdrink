@@ -4,14 +4,17 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var model = new hd.ModelBuilder()
+        var context = new hd.ContextBuilder()
             .v( 'x', {x: 0, y: 0} )
-            .end();
+            .context();
+
+        var pm = new hd.PropertyModel();
+        pm.addComponent( context );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( model );
+          hd.performDeclaredBindings( context );
           hd.bind( {view: hd.mousePosition(),
-                    model: model.x
+                    model: context.x
                    }
                  );
         } );

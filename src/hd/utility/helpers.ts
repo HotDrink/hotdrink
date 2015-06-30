@@ -233,4 +233,13 @@ module hd.utility {
     return a == b;
   }
 
+  /*------------------------------------------------------------------
+   */
+  export function isNotNull( x: any ): boolean {
+    return x !== null;
+  }
+
+  export function isUndefined( x: any ): boolean {
+    return x === undefined;
+  }
 }

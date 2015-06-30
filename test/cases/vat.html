@@ -20,7 +20,7 @@
         return a - b;
       }
 
-      var model = new hd.ModelBuilder()
+      var context = new hd.ContextBuilder()
           .variables( {pprice: 100, prate: 0.05, ptax: undefined,
                        sprice: 150, srate: 0.06, stax: undefined, diff: undefined} )
 
@@ -39,13 +39,13 @@
             .method( 'stax, ptax -> diff', difference )
             .method( 'stax, diff -> ptax', difference )
 
-          .end();
+          .context();
 
-      var system = new hd.ConstraintSystem();
-      system.addComponent( model );
+      var pm = new hd.PropertyModel();
+      pm.addComponent( context );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( model );
+        hd.performDeclaredBindings( context );
       } );
     </script>
   </head>

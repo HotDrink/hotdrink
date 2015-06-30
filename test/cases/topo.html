@@ -8,7 +8,7 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var model = new hd.ModelBuilder()
+        var context = new hd.ContextBuilder()
             .variables( {a: 0, b: 0, c: 0, d: 0} )
 
             .constraint( 'a, b, c' )
@@ -35,13 +35,13 @@
                      }
                    )
 
-            .end();
+            .context();
 
-        var system = new hd.ConstraintSystem();
-        system.addComponent( model );
+        var pm = new hd.PropertyModel();
+        pm.addComponent( context );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( model );
+          hd.performDeclaredBindings( context );
         } );
       }
     </script>

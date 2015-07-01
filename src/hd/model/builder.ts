@@ -34,7 +34,11 @@ module hd.model {
     // If the last thing created was a constraint or a method in a
     // constraint, this will point to the constraint; otherwise it
     // will be null
-    last: ConstraintSpec = null;
+    lastConstraint: ConstraintSpec = null;
+
+    // If the last thing created was one or more variables, this will
+    // point to the variables; otherwise it will be null
+    lastVariables: (VariableSpec | VariableSpec[]) = null;
 
     usedLocs: u.Dictionary<boolean> = {};
 
@@ -42,7 +46,7 @@ module hd.model {
      * Get the spec constructed by this builder
      */
     spec() {
-      this.endConstraint();
+      this.endAll();
       return this.target;
     }
 
@@ -50,7 +54,7 @@ module hd.model {
      * Get a context made according to the spec
      */
     context( init?: u.Dictionary<any> ) {
-      this.endConstraint();
+      this.endAll();
       var ctx = new Context( init );
       Context.construct( ctx, this.target );
       return ctx;
@@ -62,7 +66,7 @@ module hd.model {
     variable<T>( loc: string,
                  init?: T,
                  eq?: u.EqualityPredicate<T> ): ContextBuilder {
-      this.endConstraint();
+      this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
 
@@ -71,8 +75,10 @@ module hd.model {
         return this;
       }
 
-      this.target.variables.push( { loc: loc, init: init, eq: eq} );
+      var vspec = { loc: loc, init: init, optional: Optional.Default, eq: eq};
+      this.target.variables.push( vspec );
       this.usedLocs[loc] = true;
+      this.lastVariables = vspec;
 
       return this;
     }
@@ -84,7 +90,7 @@ module hd.model {
     variables( varorder: string, vardefs?: u.Dictionary<any> ): ContextBuilder;
     variables( vardefs: u.Dictionary<any> ): ContextBuilder;
     variables() {
-      this.endConstraint();
+      this.endAll();
 
       var varorder: string[];
       var vardefs: u.Dictionary<any>;
@@ -98,10 +104,15 @@ module hd.model {
         varorder = Object.keys( vardefs );
       }
 
+      var vspecs: VariableSpec[] = [];
       for (var i = 0, l = varorder.length; i < l; ++i) {
         var loc = varorder[i];
         this.variable( loc, vardefs[loc] );
+        if (this.lastVariables) {
+          vspecs.push( <VariableSpec>this.lastVariables );
+        }
       }
+      this.lastVariables = vspecs.length > 0 ? vspecs : null;
 
       return this;
     }
@@ -110,7 +121,7 @@ module hd.model {
      * Add a nested context.
      */
     nested( loc: string, spec: ContextSpec ): ContextBuilder {
-      this.endConstraint();
+      this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
 
@@ -124,7 +135,7 @@ module hd.model {
      * Add a reference.
      */
     reference( loc: string, eq?: u.EqualityPredicate<any> ): ContextBuilder {
-      this.endConstraint();
+      this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
 
@@ -180,7 +191,7 @@ module hd.model {
     constraint( loc: string, signature: string ): ContextBuilder;
     constraint( signature: string ): ContextBuilder;
     constraint(): ContextBuilder {
-      this.endConstraint();
+      this.endAll();
 
       var loc: string, signature: string;
       if (arguments.length > 1) {
@@ -197,11 +208,11 @@ module hd.model {
          return this;
        }
 
-      this.last = { variables: varNames, methods: [] };
+      this.lastConstraint = { variables: varNames, methods: [], optional: Optional.Default };
 
       if (loc && ! this.invalidLoc( loc )) {
-        this.last.loc = loc;
-        this.usedLocs[this.last.loc] = true;
+        this.lastConstraint.loc = loc;
+        this.usedLocs[this.lastConstraint.loc] = true;
       }
 
       return this;
@@ -209,10 +220,21 @@ module hd.model {
 
     // Complete the current constraint; no effect if no current constraint
     endConstraint(): ContextBuilder {
-      if (this.last) {
-        this.target.constraints.push( this.last );
-        this.last = null;
+      if (this.lastConstraint) {
+        this.target.constraints.push( this.lastConstraint );
+        this.lastConstraint = null;
       }
+      return this;
+    }
+
+    endVariables(): ContextBuilder {
+      this.lastVariables = null;
+      return this;
+    }
+
+    endAll(): ContextBuilder {
+      this.endConstraint();
+      this.endVariables();
       return this;
     }
 
@@ -220,7 +242,7 @@ module hd.model {
      * Add a method
      */
     method( signature: string, fn: Function, lift = true ): ContextBuilder {
-      if (! this.last) {
+      if (! this.lastConstraint) {
         console.error( 'Builder function "method" called with no constraint' );
         return this;
       }
@@ -229,7 +251,7 @@ module hd.model {
       if (p == null) { return this; }
 
       // helper function to make sure variable belongs to constraint
-      var constraintVars = this.last.variables;
+      var constraintVars = this.lastConstraint.variables;
       var isNotConstraintVar = function( name: string ) {
         if (constraintVars.indexOf( name ) < 0) {
           console.error( "Variable " + name +
@@ -245,7 +267,7 @@ module hd.model {
       }
 
       u.arraySet.addKnownDistinct(
-        this.last.methods,
+        this.lastConstraint.methods,
         {inputs: p.inputs,
          priorFlags: p.priorFlags,
          outputs: p.outputs,
@@ -256,12 +278,38 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
+     * Change optional policy on last constraint or variable.
+     */
+    optional( enforce: boolean ) {
+      var opt = enforce ? Optional.Max : Optional.Min;
+
+      if (this.lastConstraint) {
+        this.lastConstraint.optional = opt;
+      }
+      else if (this.lastVariables) {
+        if (Array.isArray( this.lastVariables )) {
+          var a = <VariableSpec[]>this.lastVariables;
+          for (var i = 0, l = a.length; i < l; ++i) {
+            a[i].optional = opt;
+          }
+        }
+        else {
+          (<VariableSpec>this.lastVariables).optional = opt;
+        }
+      }
+      else {
+        console.error( "Call to optional must follow constraint or variable" );
+      }
+      return this;
+    }
+
+    /*----------------------------------------------------------------
      */
     command( loc: string,
              signature: string,
              fn: Function,
              lift = true, sync = false ): ContextBuilder {
-      this.endConstraint();
+      this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
 
@@ -293,6 +341,7 @@ module hd.model {
      * Add output designation
      */
     output( variable: string ): ContextBuilder {
+      this.endAll();
       if (invalidPath( variable )) {
         return this;
       }
@@ -312,6 +361,7 @@ module hd.model {
      * Add a touch dependency
      */
     touchDep( from: string, to: string ): ContextBuilder {
+      this.endAll();
       if (invalidPath( from ) || invalidPath( to )) {
         return this;
       }
@@ -323,7 +373,7 @@ module hd.model {
      * Build constraint represented by simple equation.
      */
     equation( eqString: string ): ContextBuilder {
-      this.endConstraint();
+      this.endAll();
 
       // Parse the equation
       try {
@@ -338,7 +388,8 @@ module hd.model {
         // Create constraint spec
         var cspec: ConstraintSpec = {
           variables: varNames,
-          methods: []
+          methods: [],
+          optional: Optional.Default
         };
 
         var outName: string;

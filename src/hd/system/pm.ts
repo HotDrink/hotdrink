@@ -305,7 +305,6 @@ module hd.system {
       if (! (cc.id in this.constraints)) {
         this.constraints[cc.id] = cc;
 
-        cc.variables.forEach( this.addVariable, this );
         cc.methods.forEach( this.addMethod.bind( this, cc.id ) );
 
         if (cc.optional === m.Optional.Max) {

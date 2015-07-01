@@ -40,6 +40,7 @@ module hd.model {
   interface VariableSpec {
     loc: string;
     init: any;
+    optional: Optional;
     eq?: u.EqualityPredicate<any>;
   }
 
@@ -68,6 +69,7 @@ module hd.model {
     loc?: string;
     variables: u.ArraySet<string>;
     methods: u.ArraySet<MethodSpec>;
+    optional: Optional;
   }
 
   export
@@ -176,6 +178,7 @@ module hd.model {
     name: string;
     variables: u.ArraySet<string>;
     methods: u.ArraySet<MethodTemplate>;
+    optional: Optional;
     instance: Constraint = null;
 
     constructor( spec: ConstraintSpec ) {
@@ -183,6 +186,7 @@ module hd.model {
       this.methods = spec.methods.map( function( mspec: MethodSpec ) {
         return new MethodTemplate( mspec );
       } );
+      this.optional = spec.optional;
       this.name = spec.variables.join( ',' )
     }
 
@@ -199,6 +203,9 @@ module hd.model {
         var vars = varCandidates.filter( u.isType( Variable ) );
         var name = this.variables.join( ',' );
         var cc = new Constraint( name, vars );
+        if (this.optional !== Optional.Default) {
+          cc.optional = this.optional;
+        }
         for (var i = 0, l = this.methods.length; i < l; ++i) {
           var mtmpl = this.methods[i];
           mtmpl.instantiate( lookup, vars );
@@ -502,6 +509,9 @@ module hd.model {
     static
     addVariable( ctx: Context, spec: VariableSpec, init: any ) {
       var vv = new Variable( spec.loc, init === undefined ? spec.init : init, spec.eq );
+      if (spec.optional !== Optional.Default) {
+        vv.optional = spec.optional;
+      }
       ctx['#hd_data'].variables.push( vv );
       ctx[spec.loc] = vv;
     }

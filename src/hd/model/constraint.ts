@@ -7,7 +7,7 @@ module hd.model {
   import r = hd.reactive;
 
   export const
-  enum Optional { None, Max, Min };
+  enum Optional { Default, Max, Min };
 
   /*==================================================================
    * A constraint in the property model.
@@ -32,16 +32,15 @@ module hd.model {
 
     // Is this constraint optional, and, if so, should it be added
     //   with max or min priority?
-    optional: Optional;
+    optional: Optional = Optional.Default;
 
     /*----------------------------------------------------------------
      * Initialize members
      */
-    constructor( name: string, variables: u.ArraySet<Variable>, optional = Optional.None ) {
+    constructor( name: string, variables: u.ArraySet<Variable> ) {
       this.id = makeId( name );
       this.name = name;
       this.variables = variables;
-      this.optional = optional;
     }
 
     /*----------------------------------------------------------------

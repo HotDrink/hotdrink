@@ -156,36 +156,6 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     */
-    private
-    parseSignature( description: string, signature: string ) {
-      var inputs: string[], outputs: string[];
-      var leftRight = signature.trim().split( /\s*->\s*/ );
-      if (leftRight.length != 2) {
-        console.error( 'Invalid ' + description + ' signature: "' + signature + '"' );
-        return null;
-      }
-      inputs = leftRight[0] == '' ? [] : leftRight[0].split( /\s*,\s*/ );
-      outputs = leftRight[1] == '' ? [] : leftRight[1].split( /\s*,\s*/ );
-
-      var promiseFlags: boolean[] = [];
-      var priorFlags: boolean[] = [];
-      for (var i = 0, l = inputs.length; i < l; ++i) {
-        var stripResult = strip( inputs[i], ['*', '!'] );
-        if (! stripResult) { return null; }
-        inputs[i] = stripResult['name'];
-        if (stripResult['*']) { promiseFlags[i] = true; }
-        if (stripResult['!']) { priorFlags[i] = true; }
-      }
-
-      return {inputs: inputs,
-              promiseFlags: promiseFlags.length == 0 ? null : promiseFlags,
-              priorFlags: priorFlags.length == 0 ? null : priorFlags,
-              outputs: outputs
-             };
-    }
-
-    /*----------------------------------------------------------------
      * Add a constraint to the property modelcule.
      */
     constraint( loc: string, signature: string ): ContextBuilder;
@@ -202,13 +172,21 @@ module hd.model {
         signature = arguments[0];
       }
 
-      var varNames = signature.trim().split( /\s*,\s*/ );
+      var p = parseConstraint( signature );
+      if (p == null) { return this; }
 
-      if (varNames.some( invalidPath, this )) {
+      if (p.constraintVars.some( invalidPath ) ||
+          (p.touchVars && p.touchVars.some( invalidPath ))) {
          return this;
        }
 
-      this.lastConstraint = { variables: varNames, methods: [], optional: Optional.Default };
+      this.lastConstraint = {variables: p.constraintVars,
+                             methods: [],
+                             optional: Optional.Default};
+      if (p.touchVars) {
+        this.lastConstraint.optional = Optional.Max;
+        this.lastConstraint.touchVariables = p.touchVars;
+      }
 
       if (loc && ! this.invalidLoc( loc )) {
         this.lastConstraint.loc = loc;
@@ -247,7 +225,7 @@ module hd.model {
         return this;
       }
 
-      var p = this.parseSignature( 'method', signature );
+      var p = parseActivation( 'method', signature );
       if (p == null) { return this; }
 
       // helper function to make sure variable belongs to constraint
@@ -313,10 +291,10 @@ module hd.model {
 
       if (this.invalidLoc( loc )) { return this; }
 
-      var p = this.parseSignature( 'method', signature );
+      var p = parseActivation( 'method', signature );
       if (p == null) { return this; }
 
-      if (p.inputs.some( invalidPath, this ) || p.outputs.some( invalidPath, this )) {
+      if (p.inputs.some( invalidPath ) || p.outputs.some( invalidPath )) {
         return this;
       }
 
@@ -381,7 +359,7 @@ module hd.model {
 
         // Check variables
         var varNames = Object.keys( equation.vars );
-        if (varNames.some( invalidPath, this )) {
+        if (varNames.some( invalidPath )) {
           return this;
         }
 
@@ -478,6 +456,55 @@ module hd.model {
     }
     return false;
   }
+
+  /*==================================================================
+   */
+  function parseConstraint( signature: string ) {
+    var touchVars: string[];
+    var constraintVars: string[];
+    var leftRight = signature.trim().split( /\s*=>\s*/ );
+    if (leftRight.length == 1) {
+      constraintVars = leftRight[0].split( /\s*,\s*/ );
+    }
+    else if (leftRight.length == 2) {
+      touchVars = leftRight[0].split( /\s*,\s*/ );
+      constraintVars = leftRight[1].split( /\s*,\s*/ );
+    }
+    else {
+      console.error( 'Invalid constraint signature: "' + signature + '"' );
+      return null;
+    }
+    return {touchVars: touchVars,
+            constraintVars: constraintVars};
+  }
+
+  /*==================================================================
+   */
+  function parseActivation( description: string, signature: string ) {
+    var leftRight = signature.trim().split( /\s*->\s*/ );
+    if (leftRight.length != 2) {
+      console.error( 'Invalid ' + description + ' signature: "' + signature + '"' );
+      return null;
+    }
+    var inputs = leftRight[0] == '' ? [] : leftRight[0].split( /\s*,\s*/ );
+    var outputs = leftRight[1] == '' ? [] : leftRight[1].split( /\s*,\s*/ );
+
+    var promiseFlags: boolean[] = [];
+    var priorFlags: boolean[] = [];
+    for (var i = 0, l = inputs.length; i < l; ++i) {
+      var stripResult = strip( inputs[i], ['*', '!'] );
+      if (! stripResult) { return null; }
+      inputs[i] = stripResult['name'];
+      if (stripResult['*']) { promiseFlags[i] = true; }
+      if (stripResult['!']) { priorFlags[i] = true; }
+    }
+
+    return {inputs: inputs,
+            promiseFlags: promiseFlags.length == 0 ? null : promiseFlags,
+            priorFlags: priorFlags.length == 0 ? null : priorFlags,
+            outputs: outputs
+           };
+    }
 
   /*================================================================
    * Strip one-character prefixes from front of names

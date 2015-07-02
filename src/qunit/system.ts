@@ -9,6 +9,10 @@ module hd.qunit {
   import m = hd.model;
   import s = hd.system;
 
+  function id<T>( x: T ): T {
+    return x;
+  }
+
   function sum() {
     var s = arguments[0];
     for (var i = 1, l = arguments.length; i < l; ++i) {
@@ -296,6 +300,46 @@ module hd.qunit {
 
     u.schedule( 3, start );
 
+  } );
+
+  asyncTest( "optional constraints", function() {
+    expect( 18 );
+
+    var ctx: any = new m.ContextBuilder()
+          .variables( "x, y, z", {x: 4} )
+          .constraint( "x => x, y" )
+            .method( "x -> y", id )
+          .constraint( "x, y => y, z" )
+            .method( "y -> z", id )
+          .context();
+
+    var pm = new s.PropertyModel();
+    pm.addComponents( ctx );
+    pm.update();
+    checkVariables( ctx, {x: 4, y: 4, z: 4}, "1" );
+
+    ctx.y.set( 5 );
+    pm.update();
+    checkVariables( ctx, {x: 4, y: 5, z: 5}, "2" );
+
+    ctx.z.set( 6 );
+    pm.update();
+    checkVariables( ctx, {x: 4, y: 5, z: 6}, "3" );
+
+    ctx.x.set( 7 );
+    pm.update();
+    checkVariables( ctx, {x: 7, y: 7, z: 7}, "4" );
+
+    ctx.x.set( 8 );
+    ctx.z.set( 9 );
+    pm.update();
+    checkVariables( ctx, {x: 8, y: 8, z: 9}, "5" );
+
+    ctx.x.set( 1 );
+    pm.update();
+    checkVariables( ctx, {x: 1, y: 1, z: 1}, "6" );
+
+    u.schedule( 3, start );
   } );
 
 }

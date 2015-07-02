@@ -201,7 +201,7 @@ module hd.qunit {
 
     ok( x.removes.length == 2 && x.adds.length == 1, "Three updates" );
 
-    ok( x.removes[0] === o && x.removes[1] == t,
+    ok( x.removes[0] === t && x.removes[1] == o,
         "Remove old elements" );
 
     ok( x.adds[0] instanceof m.Output &&
@@ -220,4 +220,106 @@ module hd.qunit {
 
   } );
 
+
+  test( "optional syntax", function() {
+    var ctx: any = new m.ContextBuilder()
+          .variables( "x, y, z", {x: 4} )
+          .constraint( "x => x, y" )
+            .method( "x -> y", id )
+          .constraint( "x, y => y, z" )
+            .method( "y -> z", id )
+          .context();
+    m.Context.performUpdates( ctx );
+
+    equal( m.Context.constraints( ctx ).length, 2,
+           "Created optional constraints" );
+
+    var c = m.Context.constraints( ctx )[0];
+    ok( c instanceof m.Constraint &&
+        c.variables.length == 2 &&
+        c.variables[0] === ctx.x &&
+        c.variables[1] === ctx.y,
+        "Constraint looks ok" );
+
+    equal( m.Context.touchDeps( ctx ).length, 3,
+           "Created touch dependencies for optional constraints" );
+
+    var t = m.Context.touchDeps( ctx )[0];
+    ok( t instanceof m.TouchDep &&
+        t.from === ctx.x &&
+        t.to === c,
+        "Touch dependency looks ok" );
+
+    c = m.Context.constraints( ctx )[1];
+    ok( c instanceof m.Constraint &&
+        c.variables.length == 2 &&
+        c.variables[0] === ctx.y &&
+        c.variables[1] === ctx.z,
+        "Constraint looks ok" );
+
+    t = m.Context.touchDeps( ctx )[1];
+    ok( t instanceof m.TouchDep &&
+        t.from === ctx.x &&
+        t.to === c,
+        "Touch dependency looks ok" );
+
+    t = m.Context.touchDeps( ctx )[2];
+    ok( t instanceof m.TouchDep &&
+        t.from === ctx.y &&
+        t.to === c,
+        "Touch dependency looks ok" );
+
+    ctx = new m.ContextBuilder()
+          .variables( "x, y, z", {x: 3, y: 4, z: 5} )
+          .references( "a, b, c" )
+          .constraint(  "a, b => b, c" )
+            .method( "b -> c", id )
+          .context();
+    m.Context.performUpdates( ctx );
+
+    equal( m.Context.constraints( ctx ).length, 0, "No constraints" );
+    equal( m.Context.touchDeps( ctx ).length, 0, "No touch dependencies" );
+
+    ctx.b = ctx.y;
+    var x = m.Context.reportUpdates( ctx );
+    ok( x.removes.length == 0 && x.adds.length == 0,
+        "No updates with half-defined constraint" )
+
+    ctx.c = ctx.z;
+    var x = m.Context.reportUpdates( ctx );
+    ok( x.removes.length == 0 && x.adds.length == 2,
+        "Two updates" );
+
+    ok( x.adds[0] instanceof m.Constraint, "One is constraint" );
+    ok( x.adds[1] instanceof m.TouchDep, "One is touch dep" );
+
+    var c = <m.Constraint>x.adds[0];
+    ok( c.variables.length == 2 &&
+        c.variables[0] === ctx.y &&
+        c.variables[1] === ctx.z,
+        "Constraint uses correct variables" );
+
+    var t1 = <m.TouchDep>x.adds[1];
+    ok( t1.from === ctx.y && t1.to === c,
+        "Touch dep uses correct variables" );
+
+    ctx.a = ctx.x;
+    x = m.Context.reportUpdates( ctx );
+    ok( x.removes.length == 0 && x.adds.length == 1,
+        "One update" );
+
+    ok( x.adds[0] instanceof m.TouchDep, "Update is touch dep" );
+
+    var t2 = <m.TouchDep>x.adds[0];
+    ok( t2.from === ctx.x && t2.to === c,
+        "Touch dep uses correct variables" );
+
+    ctx.c = undefined;
+    x = m.Context.reportUpdates( ctx );
+    ok( x.removes.length == 3 && x.adds.length == 0, "Three updates" );
+    ok( x.removes[0] === t1, "Remove touch dep 1" );
+    ok( x.removes[1] === t2, "Remove touch dep 2" );
+    ok( x.removes[2] === c,  "Remove constraint" );
+
+  } );
 }

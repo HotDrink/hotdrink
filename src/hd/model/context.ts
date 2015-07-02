@@ -70,6 +70,7 @@ module hd.model {
     variables: u.ArraySet<string>;
     methods: u.ArraySet<MethodSpec>;
     optional: Optional;
+    touchVariables?: u.ArraySet<string>;
   }
 
   export
@@ -101,7 +102,7 @@ module hd.model {
     constraints: ConstraintSpec[];
     commands: CommandSpec[];
     outputs: OutputSpec[];
-   touchDeps: TouchDepSpec[];
+    touchDeps: TouchDepSpec[];
   }
 
   /*******************************************************************
@@ -357,24 +358,48 @@ module hd.model {
   class TouchDepTemplate {
     from: string;
     to: string;
+    toTmpl: ConstraintTemplate;
     instance: TouchDep = null;
 
-    constructor( spec: TouchDepSpec ) {
-      this.from = spec.from;
-      this.to = spec.to;
+    constructor( spec: TouchDepSpec );
+    constructor( from: string, to: ConstraintTemplate );
+    constructor() {
+      if (arguments.length == 1) {
+        var spec: TouchDepSpec = arguments[0];
+        this.from = spec.from;
+        this.to = spec.to;
+      }
+      else {
+        this.from = arguments[0];
+        this.toTmpl = arguments[1];
+      }
     }
 
     uses( path: string ) {
-      return this.from == path || this.to == path;
+      return this.from == path ||
+            (this.toTmpl ? this.toTmpl.uses( path ) : this.to == path);
     }
 
     instantiate( lookup: u.Dictionary<any> ) {
       var cc1 = lookup[this.from];
-      var cc2 = lookup[this.to];
-      if (cc1 !== cc2 &&
-          (cc1 instanceof Variable || cc1 instanceof Constraint) &&
-          (cc2 instanceof Variable || cc2 instanceof Constraint)   ) {
-        this.instance = new TouchDep( cc1, cc2 );
+      if (cc1 instanceof Variable || cc1 instanceof Constraint) {
+        if (this.toTmpl) {
+          if (this.toTmpl.instance) {
+            this.instance = new TouchDep( cc1, this.toTmpl.instance );
+          }
+          else {
+            this.instance = null;
+          }
+        }
+        else {
+          var cc2 = lookup[this.to];
+          if (cc1 !== cc2 && (cc2 instanceof Variable || cc2 instanceof Constraint)) {
+            this.instance = new TouchDep( cc1, cc2 );
+          }
+          else {
+            this.instance = null
+          }
+        }
       }
       else {
         this.instance = null;
@@ -507,33 +532,36 @@ module hd.model {
      * Add variable
      */
     static
-    addVariable( ctx: Context, spec: VariableSpec, init: any ) {
+    addVariable( ctx: Context, spec: VariableSpec, init: any ): Variable {
       var vv = new Variable( spec.loc, init === undefined ? spec.init : init, spec.eq );
       if (spec.optional !== Optional.Default) {
         vv.optional = spec.optional;
       }
       ctx['#hd_data'].variables.push( vv );
       ctx[spec.loc] = vv;
+      return vv;
     }
 
     /*----------------------------------------------------------------
      * Add nested context
      */
     static
-    addNestedContext( ctx: Context, spec: NestedSpec, init: u.Dictionary<any> ) {
+    addNestedContext( ctx: Context, spec: NestedSpec, init: u.Dictionary<any> ): Context {
       var nested = new Context();
       Context.construct( nested, spec.spec );
       ctx['#hd_data'].nesteds.push( nested );
       ctx[spec.loc] = nested;
+      return nested;
     }
 
     /*----------------------------------------------------------------
      * Add dynamic reference
      */
     static
-    addReference( ctx: Context, spec: ReferenceSpec, init: any ) {
+    addReference( ctx: Context, spec: ReferenceSpec, init: any ): r.Signal<any> {
       var prop = new r.BasicSignal<any>( init, spec.eq );
       Context.defineReferenceAccessors( ctx, spec.loc, prop );
+      return prop;
     }
 
     static
@@ -555,7 +583,7 @@ module hd.model {
      * Add constraint
      */
     static
-    addConstraint( ctx: Context, spec: ConstraintSpec ) {
+    addConstraint( ctx: Context, spec: ConstraintSpec ): ConstraintTemplate {
       var hd_data = ctx['#hd_data'];
       var usesRef = false;
       for (var i = 0, l = spec.variables.length; i < l; ++i) {
@@ -582,13 +610,20 @@ module hd.model {
       if (spec.loc) {
         ctx[spec.loc] = tmpl;
       }
+      if (spec.touchVariables) {
+        for (var i = 0, l = spec.touchVariables.length; i < l; ++i) {
+          var touch = spec.touchVariables[i];
+          Context.addTouchDep( ctx, touch, tmpl );
+        }
+      }
+      return tmpl;
     }
 
     /*----------------------------------------------------------------
      * Add command
      */
     static
-    addCommand( ctx: Context, spec: CommandSpec ) {
+    addCommand( ctx: Context, spec: CommandSpec ): CommandTemplate {
       var hd_data = ctx['#hd_data'];
       var usesRef = false;
       [spec.inputs, spec.outputs].forEach( function( vars: string[] ) {
@@ -617,13 +652,14 @@ module hd.model {
       if (spec.loc) {
         ctx[spec.loc] = tmpl;
       }
+      return tmpl;
     }
 
     /*----------------------------------------------------------------
      * Add output
      */
     static
-    addOutput( ctx: Context, spec: OutputSpec ) {
+    addOutput( ctx: Context, spec: OutputSpec ): OutputTemplate {
       var hd_data = ctx['#hd_data'];
       Context.addNameToLookup( ctx, spec.variable );
       var tmpl = new OutputTemplate( spec );
@@ -640,18 +676,40 @@ module hd.model {
           console.warn( "Invalid instantiation constant output " + spec.variable );
         }
       }
+      return tmpl;
     }
 
     /*----------------------------------------------------------------
      * Add touch dependency
      */
     static
-    addTouchDep( ctx: Context, spec: TouchDepSpec ) {
+    addTouchDep( ctx: Context, spec: TouchDepSpec ): TouchDepTemplate;
+    static
+    addTouchDep( ctx: Context, from: string, to: ConstraintTemplate ): TouchDepTemplate;
+    static
+    addTouchDep( ctx: Context ): TouchDepTemplate {
       var hd_data = ctx['#hd_data'];
-      Context.addNameToLookup( ctx, spec.from );
-      Context.addNameToLookup( ctx, spec.to );
-      var tmpl = new TouchDepTemplate( spec );
-      if (spec.from in hd_data.paths || spec.to in hd_data.paths) {
+      var from: string;
+      var to: string;
+      var toTmpl: ConstraintTemplate;
+      var tmpl: TouchDepTemplate;
+      if (arguments.length == 2) {
+        var spec: TouchDepTemplate = arguments[1];
+        from = spec.from;
+        to = spec.to;
+        tmpl = new TouchDepTemplate( spec );
+      }
+      else {
+        from = arguments[1];
+        toTmpl = arguments[2];
+        tmpl = new TouchDepTemplate( from, toTmpl );
+      }
+
+      Context.addNameToLookup( ctx, from );
+      if (to) {
+        Context.addNameToLookup( ctx, to );
+      }
+      if (from in hd_data.paths || to in hd_data.paths || toTmpl) {
         hd_data.touchDepTmpls.push( tmpl );
         u.arraySet.addKnownDistinct( hd_data.outdated, tmpl );
       }
@@ -661,10 +719,11 @@ module hd.model {
           hd_data.touchDeps.push( tmpl.instance );
         }
         else {
-          console.warn( "Invalid instantiation of constant touch dependency: " + spec.from +
-                        " => " + spec.to );
+          console.warn( "Invalid instantiation of constant touch dependency: " + from +
+                        " => " + to );
         }
       }
+      return tmpl;
     }
 
     /*----------------------------------------------------------------
@@ -699,7 +758,7 @@ module hd.model {
       for (var i = 0, l = hd_data.outdated.length; i < l; ++i) {
         var tmpl = hd_data.outdated[i];
         if (tmpl.instance) {
-          result.removes.push( tmpl.instance );
+          result.removes.unshift( tmpl.instance );
         }
         tmpl.instantiate( hd_data.lookup );
         if (tmpl.instance) {

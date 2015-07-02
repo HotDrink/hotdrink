@@ -80,6 +80,8 @@ module hd.system {
     enable: e.EnablementManager = new e.EnablementManager();
     outputVids: u.Dictionary<number> = {};
 
+    private hasOptionals: boolean;
+
     /*----------------------------------------------------------------
      * Initialize members
      */
@@ -149,7 +151,14 @@ module hd.system {
       for (var i = 0, l = contexts.length; i < l; ++i) {
         var vs = m.Context.variables( contexts[i] );
         for (var j = 0, n = vs.length; j < n; ++j) {
-          this.addVariable( vs[j] );
+          if (vs[j].optional === m.Optional.Max) {
+            this.addVariable( vs[j] );
+          }
+        }
+        for (var j = vs.length - 1; j >= 0; --j) {
+          if (vs[j].optional === m.Optional.Min) {
+            this.addVariable( vs[j] );
+          }
         }
       }
 
@@ -309,9 +318,11 @@ module hd.system {
 
         if (cc.optional === m.Optional.Max) {
           this.getPlanner().setMaxStrength( cc.id );
+          this.hasOptionals = true;
         }
         else if (cc.optional === m.Optional.Min) {
           this.getPlanner().setMinStrength( cc.id );
+          this.hasOptionals = true;
         }
 
         // Mark for update
@@ -524,11 +535,11 @@ module hd.system {
           var deps = this.touchDeps[vid];
           if (deps) {
             deps.forEach( function( dep: string ) {
-              if (! visited[dep]) {
+              if (! visited[dep] && this.constraints[dep].optional !== m.Optional.Default) {
                 sub.push( dep );
                 visited[dep] = true;
               }
-            } );
+            }, this );
           }
         }
         promote.push.apply( promote, sub.sort( descending ) );
@@ -652,28 +663,30 @@ module hd.system {
       for (var i = 0, l = this.needUpdating.length; i < l; ++i) {
         var ctx = this.needUpdating[i];
         var updates = m.Context.reportUpdates( ctx );
-        updates.removes.forEach( function( el: m.DynamicElement ) {
+        for (var i = 0, l = updates.removes.length; i < l; ++i) {
+          var el = updates.removes[i];
           if (el instanceof m.Constraint) {
             this.removeConstraint( el );
           }
           else if (el instanceof m.Output) {
-            this.removeOutput( el );
+            this.removeOutput( el.variable );
           }
           else if (el instanceof m.TouchDep) {
-            this.removeTouchDep( el );
+            this.removeTouchDependency( el.from, el.to );
           }
-        }, this );
-        updates.adds.forEach( function( el: m.DynamicElement ) {
+        }
+        for (var i = 0, l = updates.adds.length; i < l; ++i) {
+          var el = updates.adds[i];
           if (el instanceof m.Constraint) {
             this.addConstraint( el );
           }
           else if (el instanceof m.Output) {
-            this.addOutput( el );
+            this.addOutput( el.variable );
           }
           else if (el instanceof m.TouchDep) {
-            this.addTouchDep( el );
+            this.addTouchDependency( el.from, el.to );
           }
-        }, this );
+        }
       }
     }
 
@@ -693,7 +706,11 @@ module hd.system {
           this.topo = toposort( this.sgraph, this.planner );
 
           // Update stay strengths
-          this.planner.setOptionals( u.reversemap( this.topo.vids, g.stayConstraint ) );
+          var neworder = u.reversemap( this.topo.vids, g.stayConstraint );
+          if (this.hasOptionals) {
+            mergeOptionals( this.planner.getOptionals(), neworder );
+          }
+          this.planner.setOptionals( neworder );
 
           // New constraints need to be evaluated
           cids.forEach( u.stringSet.add.bind( null, this.needEvaluating ) );

@@ -79,4 +79,23 @@ module hd.system {
     return {vids: vids, mids: mids};
   }
 
+  export
+  function mergeOptionals( oldorder: string[], neworder: string[] ) {
+    var seen: u.Dictionary<boolean> = {};
+
+    var j = 0;
+    for (var i = 0, l = oldorder.length; i < l; ++i) {
+      var id = oldorder[i];
+      if (g.isStayConstraint( id )) {
+        var m = neworder.length;
+        while (! seen[id] && j < m) {
+          seen[neworder[j++]] = true;
+        }
+      }
+      else {
+        neworder.splice( j++, 0, id );
+      }
+    }
+  }
+
 }

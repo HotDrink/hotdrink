@@ -1,9 +1,9 @@
 #+TITLE: Introduction to HotDrink
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
-#+INFOJS_OPT: sdepth:1 home:index.html
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
+# #+INFOJS_OPT: sdepth:1 home:index.html
 
 * Overview of basic concepts
 
@@ -110,60 +110,55 @@ with the DOM are via cooperative API functions, e.g.,
 There are three important objects which you will need to interact with when
 using HotDrink.
 
-** The model
+** The property model
 
-The model is HotDrink's representation of the data in your
-interface. Though we have named it the model, it is really the
-view-model of the MVVM pattern.  As described above, it consists of
-variables that hold data, and constraints that define how those
-variables are related.  The model also serves as a naming mechanism for
-variables: when a variable is created, it is given a name, and stored
-as a property of the model under that name.
-For example, when defining the model ~model~,
-a variable created with the name ~x~ is accessible as ~model.x~.
+A /property model/ is the view-model of your application.  It contains
+variables for holding the data used by your GUI, and also a constraint system
+for enforcing any constraints you define over those variables as described in
+Section [[Constraint systems]].  In general, your application will always have a
+single property model, created like so:
 
-** The model builder
-
-The task of building a model is rather complex, involving calls to multiple
-functions with long signatures.  To help in constructing models, HotDrink
-contains an object called the /model builder/.  The model builder
-essentially defines its own language (i.e., an /embedded domain-specific language/)
-for constructing constraint systems.  To use
-the language, create a new model builder instance, then call its
-various member functions to add elements to the model. These member
-functions are described in detail in [[file:basics.org][Basic HotDrink Usage]]. The
-~end~ member function retrieves the constructed model.
 #+BEGIN_SRC js
-var builder = new hd.ModelBuilder();
+var pm = new hd.PropertyModel();
+#+END_SRC
+
+** The context
+
+A /context/ is an object which serves two purposes.  First, it is a container
+for variables and constraints of the property model.  Second, it provides a
+naming mechanism: if you want a variable named $x$, create a new variable
+object and assign it to the the ~x~ field of your context.  We say the
+variable is named ~x~ in the context to which you assigned it; the same
+variable may have a different name in some other context.
+
+To a context, containing an object and naming an object are two different
+things.  The context may contain certain objects which it does not name, and
+it may name objects which it does not contain.  Containing denotes ownership:
+a context owns the variables and constraints it contains.  Thus, while
+multiple contexts may give a name to a variable, only one context may contain
+a variable.  When you add a context to a property model, you add all the
+variables and constraints which it contains.
+
+** The context builder
+
+The task of building a context is rather complex.  To help, HotDrink contains
+an object called the /context builder/.  This object essentially defines its
+own language (i.e., an /embedded domain-specific language/) for constructing
+contexts.  To use this language, create a new context builder instance, then
+call its member functions to add elements to the context.  These member
+functions are described in detail in [[file:basics.org][Basic HotDrink Usage]].  The ~context~
+member function retrieves the constructed context.
+
+#+BEGIN_SRC js
+var builder = new hd.ContextBuilder();
 
 // ...invoke various builder member functions to build the model ...
 
-var model = builder.end();
+var context = builder.context();
 #+END_SRC
 
-
-** The constraint system
-
-As explained in Section [[Constraint systems]], the heart of HotDrink is a
-constraint system.  The task of the constraint system is to enforce the
-constraints of the model.  However, the two are separate entities.
-A model can exist without a constraint system; that simply means that no one is enforcing its constraints.
-
-To use a constraint system, create a new instance, then register a model with a constraint system.
+Once you have a context, you may add it to the property model.
 
 #+BEGIN_SRC js
-var system = new hd.ConstraintSystem();
-
-system.addComponent( model );
+pm.addComponent( context );
 #+END_SRC
-
-A model added to a constraint system can be later removed, if needed:
-
-#+BEGIN_SRC js
-system.removeComponent( model );
-#+END_SRC
-
-As those function names suggest, the full model for your application can
-actually consist of several different components, and new components can be
-added or removed at run-time.  For now we assume one component only and
-consider it as the entire model.

@@ -9,24 +9,27 @@
 
 The most fundamental part of a GUI written with HotDrink is the constraint
 system which represents data dependencies in your GUI.  This first example
-covers a lot of ground, including how to create a constraint system, how you
-can directly interact with it by getting and setting variables, and how the
-constraint system is updated.  The goal is to give you an exact understanding
-of what the constraint system does for you and how you may interact with it.
+shows how to create variables and constraints, and how you can directly
+interact with variables.
 
 We assume here that you have read the document [[file:intro.org][Introduction to HotDrink]] and
 are therefore familiar with the basic concept of a constraint system.
 
 ** The example
 
-This example shows a single constraint of three variables: /list/, /filter/,
-and /result/.  Each variable holds a string.  The value of /list/ is a
-comma-delimited list of words.  The value of /filter/ is any string.  The
-value of /result/ is the comma-delimited list of just those words in /list/
-which contain the string in /filter/.
+This example shows a single constraint of three variables: /emails/, /filter/,
+and /result/.  Each variable holds a string.  The value of /emails/ is a
+comma-delimited list of email addresses.  The value of /filter/ is any string.
+The value of /result/ is the comma-delimited list of just those addresses in
+/emails/ which contain the string in /filter/.
 
+Usually in a HotDrink application we bind variables to the View so that
+variable reads and writes
 Note that this example deliberately avoids using any of HotDrink's binding
 code so that all interactions with the constraint system will be explicit.
+
+Click the "Get Result" button to see the value of the /result/ variable.  You
+can use the "Set" buttons to set the values of
 
 #+HTML: <div class="results">
 #+INCLUDE: tangle/whatever.html html
@@ -36,6 +39,11 @@ code so that all interactions with the constraint system will be explicit.
 #+INCLUDE: tangle/whatever.js html
 #+HTML: })();
 #+HTML: </script>
+
+The entire source code for this example is shown below.  (Click the "show"
+links to view the code.)  To clarify, we have broken code into three sections:
+the HTML that defines the View, the JavaScript that defines the View-Model,
+and the JavaScript that binds the View to the View-Model.
 
 *Source Code*
 
@@ -47,9 +55,9 @@ code so that all interactions with the constraint system will be explicit.
     th { padding-right: 1ex; text-align: left; font-weight: bold; }
   </style>
   <tr>
-    <th>List:</th>
-    <td><span id="listSpan1"></span></td>
-    <td><input type="button" value="Set" onclick="setList1()"/></td>
+    <th>Emails:</th>
+    <td><span id="emailsSpan1"></span></td>
+    <td><input type="button" value="Set" onclick="setEmails1()"/></td>
   </tr>
   <tr>
     <th>Filter:</th>
@@ -64,33 +72,33 @@ code so that all interactions with the constraint system will be explicit.
 #+CAPTION: /View-Model/
 #+BEGIN_SRC js -n -r :exports code :tangle tangle/whatever.js :padline no
 // Define the model
-var model = new hd.ModelBuilder() (ref:builder)
-    .variable( 'list', 'ebip, snad, ebna, naip, sneb, ipeb' ) (ref:varlist)
-    .variable( 'filter', 'na' ) (ref:varfilter)
+var context = new hd.ContextBuilder() (ref:builder)
+    .variable( 'emails', 'joe@foo.com, sue@fum.edu, eve@foo.com, bob@baz.org' ) (ref:varemails)
+    .variable( 'filter', 'foo.com' ) (ref:varfilter)
     .variable( 'result' ) (ref:varresult)
 
-    .constraint( 'list, filter, result' ) (ref:con)
-    .method( 'list, filter -> result', function( list, filter ) { (ref:mth1)
-      var words = list.trim().split( /\s*,\s*/ );
+    .constraint( 'emails, filter, result' ) (ref:con)
+    .method( 'emails, filter -> result', function( emails, filter ) { (ref:mth1)
+      var words = emails.trim().split( /\s*,\s*/ );
       var filteredWords = words.filter( function( word ) {
         return word.indexOf( filter ) > -1;
       } );
       return filteredWords.join( ', ' );
     } )
 
-    .end(); (ref:end)
+    .context(); (ref:end)
 
 // Create the constraint system
-var system = new hd.ConstraintSystem();
-system.addComponent( model );
-system.update(); (ref:update1)
+var pm = new hd.PropertyModel();
+pm.addComponent( context );
+pm.update(); (ref:update1)
 #+END_SRC
 
 #+CAPTION: /Binding/
 #+BEGIN_SRC js -n -r :exports code :tangle tangle/whatever.js :padline no
 window.addEventListener( 'load', function() {
-  setSpan( 'listSpan1', model.list.get() );
-  setSpan( 'filterSpan1', model.filter.get() );
+  setSpan( 'emailsSpan1', context.emails.get() );
+  setSpan( 'filterSpan1', context.filter.get() );
 } )
 
 function setSpan( id, value ) {
@@ -99,44 +107,43 @@ function setSpan( id, value ) {
   span.appendChild( document.createTextNode( value ) );
 }
 
-setList1 = function setList1() {
-  var list = window.prompt( 'List:', model.list.get() );
-  if (list !== null) {
-    model.list.set( list );
+setEmails1 = function setEmails1() {
+  var emails = window.prompt( 'Emails:', context.emails.get() );
+  if (emails !== null) {
+    context.emails.set( emails );
     system.update(); (ref:update2)
-    setSpan( 'listSpan1', list );
+    setSpan( 'emailsSpan1', emails );
   }
 }
 
 setFilter1 = function setFilter1() {
-  var filter = window.prompt( 'Filter:', model.filter.get() );
+  var filter = window.prompt( 'Filter:', context.filter.get() );
   if (filter !== null) {
-    model.filter.set( filter );
+    context.filter.set( filter );
     system.update(); (ref:update3)
     setSpan( 'filterSpan1', filter );
   }
 }
 
 getResult1 = function getResult1() {
-  alert( 'Result: ' + model.result.get() );
+  alert( 'Result: ' + context.result.get() );
 }
 #+END_SRC
 
 ** Working with the model builder
 
-Recall from [[file:intro.org][the introduction]] that there are two steps to creating a
-constraint system.  The first is to create the /model/ --- that is, the
-variables and constraints that make up the constraint system.  The second is
-to create a /constraint system/ object and add the model to it.  The
-constraint system object is responsible for enforcing the constraints found in
-the model.
+Recall from [[file:intro.org][the introduction]] that there are two steps to using HotDrink.  The
+first is to create variables and constraints as elements of a /context/.  The
+second is to create a /property model/ object and add the context to it.  The
+property model is responsible for enforcing the constraints of the context.
 
-We create a model using a factory object called ~ModelBuilder~.  This object
-has member functions for creating the variables, constraints, and methods that
+We create a context using a factory object called ~ContextBuilder~.  This
+object has member functions for creating the variables and constraints that
 compose the object.  The general strategy for constructing a model is: (1.)
 create a new builder object, (2.) use the builder member functions to
-construct the model, (3.) call the ~end~ builder member function to retrieve
-the completed model.  The code below illustrates how this might be done.
+construct the context, (3.) call the ~context~ builder member function to
+retrieve the completed context.  The code below illustrates how this might be
+done.
 
 #+BEGIN_SRC js
 // Create new builder object
@@ -146,7 +153,7 @@ var builder = new hd.ModelBuilder();
 builder.variable( ... );
 builder.constraint( ... );
 builder.method( ... );
-...and so on...
+// ...and so on...
 
 // Retrieve the completed model
 var model = builder.end();
@@ -158,7 +165,7 @@ which they were invoked.  This allows a succinct programming style known as
 immediately invoke the next member function.  You can see this style in the
 view-model of the example.  [[(builder)][Line (builder)]] creates a new
 ~ModelBuilder~ object.  Rather than storing this builder in a variable, we
-simply begin invoking member functions on it.  [[(varlist)][Line (varlist)]]
+simply begin invoking member functions on it.  [[(varlist)][Line (varemails)]]
 invokes the ~variable~ member function, which returns the anonymous builder.
 This return value is used by [[(varfilter)][line (varfilter)]] to invoke
 ~variable~ again, which returns the builder again, and so on.  This continues
@@ -178,7 +185,7 @@ are created with the model builder using the ~variable~ member function and
 then stored in the model.  To create a variable you must specify a name; you
 may optionally specify an initial value.  As with JavaScript variables,
 uninitialized variables are given the value ~undefined~.  For example, [[(varlist)][line
-(varlist)]] of the view-model creates a variable named ~list~ which is
+(varemails)]] of the view-model creates a variable named ~emails~ which is
 initialized with a list of words, and [[(varresult)][line (varresult)]] creates a variable
 named ~result~ which is uninitialized.
 
@@ -444,11 +451,11 @@ setFilter2 = function setFilter2() {
 /Result/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/observer.html html
+# #+INCLUDE: tangle/observer.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/observer.js html
+# #+INCLUDE: tangle/observer.js html
 #+HTML: })();
 #+HTML: </script>
 
@@ -571,11 +578,11 @@ function setSpan( id, value ) {
 /Result/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/observable.html html
+# #+INCLUDE: tangle/observable.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/observable.js html
+# #+INCLUDE: tangle/observable.js html
 #+HTML: })();
 #+HTML: </script>
 
@@ -700,11 +707,11 @@ function setSpan( id, value ) {
 /Result/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/translator.html html
+# #+INCLUDE: tangle/translator.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/translator.js html
+# #+INCLUDE: tangle/translator.js html
 #+HTML: })();
 #+HTML: </script>
 
@@ -795,11 +802,11 @@ window.addEventListener( 'load', function() { (ref:onload)
 /Result/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/bind.html html
+# #+INCLUDE: tangle/bind.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/bind.js html
+# #+INCLUDE: tangle/bind.js html
 #+HTML: })();
 #+HTML: </script>
 
@@ -983,11 +990,11 @@ window.addEventListener( 'load', function() {
 /Result/
 
 # #+HTML: <div class="results">
-# #+INCLUDE: tangle/constraint.html html
+# # #+INCLUDE: tangle/constraint.html html
 # #+HTML: </div>
 # #+HTML: <script type="text/javascript">
 # #+HTML: (function() {
-# #+INCLUDE: tangle/constraint.js html
+# # #+INCLUDE: tangle/constraint.js html
 # #+HTML: })();
 # #+HTML: </script>
 
@@ -1182,11 +1189,11 @@ window.addEventListener( 'load', function() {
 /Result/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/multi-constraint.html html
+# #+INCLUDE: tangle/multi-constraint.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/multi-constraint.js html
+# #+INCLUDE: tangle/multi-constraint.js html
 #+HTML: })();
 #+HTML: </script>
 
@@ -1313,11 +1320,11 @@ window.addEventListener( 'load', function() {
 /Result/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/io-param.html html
+# #+INCLUDE: tangle/io-param.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/io-param.js html
+# #+INCLUDE: tangle/io-param.js html
 #+HTML: })();
 #+HTML: </script>
 
@@ -1446,11 +1453,11 @@ window.addEventListener( 'load', function() {
 /Result/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/multi-out.html html
+# #+INCLUDE: tangle/multi-out.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/multi-out.js html
+# #+INCLUDE: tangle/multi-out.js html
 #+HTML: })();
 #+HTML: </script>
 
@@ -1510,11 +1517,11 @@ window.addEventListener( 'load', function() {
 /Results/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/decl-bind.html html
+# #+INCLUDE: tangle/decl-bind.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/decl-bind.js html
+# #+INCLUDE: tangle/decl-bind.js html
 #+HTML: })();
 #+HTML: </script>
 
@@ -1623,11 +1630,11 @@ window.addEventListener( 'load', function() {
 /Results/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/fact-bind.html html
+# #+INCLUDE: tangle/fact-bind.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/fact-bind.js html
+# #+INCLUDE: tangle/fact-bind.js html
 #+HTML: })()
 #+HTML: </script>
 
@@ -1710,11 +1717,11 @@ window.addEventListener( 'load', function() {
 /Result/
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/eq.html html
+# #+INCLUDE: tangle/eq.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/eq.js html
+# #+INCLUDE: tangle/eq.js html
 #+HTML: })();
 #+HTML: </script>
 

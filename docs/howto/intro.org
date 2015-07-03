@@ -162,3 +162,8 @@ Once you have a context, you may add it to the property model.
 #+BEGIN_SRC js
 pm.addComponent( context );
 #+END_SRC
+
+As those function names suggest, the full model for your application can
+actually consist of several different components, and new components can be
+added or removed at run-time.  For now we assume one component only and
+consider it as the entire model.

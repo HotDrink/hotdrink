@@ -42,35 +42,3 @@ function initSource( label, i ) {
   span.appendChild( document.createTextNode( ')' ) );
   label.appendChild( span );
 }
-
-// window.addEventListener( 'load', function() {
-//   var sources = document.getElementsByClassName( 'org-src-container' );
-//   for (var i = 0, l = sources.length; i < l; ++i) {
-//     initSource( sources[i], i );
-//   }
-// } )
-
-// function initSource( source, i ) {
-//   source.style.display = 'none';
-//   var a = document.createElement( 'a' );
-//   a.name = 'src' + i;
-//   a.href = '#src' + i;
-//   a.appendChild( document.createTextNode( 'show' ) );
-//   a.onclick = function() {
-//     if (source.style.display == 'none') {
-//       source.style.display = 'inherit';
-//       a.removeChild( a.lastChild );
-//       a.appendChild( document.createTextNode( 'hide' ) );
-//     }
-//     else {
-//       source.style.display = 'none';
-//       a.removeChild( a.lastChild );
-//       a.appendChild( document.createTextNode( 'show' ) );
-//     }
-//   };
-//   var span = document.createElement( 'span' );
-//   span.appendChild( document.createTextNode( ' (' ) );
-//   span.appendChild( a );
-//   span.appendChild( document.createTextNode( ')' ) );
-//   source.previousElementSibling.appendChild( span );
-// }

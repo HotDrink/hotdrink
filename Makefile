@@ -78,7 +78,7 @@ howto_UNITS  := index intro basics binding async program
 
 howto_DEPS   := hotdrink.min.js fn-worker.js
 
-howto_RES    := style.css script.js spinner.gif
+howto_RES    := style.css collapse.js spinner.gif
 
 ######################################################################
 # Target definitions

@@ -5,12 +5,25 @@
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="script.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
+* Introduction
+
+This document describes the basics of how to create a property model, and how
+that property model operates and interacts with the rest of your web
+application.  We feel that you should not have to use a library without
+understanding exactly how it is working and what it is doing for you.
+Therefore, in this document we set aside the shortcuts and convenience
+functions of HotDrink so that it will be clear to see exactly how a property
+model works.  Then we slowly lay the groundwork for the shortcuts, making it
+clear what they are doing for you.  After reading this document, you should
+have a foundation for understanding what HotDrink can do for you without it
+seeming like \ldquo{}magic\rdquo.
+
 * Creating a constraint system
 
 The most fundamental part of a GUI written with HotDrink is the constraint
 system which represents data dependencies in your GUI.  This first example
-shows how to create variables and constraints, and how you can directly
-interact with variables.
+shows how to create variables and constraints for that system, and how you can
+directly interact with variables.
 
 We assume here that you have read the document [[file:intro.org][Introduction to HotDrink]] and
 are therefore familiar with the basic concept of a constraint system.
@@ -18,37 +31,39 @@ are therefore familiar with the basic concept of a constraint system.
 ** The example
 
 This example shows a single constraint of three variables: /emails/, /filter/,
-and /result/.  Each variable holds a string.  The value of /emails/ is a
-comma-delimited list of email addresses.  The value of /filter/ is any string.
-The value of /result/ is the comma-delimited list of just those addresses in
-/emails/ which contain the string in /filter/.
-
-Usually in a HotDrink application we bind variables to the View so that
-variable reads and writes
-Note that this example deliberately avoids using any of HotDrink's binding
-code so that all interactions with the constraint system will be explicit.
+and /result/.  Each of these variables holds a string.  The value of /emails/
+is a comma-delimited list of email addresses.  The value of /filter/ is any
+string.  The value of /result/ is the comma-delimited list of just those
+addresses in /emails/ which contain the string in /filter/ as a substring.
 
 Click the "Get Result" button to see the value of the /result/ variable.  You
 can use the "Set" buttons to set the values of
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/whatever.html html
+#+INCLUDE: tangle/barebone.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/whatever.js html
+#+INCLUDE: tangle/barebone.js html
 #+HTML: })();
 #+HTML: </script>
 
-The entire source code for this example is shown below.  (Click the "show"
-links to view the code.)  To clarify, we have broken code into three sections:
-the HTML that defines the View, the JavaScript that defines the View-Model,
-and the JavaScript that binds the View to the View-Model.
-
 *Source Code*
 
-#+CAPTION: /View/
-#+BEGIN_SRC html -n -r :exports code :tangle tangle/whatever.html :padline no
+The entire source code for this example is shown in its entirety below.
+(Click the "show" links to view the code.)  To clarify, we have broken code
+into three sections: the HTML that defines the View, the JavaScript that
+defines the View-Model, and the JavaScript that binds the View to the
+View-Model.  In the remainder of this section we will reproduce and examine
+snippets of this code.
+
+Note that, in this example, we deliberately avoid using any of HotDrink's
+binding mechanisms and write our own interactions with the property model so
+that they will be explicit.  This makes the example a little awkward, but also
+makes it easy to see what is happening.
+
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/barebone.html :padline no
 <table>
   <style type="text/css" scoped>
     td { padding-right: 1ex; }
@@ -56,94 +71,78 @@ and the JavaScript that binds the View to the View-Model.
   </style>
   <tr>
     <th>Emails:</th>
-    <td><span id="emailsSpan1"></span></td>
-    <td><input type="button" value="Set" onclick="setEmails1()"/></td>
+    <td><span id="emailsSpan"></span></td>
+    <td><input type="button" value="Set" onclick="setEmails()"/></td>
   </tr>
   <tr>
     <th>Filter:</th>
-    <td><span id="filterSpan1"></span></td>
-    <td><input type="button" value="Set" onclick="setFilter1()"/></td>
+    <td><span id="filterSpan"></span></td>
+    <td><input type="button" value="Set" onclick="setFilter()"/></td>
   </tr>
 </table>
 <br/>
-<input type="button" value="Get Result" onclick="getResult1()"/>
+<input type="button" value="Get Result" onclick="getResult()"/>
 #+END_SRC
 
-#+CAPTION: /View-Model/
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/whatever.js :padline no
-// Define the model
-var context = new hd.ContextBuilder() (ref:builder)
-    .variable( 'emails', 'joe@foo.com, sue@fum.edu, eve@foo.com, bob@baz.org' ) (ref:varemails)
-    .variable( 'filter', 'foo.com' ) (ref:varfilter)
-    .variable( 'result' ) (ref:varresult)
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/barebone.js :padline no :noweb yes
+// Define the context
+var context = new hd.ContextBuilder()
+<<emailvar>>
+    .variable( 'filter', 'foo.com' )
+    .variable( 'result' )
 
-    .constraint( 'emails, filter, result' ) (ref:con)
-    .method( 'emails, filter -> result', function( emails, filter ) { (ref:mth1)
-      var words = emails.trim().split( /\s*,\s*/ );
-      var filteredWords = words.filter( function( word ) {
-        return word.indexOf( filter ) > -1;
-      } );
-      return filteredWords.join( ', ' );
-    } )
+<<emailcon>>
+<<emailmth>>
 
-    .context(); (ref:end)
+    .context();
 
-// Create the constraint system
+// Create the property model
 var pm = new hd.PropertyModel();
 pm.addComponent( context );
-pm.update(); (ref:update1)
+<<update>>
 #+END_SRC
 
-#+CAPTION: /Binding/
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/whatever.js :padline no
+#+CAPTION: /Binding/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/barebone.js :padline no :noweb yes
+// Initialize web page when it loads
 window.addEventListener( 'load', function() {
-  setSpan( 'emailsSpan1', context.emails.get() );
-  setSpan( 'filterSpan1', context.filter.get() );
+  setSpan( 'emailsSpan', context.emails.get() );
+  setSpan( 'filterSpan', context.filter.get() );
 } )
 
+// Allow user to set emails variable
+<<setemails>>
+
+// Allow user to set filter variable
+setFilter = function setFilter() {
+  var filter = window.prompt( 'Filter:', context.filter.get() );
+  if (filter !== null) {
+    context.filter.set( filter );
+    pm.update();
+    setSpan( 'filterSpan', filter );
+  }
+}
+
+// Present result to user
+<<getResult>>
+
+// Helper function to update the contents of a <span> tag
 function setSpan( id, value ) {
   var span = document.getElementById( id );
   while (span.lastChild) { span.removeChild( span.lastChild ); }
   span.appendChild( document.createTextNode( value ) );
 }
-
-setEmails1 = function setEmails1() {
-  var emails = window.prompt( 'Emails:', context.emails.get() );
-  if (emails !== null) {
-    context.emails.set( emails );
-    system.update(); (ref:update2)
-    setSpan( 'emailsSpan1', emails );
-  }
-}
-
-setFilter1 = function setFilter1() {
-  var filter = window.prompt( 'Filter:', context.filter.get() );
-  if (filter !== null) {
-    context.filter.set( filter );
-    system.update(); (ref:update3)
-    setSpan( 'filterSpan1', filter );
-  }
-}
-
-getResult1 = function getResult1() {
-  alert( 'Result: ' + context.result.get() );
-}
 #+END_SRC
 
-** Working with the model builder
+** Working with the context builder
 
-Recall from [[file:intro.org][the introduction]] that there are two steps to using HotDrink.  The
-first is to create variables and constraints as elements of a /context/.  The
-second is to create a /property model/ object and add the context to it.  The
-property model is responsible for enforcing the constraints of the context.
-
-We create a context using a factory object called ~ContextBuilder~.  This
-object has member functions for creating the variables and constraints that
-compose the object.  The general strategy for constructing a model is: (1.)
+Recall from [[file:intro.org][the introduction]] that the context builder is a factory object for
+creating contexts.  The general strategy for constructing a context is: (1.)
 create a new builder object, (2.) use the builder member functions to
 construct the context, (3.) call the ~context~ builder member function to
-retrieve the completed context.  The code below illustrates how this might be
-done.
+retrieve the completed context.  The mock code below illustrates how this
+might be done.
 
 #+BEGIN_SRC js
 // Create new builder object
@@ -156,38 +155,51 @@ builder.method( ... );
 // ...and so on...
 
 // Retrieve the completed model
-var model = builder.end();
+var context = builder.context();
 #+END_SRC
 
 However, most builder member functions return the same builder object with
 which they were invoked.  This allows a succinct programming style known as
 \ldquo{}chaining\rdquo in which the return value of one member function is used to
 immediately invoke the next member function.  You can see this style in the
-view-model of the example.  [[(builder)][Line (builder)]] creates a new
-~ModelBuilder~ object.  Rather than storing this builder in a variable, we
-simply begin invoking member functions on it.  [[(varlist)][Line (varemails)]]
-invokes the ~variable~ member function, which returns the anonymous builder.
-This return value is used by [[(varfilter)][line (varfilter)]] to invoke
-~variable~ again, which returns the builder again, and so on.  This continues
-until [[(end)][line (end)]], where the ~end~ member function is invoked on the
-still-anonymous builder to return the model that was constructed.  It is this
-model that is assigned to the ~model~ variable on [[(builder)][line
-(builder)]].
+mock code below.
 
-Generally, creating a model involves the following steps.
+#+BEGIN_SRC js
+// Create, use, and discard builder object
+var context = new hd.ContextBuilder()
+    .variable( ... )
+    .constraint( ... )
+    .method( ... )
+    .context();
+#+END_SRC
+
+First we create a new ~ContextBuilder~ object.  Rather than storing this
+builder in a variable, we simply begin invoking member functions on it.  Each
+member function invoked returns the same anonymous builder.  This return value
+is used to invoke the next member function, and so on.  This continues until
+the end, where the ~context~ member function is invoked on the still-anonymous
+builder to return the context that was constructed.  It is this context that
+is assigned to the ~context~ variable.  This is the style we use in our
+view-model code.
+
+Generally, building a context involves the following steps.
 
 *** Creating variables
 
 Just as in a programming language, values in HotDrink are stored in variables.
-(Note, however, that HotDrink variables are /not/ the same as JavaScript
-variables --- HotDrink variables are actually JavaScript objects.)  Variables
-are created with the model builder using the ~variable~ member function and
-then stored in the model.  To create a variable you must specify a name; you
-may optionally specify an initial value.  As with JavaScript variables,
-uninitialized variables are given the value ~undefined~.  For example, [[(varlist)][line
-(varemails)]] of the view-model creates a variable named ~emails~ which is
-initialized with a list of words, and [[(varresult)][line (varresult)]] creates a variable
-named ~result~ which is uninitialized.
+Note, however, that HotDrink variables are /not/ the same as JavaScript
+variables---HotDrink variables are actually JavaScript objects.  Variables are
+created with the model builder using the ~variable~ member function and then
+stored in the model.  To create a variable you must specify a name; you may
+optionally specify an initial value.  As with JavaScript variables,
+uninitialized variables are given the value ~undefined~.  For example, the
+line below creates a variable named ~emails~ which is initialized with a list
+of email addresses.
+
+#+NAME: emailvar
+#+BEGIN_SRC js
+    .variable( 'emails', 'joe@foo.com, sue@fum.edu, eve@foo.com, bob@baz.org' )
+#+END_SRC
 
 As mentioned previously, the return value of the ~variable~ function is the
 builder object itself in order to facilitate chaining.
@@ -201,7 +213,7 @@ remainder of the examples.
 
 *** Creating constraints
 
-Recall from [[file:intro.org][the introduction]] that a constraint is simply
+Recall from [[file:intro.org][the introduction]] that a constraint is
 something that should always be true concerning some of your variables ---
 i.e., a /relation/ over the variables.  In the example above, the relation is
 that ~result~ is just those words in ~list~ which contain the string in
@@ -209,9 +221,14 @@ that ~result~ is just those words in ~list~ which contain the string in
 
 To define a constraint, you must specify the variables involved.  To make this
 simple, the ~constraint~ member function of the model builder takes a string
-containing all of the variables' names in a comma delimited list.  In
-[[(con)][line (con)]] of the view-model we define a constraint for the
-variables ~list~, ~filter~, and ~result~.
+containing all of the variables' names in a comma delimited list.  In this
+example we define a single constraint for the variables ~list~, ~filter~, and
+~result~, as shown on the line below.
+
+#+NAME: emailcon
+#+BEGIN_SRC js
+    .constraint( 'emails, filter, result' )
+#+END_SRC
 
 The return value of the ~constraint~ member function is the builder. The
 ~constraint~ member function may be abbreviated as ~c~; we will use this
@@ -231,10 +248,20 @@ The method creation function of the model builder, named ~method~, takes a
 signature and a function.  The signature is a string defining which variables
 are inputs and which are outputs; it has the form "/inputs/ ~->~ /outputs/",
 where both /inputs/ and /outputs/ are comma-delimited lists of variables.  For
-this example we provide only a single method, declared on [[(mth1)][line
-(mth1)]].  This method takes ~list~ and ~filter~ and uses them to calculate
-~result~.  You can have more than one method per constraint; we'll discuss
-this further in later examples.
+this example we provide only a single method, shown below.  This method takes
+~list~ and ~filter~ and uses them to calculate ~result~.  You can have more
+than one method per constraint; we'll discuss this further in later examples.
+
+#+NAME: emailmth
+#+BEGIN_SRC js
+    .method( 'emails, filter -> result', function( emails, filter ) {
+      var words = emails.trim().split( /\s*,\s*/ );
+      var filteredWords = words.filter( function( word ) {
+        return word.indexOf( filter ) > -1;
+      } );
+      return filteredWords.join( ', ' );
+    } )
+#+END_SRC
 
 Note that in this example we provide an anonymous function as our method, but
 this is not a requirement; methods can be named functions defined elsewhere.
@@ -249,235 +276,230 @@ the return value of ~method~ is the builder to facilitate chaining, and it may
 be abbreviated as ~m~; we will use this abbreviation in the remainder of the
 examples.
 
-*** Declaring the end
-
-You begin defining a new constraint using the ~constraint~ builder member
-function; you continue to add methods to it using ~method~.  However, the
-constraint will not actually be completed until you indicate that all methods
-belonging to the constraint have been created.  One way to do this is by
-calling the ~endConstraint~ builder member function.  After you call this
-function, the constraint is created and no further methods may be added to it.
-
-However, most builder member functions (such as ~variable~, ~constraint~,
-~end~, etc.) check to see if the builder has an unfinished constraint and, if
-so, call ~endConstraint~ for you.  Thus, most of the time there is no need to
-call ~endConstraint~ explicitly; it is only when you're doing something
-unusual with the builder must you be aware of it.  Just remember, your
-constraint has not been created until you call ~endConstraint~ or it is called
-for you.
-
-The ~endConstraint~ member function returns the builder object.  There is no
-abbreviation for ~endConstraint~.
-
-Similarly, to declare that you are done defining your model, you may call the
-~end~ builder member function.  This function finalizes the definition of your
-model.  Unlike other builder member functions, ~end~ returns the completed
-model instead of returning the builder.  There is no abbreviation for ~end~.
-
 ** Interacting with variables
 
-Variables can be accessed via the model; for example, if your model is held in
-a variable named ~model~, then the variable ~list~ is accessed as
-~model.list~.  The value of variables can be retrieved using the variable's
-~get~ member function and modified using the variable's ~set~ member function.
-If a variable is registered with a constraint system (i.e., the variable is in
-a model that has been added to the constraint system), then changes to the
-variable's value will be noticed by the constraint system.
+Variables can be accessed via the context; for example, if your context is
+held in a variable named ~context~, then the variable ~emails~ is accessed as
+~context.emails~.  The value of variables can be retrieved using the ~get~
+member function and modified using the variable's ~set~ member function.  If a
+variable is registered with a property model (i.e., the variable is in a
+context that has been added to the constraint system), then changes to the
+variable's value will be noticed by the property model.
 
-In the example above, we use the ~get~ method to initialize the prompt when
-setting ~list~ or ~filter~, and we also use ~get~ to report the value of
-~result~.  We use ~set~ to update ~list~ or ~filter~ after the user has been
-prompted for a value.  The value of ~result~ is never set explicitly.
-Instead, it is updated by the constraint system whenever ~list~ or ~filter~ is
-modified.
+In the example above, the following function is called every time the user
+clicks the "Get Results" button.  The function calls ~context.result.get~ to
+retrieve the current value of the ~result~ variable; it then displays this
+value using the standard ~alert~ function.
+
+
+#+NAME: getresult
+#+BEGIN_SRC js
+getResult = function getResult() {
+  alert( 'Result: ' + context.result.get() );
+}
+#+END_SRC
+
+The following function is called every time the user clicks the "Set" button
+for the email address list.  The function calls ~context.emails.get()~ to
+retrieve the current value of the ~emails~ variable; this is used to
+initialize the prompt.  Once the user enters a new value, it uses
+~context.emails.set()~ to store it in the variable.  It also updates the web
+page using our custom ~setSpan~ function.  (Check the full source to see the
+code for ~setSpan~.)
+
+#+NAME: setemails
+#+BEGIN_SRC js
+setEmails = function setEmails() {
+  var emails = window.prompt( 'Emails:', context.emails.get() );
+  if (emails !== null) {
+    context.emails.set( emails );
+    pm.update();
+    setSpan( 'emailsSpan', emails );
+  }
+}
+#+END_SRC
+
+This code provides a very rudimentary sort of binding: updating the web page
+so that it reflects the value of a variable.  We'll show you a better solution
+to binding in the next section.
 
 ** Updating the constraint system
 
 To /update/ the constraint system means to respond to changes that have been
-made by enforcing any constraints which may no longer be satisfied.  There are
-two types of changes which require a constraint system update: adding new
-constraints to the system, and setting the value of a variable.  The
-constraint system notices when these events occur, and remembers the changes.
-However, the constraint system does not actually update until its ~update~
-member function is called.  This allows you to package several changes into a
-single update.  Notice where we call ~update~ in the example above.  We call
-it on [[(update1)][line (update1)]] after adding our model to the constraint
-system, and we call it on [[(update2)][line (update2)]] and [[(update3)][line
-(update3)]] after setting variables.
+made --- such as added constraints or modified variables --- by enforcing any
+constraints which may no longer be satisfied.  The constraint system notices
+when changes occur, and remembers the changes.  However, the constraint system
+does not actually update until its ~update~ member function is called, as
+shown below.  This allows you to package several changes into a single update.
+In the example above, we call ~update~ after adding our context to the
+property model, as well as after setting a variable.
 
-If you would prefer, you can have the system automatically update after
-changes.  You may set the system to immediately update after every change, or
-to /schedule/ an update after every change --- meaning that it will set an
-immediate timer event (using ~window.setTimeout~) that will cause the system
-to update.  HotDrink will only schedule one update at a time; if it goes to
-schedule an update and finds that one is already scheduled, it will /not/
-schedule a second one.
-
-The update policies of the system is controlled by two member variables:
-~updateOnModelChange~ and ~updateOnVariableChange~.  These are enumerated
-types which may be set to one of ~hd.Update.None~, ~hd.Update.Immediate~, or
-~hd.Update.Scheduled~, as shown below.
-
+#+NAME: update
 #+BEGIN_SRC js
-var system = new hd.ConstraintSystem();
-
-// Policy for when constraints are added to system
-system.updateOnModelChange = hd.Update.None;          // do not automatically update
-system.updateOnModelChange = hd.Update.Immediate;     // update immediately
-system.updateOnModelChange = hd.Update.Scheduled;     // schedule an update
-
-// Policy for when variables are modified
-system.updateOnVariableChange = hd.Update.None;       // do not automatically update
-system.updateOnVariableChange = hd.Update.Immediate;  // update immediately
-system.updateOnVariableChange = hd.Update.Scheduled;  // schedule an update
+pm.update();
 #+END_SRC
 
-The default for both policies is ~hd.Updated.Scheduled~.  This policy is
-convenient in that it does not require explicit calls to ~update~, but it
-still allows multiple changes to be grouped together under a single update.
-The potential downside is that you loose precise control of when updates
-occur.  If this is a concern, then we recommend an alternate update policy.
+If you would prefer, you can have the system automatically /schedule/ an
+update after it notices changes --- meaning that it will set an immediate
+timer event (using ~window.setTimeout~) that will cause the system to update.
+HotDrink will only schedule one update at a time; thus, you can make several
+changes to the property model, and they will all be processed by a single
+timer event.
 
-Thus, in the example above, we could remove all calls to ~system.update~ with
-no visible effect --- the constraint system will automatically schedule an
-update after every change.  In future examples we will omit calls to
-~system.update~.
+In fact, scheduling updates is the default behavior for a property model.
+Thus, in the example above, we could remove all calls to ~pm.update()~ and the
+example would continue to behave exactly the same: it would schedule calls to
+~update~ after every change.  Note that calling ~update~ when no update is
+needed has no effect; we do not need to worry about calling it too often.
 
-* Reacting to variable changes
+Scheduling offers convenience at the price of loosing precise control over
+when property model updates happen.  If you would like to turn off this
+behavior, simply set the property model's ~scheduleUpdateOnChange~ property to
+~false~, as shown below.
 
-The previous example required clicking a button every time we wanted to see
-the results.  However, there is a way we can register to be notified every
-time the value of a variable changes.  Using this notification, we can show
-variable updates as soon as they are available.
+#+BEGIN_SRC js
+pm.scheduleUpdateOnChange = false;
+#+END_SRC
+
+* Binding to variables
+
+The previous example interacted with the property model using only the ~get~
+and ~set~ functions for variables.  In actuality, this is not the best way to
+interact with variables of the property model.  Variables have a second
+interface which is designed specifically for /binding/ variables to the View.
+In this example, we write our own simple binders so that the web page will
+automatically reflect the View-Model.
 
 ** The example
 
-/View/
+This example is very similar to the previous:  a list of email addresses which
+is filtered by a string.  The difference is in the way we interact with the
+property model.  In this example, the ~emails~ and ~filter~ variables are
+represented by text boxes: editing the text boxes changes the variables.
+Also, the value of the ~result~ variable is shown in the web page and updated
+automatically.
 
-#+BEGIN_SRC html -n -r :exports code :tangle tangle/observer.html :padline no
+#+HTML: <div class="results">
+#+INCLUDE: tangle/observe.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/observe.js html
+#+HTML: })();
+#+HTML: </script>
+
+*Source Code*
+
+In this example we use HotDrink's binding interfaces, but write our own
+binding objects.  In fact, HotDrink comes with several built-in binding
+objects; however, writing our own makes it clear what is happening.
+
+Note that the View-Model of this example is identical to the previous example;
+only the View and Binding have changed.
+
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/observe.html :padline no
 <table>
   <style type="text/css" scoped>
-    td { padding-right: 1ex; }
     th { padding-right: 1ex; text-align: left; font-weight: bold; }
+    input.long { width: 100ex; }
   </style>
   <tr>
-    <th>List:</th>
-    <td><span id="listSpan2"></span></td>
-    <td><input type="button" value="Set" onclick="setList2()"/></td>
+    <th>Emails:</th>
+    <td><input type="text" id="emailsEdit" class="long"/></td>
   </tr>
   <tr>
     <th>Filter:</th>
-    <td><span id="filterSpan2"></span></td>
-    <td><input type="button" value="Set" onclick="setFilter2()"/></td>
+    <td><input type="text" id="filterEdit" class="long"/></td>
   </tr>
   <tr>
     <th>Result:</th>
-    <td><span id="resultSpan2"></span></td>
+    <td><span id="resultSpan"></span></td>
   </tr>
 </table>
 #+END_SRC
 
-/View-Model/
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/observe.js :padline no
+// Define the context
+var context = new hd.ContextBuilder()
+    .v( 'emails', 'joe@foo.com, sue@fum.edu, eve@foo.com, bob@baz.org' )
+    .v( 'filter', 'foo.com' )
+    .v( 'result' )
 
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/observer.js :padline no
-// Define the model
-var model = new hd.ModelBuilder()
-    .v( 'list', 'ebip, snad, ebna, naip, sneb, ipeb' ) (ref:varlist)
-    .v( 'filter', 'na' )
-    .v( 'result' ) (ref:varresult)
-
-    .c( 'list, filter, result' ) (ref:con)
-    .m( 'list, filter -> result', function( list, filter ) {
-      var words = list.trim().split( /\s*,\s*/ );
+    .c( 'emails, filter, result' ) (ref:con)
+    .m( 'emails, filter -> result', function( emails, filter ) {
+      var words = emails.trim().split( /\s*,\s*/ );
       var filteredWords = words.filter( function( word ) {
         return word.indexOf( filter ) > -1;
       } );
       return filteredWords.join( ', ' );
     } )
 
-    .end();
+    .context();
 
-// Create the constraint system
-var system = new hd.ConstraintSystem();
-system.addComponent( model );
+// Create the property model
+var pm = new hd.PropertyModel();
+pm.addComponent( context );
 #+END_SRC
 
-/Binding/
-
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/observer.js :padline no
+#+CAPTION: /Binding/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/observe.js :padline no :noweb yes
+// To be done when the document has loaded...
 window.addEventListener( 'load', function() {
-  model.list.addObserverInit( {
-    onNext: function( v ) { setSpan( 'listSpan2', v ) },
-    onError: function( e ) { },
-    onCompleted: function() { }
-  } )
 
-  model.filter.addObserverInit( {
-    onNext: function( v ) { setSpan( 'filterSpan2', v ) },
-    onError: function( e ) { },
-    onCompleted: function() { }
-  } )
+<<emailobservable>>
 
-  model.result.addObserverInit( {
-    onNext: function( v ) { setSpan( 'resultSpan2', v ) },
-    onError: function( e ) { },
-    onCompleted: function() { }
-  } )
+  // Initialize filter text box with variable value
+  var filterEdit = document.getElementById( 'filterEdit' );
+  filterEdit.value = context.filter.get();
+
+  // Make an observable for every time the text box is edited
+  var filterObservable = new hd.BasicObservable();
+  filterEdit.addEventListener( 'input', function() {
+    filterObservable.sendNext( filterEdit.value );
+  } );
+
+  // Subscribe the variable to the observable
+  filterObservable.addObserver( context.filter );
+
+<<resultobserver>>
+<<addobserver>>
 } )
 
+// Helper function to update the contents of a <span> tag
 function setSpan( id, value ) {
   var span = document.getElementById( id );
   while (span.lastChild) { span.removeChild( span.lastChild ); }
   span.appendChild( document.createTextNode( value ) );
 }
-
-setList2 = function setList2() {
-  var list = window.prompt( 'List:', model.list.get() );
-  if (list !== null) {
-    model.list.set( list );
-    setSpan( 'listSpan2', list );
-  }
-}
-
-setFilter2 = function setFilter2() {
-  var filter = window.prompt( 'Filter:', model.filter.get() );
-  if (filter !== null) {
-    model.filter.set( filter );
-    setSpan( 'filterSpan2', filter );
-  }
-}
 #+END_SRC
 
-/Result/
-
-#+HTML: <div class="results">
-# #+INCLUDE: tangle/observer.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-# #+INCLUDE: tangle/observer.js html
-#+HTML: })();
-#+HTML: </script>
-
-/Notes/
-
-#+HTML: <div class="notes">
-This example uses the same constraint as the previous example.  The results
-are displayed in the web page, and automatically updated every time a variable
-changes.
-#+HTML: </div>
 
 ** The Observer pattern
 
-The typical approach to event-based programming is to register a single
-callback function to be executed any time an event occurs.  This is sometimes
-known as the /observer pattern/ --- the observer provides a function to be
-called when an event occurs.  In HotDrink, however, we use a variation of the
-observer pattern inspired by Microsoft's [[https://rx.codeplex.com/][reactive extensions]].  In this
-pattern, an observer has three associated callbacks:  one to be called for
-normal event values, one for erroneous event values, and one without a value
-indicating that no more events will occur.  Thus, in HotDrink, an /observer/
-is any object which has the following three properties:
+You may be wondering why, in the previous example, we did not update the
+result immediately after either the ~emails~ or ~filter~ variable were
+changed.  The reason is that property models execute /asynchronously/.  This
+means that, when you update the property model by calling ~update~, it does
+not immediately do all the work of solving the constraint system.  Instead, it
+does some of the work right away, and then /schedules/ the rest to be
+completed later.  The ability of a property model to run asynchronously means
+it cooperates well with other asynchronous programming techniques, such as
+Ajax calls and web workers.  However, it means that, had we tried to read the
+value of ~result~ immediately after writing to ~emails~, we would still see
+the old value of ~result~; it would not have been updated yet.
+
+Rather than asking the ~result~ variable for its value, we should ask it to
+tell us when its value is ready.  Typically we might do this by registering a
+callback function to be executed as soon as the value was ready.  This
+technique is sometimes known as the /observer pattern/ --- the observer
+provides a function to be called when an event occurs.  In HotDrink, we use a
+variation of the observer pattern inspired by Microsoft's [[https://rx.codeplex.com/][reactive extensions]].
+In this pattern, an observer has three associated callbacks: one to be called
+for normal event values, one for erroneous event values, and one without a
+value indicating that no more events will occur.  Thus, in HotDrink, an
+/observer/ is any object which has the following three properties:
 
 - ~onNext( value )~ :: function called on normal event; takes value associated
      with the event
@@ -487,119 +509,108 @@ is any object which has the following three properties:
 
 - ~onCompleted()~ :: function called when no more events can occur
 
+It does not matter what type of object it is, nor what other properties it
+has; only that it has these three properties.  Here's an example of an
+observer for the result variable.  Whenever the variable takes a new value, it
+will call ~onNext~, which will update the web page with the new value.
 
-* Automating variable updates
+#+NAME: resultobserver
+#+BEGIN_SRC js
+  var resultObserver = {
+    onNext: function( v ) { setSpan( 'resultSpan', v ) },
+    onError: function( e ) { },
+    onCompleted: function() { }
+  };
+#+END_SRC
+
+** The Observable pattern
+
+The counterpart to an observer is an /observable/.  An observable is an object
+which publishes values an observer would want to know about.  An observer may
+/subscribe/ to an observable, in which case the observable will notify it of
+each new value by calling the observer's ~onNext~ callback.  In HotDrink, an
+observable is any object which has the following two properties:
+
+- ~addObserver( observer )~ :: Subscribe the observer to the observable so
+     that it will receive notifications
+
+- ~removeObserver( observer )~ :: Unsubsribe the observer so that it will no
+     longer receive notifiactions.
+
+As you have probably guessed, variables of the property model are observable.
+Thus, we may subscribe our observer to the result variable like so:
+
+#+NAME: addobserver
+#+BEGIN_SRC js
+  context.result.addObserver( resultObserver );
+#+END_SRC
+
+Now, as soon as the property model updates the result variable, our callback
+will be executed and the web page will be updated.
+
+** The ~BasicObservable~ type
+
+Variables of the property model are not only observable, they are observers as
+well.  When a variable observes an observable, every value produced by that
+observer is treated as a ~set~ of the variable.  (In fact, a variable's
+~onNext~ and ~set~ functions do the exact same thing.)  Thus, if we want
+changes to a text box to be reflected in a variable of the property model, we
+can create an observable that represents the value of the text box.
+
+Creating an observable object is not hard, but it does tend to involve a lot
+of boiler-plate code.  For this reason, HotDrink provides a simple
+implementation of an observable object called ~BasicObservable~.  You may
+create instances of this type, or use it as a prototype for your own
+JavaScript types.  A ~BasicObservable~ keeps a list of observers in a property
+named ~observers~.  It also provides three functions, ~sendNext~, ~sendError~,
+and ~sendCompleted~, for invoking callbacks of all subscribed observers.
+
+The code below creates a ~BasicObservable~ to represent the text box for the
+~email~ variable.  An event listener is created for the text box so that every
+time it is edited, the observable will notify any subscribers of the new
+value.  Then we subscribe the ~emails~ variable to this new observable.  In
+this way, any changes to the text box will be relayed to the variable.
+
+#+NAME: emailobservable
+#+BEGIN_SRC js
+  // Initialize email text box with variable value
+  var emailsEdit = document.getElementById( 'emailsEdit' );
+  emailsEdit.value = context.emails.get();
+
+  // Make an observable for every time the text box is edited
+  var emailsObservable = new hd.BasicObservable();
+  emailsEdit.addEventListener( 'input', function() {
+    emailsObservable.sendNext( emailsEdit.value );
+  } );
+
+  // Subscribe the variable to the observable
+  emailsObservable.addObserver( context.emails );
+#+END_SRC
+
+* Adapters and translators
 
 ** The example
 
-/View/
+This example also contains a single constraint.  This time, the constraint
+represents the mathematical equation, $income - expenses = profit$.  As with
+the previous example, updating the text boxes will cause the result to update
+automatically.
 
-#+BEGIN_SRC html -n -r :exports code :tangle tangle/observable.html :padline no
-<table>
-  <style type="text/css" scoped>
-    th { padding-right: 1ex; text-align: left; font-weight: bold; }
-    input.long { width: 100ex; }
-  </style>
-  <tr>
-    <th>List:</th>
-    <td><input type="text" id="listEdit3" class="long"/></td>
-  </tr>
-  <tr>
-    <th>Filter:</th>
-    <td><input type="text" id="filterEdit3" class="long"/></td>
-  </tr>
-  <tr>
-    <th>Result:</th>
-    <td><span id="resultSpan3"></span></td>
-  </tr>
-</table>
-#+END_SRC
-
-/View-Model/
-
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/observable.js :padline no
-// Define the model
-var model = new hd.ModelBuilder()
-    .v( 'list', 'ebip, snad, ebna, naip, sneb, ipeb' ) (ref:varlist)
-    .v( 'filter', 'na' )
-    .v( 'result' ) (ref:varresult)
-
-    .c( 'list, filter, result' ) (ref:con)
-    .m( 'list, filter -> result', function( list, filter ) {
-      var words = list.trim().split( /\s*,\s*/ );
-      var filteredWords = words.filter( function( word ) {
-        return word.indexOf( filter ) > -1;
-      } );
-      return filteredWords.join( ', ' );
-    } )
-
-    .end();
-
-// Create the constraint system
-var system = new hd.ConstraintSystem();
-system.addComponent( model );
-#+END_SRC
-
-/Binding/
-
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/observable.js :padline no
-window.addEventListener( 'load', function() {
-  var listObservable = new hd.BasicObservable();
-  var listEdit = document.getElementById( 'listEdit3' );
-  listEdit.value = model.list.get();
-  listEdit.addEventListener( 'input', function() {
-    listObservable.sendNext( listEdit.value );
-  } );
-  listObservable.addObserver( model.list );
-
-  var filterObservable = new hd.BasicObservable();
-  var filterEdit = document.getElementById( 'filterEdit3' );
-  filterEdit.value = model.filter.get();
-  filterEdit.addEventListener( 'input', function() {
-    filterObservable.sendNext( filterEdit.value );
-  } );
-  filterObservable.addObserver( model.filter );
-
-  model.result.addObserverInit( {
-    onNext: function( v ) { setSpan( 'resultSpan3', v ) },
-    onError: function( e ) { },
-    onCompleted: function() { }
-  } )
-} )
-
-function setSpan( id, value ) {
-  var span = document.getElementById( id );
-  while (span.lastChild) { span.removeChild( span.lastChild ); }
-  span.appendChild( document.createTextNode( value ) );
-}
-
-#+END_SRC
-
-/Result/
+This example utilizes some new binding techniques, including the ability to
+convert between string values in the View and numeric values in the View-Model.
 
 #+HTML: <div class="results">
-# #+INCLUDE: tangle/observable.html html
+#+INCLUDE: tangle/translator.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-# #+INCLUDE: tangle/observable.js html
+#+INCLUDE: tangle/translator.js html
 #+HTML: })();
 #+HTML: </script>
 
-/Notes/
+*Source Code*
 
-#+HTML: <div class="notes">
-This example keeps the same constraint as the previous two examples.  However,
-rather than manually setting a variable with a button, this example
-automatically sets variables every time the corresponding edit box is changed.
-#+HTML: </div>
-
-* Translating values
-
-** The example
-
-/View/
-
+#+CAPTION: /View/ (show/hide)
 #+BEGIN_SRC html -n -r :exports code :tangle tangle/translator.html :padline no
 <table>
   <style type="text/css" scoped>
@@ -620,11 +631,10 @@ automatically sets variables every time the corresponding edit box is changed.
 </table>
 #+END_SRC
 
-/View-Model/
-
+#+CAPTION: /View-Model/ (show/hide)
 #+BEGIN_SRC js -n -r :exports code :tangle tangle/translator.js :padline no
-// Define the model
-var model = new hd.ModelBuilder()
+// Define the context
+var context = new hd.ContextBuilder()
     .v( 'income', 2000 )
     .v( 'expenses', 480 )
     .v( 'profit' )
@@ -634,58 +644,46 @@ var model = new hd.ModelBuilder()
       return income - expenses;
     } )
 
-    .end();
+    .context();
 
 // Create the constraint system
-var system = new hd.ConstraintSystem();
-system.addComponent( model );
+var pm = new hd.PropertyModel();
+pm.addComponent( context );
 #+END_SRC
 
-/Binding/
-
+#+CAPTION: /Binding/ (show/hide)
 #+BEGIN_SRC js -n -r :exports code :tangle tangle/translator.js :padline no
+// To be done when the document has loaded...
 window.addEventListener( 'load', function() {
-  var incomeObservable = new hd.BasicObservable();
-  var incomeEdit = document.getElementById( 'incomeEdit' );
-  incomeEdit.value = model.income.get();
-  incomeEdit.addEventListener( 'input', function() {
-    incomeObservable.sendNext( incomeEdit.value );
-  } );
 
+  // Income adapter/translator
+  var incomeAdapter = new hd.Edit( document.getElementById( 'incomeEdit' ) );
   var incomeTranslator = new hd.Translator();
   incomeTranslator.onNext = stringToNumber;
 
-  incomeTranslator.addObserver( model.income );
-  incomeObservable.addObserver( incomeTranslator );
+  incomeTranslator.addObserver( context.income );
+  incomeAdapter.addObserver( incomeTranslator );
+  context.income.addObserver( incomeAdapter );
 
-  var expensesObservable = new hd.BasicObservable();
-  var expensesEdit = document.getElementById( 'expensesEdit' );
-  expensesEdit.value = model.expenses.get();
-  expensesEdit.addEventListener( 'input', function() {
-    expensesObservable.sendNext( expensesEdit.value );
-  } );
-
+  // Expenses adapter/translator
+  var expensesAdapter = new hd.Edit( document.getElementById( 'expensesEdit' ) );
   var expensesTranslator = new hd.Translator();
   expensesTranslator.onNext = stringToNumber;
 
-  expensesTranslator.addObserver( model.expenses )
-  expensesObservable.addObserver( expensesTranslator );
+  expensesTranslator.addObserver( context.expenses )
+  expensesAdapter.addObserver( expensesTranslator );
+  context.expenses.addObserver( expensesAdapter );
 
-  var profitObserver = {
-    onNext: function( v ) { setSpan( 'profitSpan', v ) },
-    onError: function( e ) { },
-    onCompleted: function() { }
-  };
-
+  // Profit adapter/translator
+  var profitAdapter = new hd.Text( document.getElementById( 'profitSpan' ) );
   var profitTranslator = new hd.Translator();
-  profitTranslator.onNext = function( n ) {
-    this.sendNext( n.toFixed( 2 ) );
-  }
+  profitTranslator.onNext = fix2;
 
-  model.profit.addObserverInit( profitTranslator );
-  profitTranslator.addObserver( profitObserver );
+  context.profit.addObserver( profitTranslator );
+  profitTranslator.addObserver( profitAdapter );
 } )
 
+// Helper function for translator:  convert string to number
 function stringToNumber( s ) {
   var n = Number( s );
   if (s == '' || isNaN( n )) {
@@ -696,32 +694,29 @@ function stringToNumber( s ) {
   }
 }
 
-function setSpan( id, value ) {
-  var span = document.getElementById( id );
-  while (span.lastChild) { span.removeChild( span.lastChild ); }
-  span.appendChild( document.createTextNode( value ) );
+// Helper function for translator:  convert number to string
+function fix2( n ) {
+  this.sendNext( n.toFixed( 2 ) );
 }
-
 #+END_SRC
 
-/Result/
 
-#+HTML: <div class="results">
-# #+INCLUDE: tangle/translator.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-# #+INCLUDE: tangle/translator.js html
-#+HTML: })();
-#+HTML: </script>
+** View adapters
 
-/Notes/
+A /view adapter/ is an object which represents some element of the view which
+can be bound to a property model.  It is called an /adapter/ because it adapts
+the view element's interface to the observable/observer interface expected by
+HotDrink.
 
-#+HTML: <div class="notes">
-This example keeps the same constraint as the previous two examples.  However,
-rather than manually setting a variable with a button, this example
-automatically sets variables every time the corresponding edit box is changed.
-#+HTML: </div>
+A view adapter may be read-only (i.e., observable-only), read-write (i.e.,
+observable-observer), or write-only (i.e., observer-only).  For example, an
+adapter for the mouse cursor position would be read-only; an adapter for a
+text box would be read-write; and an adapter for a <span> tag would be
+write-only.
+
+HotDrink provides several of these view adapters.  We describe them in detail
+in the the [[file:binding.org][Advanced Binding Concepts]] how-to.  For now, however, we introduce
+two adapters to use in the remainder of this how-to.  The ~Edit~ adapter
 
 
 * Variables and binding
@@ -925,7 +920,7 @@ will /not/ be passed from the view to the model (or from the model to the
 view, depending on the direction).  Also, transformations may result in loss
 of formatting, since formatting is a property of the string.  (For example,
 try entering "1e3" into the edit box for Y.)
-x
+
 * Constraints and methods
 
 ** The example

@@ -2,6 +2,7 @@
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="script.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 # #+INFOJS_OPT: sdepth:1 home:index.html
 
@@ -41,7 +42,7 @@ variables are used to update which other variables.  HotDrink has a
 dataflows depending on which methods are executed.  In general, HotDrink
 selects a dataflow that preserves variables the user has edited more recently.
 
-In a HotDrink \ldquo{}powered\rdquo{} user interface, GUI events are translated to changes
+In a HotDrink \ldquo{}powered\rdquo user interface, GUI events are translated to changes
 to constraint system variables.  These changes result
 in constraints which are no longer satisfied.  HotDrink
 responds by /solving/ the constraint system --- that is, selecting which methods
@@ -65,14 +66,14 @@ follows:
   with HTML, JavaScript, and constructing web pages.
 
 - The /view-model/ is responsible for managing the data presented in
-  the view. This means supplying the data to the view to be displayed,
+  the view. This means supplying the data to be displayed by the view,
   as well as responding to user actions.  The purpose of
   HotDrink is to help in implementing the view-model.
 
 - Another important part of an MVVM application are the /bindings/.  A
   binding connects elements in the view with variables in the
   view-model.  The bindings are sometimes treated as part of the
-  view---that is why there is no "B" in "MVVM"---but we treat them as
+  view---that is why there is no \ldquo{}B\rdquo in \ldquo{}MVVM\rdquo---but we treat them as
   a distinct component of the pattern.  In HotDrink, bindings can be
   specified in JavaScript, or as annotations in HTML as part of the
   view specification.
@@ -112,42 +113,60 @@ using HotDrink.
 
 ** The property model
 
-A /property model/ is the view-model of your application.  It contains
-variables for holding the data used by your GUI, and also a constraint system
-for enforcing any constraints you define over those variables as described in
-Section [[Constraint systems]].  In general, your application will always have a
-single property model, created like so:
-
-#+BEGIN_SRC js
-var pm = new hd.PropertyModel();
-#+END_SRC
+A /property model/ is the view-model of a HotDrink \ldquo{}powered\rdquo application.
+application.  It contains variables for holding the data used by your GUI, and
+a constraint system for enforcing any constraints you define for those
+variables (as described in Section [[Constraint systems]].)  In general, your
+application will always have a single property model: first you create the
+property model, then you give it some variables and constraints to manage.
+For that, you will need a context.
 
 ** The context
 
 A /context/ is an object which serves two purposes.  First, it is a container
-for variables and constraints of the property model.  Second, it provides a
-naming mechanism: if you want a variable named $x$, create a new variable
-object and assign it to the the ~x~ field of your context.  We say the
-variable is named ~x~ in the context to which you assigned it; the same
-variable may have a different name in some other context.
+for elements of the property model, such as variables and constraints.
+Second, it provides a naming mechanism for those elements: if you want a
+variable named $x$, create a new variable object and assign it to the the ~x~
+field of your context.  We say the variable is named ~x~ in the context to
+which you assigned it; the same variable may have a different name in some
+other context.
 
-To a context, containing an object and naming an object are two different
-things.  The context may contain certain objects which it does not name, and
-it may name objects which it does not contain.  Containing denotes ownership:
-a context owns the variables and constraints it contains.  Thus, while
-multiple contexts may give a name to a variable, only one context may contain
-a variable.  When you add a context to a property model, you add all the
-variables and constraints which it contains.
+For a context, containing an object and naming an object are two unrelated
+tasks.  The context may contain certain objects which it does not name, and it
+may name objects which it does not contain.  Containing denotes ownership: a
+context owns the variables and constraints it contains.  Thus, while multiple
+contexts may give a name to a variable, only one context may contain a
+variable.
+
+Once you have a context, you may add it to a property model, like so:
+
+#+BEGIN_SRC js
+pm.addComponent( context );
+#+END_SRC
+
+When you add a context to a property model, it automatically adds to the
+property model all the variables and constraints which it contains.  Later,
+you may remove those elements from the property model, like so:
+
+#+BEGIN_SRC js
+pm.removeComponent( context );
+#+END_SRC
+
+As those function names suggest, the full property model for your application
+can actually consist of several different contexts, and new contexts can be
+added or removed at run-time.  For now we assume a single context defines the
+entire property model.
 
 ** The context builder
 
 The task of building a context is rather complex.  To help, HotDrink contains
-an object called the /context builder/.  This object essentially defines its
-own language (i.e., an /embedded domain-specific language/) for constructing
-contexts.  To use this language, create a new context builder instance, then
-call its member functions to add elements to the context.  These member
-functions are described in detail in [[file:basics.org][Basic HotDrink Usage]].  The ~context~
-member function retrieves the constructed context.
+an object called the /context builder/.  This factory object essentially
+defines its own language (i.e., an /embedded domain-specific language/) for
+constructing contexts.  To use this language, create a new context builder
+instance, then call its member functions to add elements to the context.
+These member functions are described in detail in [[file:basics.org][Basic
+HotDrink Usage]].  When you are done, the ~context~ member function retrieves
+the constructed context.
 
 #+BEGIN_SRC js
 var builder = new hd.ContextBuilder();
@@ -157,13 +176,252 @@ var builder = new hd.ContextBuilder();
 var context = builder.context();
 #+END_SRC
 
-Once you have a context, you may add it to the property model.
+* An introductory example
 
-#+BEGIN_SRC js
+We present here a simple example of using HotDrink.  Note that we will not
+explain all the details of this example, only the most important points.  The
+goal of this example is to define some basic concepts that you will need to
+understand the other HotDrink how-tos; they will provide a more in-depth
+explanation of how HotDrink works.
+
+** The example
+
+Below is an form from a hypothetical hotel reservation web page.  The user may
+edit the check-in date, the check-out date, the number of nights to stay, and
+the number of beds desired.  Notice that, as one text box is edited, other
+elements of the web page are updated to be consistent with the changes.
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/intro.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/intro.js html
+#+HTML: })();
+#+HTML: </script>
+
+*Source Code*
+
+The source code for this form is shown in its entirety below.  (Click the
+"show" links to view the code.)  To clarify, we have broken the code into
+three sections:  the HTML that defines the View, the JavaScript that defines
+the View-Model, and the JavaScript that performs binding.  In the remainder of
+this section we will reproduce and examine snippets of this code.
+
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/intro.html :padline no
+<table>
+  <style type="text/css" scoped>
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+  </style>
+  <tr>
+    <th>Check-In:</th>
+    <td><input type="text" data-bind="hd.date( checkin )"/>
+  </tr>
+  <tr>
+    <th>Check-Out:</th>
+    <td><input type="text" data-bind="hd.date( checkout )"/>
+  </tr>
+  <tr>
+    <th>Nights:</th>
+    <td><input type="text" data-bind="hd.num( nights, 0 )"/>
+  </tr>
+  <tr>
+    <th>Room Type:</th>
+    <td>
+      <select data-bind="hd.value( rate, hd.toNum() )">
+        <option value="80">1 Double Bed</option>
+        <option value="95">1 Queen Bed</option>
+        <option value="115">1 King Bed</option>
+        <option value="140">2 Queen Beds</option>
+      </select>
+    </td>
+  </tr>
+  <tr>
+    <th>Price:</th>
+    <td>$<span data-bind="hd.text( price, hd.fix( 2 ) )"></span></td>
+  </tr>
+</table>
+#+END_SRC
+
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/intro.js :padline no :noweb yes
+// Some constants to help us
+var oneDayMs = 24*60*60*1000;
+var today = new Date();
+today.setHours( 0, 0, 0, 0 );
+
+// Define variables and constraints in a context
+var context = new hd.ContextBuilder()
+
+    // Variables
+    .variable( "checkin", today)
+<<variables>>
+    .variable( "rate", 80 )
+    .variable( "price" )
+
+    // First constraint
+<<constraint>>
+<<methods>>
+
+    // Second constraint
+    .constraint( 'nights, rate, price' )
+    .method( 'nights, rate -> price', function( nights, rate ) {
+      return nights * rate
+    } )
+
+    .context();
+
+// Define the property model
+var pm = new hd.PropertyModel();
 pm.addComponent( context );
 #+END_SRC
 
-As those function names suggest, the full model for your application can
-actually consist of several different components, and new components can be
-added or removed at run-time.  For now we assume one component only and
-consider it as the entire model.
+#+CAPTION: /Binding/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/intro.js :padline no
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( context, document.body );
+} );
+#+END_SRC
+
+** The Context Builder
+
+The first thing we do in the view-model is construct the variables and
+constraints that will define our property model.  We create these as members
+of a context using a context builder.  The general strategy for constructing a
+context is: (1.)  create a new builder object, (2.) use the builder member
+functions to construct the context, (3.) call the ~context~ builder member
+function to retrieve the completed context.  The mock code below illustrates
+how this might be done.
+
+#+BEGIN_SRC js
+// Create new builder object
+var builder = new hd.ModelBuilder();
+
+// Use methods to construct the model
+builder.variable( ... );
+builder.constraint( ... );
+builder.method( ... );
+// ...and so on...
+
+// Retrieve the completed model
+var context = builder.context();
+#+END_SRC
+
+However, most builder member functions return the same builder object with
+which they were invoked.  This allows a succinct programming style known as
+\ldquo{}chaining\rdquo in which the return value of one member function is used to
+immediately invoke the next member function.  You can see this style in the
+mock code below.
+
+#+BEGIN_SRC js
+// Create, use, and discard builder object
+var context = new hd.ContextBuilder()
+    .variable( ... )
+    .constraint( ... )
+    .method( ... )
+    .context();
+#+END_SRC
+
+First we create a new ~ContextBuilder~ object.  Rather than storing this
+builder in a variable, we simply begin invoking member functions on it.  Each
+member function invoked returns the same anonymous builder.  This return value
+is used to invoke the next member function, and so on.  This continues until
+the end, where the ~context~ member function is invoked on the still-anonymous
+builder to return the context that was constructed.  It is this context that
+is assigned to the ~context~ variable.  This is the style we use in our
+view-model code.
+
+Generally, building a context involves the following steps.
+
+*** Creating variables
+
+Just as in a programming language, values in HotDrink are stored in variables.
+Note, however, that HotDrink variables are /not/ the same as JavaScript
+variables---HotDrink variables are actually JavaScript objects.  Variables are
+created with the model builder using the ~variable~ member function and then
+stored in the model.  To create a variable you must specify a name; you may
+optionally specify an initial value.  As with JavaScript variables,
+uninitialized variables are given the value ~undefined~.  For example, the
+line below creates a variable named ~checkout~ which is undefined, and a
+variable named ~nights~ which is initialized with the value ~2~.
+
+#+NAME: variables
+#+BEGIN_SRC js
+    .variable( "checkout" )
+    .variable( "nights", 2 )
+#+END_SRC
+
+As mentioned previously, the return value of the ~variable~ function is the
+builder object itself in order to facilitate chaining.
+
+Builder member functions such as ~variable~ are used frequently when declaring
+a property model.  To make them easier to use, the model builder provides
+abbreviated names for many of them.  For example, you may refer to the
+~variable~ member function simply as ~v~.  This is perhaps slightly less
+readable, but much easier to type.
+
+*** Creating constraints
+
+Recall that a constraint is something that should always be true concerning
+some of your variables --- i.e., a /relation/ over the variables.  In the
+example above, the relation is that ~result~ is just those words in ~list~
+which contain the string in ~filter~.
+
+To define a constraint, you must specify the variables involved.  To make this
+simple, the ~constraint~ member function of the model builder takes a string
+containing all of the variables' names in a comma delimited list.  For
+example, the line below creates a constraint over the variables ~checkin~,
+~checkout~, and ~nights~.
+
+#+NAME: constraint
+#+BEGIN_SRC js
+    .constraint( 'checkin, checkout, nights' )
+#+END_SRC
+
+The return value of the ~constraint~ member function is the builder. The
+~constraint~ member function may be abbreviated as ~c~.
+
+*** Creating methods
+
+Notice that, when you create a constraint, you do /not/ tell HotDrink what
+relation the constraint represents.  Instead, you define a constraint by
+providing /constraint satisfaction methods/, or just /methods/ for short.  A
+method is a function whose parameters are /some/ variables of the constraint,
+and which returns new values for /other/ variables of the constraint.  The
+purpose of a method is to provide new values for its output variables that
+will satisfy the constraint.
+
+The method creation function of the model builder, named ~method~, takes a
+signature and a function.  The signature is a string defining which variables
+are inputs and which are outputs; it has the form "/inputs/ ~->~ /outputs/",
+where both /inputs/ and /outputs/ are comma-delimited lists of variables.  Our
+constraint over ~checkin~, ~checkout~, and ~nights~ has three methods, shown
+below.
+
+#+NAME: methods
+#+BEGIN_SRC js
+    .method( 'checkin, checkout -> nights', function( checkin, checkout ) {
+      return (checkout.getTime() - checkin.getTime()) / oneDayMs;
+    } )
+    .method( 'nights, checkin -> checkout', function( nights, checkin ) {
+      return new Date( checkin.getTime() + nights*oneDayMs );
+    } )
+    .method( 'nights, checkout -> checkin', function( nights, checkout ) {
+      return new Date( checkout.getTime() - nights*oneDayMs );
+    } )
+#+END_SRC
+
+Note that in this example we provide an anonymous functions for each method,
+but this is not a requirement; methods can be named functions defined
+elsewhere in the program.  Also note that it is not a requirement for function
+parameter names to match the variables which should be passed to them; in
+fact, HotDrink has no way of knowing what you named your parameters.  HotDrink
+will use the signature you provided to decide what variables to pass to the
+function.
+
+Whenever you call ~method~, the builder assumes you are adding a method to the
+most recently defined constraint.  As with the other builder member functions,
+the return value of ~method~ is the builder to facilitate chaining, and it may
+be abbreviated as ~m~; we will use this abbreviation in the remainder of the
+examples.

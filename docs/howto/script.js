@@ -1,7 +1,16 @@
+var showhide = /\(show\/hide\)\s*$/;
+
 window.addEventListener( 'load', function() {
   var labels = document.getElementsByClassName( 'org-src-name' );
   for (var i = 0, l = labels.length; i < l; ++i) {
-    initSource( labels[i], i );
+    var text = labels[i].lastChild;
+    if (text.nodeType == Node.TEXT_NODE) {
+      var s = text.nodeValue.replace( showhide, '' );
+      if (s != text.nodeValue) {
+        text.nodeValue = s;
+        initSource( labels[i], i );
+      }
+    }
   }
 } )
 

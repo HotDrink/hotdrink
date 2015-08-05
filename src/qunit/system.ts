@@ -13,6 +13,10 @@ module hd.qunit {
     return x;
   }
 
+  function plus1( x: number ): number {
+    return x + 1;
+  }
+
   function sum() {
     var s = arguments[0];
     for (var i = 1, l = arguments.length; i < l; ++i) {
@@ -338,6 +342,59 @@ module hd.qunit {
     ctx.x.set( 1 );
     pm.update();
     checkVariables( ctx, {x: 1, y: 1, z: 1}, "6" );
+
+    u.schedule( 3, start );
+  } );
+
+  asyncTest( "topological sorting", function() {
+    expect( 42 );
+
+    var ctx: any = new m.ContextBuilder()
+          .variables( "a, b, c, x, y, z", {a: 3, b: 4, z: 6} )
+          .constraint( "a => a, x" )
+            .method( "a -> x", id )
+          .constraint( "b, y" )
+            .method( "b -> y", plus1 )
+            .method( "y -> b", plus1 )
+          .constraint( "c, x, y, z" )
+            .method( "x, y, z -> c",
+                     function( x: number, y: number, z: number ) {
+                       return x + y + z
+                     }
+                   )
+            .method( "c -> x, y, z",
+                     function( c: number ) { return [c/3, c/3, c/3]; }
+                   )
+          .context();
+
+    var pm = new s.PropertyModel();
+    pm.addComponents( ctx );
+    pm.update();
+    checkVariables( ctx, {a: 3, b: 4, c: 14, x: 3, y: 5, z: 6}, "1" );
+
+    ctx.c.set( 21 );
+    pm.update();
+    checkVariables( ctx, {a: 3, b: 8, c: 21, x: 7, y: 7, z: 7}, "2" );
+
+    ctx.z.set( 2 );
+    pm.update();
+    checkVariables( ctx, {a: 3, b: 8, c: 16, x: 7, y: 7, z: 2}, "3" );
+
+    ctx.a.set( 4 );
+    pm.update();
+    checkVariables( ctx, {a: 4, b: 8, c: 13, x: 4, y: 7, z: 2}, "4" );
+
+    ctx.b.set( 5 );
+    pm.update();
+    checkVariables( ctx, {a: 4, b: 5, c: 12, x: 4, y: 6, z: 2}, "5" );
+
+    ctx.c.set( 3 );
+    pm.update();
+    checkVariables( ctx, {a: 4, b: 2, c: 3, x: 1, y: 1, z: 1}, "6" );
+
+    ctx.z.set( 8 );
+    pm.update();
+    checkVariables( ctx, {a: 4, b: 2, c: 10, x: 1, y: 1, z: 8}, "7" );
 
     u.schedule( 3, start );
   } );

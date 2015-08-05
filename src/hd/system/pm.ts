@@ -40,7 +40,7 @@ module hd.system {
     getSGraph(): g.ReadOnlyConstraintGraph { return this.sgraph; }
 
     // Topological sorting of solution graph w.r.t. priority
-    private topo: {vids: string[]; mids: string[]};
+    private topomids: string[];
 
     // The planning algorithm
     private planner: p.Planner;
@@ -703,14 +703,19 @@ module hd.system {
           this.sgraph = this.planner.getSGraph();
 
           // Topological sort of all mids and vids
-          this.topo = toposort( this.sgraph, this.planner );
+          var tgraph = topograph( this.cgraph, this.sgraph );
+          this.topomids = toposort( tgraph, this.planner );
+          var priorities: string[] = [];
+          for (var i = this.topomids.length - 1; i >= 0; --i) {
+            var cid = tgraph.constraintForMethod( this.topomids[i] );
+            if (g.isStayConstraint( cid ) ||
+                this.constraints[cid].optional) {
+              priorities.push( cid );
+            }
+          }
 
           // Update stay strengths
-          var neworder = u.reversemap( this.topo.vids, g.stayConstraint );
-          if (this.hasOptionals) {
-            mergeOptionals( this.planner.getOptionals(), neworder );
-          }
-          this.planner.setOptionals( neworder );
+          this.planner.setOptionals( priorities );
 
           // New constraints need to be evaluated
           cids.forEach( u.stringSet.add.bind( null, this.needEvaluating ) );
@@ -781,7 +786,7 @@ module hd.system {
               .nodesDownstreamSameType( mids )
               .filter( g.isNotStayMethod )
               .reduce( u.stringSet.build, <u.StringSet>{} );
-        var scheduledMids = this.topo.mids
+        var scheduledMids = this.topomids
               .filter( function( mid: string ) { return downstreamMids[mid]; } );
 
         // Evaluate methods

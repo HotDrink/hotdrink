@@ -9,14 +9,17 @@ module hd.qunit {
   import m = hd.model;
   import s = hd.system;
 
+  export
   function id<T>( x: T ): T {
     return x;
   }
 
+  export
   function plus1( x: number ): number {
     return x + 1;
   }
 
+  export
   function sum() {
     var s = arguments[0];
     for (var i = 1, l = arguments.length; i < l; ++i) {
@@ -25,6 +28,7 @@ module hd.qunit {
     return s;
   }
 
+  export
   function diff() {
     var s = arguments[0];
     for (var i = 1, l = arguments.length; i < l; ++i) {
@@ -395,6 +399,89 @@ module hd.qunit {
     ctx.z.set( 8 );
     pm.update();
     checkVariables( ctx, {a: 4, b: 2, c: 10, x: 1, y: 1, z: 8}, "7" );
+
+    u.schedule( 3, start );
+  } );
+
+  asyncTest( "set commands", function() {
+    expect( 12 );
+
+    var ctx: any = new m.ContextBuilder()
+          .variables( "x, y, z", {x: 3, y: 5} )
+          .constraint( "x, y, z" )
+          .method( "x, y -> z", sum )
+          .method( "z, x -> y", diff )
+          .method( "z, y -> x", diff )
+          .context();
+
+    var pm = new s.PropertyModel
+    pm.addComponents( ctx );
+    pm.update();
+    checkVariables( ctx, {x: 3, y: 5, z: 8}, "1" );
+
+    ctx.x.commandSet( 4 );
+    pm.performCommands();
+    checkVariables( ctx, {x: 4, y: 5, z: 9}, "2" );
+
+    ctx.y.commandSet( 3 );
+    ctx.z.commandSet( 10 );
+    checkVariables( ctx, {x: 4, y: 5, z: 9}, "2 (again)" );
+
+    pm.performCommands();
+    checkVariables( ctx, {x: 7, y: 3, z: 10}, "4" );
+
+    u.schedule( 3, start );
+  } );
+
+  asyncTest( "command queue", function() {
+    var spec = new m.ContextBuilder()
+          .variables( "a, x, y, z", {a: 12, x: 3, y: 5} )
+          .constraint( "x, y, z" )
+          .method( "x, y -> z", sum )
+          .method( "z -> x, y", function( z: number ) { return [z/2, z/2]; } )
+          .command( "cmd", "a -> x", plus1 )
+          .spec();
+
+    var ctx1: any = new m.Context();
+    m.Context.construct( ctx1, spec );
+
+    var ctx2: any = new m.Context();
+    m.Context.construct( ctx2, spec );
+
+    var ctx3: any = new m.Context();
+    m.Context.construct( ctx3, spec );
+
+    var pm = new s.PropertyModel
+    pm.addComponents( ctx1, ctx2, ctx3 );
+    pm.update();
+    checkVariables( ctx1, {a: 12, x: 3, y: 5, z: 8}, "1.1" );
+    checkVariables( ctx2, {a: 12, x: 3, y: 5, z: 8}, "1.2" );
+    checkVariables( ctx3, {a: 12, x: 3, y: 5, z: 8}, "1.3" );
+
+    ctx1.z.commandSet( 12 );
+    ctx2.z.commandSet( 12 );
+    ctx3.z.commandSet( 12 );
+
+    ctx2.a.commandSet( 9 );
+    ctx3.a.commandSet( 9 );
+
+    ctx3.cmd.activate();
+
+    checkVariables( ctx1, {a: 12, x: 3, y: 5, z: 8}, "1.1 (again)" );
+    checkVariables( ctx2, {a: 12, x: 3, y: 5, z: 8}, "1.2 (again)" );
+    checkVariables( ctx3, {a: 12, x: 3, y: 5, z: 8}, "1.3 (again)" );
+
+    u.schedule( 3, function() {
+      checkVariables( ctx1, {a: 12, x: 6, y: 6, z: 12}, "2.1" );
+    } );
+
+    u.schedule( 3, function() {
+      checkVariables( ctx2, {a: 9, x: 6, y: 6, z: 12}, "3.2" );
+    } );
+
+    u.schedule( 3, function() {
+      checkVariables( ctx3, {a: 9, x: 10, y: 6, z: 16}, "3.2" );
+    } );
 
     u.schedule( 3, start );
   } );

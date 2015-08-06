@@ -305,8 +305,10 @@ module hd.model {
       }
     }
 
-    activate(): ActivationRecord {
-      return this.instance ? this.instance.activate() : null;
+    activate() {
+      if (this.instance) {
+        this.instance.activate();
+      }
     }
 
     onNext() {

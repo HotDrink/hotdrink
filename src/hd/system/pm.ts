@@ -25,6 +25,7 @@ module hd.system {
 
   // scheduling priority for responding to state changes
   export var SystemUpdatePriority = 1;
+  export var SystemCommandPriority = 2;
 
   /*==================================================================
    * The constraint system
@@ -81,6 +82,9 @@ module hd.system {
     outputVids: u.Dictionary<number> = {};
 
     private hasOptionals: boolean;
+
+    private commandQueue: m.Command[] = [];
+    private isCommandScheduled = false;
 
     /*----------------------------------------------------------------
      * Initialize members
@@ -186,6 +190,14 @@ module hd.system {
         }
       }
 
+      // Add commands
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var ms = m.Context.commands( contexts[i] );
+        for (var j = 0, n = ms.length; j < n; ++j) {
+          this.addCommand( ms[j] );
+        }
+      }
+
     }
 
     //--------------------------------------------
@@ -251,6 +263,14 @@ module hd.system {
         var vs = m.Context.variables( contexts[i] );
         for (var j = 0, n = vs.length; j < n; ++j) {
           this.removeVariable( vs[j] );
+        }
+      }
+
+      // Remove commands
+      for (var i = 0, l = contexts.length; i < l; ++i) {
+        var ms = m.Context.commands( contexts[i] );
+        for (var j = 0, n = ms.length; j < n; ++j) {
+          this.removeCommand( ms[j] );
         }
       }
     }
@@ -480,6 +500,18 @@ module hd.system {
       }
     }
 
+    //--------------------------------------------
+    // Add command
+    addCommand( cmd: m.Command ) {
+      cmd.addObserver( this, this.scheduleCommand, null, null );
+    }
+
+    //--------------------------------------------
+    // Remove command
+    removeCommand( cmd: m.Command ) {
+      cmd.removeObserver( this );
+    }
+
     /*----------------------------------------------------------------
      * Respond to variable changes
      */
@@ -508,6 +540,10 @@ module hd.system {
             this.solved.set( true );
           }
         }
+        break;
+
+      case m.VariableEventType.command:
+        this.scheduleCommand( event.cmd );
         break;
       }
     }
@@ -674,6 +710,9 @@ module hd.system {
           else if (el instanceof m.TouchDep) {
             this.removeTouchDependency( el.from, el.to );
           }
+          else if (el instanceof m.Command) {
+            this.removeCommand( el );
+          }
         }
         for (var i = 0, l = updates.adds.length; i < l; ++i) {
           var el = updates.adds[i];
@@ -685,6 +724,9 @@ module hd.system {
           }
           else if (el instanceof m.TouchDep) {
             this.addTouchDependency( el.from, el.to );
+          }
+          else if (el instanceof m.Command) {
+            this.addCommand( el );
           }
         }
       }
@@ -792,7 +834,7 @@ module hd.system {
         // Evaluate methods
         for (var i = 0, l = scheduledMids.length; i < l; ++i) {
           var mid = scheduledMids[i];
-          var ar = this.methods[mid].activate();
+          var ar = activate( this.methods[mid] );
           this.enable.methodScheduled( this.cgraph.constraintForMethod( mid ),
                                        mid,
                                        ar.inputs,
@@ -838,6 +880,27 @@ module hd.system {
                                              )
                            );
           }
+        }
+      }
+    }
+
+    /*----------------------------------------------------------------
+     */
+    scheduleCommand( cmd: m.Command ) {
+      this.commandQueue.push( cmd );
+      if (! this.isCommandScheduled) {
+        this.isCommandScheduled = true;
+        u.schedule( SystemCommandPriority, this.performCommands, this );
+      }
+    }
+
+    performCommands() {
+      this.isCommandScheduled = false;
+      while (this.commandQueue.length > 0) {
+        var cmd = this.commandQueue.shift();
+        activate( cmd );
+        if (cmd.external) {
+          this.update();
         }
       }
     }

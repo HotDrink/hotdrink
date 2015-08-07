@@ -6,6 +6,61 @@ module hd.model {
   import u = hd.utility;
   import r = hd.reactive;
 
+  export
+  type Position = number;
+
+  /*==================================================================
+   * Pattern for an array index in a path
+   */
+  class IndexPattern {
+    scale: number;
+    offset: number;
+
+    // Init
+    constructor( scale: number, offset: number ) {
+      this.scale = scale;
+      this.offset = offset;
+    }
+
+    // Get the result for this pattern at a particular position
+    apply( pos: Position ) {
+      if (this.scale == 0) {
+        return this.offset;
+      }
+      else {
+        return this.scale * pos + this.offset;
+      }
+    }
+
+    // Inverse of apply: what value of index variable would
+    //   result in the value for that variable in given position?
+    inverse( pos: Position ) {
+      if (this.scale == 0) { return null; }
+      var i = (pos - this.offset) / this.scale;
+      if (Math.floor( i ) === i) {
+        return i;
+      }
+      else {
+        return null;
+      }
+    }
+  }
+
+  /*==================================================================
+   * Defines names of index variable
+   */
+
+  // index variable names, in order
+  var indexName: string;
+
+  // define names for array indices
+  function defineArrayIndexName( name: string ) {
+    indexName = name;
+  }
+
+  // Default: i, j, k
+  defineArrayIndexName( 'i' );
+
   /*==================================================================
    * An observable representing a particular property path in a
    * context.
@@ -20,7 +75,8 @@ module hd.model {
     path: string[];
 
     // Any observable properties subscribed to along the way
-    properties: r.ProxySignal<any>[] = null;
+    observables0: r.ProxyObservable<any>[] = null;
+    observables1: r.ProxyObservable<any>[][] = null;
 
     // The result at the end of the path
     result: any;
@@ -166,4 +222,68 @@ module hd.model {
       this.followPath();
     }
   }
+
+  /*==================================================================
+   */
+
+  export
+  function parse( pathstr: string ): (string|IndexPattern)[] {
+    var s = pathstr;
+    var nonempty = /\S/;
+    var field = /^\s*\.?([a-zA-Z][\w$]*)/;
+    var cindex = /^\s*\[\s*(\d+)\s*\]/;
+    var vindex = /^\s*\[\s*(\d+)([a-zA-Z][\w$]*)\s*(?:([+-])\s*(\d+)\s*)?\]/;
+    var legs: any[] = [];
+
+    while (nonempty.test( s )) {
+      var m : string[];
+      if (m = field.exec( s )) {
+        legs.push( m[1] );
+      }
+      else if (m = cindex.exec( s )) {
+        legs.push( {scale: 0, index: 0, offset: Number( m[1] )} );
+      }
+      else if (m = vindex.exec( s )) {
+        if (m[2] == indexName) {
+          var scale = 0;
+          var offset = 0;
+          if (m[1]) {
+            scale = Number( m[1] );
+          }
+          if (m[4]) {
+            offset = Number( m[4] );
+            if (m[3] == '-') {
+              offset = -offset;
+            }
+          }
+          legs.push( new IndexPattern( scale, offset ) );
+        }
+        else {
+          console.error( 'Unknown array index in "' + pathstr + '"' );
+          return null;
+        }
+      }
+      else {
+        console.error( 'Unable to parse path "' + pathstr + '"' );
+        return null;
+      }
+      s = s.substr( m[0].length );
+    }
+    return legs;
+  }
+
+  /*==================================================================
+   * Make sure indices are used in correct order;
+   * calculate cardinality.
+   */
+  export
+  function calcCardinality( path: string, legs: (string|IndexPattern)[] ) {
+    for (var i = 0, l = legs.length; i < l; ++i) {
+      if (typeof legs[i] !== 'string' && (<IndexPattern>legs[i]).scale != 0) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+
 }

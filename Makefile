@@ -30,7 +30,7 @@ graph_UNITS     := walker digraph cgraph sgraph stay
 graph_DEPS      := utility reactive
 
 model_LOC       := hd/
-model_UNITS     := ids variable method constraint context eqn builder path command
+model_UNITS     := ids variable method constraint context eqn builder path command array
 model_DEPS      := utility reactive
 
 dfa_LOC         := hd/

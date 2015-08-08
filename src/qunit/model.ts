@@ -322,4 +322,40 @@ module hd.qunit {
     ok( x.removes[2] === c,  "Remove constraint" );
 
   } );
+
+  test( "array contexts", function() {
+
+    var a = new m.ArrayContext();
+    a.length = 10;
+    a.changes.addObserver( new ObservableTest(
+      [new Result( E.next, 3 ),
+       new Result( E.next, 8 ),
+       new Result( E.next, 4 ),
+       new Result( E.next, 10 ),
+       new Result( E.next, 3 ),
+       new Result( E.next, 8 ),
+       new Result( E.next, 11 ),
+       new Result( E.next, 12 ),
+       new Result( E.next, 12 ),
+       new Result( E.next, 11 ),
+       new Result( E.next, 10 ),
+       new Result( E.next, 9 ),
+       new Result( E.next, 8 )
+      ]
+    ) );
+
+    a[3] = 6;
+    a[8] = 12;
+    a[4] = 4;
+    a.push( -3 );
+    a[3] = 8;
+    a[8] = 12;
+
+    a.length = 13;
+    equal( a.length, 13, "Set length" );
+
+    a.length = 8;
+    equal( a.length, 8, "Set length 2" );
+
+  } );
 }

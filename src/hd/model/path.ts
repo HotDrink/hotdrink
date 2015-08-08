@@ -12,6 +12,7 @@ module hd.model {
   /*==================================================================
    * Pattern for an array index in a path
    */
+  export
   class IndexPattern {
     scale: number;
     offset: number;
@@ -102,7 +103,7 @@ module hd.model {
      * Were there any properties in the path?
      */
     isConstant(): boolean {
-      return ! this.properties;
+      return ! this.observables0 && ! this.observables1;
     }
 
     /*----------------------------------------------------------------
@@ -123,7 +124,15 @@ module hd.model {
                  onError?: (error: any, id?: any) => void,
                  onCompleted?: (id?: any) => void,
                  id?: any                                  ): r.Observer<any> {
-      if (this.properties) {
+      if (this.isConstant()) {
+        if (arguments.length == 1) {
+          (<r.Observer<any>>object).onCompleted();
+        }
+        else {
+          onCompleted.call( object, id );
+        }
+      }
+      else {
         var added: r.Observer<any>;
         if (arguments.length === 1) {
           added = super.addObserver( <r.Observer<any>>object );
@@ -133,25 +142,17 @@ module hd.model {
         }
         return added;
       }
-      else {
-        if (arguments.length == 1) {
-          (<r.Observer<any>>object).onCompleted();
-        }
-        else {
-          onCompleted.call( object, id );
-        }
-      }
     }
 
     /*----------------------------------------------------------------
      * Indicates that this path is no longer needed
      */
     cancel() {
-      if (this.properties) {
-        this.properties.forEach( function( p: r.ProxySignal<any> ) {
+      if (! this.isConstant()) {
+        this.observables0.forEach( function( p: r.ProxySignal<any> ) {
           p.removeObserver( this );
         }, this );
-        this.properties = null;
+        this.observables0 = null;
       }
     }
 
@@ -183,11 +184,11 @@ module hd.model {
         this.sendNext( m );
       }
       if (properties.length > 0) {
-        this.properties = properties;
+        this.observables0 = properties;
       }
       else {
         // should be unnecessary, but just in case
-        this.properties = null;
+        this.observables0 = null;
         this.sendCompleted();
       }
     }

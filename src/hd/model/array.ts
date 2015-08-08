@@ -14,15 +14,6 @@ module hd.model {
   interface MultiArray<T> extends Array<T|MultiArray<T>> { };
 
   /*==================================================================
-   * Event signaling change to the array.
-   */
-  export
-  interface ArrayChange {
-    index: number;
-    value: any;
-  }
-
-  /*==================================================================
    */
   export
   class SingleElement extends r.BasicObservable<any> {
@@ -33,9 +24,9 @@ module hd.model {
       this.index = index;
     }
 
-    onNext( change: ArrayChange ) {
-      if (change.index == this.index) {
-        this.sendNext( change.value );
+    onNext( index: number ) {
+      if (index == this.index) {
+        this.sendNext( index );
       }
     }
 
@@ -55,91 +46,89 @@ module hd.model {
   class ArrayContext extends Context {
 
     // The actual array for storing contents
-    private elems: (Variable|Context)[] = [];
+    private elems: any[] = [];
 
     // The length of the array; this controls how many properties are defined
-    private length = 0;
+    private _length = 0;
+    length: number;
 
     // Just to indicate that you can access this as an array
-    [index: number]: (Variable|Context);
+    [index: number]: any;
 
     // Observable for changes to the array
-    changes = new r.BasicObservable<ArrayChange>();
+    changes = new r.BasicObservable<number>();
 
     /*----------------------------------------------------------------
      * Length getter
      */
-    getLength() { return length; }
+    getLength() { return this._length; }
 
     /*----------------------------------------------------------------
      * Length setter
      */
     setLength( n: number ) {
       // If we're decreasing length
-      if (n < this.length) {
-        for (var i = this.length - 1; i >= n; --i) {
+      if (n < this._length) {
+        for (var i = this._length - 1; i >= n; --i) {
           this.elems[i] = undefined;
-          this.changes.sendNext( {index: i, value: undefined} );
+          this.changes.sendNext( i );
         }
       }
       // If we're increasing length, define properties for new indices
       else {
-        ArrayContext.defineNumericPropertiesUntil( n );
+        for (var i = this._length; i < n; ++i) {
+          this.changes.sendNext( i );
+          if (! ArrayContext.prototype.hasOwnProperty( i.toString() )) {
+            Object.defineProperty( ArrayContext.prototype, i.toString(), {
+              configurable: false,
+              enumerable: true,
+              get: getter( i ),
+              set: setter( i )
+            } );
+          }
+        }
       }
 
-      this.length = n;
+      this._length = n;
     }
 
     /*----------------------------------------------------------------
      * Element getter
      */
-    get( i: number ) {
+    get( i: number ): any {
       return this.elems[i];
     }
 
     /*----------------------------------------------------------------
      * Element setter
      */
-    set( i: number, v: (Variable|Context) ) {
+    set( i: number, v: any ) {
       // Ensure length is big enough to hold this
-      if (this.length <= i) {
+      if (this._length <= i) {
         this.setLength( i + 1 );
+        this.elems[i] = v;
       }
-      this.elems[i] = v;
-      this.changes.sendNext( {index: i, value: v} );
+      else {
+        this.elems[i] = v;
+        this.changes.sendNext( i );
+      }
     }
 
     /*----------------------------------------------------------------
      * Push operation
      */
-    push( v: (Variable|Context) ) {
-      var i = this.length;
+    push( v: any ) {
+      var i = this._length;
       this.set( i, v );
     }
 
-    /*----------------------------------------------------------------
-     * Make sure we have numeric properties defined until n.
-     * Actually starts with n and works its way down; stops as soon
-     * as it finds a pre-existing numeric property.
-     */
-    private static
-    defineNumericPropertiesUntil( n: number ) {
-      for (var i = n - 1; i >= 0; --i) {
-        if (ArrayContext.prototype.hasOwnProperty( i.toString() )) {
-          break;
-        }
-        else {
-          Object.defineProperty( ArrayContext.prototype, i.toString(), {
-            configurable: false,
-            enumerable: true,
-            get: getter( i ),
-            set: setter( i )
-          } );
-        }
-      }
-    }
-
   }
+
+  Object.defineProperty( ArrayContext.prototype, "length",
+                         {configurable: false,
+                          enumerable: false,
+                          get: ArrayContext.prototype.getLength,
+                          set: ArrayContext.prototype.setLength} );
 
   // helper - Create getter for specified index
   function getter( i: number ) {

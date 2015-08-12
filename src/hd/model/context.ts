@@ -487,7 +487,7 @@ module hd.model {
     static
     construct( ctx: Context,
                spec: ContextSpec,
-               init?: u.Dictionary<any> ) {
+               init?: u.Dictionary<any> ): Context {
       if (init && typeof init !== 'Object') {
         throw "Invalid initialization object passed to Context.construct: " + init;
       }
@@ -528,6 +528,8 @@ module hd.model {
       for (var i = 0, l = spec.touchDeps.length; i < l; ++i) {
         Context.addTouchDep( ctx, spec.touchDeps[i] );
       }
+
+      return ctx;
     }
 
     /*----------------------------------------------------------------
@@ -849,8 +851,8 @@ module hd.model {
       var hd_data = ctx['#hd_data'];
       if (! (name in hd_data.lookup)) {
         var path = new Path( ctx, name );
-        hd_data.lookup[name] = path.get();
-        if (! path.isConstant()) {
+        hd_data.lookup[name] = path.get( null );
+        if (! path.constant) {
           path.addObserver( Context, Context.onNextPath, null, null, {ctx: ctx, name: name} );
           hd_data.paths[name] = path;
         }

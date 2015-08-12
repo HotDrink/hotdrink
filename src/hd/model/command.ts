@@ -66,13 +66,11 @@ module hd.model {
 
 
   export
-  class None extends r.BasicObservable<boolean> {
+  class None extends r.BasicSignal<boolean> {
 
     observables: r.ProxyObservable<any>[];
 
     cache: boolean[] = [];
-
-    result: boolean;
 
     constructor( observables: r.ProxyObservable<any>[] ) {
       super();
@@ -94,42 +92,7 @@ module hd.model {
         none = none && ! this.cache[i];
       }
 
-      if (this.result !== none) {
-        this.result = none;
-        this.sendNext( none );
-      }
-    }
-
-    addObserver( observer: r.Observer<boolean> ): r.Observer<boolean>;
-    addObserver( object: Object,
-                 onNext: (value: boolean) => void,
-                 onError: (error: any) => void,
-                 onCompleted: () => void           ): r.Observer<boolean>;
-    addObserver<U>( object: Object,
-                    onNext: (value: boolean, id?: U) => void,
-                    onError: (error: any, id?: U) => void,
-                    onCompleted: (id?: U) => void,
-                    id: U                                     ): r.Observer<boolean>;
-    addObserver( object: Object,
-                 onNext?: (value: boolean, id?: any) => void,
-                 onError?: (error: any, id?: any) => void,
-                 onCompleted?: (id?: any) => void,
-                 id?: any                                     ): r.Observer<boolean> {
-      var added: r.Observer<boolean>;
-      if (arguments.length === 1) {
-        added = super.addObserver( <r.Observer<boolean>>object );
-      }
-      else {
-        added = super.addObserver( object, onNext, onError, onCompleted, id );
-      }
-      if (added && this.result !== undefined) {
-        added.onNext( this.result );
-      }
-      return added;
-    }
-
-    get(): boolean {
-      return this.result;
+      this.set( none );
     }
   }
 

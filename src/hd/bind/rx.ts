@@ -49,9 +49,9 @@ module hd.bindings {
     }
   }
 
-  export function path( model: m.Context, name: string ) {
-    return new r.HotSwap<any>( new m.Path( model, name ) );
-  }
+  // export function path( model: m.Context, name: string ) {
+  //   return new r.HotSwap<m.Position>( new m.Path( model, name ) );
+  // }
 
   export function rw<T, U>( read: r.Observable<U>, write: r.Observer<T> ) {
     return new r.ReadWrite( read, write );

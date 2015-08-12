@@ -6,32 +6,9 @@ module hd.model {
   import u = hd.utility;
   import r = hd.reactive;
 
+  // A position in a template; null for 0 dimensions, number for 1
   export
   type Position = number;
-
-  export
-  type PositionSet = u.ArraySet<number>;
-
-  export
-  function addPosition( set: PositionSet, pos: Position ) {
-    if (set === null || pos === null) { return null; }
-    return u.arraySet.add( set, pos );
-  }
-
-  export
-  function hasPosition( set: PositionSet, pos: Position ) {
-    if (set === null) { return true; }
-    if (pos === null) { return false; }
-    return u.arraySet.contains( set, pos );
-  }
-
-  export union( target: PositionSet, set: PositionSet ) {
-    if (target === null || set === null) { return null; }
-    for (var i = 0, l = set.length; i < l; ++i) {
-      u.arraySet.add( target, set[i] );
-    }
-    return target;
-  }
 
   /*==================================================================
    * Pattern for an array index in a path
@@ -52,6 +29,9 @@ module hd.model {
       if (this.scale == 0) {
         return this.offset;
       }
+      else if (pos === null) {
+        return pos;
+      }
       else {
         return this.scale * pos + this.offset;
       }
@@ -60,7 +40,8 @@ module hd.model {
     // Inverse of apply: what value of index variable would
     //   result in the value for that variable in given position?
     inverse( pos: Position ): Position {
-      if (this.scale == 0) { return null; }
+      if (this.scale == 0) { return this.offset; }
+      if (pos === null) { return null; }
       var i = (pos - this.offset) / this.scale;
       if (Math.floor( i ) === i) {
         return i;
@@ -86,6 +67,48 @@ module hd.model {
   // Default: i, j, k
   defineArrayIndexName( 'i' );
 
+  class PropertyObserver {
+    constructor( public path: Path,
+                 public property: r.Signal<any>,
+                 public legi: number,
+                 public pos: Position          ) {
+      property.addObserverChangesOnly( this );
+    }
+
+    destruct() {
+      this.property.removeObserver( this );
+    }
+
+    onNext() {
+      this.path.onNextProperty( this.legi, this.pos );
+    }
+
+    onError() { }
+    onCompleted() { }
+  }
+
+  class ArrayObserver {
+    constructor( public path: Path,
+                 public ctx: ArrayContext,
+                 public legi: number,
+                 public pos: Position      ) {
+      ctx.changes.addObserver( this );
+    }
+
+    destruct() {
+      this.ctx.changes.removeObserver( this );
+    }
+
+    onNext( idx: number ) {
+      this.path.onNextArray( idx, this.legi, this.pos );
+    }
+
+    onError() { }
+    onCompleted() { }
+  }
+
+  type LegObserver = PropertyObserver | ArrayObserver;
+
   /*==================================================================
    * An observable representing a particular property path in a
    * context.
@@ -100,34 +123,38 @@ module hd.model {
     legs: (string|IndexPattern)[];
 
     // Maximum index variable used
-    private cardinality: number;
+    cardinality: number;
 
-    // Doesn't subscribe to any properties or arrays
-    private constant = true;
+    constant = true;
+
+    private branchi = 0;
 
     // Any observable properties subscribed to along the way
-    observables0: r.ProxyObservable<any>[] = null;
-    observables1: r.ProxyObservable<any>[][] = null;
+    private observers0: LegObserver[] = null;
+    private observers1: LegObserver[][] = null;
 
-    // The result (or array of results) at the end of the path
-    result: any;
+    private result: any;
 
     /*----------------------------------------------------------------
      * Perform initial search.
      */
     constructor( start: Context, path: string ) {
       super();
-      this.start = start;
 
       // Break path down into property names and index patterns
-      var legs = parse( path );
-      var cardinality = -1;
-      if (legs) {
-        cardinality = calcCardinality( path, legs );
-      }
-      if (legs && cardinality >= 0) {
-        this.legs = legs;
-        this.cardinality = cardinality;
+      this.legs = parse( path );
+      if (this.legs) {
+        this.start = start;
+        this.cardinality = 0;
+        for (var i = 0, l = this.legs.length; i < l; ++i) {
+          if ((<any>this.legs[i]) instanceof IndexPattern &&
+              (<IndexPattern>this.legs[i]).scale != 0       ) {
+            this.branchi = i;
+            this.cardinality = 1;
+            this.result = [];
+            break;
+          }
+        }
       }
       else {
         // Create a path which always just returns undefined
@@ -136,66 +163,130 @@ module hd.model {
         this.cardinality = 0;
       }
 
-      if (cardinality == 1) {
-        this.result = [];
-      }
-
-      this.path = path.split( '.' );
-      this.followPath();
-    }
-
-    /*----------------------------------------------------------------
-     * Were there any properties in the path?
-     */
-    isConstant(): boolean {
-      return this.constant;
+      // Initialize
+      this.followPath( this.start, 0, null );
     }
 
     /*----------------------------------------------------------------
      * The current result for the path serach
      */
     get( pos: Position ): any {
-      if (this.cardinality == 0 && pos === null) {
+      if (this.cardinality == 0) {
         return this.result;
       }
-      if (this.cardinality == 1 && pos !== null) {
-        return this.result[pos];
+      else if (pos !== null) {
+        return this.result[pos]
       }
     }
 
-    /*----------------------------------------------------------------
-     */
     private
     addResult( pos: Position, val: any ) {
-      if (this.cardinality == 0 && pos === null) {
+      if (this.cardinality == 0) {
         this.result = val;
+        this.sendNext( null );
       }
-      else if (this.cardinality == 1 && pos !== null) {
+      else if (pos !== null) {
         this.result[pos] = val;
+        this.sendNext( pos );
       }
     }
 
-    /*----------------------------------------------------------------
-     */
     private
-    addObservable( pos: Position, vable: ProxyObservable ) {
-      if (pos === null) {
-        if (! this.observables0) {
-          this.observables0 = [vable];
+    dropResult( pos: Position ) {
+      if (this.cardinality == 0) {
+        if (this.result !== undefined) {
+          this.result = undefined;
+          this.sendNext( pos );
         }
-        else {
-          this.observables0.push( vable );
+      }
+      else if (pos !== null) {
+        if (this.result[pos] !== undefined) {
+          this.result[pos] = undefined;
+          this.sendNext( pos );
         }
       }
       else {
-        if (! this.observables1) {
-          this.observables1 = [];
+        this.result = [];
+        this.sendNext( pos );
+      }
+    }
+
+    private
+    getUpTo( limit: number, pos: Position ): any {
+      var ctx = this.start;
+      for (var legi = 0; legi < limit && ctx instanceof Context; ++legi) {
+        var leg = this.legs[legi];
+        if (typeof leg === 'string') {
+          ctx = ctx[leg];
         }
-        if (! this.observables1[pos]) {
-          this.observables1[pos] = [vable];
+        else if (leg instanceof IndexPattern) {
+          var n = leg.apply( pos );
+          if (n === null) {
+            ctx = undefined;
+          }
+          else {
+            ctx = ctx[n];
+          }
         }
-        else {
-          this.observables1[pos].push( vable );
+      }
+      return legi == limit ? ctx : undefined;
+    }
+
+    /*----------------------------------------------------------------
+     */
+    private
+    addLegObserver( ver: LegObserver, legi: number, pos: Position ) {
+      this.constant = false;
+      if (pos === null) {
+        if (! this.observers0) { this.observers0 = []; }
+        this.observers0[legi] = ver;
+      }
+      else {
+        if (! this.observers1) { this.observers1 = []; }
+        if (! this.observers1[pos]) { this.observers1[pos] = []; }
+        this.observers1[pos][legi - this.branchi] = ver;
+      }
+    }
+
+    /*----------------------------------------------------------------
+     */
+    private
+    removeLegObservers( start: number, pos: Position ) {
+      if (pos === null) {
+        if (this.observers0) {
+          for (var i = start, l = this.observers0.length; i < l; ++i) {
+            var ver = this.observers0[i]
+            if (ver) {
+              ver.destruct();
+              this.observers0[i] = undefined;
+            }
+          }
+        }
+        if (this.observers1) {
+          for (var i = 0, l = this.observers1.length; i < l; ++i) {
+            var obs1 = this.observers1[i];
+            if (obs1) {
+              for (var j = 0, m = obs1.length; j < m; ++j) {
+                var ver = obs1[j];
+                if (ver) {
+                  ver.destruct();
+                  obs1[j] = undefined;
+                }
+              }
+            }
+          }
+        }
+      }
+      else if (this.observers1) {
+        var obs1 = this.observers1[pos];
+        if (obs1) {
+          for (var j = start - this.branchi, m = obs1.length; j < m; ++j) {
+            var ver = obs1[j];
+            if (ver) {
+              ver.destruct();
+              obs1[j] = undefined;
+            }
+          }
         }
       }
     }
@@ -204,17 +295,16 @@ module hd.model {
      * Perform the search, subscribing to any properties encountered.
      */
     private
-    followPath( ctx: Context, i: number; pos: Position ) {
+    followPath( ctx: Context, legi: number, pos: Position ) {
 
-      for (var l = this.legs.length; i < l && ctx instanceof Context; ++i) {
-        var leg = this.legs[i];
+      for (var l = this.legs.length; legi < l && ctx instanceof Context; ++legi) {
+        var leg = this.legs[legi];
         if (typeof leg === 'string') {
           var propname = '$' + leg;
           if (propname in ctx) {
-            var p = ctx[propname];
-            p.addObserverChangesOnly( this, this.onNextProperty, null, null, pos );
-            this.addObservable( pos, p );
-            ctx = p.get();
+            var prop = ctx[propname];
+            this.addLegObserver( new PropertyObserver( this, prop, legi, pos ), legi, pos );
+            ctx = prop.get();
           }
           else {
             ctx = ctx[leg];
@@ -223,108 +313,57 @@ module hd.model {
         else if (leg instanceof IndexPattern && ctx instanceof ArrayContext) {
           if (leg.scale == 0 || pos !== null) {
             var idx = leg.apply( pos );
-            ctx.addObserver( this, this.onNextArray, null, null, {ctx: ctx, legi: i, pos: pos} );
+            this.addLegObserver( new ArrayObserver( this, <ArrayContext>ctx, legi, pos ),
+                                 legi, pos                                                );
             ctx = ctx[idx];
           }
           else {
-            ctx.addObserver( this, this.onNextArray, null, null, {ctx: ctx, legi: i, pos: pos} );
-            for (var j = 0, m = ctx.length; j < m; ++j) {
+            this.branchi = legi;
+            this.addLegObserver( new ArrayObserver( this, <ArrayContext>ctx, legi, pos ),
+                                 legi, pos                                                );
+            for (var j = 0, m = (<ArrayContext>ctx).length; j < m; ++j) {
               if (ctx[j] !== undefined) {
                 var n = leg.inverse( j );
                 if (n !== null) {
-                  this.followPath( ctx[j], i + 1, n );
+                  this.followPath( ctx[j], legi + 1, n );
                 }
               }
             }
-            break; // we followed the rest recursively
+            break; // we followed everything else recursively
           }
         }
       }
-
-      if (i == l && ctx !== undefined) {
+      if (l == legi && ctx !== undefined) {
         this.addResult( pos, ctx );
       }
     }
 
     /*----------------------------------------------------------------
      */
-    private followOnePath( pos: Position ) {
-      var ctx = this.start;
-      for (var i = 0, l = this.legs.length; i < l && ctx instanceof Context; ++i) {
-        var leg = this.legs[i];
-        if (typeof leg === 'string') {
-          ctx = ctx[leg];
-        }
-        else if (leg instanceof IndexPattern && ctx instanceof ArrayContext) {
-          if (leg.scale == 0) {
-            var idx = leg.apply( pos );
-            ctx = ctx[idx];
-          }
-          else {
-            var n = leg.inverse( j );
-            if (n !== nul) {
-              this.followPath( ctx[j], i + 1, n );
-            }
-            break;
-          }
-        }
-      }
+    onNextProperty( legi: number, pos: Position ) {
+      this.dropResult( pos );
+      this.removeLegObservers( legi + 1, pos );
+      this.followPath( this.getUpTo( legi + 1, pos ), legi + 1, pos );
     }
 
     /*----------------------------------------------------------------
-     * Indicates that this path is no longer needed
      */
-    cancel( pos: Position ) {
-      if (pos === null) {
-        if (this.observables1) {
-          this.observables1.forEach( this.unsubscribeAll, this );
-          this.observables1 = null;
+
+    onNextArray( idx: number, legi: number, pos: Position ) {
+      var leg = <IndexPattern>this.legs[legi];
+      if (leg.scale == 0 || pos !== null) {
+        var n = leg.inverse( pos );
+        if (n === idx) {
+          this.dropResult( pos );
+          this.removeLegObservers( legi + 1, pos );
+          this.followPath( this.getUpTo( legi + 1, pos ), legi + 1, pos );
         }
-        this.unsubscribeAll( this.observables0 );
-        this.observables0 = null;
       }
       else {
-        if (this.observables1[pos]) {
-          this.unsubscribeAll( this.observables1[pos] );
-          this.observables1[pos] = null;
-        }
-      }
-    }
-
-    private
-    unsubscribeAll( vables: ProxyObservable[] ) {
-      if (vables) {
-        vables.forEach( this.unsubsribe, this );
-      }
-    }
-
-    private
-    unsubscribe( vable: ProxyObservable ) {
-      if (vable) {
-        vable.removeObserver( this );
-      }
-    }
-
-    /*----------------------------------------------------------------
-     */
-    onNextProperty( val: any, pos: Position ) {
-      this.cancel( p.pos );
-      if (pos == null) {
-        this.followPath( this.start, 0, null );
-      }
-      else {
-        this.followOnePath( pos );
-      }
-      this.sendNext( pos );
-    }
-
-    /*----------------------------------------------------------------
-     */
-
-    onNextArray( idx: number, p: {ctx: Context, legi: number, pos: Position} ) {
-      var leg = this.legs[p.legi];
-      var n = leg.inverse( idx );
-      if (n !== null && (pos === null || pos === n) {
+        var pos = leg.apply( idx );
+        this.dropResult( pos );
+        this.removeLegObservers( legi + 1, pos );
+        this.followPath( this.getUpTo( legi + 1, pos ), legi + 1, pos );
       }
     }
   }
@@ -338,7 +377,7 @@ module hd.model {
     var nonempty = /\S/;
     var field = /^\s*\.?([a-zA-Z][\w$]*)/;
     var cindex = /^\s*\[\s*(\d+)\s*\]/;
-    var vindex = /^\s*\[\s*(\d+)([a-zA-Z][\w$]*)\s*(?:([+-])\s*(\d+)\s*)?\]/;
+    var vindex = /^\s*\[\s*(?:(\d+)\s*\*\s*)?([a-zA-Z][\w$]*)\s*(?:([+-])\s*(\d+)\s*)?\]/;
     var legs: any[] = [];
 
     while (nonempty.test( s )) {
@@ -351,7 +390,7 @@ module hd.model {
       }
       else if (m = vindex.exec( s )) {
         if (m[2] == indexName) {
-          var scale = 0;
+          var scale = 1;
           var offset = 0;
           if (m[1]) {
             scale = Number( m[1] );
@@ -376,20 +415,6 @@ module hd.model {
       s = s.substr( m[0].length );
     }
     return legs;
-  }
-
-  /*==================================================================
-   * Make sure indices are used in correct order;
-   * calculate cardinality.
-   */
-  export
-  function calcCardinality( path: string, legs: (string|IndexPattern)[] ) {
-    for (var i = 0, l = legs.length; i < l; ++i) {
-      if (typeof legs[i] !== 'string' && (<IndexPattern>legs[i]).scale != 0) {
-        return 1;
-      }
-    }
-    return 0;
   }
 
 }

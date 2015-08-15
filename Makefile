@@ -57,11 +57,11 @@ async_LOC       := hd/
 async_UNITS     := worker ajax
 async_DEPS      := utility reactive
 
-hd_UNITS        := api
+hd_UNITS        := api methods
 hd_DEPS         := utility reactive model graph plan enable bind system
 
-qunit_UNITS     := qunit.d utility reactive ladder graph model dynamic system
-qunit_DEPS      := $(hd_DEPS)
+qunit_UNITS     := qunit.d utility reactive ladder graph model system
+qunit_DEPS      := hd $(hd_DEPS)
 
 compile-dfa_LOC   := apps/
 compile-dfa_UNITS := ../node.d output main

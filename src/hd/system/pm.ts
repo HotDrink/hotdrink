@@ -141,9 +141,6 @@ module hd.system {
       while (q.length > 0) {
         var ctx = q.shift();
         m.Context.changes( ctx ).addObserver( this, this.recordContextChange, null, null );
-        if (m.Context.hasUpdates( ctx )) {
-          this.recordContextChange( ctx );
-        }
         var ns = m.Context.nesteds( ctx );
         if (ns.length) {
           contexts.push.apply( contexts, ns );
@@ -331,7 +328,7 @@ module hd.system {
     //--------------------------------------------
     // Add constraint
     addConstraint( cc: m.Constraint ) {
-      if (! (cc.id in this.constraints)) {
+      if (! (cc.id in this.constraints) && cc.methods.length > 0) {
         this.constraints[cc.id] = cc;
 
         cc.methods.forEach( this.addMethod.bind( this, cc.id ) );
@@ -345,6 +342,12 @@ module hd.system {
           this.hasOptionals = true;
         }
 
+        if (cc.touchVariables) {
+          cc.touchVariables.forEach( function( v: m.Variable ) {
+            this.addTouchDependency( v, cc );
+          }, this );
+        }
+
         // Mark for update
         this.recordConstraintChange( cc.id );
       }
@@ -356,6 +359,12 @@ module hd.system {
       if (cc.id in this.constraints) {
         delete this.constraints[cc.id];
         this.removeConstraintRecords( cc.id );
+
+        if (cc.touchVariables) {
+          cc.touchVariables.forEach( function( v: m.Variable ) {
+            this.removeTouchDependency( v, cc );
+          }, this );
+        }
 
         cc.methods.forEach( this.removeMethod, this );
 
@@ -393,27 +402,15 @@ module hd.system {
     }
 
     //--------------------------------------------
-    // Add output
-    addOutput( out: m.Variable ) {
-      var id = out.id;
-      if (id in this.outputVids) {
-        ++this.outputVids[id];
-      }
-      else {
-        this.outputVids[id] = 1;
-      }
+    // Add command
+    addCommand( cmd: m.Command ) {
+      cmd.addObserver( this, this.scheduleCommand, null, null );
     }
 
     //--------------------------------------------
-    // Remove output
-    removeOutput( out: m.Variable ) {
-      var id = out.id;
-      if (this.outputVids[id] > 1) {
-        --this.outputVids[id];
-      }
-      else {
-        delete this.outputVids[out.id];
-      }
+    // Remove command
+    removeCommand( cmd: m.Command ) {
+      cmd.removeObserver( this );
     }
 
     //--------------------------------------------
@@ -501,15 +498,27 @@ module hd.system {
     }
 
     //--------------------------------------------
-    // Add command
-    addCommand( cmd: m.Command ) {
-      cmd.addObserver( this, this.scheduleCommand, null, null );
+    // Add output
+    addOutput( out: m.Variable ) {
+      var id = out.id;
+      if (id in this.outputVids) {
+        ++this.outputVids[id];
+      }
+      else {
+        this.outputVids[id] = 1;
+      }
     }
 
     //--------------------------------------------
-    // Remove command
-    removeCommand( cmd: m.Command ) {
-      cmd.removeObserver( this );
+    // Remove output
+    removeOutput( out: m.Variable ) {
+      var id = out.id;
+      if (this.outputVids[id] > 1) {
+        --this.outputVids[id];
+      }
+      else {
+        delete this.outputVids[out.id];
+      }
     }
 
     /*----------------------------------------------------------------
@@ -698,10 +707,21 @@ module hd.system {
     updateModel() {
       for (var i = 0, l = this.needUpdating.length; i < l; ++i) {
         var ctx = this.needUpdating[i];
-        var updates = m.Context.reportUpdates( ctx );
+        var updates = m.Context.update( ctx );
         for (var i = 0, l = updates.removes.length; i < l; ++i) {
           var el = updates.removes[i];
-          if (el instanceof m.Constraint) {
+          if (el instanceof m.Variable) {
+            this.removeVariable( el );
+          }
+          else if (el instanceof m.Context) {
+            // Removing context could alter this.needUpdating
+            var j = this.needUpdating.indexOf( el );
+            if (j >= 0 && j <= i) {
+              --i;
+            }
+            this.removeComponents( el );
+          }
+          else if (el instanceof m.Constraint) {
             this.removeConstraint( el );
           }
           else if (el instanceof m.Output) {
@@ -716,7 +736,13 @@ module hd.system {
         }
         for (var i = 0, l = updates.adds.length; i < l; ++i) {
           var el = updates.adds[i];
-          if (el instanceof m.Constraint) {
+          if (el instanceof m.Variable) {
+            this.addVariable( el );
+          }
+          else if (el instanceof m.Context) {
+            this.addComponents( el );
+          }
+          else if (el instanceof m.Constraint) {
             this.addConstraint( el );
           }
           else if (el instanceof m.Output) {
@@ -730,6 +756,8 @@ module hd.system {
           }
         }
       }
+
+      this.needUpdating = [];
     }
 
     /*----------------------------------------------------------------
@@ -807,14 +835,18 @@ module hd.system {
      * Run any methods which need updating.
      */
     evaluate() {
-      var mids = u.stringSet.members( this.needEvaluating )
-            .map( function( cid: string ) {
-              return this.sgraph.selectedForConstraint( cid );
-            }, this )
-            .filter( u.isNotNull );
+      var cids = u.stringSet.members( this.needEvaluating );
 
-      var downstreamVids = new g.DigraphWalker( this.sgraph.graph )
-            .nodesDownstreamOtherType( mids );
+      if (cids.length > 0) {
+
+        var mids = cids
+              .map( function( cid: string ) {
+                return this.sgraph.selectedForConstraint( cid );
+              }, this )
+              .filter( u.isNotNull );
+
+        var downstreamVids = new g.DigraphWalker( this.sgraph.graph )
+              .nodesDownstreamOtherType( mids );
 
         // Commit initial edits
         for (var i = 0, l = downstreamVids.length; i < l; ++i) {
@@ -822,33 +854,34 @@ module hd.system {
           this.variables[vid].commitPromise();
         }
 
-      if (mids.length > 0) {
-        // Collect methods to be run
-        var downstreamMids = new g.DigraphWalker( this.sgraph.graph )
-              .nodesDownstreamSameType( mids )
-              .filter( g.isNotStayMethod )
-              .reduce( u.stringSet.build, <u.StringSet>{} );
-        var scheduledMids = this.topomids
-              .filter( function( mid: string ) { return downstreamMids[mid]; } );
+        if (mids.length > 0) {
+          // Collect methods to be run
+          var downstreamMids = new g.DigraphWalker( this.sgraph.graph )
+                .nodesDownstreamSameType( mids )
+                .filter( g.isNotStayMethod )
+                .reduce( u.stringSet.build, <u.StringSet>{} );
+          var scheduledMids = this.topomids
+                .filter( function( mid: string ) { return downstreamMids[mid]; } );
 
-        // Evaluate methods
-        for (var i = 0, l = scheduledMids.length; i < l; ++i) {
-          var mid = scheduledMids[i];
-          var ar = activate( this.methods[mid] );
-          this.enable.methodScheduled( this.cgraph.constraintForMethod( mid ),
-                                       mid,
-                                       ar.inputs,
-                                       ar.outputs
-                                     );
+          // Evaluate methods
+          for (var i = 0, l = scheduledMids.length; i < l; ++i) {
+            var mid = scheduledMids[i];
+            var ar = activate( this.methods[mid] );
+            this.enable.methodScheduled( this.cgraph.constraintForMethod( mid ),
+                                         mid,
+                                         ar.inputs,
+                                         ar.outputs
+                                       );
+          }
+
+          // Commit all output promises
+          for (var i = 0, l = downstreamVids.length; i < l; ++i) {
+            var vid = downstreamVids[i];
+            this.variables[vid].commitPromise();
+          }
+
+          this.needEvaluating = {};
         }
-
-        // Commit all output promises
-        for (var i = 0, l = downstreamVids.length; i < l; ++i) {
-          var vid = downstreamVids[i];
-          this.variables[vid].commitPromise();
-        }
-
-        this.needEvaluating = {};
       }
     }
 

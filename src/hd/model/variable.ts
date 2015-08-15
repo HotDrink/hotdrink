@@ -71,7 +71,7 @@ module hd.model {
      * determine when value has changed.
      */
     constructor( name: string,
-                 value: any,
+                 value?: any,
                  eq?: u.EqualityPredicate<any> ) {
       this.id = makeId( name );
       this.name = name;

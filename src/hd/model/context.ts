@@ -7,18 +7,123 @@ module hd.model {
   import r = hd.reactive;
 
   /*******************************************************************
+     Helpers
+   ******************************************************************/
+
+  // getter for constant
+  function pathConstant( p: Path ) {
+    return p.constant;
+  }
+
+  // object that can retrieve a path for a string
+  interface PathLookup {
+    get( name: string ): Path;
+  }
+
+  // ojbect that has an id
+  interface HasId {
+    id: string;
+  }
+
+  // lexicographical comparison for arrays of HasId
+  function compareIds( a: HasId[], b: HasId[] ) {
+    for (var i = 0, l = a.length, m = b.length; i < l && i < m; ++i) {
+      if (a[i] !== b[i]) {
+        var cmp = a[i].id.localeCompare( b[i].id );
+        if (cmp != 0) {
+          return cmp;
+        }
+      }
+    }
+
+    return l - m;
+  }
+
+  // lexicographical comparison for array
+  function compareAnys( a: any[], b: any[] ) {
+    for (var i = 0, l = a.length, m = b.length; i < l && i < m; ++i) {
+      if (a[i] !== b[i]) {
+        var ai = a[i];
+        var bi = b[i];
+        var cmp: number;
+        if ((ai instanceof Variable || ai instanceof Constraint || ai instanceof Command) &&
+            (bi instanceof Variable || bi instanceof Constraint || bi instanceof Command)   ) {
+          cmp = ai.id.localeCompare( bi.id );
+        }
+        else if (typeof ai === 'number' && typeof bi === 'number') {
+          cmp = ai - bi;
+        }
+        else if (typeof ai === 'string' && typeof bi === 'string') {
+          cmp = ai.localeCompare( bi );
+        }
+        else {
+          cmp = (ai + "").localeCompare( bi + "" );
+        }
+        if (cmp != 0) {
+          return cmp;
+        }
+      }
+    }
+
+    return l - m;
+  }
+
+  // find the differences between two SORTED arrays
+  function listDiff<T>( a: T[], b: T[], compare: (a: T, b: T) => number ) {
+    var leftOnly    = <T[]> [];
+    var leftShared  = <T[]> [];
+    var rightOnly   = <T[]> [];
+    var rightShared = <T[]> []
+
+    var i = 0;
+    var j = 0;
+    var l = a.length;
+    var  m = b.length;
+    while (i < l && j < m) {
+      var cmp = compare( a[i], b[j] );
+      if (cmp < 0) {
+        leftOnly.push( a[i] );
+        ++i;
+      }
+      else if (cmp > 0) {
+        rightOnly.push( b[j] );
+        ++j;
+      }
+      else {
+        leftShared.push( a[i] );
+        rightShared.push( b[i] );
+        ++i; ++j;
+      }
+    }
+
+    while (i < l) {
+      leftOnly.push( a[i] );
+      ++i;
+    }
+
+    while (j < m) {
+      rightOnly.push( b[j] );
+      ++j;
+    }
+
+    return {leftOnly: leftOnly, leftShared: leftShared,
+            rightOnly: rightOnly, rightShared: rightShared};
+  }
+
+
+  /*******************************************************************
     Context elements
    ******************************************************************/
 
   // Union type for all possible elements
   export
-  type ContextElement = StructuralElement | DynamicElement;
+  type ContextElement = Variable | Context | Constraint | Command | TouchDep | Output;
 
+  // Wrapper class to represent touch dependency
   export
-  type StructuralElement = Variable | Context;
-
-  export
-  type DynamicElement = Constraint | Command | Output | TouchDep;
+  class TouchDep {
+    constructor( public from: Variable | Constraint, public to: Variable | Constraint ) { }
+  }
 
   // Wrapper class to represent output
   export
@@ -26,10 +131,16 @@ module hd.model {
     constructor( public variable: Variable ) { }
   }
 
-  // Wrapper class to represent touch dependency
   export
-  class TouchDep {
-    constructor( public from: Variable | Constraint, public to: Variable | Constraint ) { }
+  interface ContextClass {
+    new (): Context;
+  }
+
+  // Changes made by a context in response to an update
+  export
+  interface ContextChanges {
+    removes: ContextElement[];
+    adds: ContextElement[]
   }
 
   /*******************************************************************
@@ -47,7 +158,8 @@ module hd.model {
   export
   interface NestedSpec {
     loc: string;
-    spec: ContextSpec;
+    klass?: ContextClass;
+    spec?: ContextSpec;
   }
 
   export
@@ -84,14 +196,14 @@ module hd.model {
   }
 
   export
-  interface OutputSpec {
-    variable: string;
-  }
-
-  export
   interface TouchDepSpec {
     from: string;
     to: string;
+  }
+
+  export
+  interface OutputSpec {
+    variable: string;
   }
 
   export
@@ -101,43 +213,231 @@ module hd.model {
     references: ReferenceSpec[];
     constraints: ConstraintSpec[];
     commands: CommandSpec[];
-    outputs: OutputSpec[];
     touchDeps: TouchDepSpec[];
+    outputs: OutputSpec[];
   }
 
   /*******************************************************************
-    Templates -- represent an element that changes as references
-      change
+    Templates -- represent an element that changes as paths change.
+
+    Instances -- represent a single filling of blanks in a template.
    ******************************************************************/
 
-  export
-  type Template = ConstraintTemplate | CommandTemplate | OutputTemplate | TouchDepTemplate;
+  // Union type for instances
+  type TemplateInstance = ConstraintInstance | CommandInstance | TouchDepInstance | OutputInstance;
+
+  // getter for element associated with instance
+  function getElement( inst: TemplateInstance ) {
+    return inst.element;
+  }
 
   /*==================================================================
-   * Not really a stand-alone template; helper to the constraint
-   *   template.
+   * Abstract base class for all templates.
+   * For generality, this class does not interact directly with paths.
+   * That means its the derived class' responsibility to:
+   * - in constructor, subscribe to any paths used by the template
+   * - in constructor, pick a path and assign to master
+   * - in destructor, unsubscribe to all paths
    */
+  class Template extends r.BasicObservable<Template> {
 
-  export
+    // All paths used by this template
+    paths: u.ArraySet<Path> = [];
+
+    // Any path with same cardinality as the template
+    master: Path;
+
+    // All instances created from this template, in sorted order
+    instances : TemplateInstance[] = [];
+
+    // Have their been any changes since the last update?
+    changed = true;
+
+    /*----------------------------------------------------------------
+     */
+    addPath( path: Path ) {
+      if (u.arraySet.add( this.paths, path )) {
+        path.addObserver( this );
+        if (! this.master || this.master.cardinality < path.cardinality) {
+          this.master = path;
+        }
+      }
+    }
+
+    addPaths( paths: Path[] ) {
+      paths.forEach( this.addPath, this );
+    }
+
+    /*----------------------------------------------------------------
+     */
+    destruct() {
+      for (var i = 0, l = this.paths.length; i < l; ++i) {
+        this.paths[i].removeObserver( this );
+      }
+    }
+
+    /*----------------------------------------------------------------
+     */
+    isConstant(): boolean {
+      return this.paths.every( pathConstant );
+    }
+
+    /*----------------------------------------------------------------
+     * To be implemented by derived classes
+     */
+
+    // Abstract:  Create an instance for a given position
+    define( pos: Position ): TemplateInstance {
+      throw "Attempt to call abstract method";
+    }
+
+    // Abstract:  Order two instances
+    compare( a: TemplateInstance, b: TemplateInstance ): number {
+      throw "Attempt to call abstract method";
+    }
+
+    // Abstract:  Create element for instance
+    create( inst: TemplateInstance ) {
+      throw "Attempt to call abstract method";
+    }
+
+    /*----------------------------------------------------------------
+     * Overload addObserver so that subscribing to a template needing
+     * updates results in automatic notification.
+     */
+    addObserver( observer: r.Observer<Template> ): r.Observer<Template>;
+    addObserver( object: Object,
+                 onNext: (value: Template) => void,
+                 onError: (error: any) => void,
+                 onCompleted: () => void        ): r.Observer<Template>;
+    addObserver<U>( object: Object,
+                    onNext: (value: Template, id?: U) => void,
+                    onError: (error: any, id?: U) => void,
+                    onCompleted: (id?: U) => void,
+                    id: U                                  ): r.Observer<Template>;
+    addObserver( object: Object,
+                 onNext?: (value: Template, id?: any) => void,
+                 onError?: (error: any, id?: any) => void,
+                 onCompleted?: (id?: any) => void,
+                 id?: any                                  ): r.Observer<Template> {
+      var added: r.Observer<Template>;
+      if (arguments.length == 1) {
+        added = super.addObserver( <r.Observer<Template>>object );
+      }
+      else {
+        added = super.addObserver( object, onNext, onError, onCompleted, id );
+      }
+      if (added && this.changed) {
+        added.onNext( this );
+      }
+      return added;
+    }
+
+    /*----------------------------------------------------------------
+     * Recalculate all instances and report any changes.
+     */
+    update( changes: ContextChanges ) {
+      var newInstances = <TemplateInstance[]> [];
+
+      // Take all positions from master and try to create instance
+      this.master.forEach( function( vv: any, pos: Position ) {
+        var inst = this.define( pos );
+        if (inst) {
+          newInstances.push( inst );
+        }
+      }, this );
+
+      // Sort the list
+      newInstances.sort( this.compare );
+
+      // Calculate difference between this list and our new list
+      var diff = listDiff( this.instances, newInstances, this.compare );
+
+      // Put leftOnly on the remove list
+      if (diff.leftOnly.length > 0) {
+        changes.removes.push.apply( changes.removes, diff.leftOnly.map( getElement ) );
+      }
+
+      // Copy over elements for shared
+      for (var i = 0, l = diff.leftShared.length; i < l; ++i) {
+        diff.rightShared[i].element = diff.leftShared[i].element;
+      }
+
+      // Create elements for rightOnly and put on the add list
+      if (diff.rightOnly.length > 0) {
+        diff.rightOnly.forEach( function( inst: TemplateInstance ) {
+          this.create( inst );
+          changes.adds.push( inst.element );
+        }, this );
+      }
+
+      // Record results
+      this.instances = newInstances;
+      this.changed = false;
+    }
+
+    /*----------------------------------------------------------------
+     * All current elements created by this template
+     */
+    getElements(): ContextElement[] {
+      return this.instances.map( getElement );
+    }
+
+    /*----------------------------------------------------------------
+     * When a path used by this template changes.  Currently, we
+     * ignore the position that changes and just always recalculate
+     * all positions.
+     */
+    onNext() {
+      if (! this.changed) {
+        this.changed = true;
+        this.sendNext( this );
+      }
+    }
+
+    onError() { }
+
+    onCompleted() { }
+  }
+
+  /*==================================================================
+   * MethodTemplate slightly different from other templates.
+   * It's not actually a template in its own right (doesn't inherit
+   * from Template class); it's more a helper for ConstraintTemplate
+   */
+  interface MethodInstance {
+    inputs: any[];
+    outputs: Variable[];
+  }
+
   class MethodTemplate {
     name: string;
-    inputs: string[];
+    inputs: Path[];
     priorFlags: boolean[];
-    outputs: string[];
+    outputs: Path[];
     fn: Function;
-    instance: Method = null;
 
-    constructor( mspec: MethodSpec ) {
-      this.inputs = mspec.inputs;
-      this.priorFlags = mspec.priorFlags;
-      this.outputs = mspec.outputs;
+    /*----------------------------------------------------------------
+     * Look up paths, but don't subscribe; the constraint template
+     * handles that
+     */
+    constructor( mspec: MethodSpec, lookup: PathLookup ) {
+      this.inputs = mspec.inputs.map( lookup.get, lookup );
+      if (mspec.priorFlags) {
+        this.priorFlags = mspec.priorFlags.slice( 0 );
+      }
+      this.outputs = mspec.outputs.map( lookup.get, lookup );
       this.fn = mspec.fn;
       this.name = [mspec.inputs.join( ',' ), mspec.outputs.join( ',' )].join( '->' );
     }
 
-    instantiate( lookup: u.Dictionary<any>, vars: u.ArraySet<Variable> ) {
-      var ins = this.inputs.map( u.toValueIn( lookup ) );
-      var outs = this.outputs.map( u.toValueIn( lookup ) );
+    /*----------------------------------------------------------------
+     * Create an instance for a given position
+     */
+    define( pos: Position ): MethodInstance {
+      var get = function( p: Path ) { return p.get( pos ) };
+      var ins = this.inputs.map( get );
+      var outs = this.outputs.map( get );
 
       // Cannot have same variable as input and output
       for (var i = 0, l = ins.length; i < l; ++i) {
@@ -146,120 +446,188 @@ module hd.model {
             outs.indexOf( ins[i] ) >= 0) {
           console.warn( 'Method cannot be instantiated with same variable as input and output: ' +
                         this.name );
-          this.instance = null;
-          return;
+          return null;
         }
       }
 
       // outs should contain only variables; no duplicates
       var outVars = u.arraySet.fromArray( <Variable[]>outs.filter( u.isType( Variable ) ) );
-      if (outs.length == outVars.length) {
-        this.instance = new Method( this.name,
-                                    this.fn,
-                                    ins,
-                                    this.priorFlags,
-                                    outs,
-                                    u.arraySet.difference( vars, outVars )
-                                  );
-      }
-      else {
+      if (outs.length != outVars.length) {
         console.warn( 'Method cannot be instantiated with non-variable or duplicate outputs: ' +
                       this.name );
-        this.instance = null;
+        return null;
       }
+
+
+      return {inputs: ins, outputs: outs};
     }
 
-    activate() {
+    /*----------------------------------------------------------------
+     * Create element for instance; requires list of other variables
+     * in the constraint.
+     */
+    create( inst: MethodInstance, vars: u.ArraySet<Variable> ): Method {
+      return new Method( this.name,
+                         this.fn,
+                         inst.inputs,
+                         this.priorFlags,
+                         inst.outputs,
+                         u.arraySet.difference( vars, inst.outputs )
+                       );
     }
   }
 
-  /*================================================================*/
-  export
-  class ConstraintTemplate {
-    name: string;
-    variables: u.ArraySet<string>;
-    methods: u.ArraySet<MethodTemplate>;
-    optional: Optional;
-    instance: Constraint = null;
+  /*==================================================================
+   * Constraint Template.
+   */
+  class ConstraintInstance {
+    element: Constraint;
 
-    constructor( spec: ConstraintSpec ) {
-      this.variables = spec.variables;
+    constructor( public all: any[],
+                 public variables: Variable[],
+                 public methods: MethodInstance[],
+                 public touchVariables: Variable[] ) { }
+  }
+
+  class ConstraintTemplate extends Template {
+    name: string;
+    variables: Path[];
+    methods: MethodTemplate[];
+    optional: Optional;
+    touchVariables: Path[];
+
+    /*----------------------------------------------------------------
+     * Initialize, look up paths, subscribe
+     */
+    constructor( spec: ConstraintSpec, lookup: PathLookup ) {
+      super();
+      this.addPaths( this.variables = spec.variables.map( lookup.get, lookup ) );
       this.methods = spec.methods.map( function( mspec: MethodSpec ) {
-        return new MethodTemplate( mspec );
+        return new MethodTemplate( mspec, lookup );
       } );
       this.optional = spec.optional;
+      if (spec.touchVariables && spec.touchVariables.length) {
+        this.addPaths( this.touchVariables = spec.touchVariables.map( lookup.get, lookup ) );
+      }
       this.name = spec.variables.join( ',' )
     }
 
-    uses( path: string ) {
-      return this.variables.indexOf( path ) >= 0;
-    }
+    /*----------------------------------------------------------------
+     * Create an instance for a given position.
+     */
+    define( pos: Position ) {
+      var all = <any[]> [];
+      var vvs = <Variable[]> [];
 
-    instantiate( lookup: u.Dictionary<any> ) {
-      var varCandidates = this.variables.map( u.toValueIn( lookup ) );
-      if (varCandidates.some( function( x ) { return x === undefined; } )) {
-        this.instance = null;
-      }
-      else {
-        var vars = varCandidates.filter( u.isType( Variable ) );
-        var name = this.variables.join( ',' );
-        var cc = new Constraint( name, vars );
-        if (this.optional !== Optional.Default) {
-          cc.optional = this.optional;
+      for (var i = 0, l = this.variables.length; i < l; ++i) {
+        var vv = this.variables[i].get( pos );
+        if (vv === undefined) {
+          return null;
         }
-        for (var i = 0, l = this.methods.length; i < l; ++i) {
-          var mtmpl = this.methods[i];
-          mtmpl.instantiate( lookup, vars );
-          if (mtmpl.instance) {
-            cc.addMethod( mtmpl.instance );
+        all.push( vv );
+        if (vv instanceof Variable) {
+          vvs.push( vv );
+        }
+      }
+
+      var minsts = <MethodInstance[]> [];
+      var hasMethods = false;
+
+      for (var i = 0, l = this.methods.length; i < l; ++i) {
+        var minst = this.methods[i].define( pos );
+        if (minst) {
+          minsts[i] = minst;
+          hasMethods = true;
+        }
+      }
+
+      if (hasMethods) {
+        var tvs : u.ArraySet<Variable>;
+        if (this.touchVariables && this.touchVariables.length) {
+          tvs = [];
+          for (var i = 0, l = this.touchVariables.length; i < l; ++i) {
+            var vv = this.touchVariables[i].get( pos );
+            if (vv instanceof Variable) {
+              u.arraySet.add( tvs, vv );
+            }
           }
         }
-        if (cc.methods.length) {
-          this.instance = cc;
-        }
-        else {
-          this.instance = null;
+
+        return new ConstraintInstance( all, vvs, minsts, <Variable[]>tvs );
+      }
+      else {
+        return null;
+      }
+    }
+
+    /*----------------------------------------------------------------
+     * Order two instances
+     */
+    compare( a: ConstraintInstance, b: ConstraintInstance ) {
+      return compareAnys( a.all, b.all );
+    }
+
+    /*----------------------------------------------------------------
+     * Create element for instance
+     */
+    create( inst: ConstraintInstance ) {
+      var cc = new Constraint( this.name, inst.variables, inst.touchVariables );
+      cc.optional = this.optional;
+      for (var i = 0, l = inst.methods.length; i < l; ++i) {
+        if (inst.methods[i]) {
+          cc.addMethod(
+            this.methods[i].create( inst.methods[i], inst.variables )
+          );
         }
       }
+      inst.element = cc;
     }
   }
 
-  /*================================================================*/
-  export
-  class CommandTemplate {
+  /*==================================================================
+   * Command Template.
+   */
+  class CommandInstance {
+    element: Command;
+
+    constructor( public inputs: any[],
+                 public outputs: Variable[] ) { }
+  }
+
+  class CommandTemplate extends Template {
     name: string;
-    inputs: string[];
+    inputs: Path[];
     priorFlags: boolean[];
-    outputs: string[];
+    outputs: Path[];
     fn: Function;
     synchronous: boolean;
-    instance: Command = null;
 
-    ready: r.HotSwapSignal<boolean>;
-
-    constructor( cmdspec: CommandSpec ) {
-      this.inputs = cmdspec.inputs;
-      this.priorFlags = cmdspec.priorFlags;
-      this.outputs = cmdspec.outputs;
+    /*----------------------------------------------------------------
+     * Initialize, look up paths, subscribe
+     */
+    constructor( cmdspec: CommandSpec, lookup: PathLookup ) {
+      super();
+      this.addPaths( this.inputs = cmdspec.inputs.map( lookup.get, lookup ) )
+      if (cmdspec.priorFlags) {
+        this.priorFlags = cmdspec.priorFlags.slice( 0 );
+      }
+      this.addPaths( this.outputs = cmdspec.outputs.map( lookup.get, lookup ) )
       this.fn = cmdspec.fn;
       this.synchronous = cmdspec.synchronous;
       this.name = [cmdspec.inputs.join( ',' ), cmdspec.outputs.join( ',' )].join( '->' );
-      this.ready = new r.HotSwapSignal<boolean>();
     }
 
-    uses( path: string ) {
-      return this.inputs.indexOf( path ) >= 0 || this.outputs.indexOf( path ) >= 0;
-    }
-
-    instantiate( lookup: u.Dictionary<any> ) {
-      var ins = this.inputs.map( u.toValueIn( lookup ) );
-      var outs = this.outputs.map( u.toValueIn( lookup ) );
+    /*----------------------------------------------------------------
+     * Create an instance for a given position.
+     */
+    define( pos: Position ) {
+      var get = function( p: Path ) { return p.get( pos ) };
+      var ins = this.inputs.map( get );
+      var outs = this.outputs.map( get );
 
       // Ensure all paths have values
       if (ins.some( u.isUndefined ) || outs.some( u.isUndefined )) {
-        this.instance = null;
-        this.ready.onNext( null );
-        return;
+        return null;
       }
 
       // Cannot have same variable as input and output
@@ -269,143 +637,162 @@ module hd.model {
             outs.indexOf( ins[i] ) >= 0) {
           console.warn( 'Command cannot be instantiated with same variable as input and output: ' +
                         this.name );
-          this.instance = null;
-          this.ready.onNext( null );
-          return;
+          return null;
         }
       }
 
       // outs should contain only variables; no duplicates
       var outVars = u.arraySet.fromArray( <Variable[]>outs.filter( u.isType( Variable ) ) );
-      if (outs.length == outVars.length) {
-        if (this.synchronous) {
-          this.instance = new SynchronousCommand( this.name,
-                                                  this.fn,
-                                                  ins,
-                                                  this.priorFlags,
-                                                  outs
-                                                );
-          this.ready.onNext( (<SynchronousCommand>this.instance).ready );
-        }
-        else {
-          this.instance = new Command( this.name,
-                                       this.fn,
-                                       ins,
-                                       this.priorFlags,
-                                       outs
-                                     );
-          this.ready.onNext( null );
-        }
-      }
-      else {
+      if (outVars.length != outs.length) {
         console.warn( 'Command cannot be instantiated with non-variable or duplicate outputs: ' +
                       this.name );
-        this.instance = null;
-        this.ready.onNext( null );
+        return null;
+      }
+
+      return new CommandInstance( ins, outs );
+    }
+
+    /*----------------------------------------------------------------
+     * Order two instances
+     */
+    compare( a: CommandInstance, b: CommandInstance ) {
+      var cmp = compareAnys( a.inputs, b.inputs );
+      if (cmp == 0) {
+        cmp = compareIds( a.outputs, b.outputs );
+      }
+      return cmp;
+    }
+
+    /*----------------------------------------------------------------
+     * Create element for instance
+     */
+    create( inst: CommandInstance ) {
+      if (this.synchronous) {
+        inst.element = new SynchronousCommand( this.name,
+                                               this.fn,
+                                               inst.inputs,
+                                               this.priorFlags,
+                                               inst.outputs     );
+      }
+      else {
+        inst.element = new Command( this.name,
+                                    this.fn,
+                                    inst.inputs,
+                                    this.priorFlags,
+                                    inst.outputs     );
       }
     }
 
+    /*----------------------------------------------------------------
+     */
     activate() {
-      if (this.instance) {
-        this.instance.activate();
-      }
-    }
-
-    onNext() {
-      if (this.instance) {
-        this.instance.onNext();
-      }
-    }
-
-    onError() {
-      if (this.instance) {
-        this.instance.onError();
-      }
-    }
-
-    onCompleted() {
-      if (this.instance) {
-        this.instance.onCompleted();
+      var cmds = this.getElements();
+      if (cmds.length) {
+        (<Command>cmds[0]).activate();
       }
     }
   }
 
-  /*================================================================*/
-  export
-  class OutputTemplate {
-    variable: string;
-    instance: Output = null;
+  /*==================================================================
+   * TouchDep Template.
+   */
+  class TouchDepInstance {
+    element: TouchDep;
 
-    constructor( spec: OutputSpec ) {
-      this.variable = spec.variable;
+    constructor( public from: Constraint|Variable,
+                 public to: Constraint|Variable    ) { }
+  }
+
+  class TouchDepTemplate extends Template {
+    from: Path;
+    to: Path;
+
+    /*----------------------------------------------------------------
+     * Initialize, look up paths, subscribe
+     */
+    constructor( spec: TouchDepSpec, lookup: PathLookup ) {
+      super();
+      this.addPath( this.from = lookup.get( spec.from ) );
+      this.addPath( this.to = lookup.get( spec.to ) );
     }
 
-    uses( path: string ) {
-      return this.variable == path;
+    /*----------------------------------------------------------------
+     * Create an instance for a given position.
+     */
+    define( pos: Position ) {
+      var cc1 = this.from.get( pos );
+      var cc2 = this.to.get( pos );
+      if (cc1 !== cc2 &&
+          (cc1 instanceof Variable || cc1 instanceof Constraint) &&
+          (cc2 instanceof Variable || cc2 instanceof Constraint)   ) {
+        return new TouchDepInstance( cc1, cc2 );
+      }
+      else {
+        return null;
+      }
     }
 
-    instantiate( lookup: u.Dictionary<any> ) {
-      var vv = lookup[this.variable];
+    /*----------------------------------------------------------------
+     * Order two instances
+     */
+    compare( a: TouchDepInstance, b: TouchDepInstance ) {
+      var cmp = a.from.id.localeCompare( b.from.id );
+      if (cmp == 0) {
+        cmp = a.to.id.localeCompare( b.to.id );
+      }
+      return cmp;
+    }
+
+    /*----------------------------------------------------------------
+     * Create element for instance
+     */
+    create( inst: TouchDepInstance ) {
+      inst.element = new TouchDep( inst.from, inst.to );
+    }
+  }
+
+  /*==================================================================
+   * Output Template;
+   */
+  class OutputInstance {
+    element: Output;
+
+    constructor( public variable: Variable ) { }
+  }
+
+  class OutputTemplate extends Template {
+    variable: Path;
+
+    /*----------------------------------------------------------------
+     * Initialize, look up paths, subscribe
+     */
+    constructor( spec: OutputSpec, lookup: PathLookup ) {
+      super();
+      this.addPath( this.variable = lookup.get( spec.variable ) );
+    }
+
+    /*----------------------------------------------------------------
+     * Create an instance for a given position.
+     */
+    define( pos: Position ) {
+      var vv = this.variable.get( pos );
       if (vv instanceof Variable) {
-        this.instance = new Output( vv );
-      }
-      else {
-        this.instance = null;
-      }
-    }
-  }
-
-  /*================================================================*/
-  export
-  class TouchDepTemplate {
-    from: string;
-    to: string;
-    toTmpl: ConstraintTemplate;
-    instance: TouchDep = null;
-
-    constructor( spec: TouchDepSpec );
-    constructor( from: string, to: ConstraintTemplate );
-    constructor() {
-      if (arguments.length == 1) {
-        var spec: TouchDepSpec = arguments[0];
-        this.from = spec.from;
-        this.to = spec.to;
-      }
-      else {
-        this.from = arguments[0];
-        this.toTmpl = arguments[1];
+        return new OutputInstance( vv );
       }
     }
 
-    uses( path: string ) {
-      return this.from == path ||
-            (this.toTmpl ? this.toTmpl.uses( path ) : this.to == path);
+    /*----------------------------------------------------------------
+     * Order two instances
+     */
+    compare( a: OutputInstance, b: OutputInstance ) {
+      return a.variable.id.localeCompare( b.variable.id );
     }
 
-    instantiate( lookup: u.Dictionary<any> ) {
-      var cc1 = lookup[this.from];
-      if (cc1 instanceof Variable || cc1 instanceof Constraint) {
-        if (this.toTmpl) {
-          if (this.toTmpl.instance) {
-            this.instance = new TouchDep( cc1, this.toTmpl.instance );
-          }
-          else {
-            this.instance = null;
-          }
-        }
-        else {
-          var cc2 = lookup[this.to];
-          if (cc1 !== cc2 && (cc2 instanceof Variable || cc2 instanceof Constraint)) {
-            this.instance = new TouchDep( cc1, cc2 );
-          }
-          else {
-            this.instance = null
-          }
-        }
-      }
-      else {
-        this.instance = null;
-      }
+    /*----------------------------------------------------------------
+     * Create element for instance
+     */
+    create( inst: OutputInstance ) {
+      inst.element = new Output( inst.variable );
     }
   }
 
@@ -420,8 +807,7 @@ module hd.model {
    * it is simply instantiated and stored; if it does, then we store
    * a template for the element.
    */
-  export
-  class ContextData {
+  class ContextData extends r.BasicObservable<Context> {
 
     // Variables
     variables: Variable[]                 = [];
@@ -437,25 +823,78 @@ module hd.model {
     commands: Command[]                   = [];
     commandTmpls: CommandTemplate[]       = [];
 
-    // Outputs
-    outputs: Output[]                     = [];
-    outputTmpls: OutputTemplate[]         = [];
-
     // Touch dependencies
     touchDeps: TouchDep[]                 = [];
     touchDepTmpls: TouchDepTemplate[]     = [];
 
-    // Templates that need to be updated
-    outdated: u.ArraySet<Template>        = [];
+    // Outputs
+    outputs: Output[]                     = [];
+    outputTmpls: OutputTemplate[]         = [];
 
     // All paths we are watching
     paths: u.Dictionary<any>              = {};
 
-    // Current value for each path name
-    lookup: u.Dictionary<any>             = {};
+    // Templates that need to be updated
+    outdated: Template[]                  = null;
 
-    // Publishes when dynamic elements of the context have changed
-    changes = new r.BasicObservable<Context>();
+    // Init
+    constructor( public ctx: Context ) {
+      super();
+    }
+
+    // Implement PathLookup
+    get( name: string ) {
+      var path = this.paths[name];
+      if (! path) {
+        path = this.paths[name] = new Path( this.ctx, name );
+      }
+      return path;
+    }
+
+    // Implement Observable<Template>
+    onNext( tmpl: Template ) {
+      if (this.outdated) {
+        this.outdated.push( tmpl );
+      }
+      else {
+        this.outdated = [tmpl];
+        this.sendNext( this.ctx );
+      }
+    }
+    onError() { }
+    onCompleted() { }
+
+    /*----------------------------------------------------------------
+     * Overload addObserver so that subscribing to a context needing
+     * updates results in automatic notification.
+     */
+    addObserver( observer: r.Observer<Context> ): r.Observer<Context>;
+    addObserver( object: Object,
+                 onNext: (value: Context) => void,
+                 onError: (error: any) => void,
+                 onCompleted: () => void        ): r.Observer<Context>;
+    addObserver<U>( object: Object,
+                    onNext: (value: Context, id?: U) => void,
+                    onError: (error: any, id?: U) => void,
+                    onCompleted: (id?: U) => void,
+                    id: U                                  ): r.Observer<Context>;
+    addObserver( object: Object,
+                 onNext?: (value: Context, id?: any) => void,
+                 onError?: (error: any, id?: any) => void,
+                 onCompleted?: (id?: any) => void,
+                 id?: any                                  ): r.Observer<Context> {
+      var added: r.Observer<Context>;
+      if (arguments.length == 1) {
+        added = super.addObserver( <r.Observer<Context>>object );
+      }
+      else {
+        added = super.addObserver( object, onNext, onError, onCompleted, id );
+      }
+      if (added && this.outdated) {
+        added.onNext( this.ctx );
+      }
+      return added;
+    }
   }
 
   /*==================================================================
@@ -466,10 +905,14 @@ module hd.model {
   export
   class Context {
 
+    private
     '#hd_data': ContextData;
 
     [key: string]: any;
 
+    /*----------------------------------------------------------------
+     * Copies any fields found in init
+     */
     constructor( init?: u.Dictionary<any> ) {
       if (init) {
         for (var key in init) {
@@ -521,12 +964,12 @@ module hd.model {
         Context.addCommand( ctx, spec.commands[i] );
       }
 
-      for (var i = 0, l = spec.outputs.length; i < l; ++i) {
-        Context.addOutput( ctx, spec.outputs[i] );
-      }
-
       for (var i = 0, l = spec.touchDeps.length; i < l; ++i) {
         Context.addTouchDep( ctx, spec.touchDeps[i] );
+      }
+
+      for (var i = 0, l = spec.outputs.length; i < l; ++i) {
+        Context.addOutput( ctx, spec.outputs[i] );
       }
 
       return ctx;
@@ -537,11 +980,12 @@ module hd.model {
      */
     static
     addVariable( ctx: Context, spec: VariableSpec, init: any ): Variable {
+      var hd_data = ctx['#hd_data'];
       var vv = new Variable( spec.loc, init === undefined ? spec.init : init, spec.eq );
       if (spec.optional !== Optional.Default) {
         vv.optional = spec.optional;
       }
-      ctx['#hd_data'].variables.push( vv );
+      hd_data.variables.push( vv );
       ctx[spec.loc] = vv;
       return vv;
     }
@@ -551,9 +995,18 @@ module hd.model {
      */
     static
     addNestedContext( ctx: Context, spec: NestedSpec, init: u.Dictionary<any> ): Context {
-      var nested = new Context();
-      Context.construct( nested, spec.spec );
-      ctx['#hd_data'].nesteds.push( nested );
+      var hd_data = ctx['#hd_data'];
+      var nested: Context;
+      if (spec.klass) {
+        nested = new spec.klass();
+      }
+      else {
+        nested = new Context();
+      }
+      if (spec.spec) {
+        Context.construct( nested, spec.spec );
+      }
+      hd_data.nesteds.push( nested );
       ctx[spec.loc] = nested;
       return nested;
     }
@@ -587,168 +1040,105 @@ module hd.model {
      * Add constraint
      */
     static
-    addConstraint( ctx: Context, spec: ConstraintSpec ): ConstraintTemplate {
+    addConstraint( ctx: Context, spec: ConstraintSpec ) {
       var hd_data = ctx['#hd_data'];
-      var usesRef = false;
-      for (var i = 0, l = spec.variables.length; i < l; ++i) {
-        var name = spec.variables[i];
-        Context.addNameToLookup( ctx, name );
-        if (name in hd_data.paths) {
-          usesRef = true;
-        }
-      }
-      var tmpl = new ConstraintTemplate( spec );
-      if (usesRef) {
-        hd_data.constraintTmpls.push( tmpl );
-        u.arraySet.addKnownDistinct( hd_data.outdated, tmpl );
-      }
-      else {
-        tmpl.instantiate( hd_data.lookup );
-        if (tmpl.instance) {
-          hd_data.constraints.push( tmpl.instance );
+
+      var tmpl = new ConstraintTemplate( spec, hd_data );
+      if (tmpl.isConstant()) {
+        var changes: ContextChanges = {removes: [], adds: []};
+        tmpl.update( changes );
+        if (changes.adds.length > 0) {
+          hd_data.constraints.push.apply( hd_data.constraints, changes.adds );
         }
         else {
           console.warn( "Invalid instantiation of constant constraint " + tmpl.name );
         }
       }
+      else {
+        hd_data.constraintTmpls.push( tmpl );
+        tmpl.addObserver( hd_data );
+      }
+
       if (spec.loc) {
         ctx[spec.loc] = tmpl;
       }
-      if (spec.touchVariables) {
-        for (var i = 0, l = spec.touchVariables.length; i < l; ++i) {
-          var touch = spec.touchVariables[i];
-          Context.addTouchDep( ctx, touch, tmpl );
-        }
-      }
-      return tmpl;
     }
 
     /*----------------------------------------------------------------
      * Add command
      */
     static
-    addCommand( ctx: Context, spec: CommandSpec ): CommandTemplate {
+    addCommand( ctx: Context, spec: CommandSpec ) {
       var hd_data = ctx['#hd_data'];
-      var usesRef = false;
-      [spec.inputs, spec.outputs].forEach( function( vars: string[] ) {
-        for (var i = 0, l = vars.length; i < l; ++i) {
-          var name = vars[i];
-          Context.addNameToLookup( ctx, name );
-          if (name in hd_data.paths) {
-            usesRef = true;
-          }
-        }
-      } );
-      var tmpl = new CommandTemplate( spec );
-      if (usesRef) {
-        hd_data.commandTmpls.push( tmpl );
-        u.arraySet.addKnownDistinct( hd_data.outdated, tmpl );
-      }
-      else {
-        tmpl.instantiate( hd_data.lookup );
-        if (tmpl.instance) {
-          hd_data.commands.push( tmpl.instance );
+
+      var tmpl = new CommandTemplate( spec, hd_data );
+      if (tmpl.isConstant()) {
+        var changes: ContextChanges = {removes: [], adds: []};
+        tmpl.update( changes );
+        if (changes.adds.length > 0) {
+          hd_data.commands.push.apply( hd_data.commands, changes.adds );
         }
         else {
           console.warn( "Invalid instantiation of constant command " + tmpl.name );
         }
       }
+      else {
+        hd_data.commandTmpls.push( tmpl );
+        tmpl.addObserver( hd_data );
+      }
+
       if (spec.loc) {
         ctx[spec.loc] = tmpl;
       }
-      return tmpl;
-    }
-
-    /*----------------------------------------------------------------
-     * Add output
-     */
-    static
-    addOutput( ctx: Context, spec: OutputSpec ): OutputTemplate {
-      var hd_data = ctx['#hd_data'];
-      Context.addNameToLookup( ctx, spec.variable );
-      var tmpl = new OutputTemplate( spec );
-      if (spec.variable in hd_data.paths) {
-        hd_data.outputTmpls.push( tmpl );
-        u.arraySet.addKnownDistinct( hd_data.outdated, tmpl );
-      }
-      else {
-        tmpl.instantiate( hd_data.lookup );
-        if (tmpl.instance) {
-          hd_data.outputs.push( tmpl.instance );
-        }
-        else {
-          console.warn( "Invalid instantiation constant output " + spec.variable );
-        }
-      }
-      return tmpl;
     }
 
     /*----------------------------------------------------------------
      * Add touch dependency
      */
     static
-    addTouchDep( ctx: Context, spec: TouchDepSpec ): TouchDepTemplate;
-    static
-    addTouchDep( ctx: Context, from: string, to: ConstraintTemplate ): TouchDepTemplate;
-    static
-    addTouchDep( ctx: Context ): TouchDepTemplate {
+    addTouchDep( ctx: Context, spec: TouchDepSpec ) {
       var hd_data = ctx['#hd_data'];
-      var from: string;
-      var to: string;
-      var toTmpl: ConstraintTemplate;
-      var tmpl: TouchDepTemplate;
-      if (arguments.length == 2) {
-        var spec: TouchDepTemplate = arguments[1];
-        from = spec.from;
-        to = spec.to;
-        tmpl = new TouchDepTemplate( spec );
-      }
-      else {
-        from = arguments[1];
-        toTmpl = arguments[2];
-        tmpl = new TouchDepTemplate( from, toTmpl );
-      }
 
-      Context.addNameToLookup( ctx, from );
-      if (to) {
-        Context.addNameToLookup( ctx, to );
-      }
-      if (from in hd_data.paths || to in hd_data.paths || toTmpl) {
-        hd_data.touchDepTmpls.push( tmpl );
-        u.arraySet.addKnownDistinct( hd_data.outdated, tmpl );
-      }
-      else {
-        tmpl.instantiate( hd_data.lookup );
-        if (tmpl.instance) {
-          hd_data.touchDeps.push( tmpl.instance );
+      var tmpl = new TouchDepTemplate( spec, hd_data );
+      if (tmpl.isConstant()) {
+        var changes: ContextChanges = {removes: [], adds: []};
+        tmpl.update( changes );
+        if (changes.adds.length > 0) {
+          hd_data.touchDeps.push.apply( hd_data.touchDeps, changes.adds );
         }
         else {
-          console.warn( "Invalid instantiation of constant touch dependency: " + from +
-                        " => " + to );
+          console.warn( "Invalid instantiation of constant touch dependency: " + spec.from +
+                        " => " + spec.to );
         }
       }
-      return tmpl;
-    }
-
-    /*----------------------------------------------------------------
-     * Are there changes to dynamic elements that need to be
-     *   processed?
-     */
-    static
-    hasUpdates( ctx: Context ) {
-      return ctx['#hd_data'].outdated.length > 0;
-    }
-
-    /*----------------------------------------------------------------
-     * Update all templates which need it.
-     */
-    static
-    performUpdates( ctx: Context ) {
-      var hd_data = ctx['#hd_data'];
-      for (var i = 0, l = hd_data.outdated.length; i < l; ++i) {
-        hd_data.outdated[i].instantiate( hd_data.lookup );
+      else {
+        hd_data.touchDepTmpls.push( tmpl );
+        tmpl.addObserver( hd_data );
       }
-      hd_data.outdated = [];
+    }
+
+    /*----------------------------------------------------------------
+     * Add output
+     */
+    static
+    addOutput( ctx: Context, spec: OutputSpec ) {
+      var hd_data = ctx['#hd_data'];
+
+      var tmpl = new OutputTemplate( spec, hd_data );
+      if (tmpl.isConstant()) {
+        var changes: ContextChanges = {removes: [], adds: []};
+        tmpl.update( changes );
+        if (changes.adds.length > 0) {
+          hd_data.outputs.push.apply( hd_data.outputs, changes.adds );
+        }
+        else {
+          console.warn( "Invalid instantiation constant output " + spec.variable );
+        }
+      }
+      else {
+        hd_data.outputTmpls.push( tmpl );
+        tmpl.addObserver( hd_data );
+      }
     }
 
     /*----------------------------------------------------------------
@@ -756,20 +1146,15 @@ module hd.model {
      *   which were made.
      */
     static
-    reportUpdates( ctx: Context ): {removes: DynamicElement[]; adds: DynamicElement[]} {
-      var result = {removes: <DynamicElement[]>[], adds: <DynamicElement[]>[]};
+    update( ctx: Context ): ContextChanges {
       var hd_data = ctx['#hd_data'];
-      for (var i = 0, l = hd_data.outdated.length; i < l; ++i) {
-        var tmpl = hd_data.outdated[i];
-        if (tmpl.instance) {
-          result.removes.unshift( tmpl.instance );
+      var result: ContextChanges = {removes: [], adds: []};
+      if (hd_data.outdated) {
+        for (var i = 0, l = hd_data.outdated.length; i < l; ++i) {
+          hd_data.outdated[i].update( result );
         }
-        tmpl.instantiate( hd_data.lookup );
-        if (tmpl.instance) {
-          result.adds.push( tmpl.instance );
-        }
+        hd_data.outdated = null;
       }
-      hd_data.outdated = [];
       return result;
     }
 
@@ -778,7 +1163,7 @@ module hd.model {
      */
     static
     changes( ctx: Context ): r.ProxyObservable<Context> {
-      return ctx['#hd_data'].changes;
+      return ctx['#hd_data'];
     }
 
     /*----------------------------------------------------------------
@@ -804,9 +1189,11 @@ module hd.model {
     static
     constraints( ctx: Context ): Constraint[] {
       var hd_data = ctx['#hd_data'];
-      return hd_data.constraints.concat(
-        hd_data.constraintTmpls.map( getInstance ).filter( u.isNotNull )
-      );
+      var ccs = hd_data.constraints.slice( 0 );
+      hd_data.constraintTmpls.forEach( function( tmpl: ConstraintTemplate ) {
+        ccs.push.apply( ccs, tmpl.getElements() );
+      } );
+      return ccs;
     }
 
     /*----------------------------------------------------------------
@@ -815,20 +1202,11 @@ module hd.model {
     static
     commands( ctx: Context ): Command[] {
       var hd_data = ctx['#hd_data'];
-      return hd_data.commands.concat(
-        hd_data.commandTmpls.map( getInstance ).filter( u.isNotNull )
-      );
-    }
-
-    /*----------------------------------------------------------------
-     * Getter
-     */
-    static
-    outputs( ctx: Context ): Output[] {
-      var hd_data = ctx['#hd_data'];
-      return hd_data.outputs.concat(
-        hd_data.outputTmpls.map( getInstance ).filter( u.isNotNull )
-      );
+      var cmds = hd_data.commands.slice( 0 );
+      hd_data.commandTmpls.forEach( function( tmpl: CommandTemplate ) {
+        cmds.push.apply( cmds, tmpl.getElements() );
+      } );
+      return cmds;
     }
 
     /*----------------------------------------------------------------
@@ -837,47 +1215,31 @@ module hd.model {
     static
     touchDeps( ctx: Context ): TouchDep[] {
       var hd_data = ctx['#hd_data'];
-      return hd_data.touchDeps.concat(
-        hd_data.touchDepTmpls.map( getInstance ).filter( u.isNotNull )
-      );
+      var tds = hd_data.touchDeps.slice( 0 );
+      hd_data.touchDepTmpls.forEach( function( tmpl: TouchDepTemplate ) {
+        tds.push.apply( tds, tmpl.getElements() );
+      } );
+      return tds;
     }
 
     /*----------------------------------------------------------------
-     * Add value of name to lookup; if name uses references, then
-     * subscribe to path so that it will be updated
+     * Getter
      */
-    private static
-    addNameToLookup( ctx: Context, name: string ) {
+    static
+    outputs( ctx: Context ): Output[] {
       var hd_data = ctx['#hd_data'];
-      if (! (name in hd_data.lookup)) {
-        var path = new Path( ctx, name );
-        hd_data.lookup[name] = path.get( null );
-        if (! path.constant) {
-          path.addObserver( Context, Context.onNextPath, null, null, {ctx: ctx, name: name} );
-          hd_data.paths[name] = path;
-        }
-      }
+      var ops = hd_data.outputs.slice( 0 );
+      hd_data.outputTmpls.forEach( function( tmpl: OutputTemplate ) {
+        ops.push.apply( ops, tmpl.getElements() );
+      } );
+      return ops;
     }
 
     /*----------------------------------------------------------------
-     * When a path that some element of this context depends on
-     * changes.
      */
-    private static
-    onNextPath( value: any, params: {ctx: Context; name: string} ) {
-      var ctx = params.ctx;
-      var name = params.name;
-      var hd_data = ctx['#hd_data'];
-      hd_data.lookup[name] = value;
-      var checkForUse = function( tmpl: Template ) {
-        if (tmpl.uses( name )) {
-          u.arraySet.add( hd_data.outdated, tmpl );
-        }
-      };
-      hd_data.constraintTmpls.forEach( checkForUse );
-      hd_data.outputTmpls.forEach( checkForUse );
-      hd_data.touchDepTmpls.forEach( checkForUse );
-      hd_data.changes.sendNext( ctx );
+    static
+    claim( ctx: Context, nested: Context ) {
+
     }
   }
 
@@ -888,7 +1250,7 @@ module hd.model {
    */
   Object.defineProperty( Context.prototype, '#hd_data', {
     get: function makeData() {
-      var data = new ContextData();
+      var data = new ContextData( this );
       Object.defineProperty( this, '#hd_data', {configurable: true,
                                                 enumerable: false,
                                                 value: data
@@ -897,12 +1259,5 @@ module hd.model {
       return data;
     }
   } );
-
-  /*==================================================================
-   * Helper functions
-   */
-  function getInstance<T>( tmpl: {instance: T} ): T {
-    return tmpl.instance;
-  }
 
 }

@@ -70,14 +70,15 @@ module hd.model {
       // If we're decreasing length
       if (n < this._length) {
         for (var i = this._length - 1; i >= n; --i) {
-          this.elems[i] = undefined;
-          this.changes.sendNext( i );
+          if (this.elems[i] !== undefined) {
+            this.elems[i] = undefined;
+            this.changes.sendNext( i );
+          }
         }
       }
       // If we're increasing length, define properties for new indices
       else {
         for (var i = this._length; i < n; ++i) {
-          this.changes.sendNext( i );
           if (! ArrayContext.prototype.hasOwnProperty( i.toString() )) {
             Object.defineProperty( ArrayContext.prototype, i.toString(), {
               configurable: false,
@@ -106,12 +107,9 @@ module hd.model {
       // Ensure length is big enough to hold this
       if (this._length <= i) {
         this.setLength( i + 1 );
-        this.elems[i] = v;
       }
-      else {
-        this.elems[i] = v;
-        this.changes.sendNext( i );
-      }
+      this.elems[i] = v;
+      this.changes.sendNext( i );
     }
 
     /*----------------------------------------------------------------

@@ -120,12 +120,12 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a nested context.
      */
-    nested( loc: string, spec: ContextSpec ): ContextBuilder {
+    nested( loc: string, klass: {new (): Context}, spec?: ContextSpec ): ContextBuilder {
       this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
 
-      this.target.nesteds.push( {loc: loc, spec: spec} );
+      this.target.nesteds.push( {loc: loc, klass: klass, spec: spec} );
       this.usedLocs[loc] = true;
 
       return this;
@@ -450,7 +450,7 @@ module hd.model {
    * Test for invalid variable path
    */
   function invalidPath( path: string ): boolean {
-    if (! path.match( /^[a-zA-Z][\w$]*(\.[a-zA-Z][\w$]*)*$/ )) {
+    if (! path.match( /^[a-zA-Z][\w$]*(\.[a-zA-Z][\w$]*|\[\s*(\d+|\*)\s*\]|\[\s*(\d+\s*)?[a-zA-Z][\w$]*\s*([+-]\s*\d+\s*)?\])*$/ )) {
       console.error( 'Invalid variable path: "' + path + '"' );
       return true;
     }

@@ -9,32 +9,8 @@ module hd.qunit {
   import m = hd.model;
   import s = hd.system;
 
-  export
-  function id<T>( x: T ): T {
-    return x;
-  }
-
-  export
   function plus1( x: number ): number {
     return x + 1;
-  }
-
-  export
-  function sum() {
-    var s = arguments[0];
-    for (var i = 1, l = arguments.length; i < l; ++i) {
-      s+= arguments[i];
-    }
-    return s;
-  }
-
-  export
-  function diff() {
-    var s = arguments[0];
-    for (var i = 1, l = arguments.length; i < l; ++i) {
-      s-= arguments[i];
-    }
-    return s;
   }
 
   function checkVariable( vv: m.Variable, value: number, text: string ) {
@@ -65,6 +41,34 @@ module hd.qunit {
     setTimeout( function() { q.resolve( value ); }, 500 );
     return q;
   }
+
+  asyncTest( "empty property model", function() {
+    expect( 3 );
+    var pm = new s.PropertyModel();
+    pm.update();
+
+    var x = new m.Variable( "x", 4 );
+    var y = new m.Variable( "y", 5 );
+    var z = new m.Variable( "z", 6 );
+    pm.addVariable( x );
+    pm.addVariable( y );
+    pm.addVariable( z );
+
+    var c = new m.Constraint( "x,y,z", [x, y, z] );
+    pm.addConstraint( c );
+    pm.update();
+
+    pm.removeConstraint( c );
+    c.addMethod( new m.Method( "x,y->z", hd.reactive.liftFunction( sum ), [x,y], null, [z], [x,y] ) );
+    pm.addConstraint( c );
+    pm.update();
+
+    checkVariable( x, 4, "x" );
+    checkVariable( y, 5, "y" );
+    checkVariable( z, 9, "z" );
+
+    u.schedule( 3, start );
+  } );
 
   asyncTest( "simple constraint", function() {
     expect( 12 );
@@ -346,6 +350,58 @@ module hd.qunit {
     ctx.x.set( 1 );
     pm.update();
     checkVariables( ctx, {x: 1, y: 1, z: 1}, "6" );
+
+    u.schedule( 3, start );
+  } );
+
+  asyncTest( "array constraints", function() {
+    expect( 9 );
+
+    var rowspec = new m.ContextBuilder()
+          .variables( "begin, end", {begin: 0, end: 10} )
+          .spec();
+
+    var ctx: any = new m.ContextBuilder()
+          .nested( "a", m.ArrayContext )
+          .nested( "b", m.ArrayContext )
+          .constraint( "a[i].begin, a[i].end, b[i]" )
+            .method( "a[i].end, a[i].begin -> b[i]", diff )
+            .method( "a[i].end, b[i] -> a[i].begin", diff )
+            .method( "a[i].begin, b[i] -> a[i.end]", sum )
+          .context();
+
+    var pm = new s.PropertyModel();
+    pm.addComponents( ctx );
+    pm.update();
+
+    var a: any = m.Context.construct( new m.Context(), rowspec );
+    pm.addComponents( a );
+    ctx.a.push( a );
+    var b = new m.Variable( "b0" );
+    pm.addVariable( b );
+    ctx.b.push( b );
+    pm.update();
+
+    checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
+    checkVariable( ctx.a[0].end, 10, "a[0].end" );
+    checkVariable( ctx.b[0], 10, "b[0]" );
+
+    a = m.Context.construct( new m.Context(), rowspec );
+    pm.addComponents( a );
+    ctx.a.push( a );
+    a.begin.set( 5 );
+    a.end.set( 20 );
+    b = new m.Variable( "b1" );
+    pm.addVariable( b );
+    ctx.b.push( b );
+    pm.update();
+
+    checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
+    checkVariable( ctx.a[0].end, 10, "a[0].end" );
+    checkVariable( ctx.b[0], 10, "b[0]" );
+    checkVariable( ctx.a[1].begin, 5, "a[1].begin" );
+    checkVariable( ctx.a[1].end, 20, "a[1].end" );
+    checkVariable( ctx.b[1], 15, "b[1]" );
 
     u.schedule( 3, start );
   } );

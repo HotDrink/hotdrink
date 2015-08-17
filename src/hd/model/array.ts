@@ -46,7 +46,7 @@ module hd.model {
   class ArrayContext extends Context {
 
     // The actual array for storing contents
-    private elems: any[] = [];
+    private elements: any[] = [];
 
     // The length of the array; this controls how many properties are defined
     private _length = 0;
@@ -57,6 +57,13 @@ module hd.model {
 
     // Observable for changes to the array
     changes = new r.BasicObservable<number>();
+
+    /*----------------------------------------------------------------
+     */
+    constructor( private klass?: ContextClass,
+                 private spec?: ContextSpec    ) {
+      super();
+    }
 
     /*----------------------------------------------------------------
      * Length getter
@@ -70,8 +77,8 @@ module hd.model {
       // If we're decreasing length
       if (n < this._length) {
         for (var i = this._length - 1; i >= n; --i) {
-          if (this.elems[i] !== undefined) {
-            this.elems[i] = undefined;
+          if (this.elements[i] !== undefined) {
+            this.elements[i] = undefined;
             this.changes.sendNext( i );
           }
         }
@@ -97,7 +104,7 @@ module hd.model {
      * Element getter
      */
     get( i: number ): any {
-      return this.elems[i];
+      return this.elements[i];
     }
 
     /*----------------------------------------------------------------
@@ -108,8 +115,10 @@ module hd.model {
       if (this._length <= i) {
         this.setLength( i + 1 );
       }
-      this.elems[i] = v;
-      this.changes.sendNext( i );
+      if (this.elements[i] !== undefined || v !== undefined) {
+        this.elements[i] = v;
+        this.changes.sendNext( i );
+      }
     }
 
     /*----------------------------------------------------------------
@@ -118,6 +127,68 @@ module hd.model {
     push( v: any ) {
       var i = this._length;
       this.set( i, v );
+    }
+
+    /*----------------------------------------------------------------
+     */
+    expand( count: number, start = this.elements.length ) {
+      if (count > 0) {
+        // Set length
+        var oldLength = this.getLength();
+        var newLength = oldLength + count;
+        this.setLength( newLength );
+
+        // Copy old stuff foward
+        for (var i = oldLength - 1; i >= start; --i) {
+          this.set( i + count, this.elements[i] );
+        }
+
+        // Initialize new spaces
+        if (this.klass || this.spec) {
+          var klass = this.klass || Context;
+          var spec = this.spec;
+          for (var i = start, l = start + count; i < l; ++i) {
+            var ctx = new klass();
+            if (spec) {
+              Context.construct( ctx, spec );
+            }
+            this.set( i, ctx );
+            Context.claim( this, ctx );
+          }
+        }
+        else {
+          for (var i = start, l = start + count; i < l; ++i) {
+            this.set( i, undefined );
+          }
+        }
+      }
+    }
+
+    /*----------------------------------------------------------------
+     */
+    collapse( count: number, start = this.elements.length - count ) {
+      if (count > 0) {
+        var oldLength = this.getLength();
+        var newLength = oldLength - count;
+
+        // Destruct existing spaces
+        for (var i = start, l = start + count; i < l; ++i) {
+          var ctx = this.elements[i];
+          if (ctx !== undefined &&
+              Context.release( this, ctx ) &&
+              ctx instanceof Context         ) {
+            ctx.destruct();
+          }
+        }
+
+        // Copy old stuff backward
+        for (var i = start; i < newLength; ++i) {
+          this.set( i, this.elements[i + count] );
+        }
+
+        // Set length
+        this.setLength( newLength )
+      }
     }
 
   }

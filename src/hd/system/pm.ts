@@ -66,7 +66,7 @@ module hd.system {
     private pendingCount = 0;
 
     // Changes requiring an update
-    private needUpdating: u.ArraySet<m.Context> = [];
+    private needUpdating: m.Context[] = [];
     private needEnforcing: u.StringSet = {};
     private needEvaluating: u.StringSet = {};
 
@@ -114,162 +114,66 @@ module hd.system {
     /*----------------------------------------------------------------
      * Add and remove elements to and from the property model
      */
+    add( el: m.ContextElement ) {
+      if (el instanceof m.Variable) {
+        this.addVariable( el );
+      }
+      else if (el instanceof m.Context) {
+        this.addComponent( el );
+      }
+      else if (el instanceof m.Constraint) {
+        this.addConstraint( el );
+      }
+      else if (el instanceof m.Output) {
+        this.addOutput( el.variable );
+      }
+      else if (el instanceof m.TouchDep) {
+        this.addTouchDependency( el.from, el.to );
+      }
+      else if (el instanceof m.Command) {
+        this.addCommand( el );
+      }
+    }
+
+    /*----------------------------------------------------------------
+     */
+    remove( el: m.ContextElement ) {
+      if (el instanceof m.Variable) {
+        this.removeVariable( el );
+      }
+      else if (el instanceof m.Context) {
+        this.removeComponents( el );
+      }
+      else if (el instanceof m.Constraint) {
+        this.removeConstraint( el );
+      }
+      else if (el instanceof m.Output) {
+        this.removeOutput( el.variable );
+      }
+      else if (el instanceof m.TouchDep) {
+        this.removeTouchDependency( el.from, el.to );
+      }
+      else if (el instanceof m.Command) {
+        this.removeCommand( el );
+      }
+    }
 
     //--------------------------------------------
     // Add context
-    addComponents( ...contexts: m.Context[] ): void;
-    addComponents( contexts: m.Context[] ): void;
-    addComponents(): void {
-      var contexts: m.Context[] = [];
-      var q: m.Context[];
-      if (arguments.length == 1 && Array.isArray( arguments[0] )) {
-        q = arguments[0];
-      }
-      else {
-        q = Array.prototype.slice.call( arguments, 0 );
-      }
-      for (var i = 0, l = q.length; i < l; ++i) {
-        if (! (q[i] instanceof m.Context)) {
-          console.error( "Invalid component passed to PropertyModel.addComponents: " + q[i] );
-        }
-        else {
-          contexts.push( q[i] );
-        }
-      }
-
-      // Collect all contexts; subscribe to all
-      while (q.length > 0) {
-        var ctx = q.shift();
-        m.Context.changes( ctx ).addObserver( this, this.recordContextChange, null, null );
-        var ns = m.Context.nesteds( ctx );
-        if (ns.length) {
-          contexts.push.apply( contexts, ns );
-          q.push.apply( q, ns );
-        }
-      }
-
-      // Add variables
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var vs = m.Context.variables( contexts[i] );
-        for (var j = 0, n = vs.length; j < n; ++j) {
-          if (vs[j].optional === m.Optional.Max) {
-            this.addVariable( vs[j] );
-          }
-        }
-        for (var j = vs.length - 1; j >= 0; --j) {
-          if (vs[j].optional === m.Optional.Min) {
-            this.addVariable( vs[j] );
-          }
-        }
-      }
-
-      // Add constraints
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var cs = m.Context.constraints( contexts[i] );
-        for (var j = 0, n = cs.length; j < n; ++j) {
-          this.addConstraint( cs[j] );
-        }
-      }
-
-      // Add outputs
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var os = m.Context.outputs( contexts[i] );
-        for (var j = 0, n = os.length; j < n; ++j) {
-          this.addOutput( os[j].variable );
-        }
-      }
-
-      // Add touch dependencies
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var ts = m.Context.touchDeps( contexts[i] );
-        for (var j = 0, n = ts.length; j < n; ++j) {
-          this.addTouchDependency( ts[j].from, ts[j].to );
-        }
-      }
-
-      // Add commands
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var ms = m.Context.commands( contexts[i] );
-        for (var j = 0, n = ms.length; j < n; ++j) {
-          this.addCommand( ms[j] );
-        }
-      }
-
+    addComponent( context: m.Context ) {
+      m.Context.update( context );
+      m.Context.elements( context ).forEach( this.add, this );
+      m.Context.changes( context ).addObserver(
+        this, this.recordContextChange, null, null
+      );
     }
 
     //--------------------------------------------
     // Remove context
-    removeComponents( ...contexts: m.Context[] ): void;
-    removeComponents( contexts: m.Context[] ): void;
-    removeComponents(): void {
-      var contexts: m.Context[] = [];
-      var q: m.Context[];
-      if (arguments.length == 1 && Array.isArray( arguments[0] )) {
-        q = arguments[0];
-      }
-      else {
-        q = Array.prototype.slice.call( arguments, 0 );
-      }
-      for (var i = 0, l = q.length; i < l; ++i) {
-        if (! (q[i] instanceof m.Context)) {
-          console.error( "Invalid component passed to PropertyModel.addComponents: " + q[i] );
-        }
-        else {
-          contexts.push( q[i] );
-        }
-      }
-
-      // Collect all contexts; unsubscribe to all
-      while (q.length > 0) {
-        var ctx = q.shift();
-        m.Context.changes( ctx ).removeObserver( this );
-        this.removeContextRecords( ctx );
-        var ns = m.Context.nesteds( ctx );
-        if (ns.length) {
-          contexts.push.apply( contexts, ns );
-          q.push.apply( q, ns );
-        }
-      }
-
-      // Remove touch dependencies
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var ts = m.Context.touchDeps( contexts[i] );
-        for (var j = 0, n = ts.length; j < n; ++j) {
-          this.removeTouchDependency( ts[j].from, ts[j].to );
-        }
-      }
-
-      // Remove outputs
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var os = m.Context.outputs( contexts[i] );
-        for (var j = 0, n = os.length; j < n; ++j) {
-          this.removeOutput( os[j].variable );
-        }
-      }
-
-      // Remove constraints
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var cs = m.Context.constraints( contexts[i] );
-        for (var j = 0, n = cs.length; j < n; ++j) {
-          this.removeConstraint( cs[j] );
-        }
-      }
-
-      // Remove variables
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var vs = m.Context.variables( contexts[i] );
-        for (var j = 0, n = vs.length; j < n; ++j) {
-          this.removeVariable( vs[j] );
-        }
-      }
-
-      // Remove commands
-      for (var i = 0, l = contexts.length; i < l; ++i) {
-        var ms = m.Context.commands( contexts[i] );
-        for (var j = 0, n = ms.length; j < n; ++j) {
-          this.removeCommand( ms[j] );
-        }
-      }
+    removeComponents( context: m.Context ) {
+      m.Context.elements( context ).forEach( this.remove, this );
+      m.Context.changes( context ).removeObserver( this );
+      this.removeContextRecords( context );
     }
 
     //--------------------------------------------
@@ -624,7 +528,7 @@ module hd.system {
     // Context reference has changed; need to query for adds/drops
     private
     recordContextChange( ctx: m.Context ) {
-      u.arraySet.add( this.needUpdating, ctx );
+      this.needUpdating.push( ctx );
       this.recordChange();
     }
 
@@ -705,59 +609,16 @@ module hd.system {
      */
     private
     updateModel() {
-      for (var i = 0, l = this.needUpdating.length; i < l; ++i) {
-        var ctx = this.needUpdating[i];
-        var updates = m.Context.update( ctx );
-        for (var i = 0, l = updates.removes.length; i < l; ++i) {
-          var el = updates.removes[i];
-          if (el instanceof m.Variable) {
-            this.removeVariable( el );
-          }
-          else if (el instanceof m.Context) {
-            // Removing context could alter this.needUpdating
-            var j = this.needUpdating.indexOf( el );
-            if (j >= 0 && j <= i) {
-              --i;
-            }
-            this.removeComponents( el );
-          }
-          else if (el instanceof m.Constraint) {
-            this.removeConstraint( el );
-          }
-          else if (el instanceof m.Output) {
-            this.removeOutput( el.variable );
-          }
-          else if (el instanceof m.TouchDep) {
-            this.removeTouchDependency( el.from, el.to );
-          }
-          else if (el instanceof m.Command) {
-            this.removeCommand( el );
-          }
+      while (this.needUpdating.length > 0) {
+        var ctx = this.needUpdating.shift();
+        var changes = m.Context.update( ctx );
+        for (var i = 0, l = changes.removes.length; i < l; ++i) {
+          this.remove( changes.removes[i] );
         }
-        for (var i = 0, l = updates.adds.length; i < l; ++i) {
-          var el = updates.adds[i];
-          if (el instanceof m.Variable) {
-            this.addVariable( el );
-          }
-          else if (el instanceof m.Context) {
-            this.addComponents( el );
-          }
-          else if (el instanceof m.Constraint) {
-            this.addConstraint( el );
-          }
-          else if (el instanceof m.Output) {
-            this.addOutput( el.variable );
-          }
-          else if (el instanceof m.TouchDep) {
-            this.addTouchDependency( el.from, el.to );
-          }
-          else if (el instanceof m.Command) {
-            this.addCommand( el );
-          }
+        for (var i = 0, l = changes.adds.length; i < l; ++i) {
+          this.add( changes.adds[i] );
         }
       }
-
-      this.needUpdating = [];
     }
 
     /*----------------------------------------------------------------
@@ -939,8 +800,5 @@ module hd.system {
     }
 
   }
-
-  (<any>PropertyModel).prototype.addComponent = PropertyModel.prototype.addComponents;
-  (<any>PropertyModel).prototype.removeComponent = PropertyModel.prototype.removeComponents;
 
 }

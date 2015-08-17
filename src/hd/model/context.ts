@@ -270,14 +270,6 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    destruct() {
-      for (var i = 0, l = this.paths.length; i < l; ++i) {
-        this.paths[i].removeObserver( this );
-      }
-    }
-
-    /*----------------------------------------------------------------
-     */
     isConstant(): boolean {
       return this.paths.every( pathConstant );
     }
@@ -398,6 +390,14 @@ module hd.model {
     onError() { }
 
     onCompleted() { }
+
+    /*----------------------------------------------------------------
+     */
+    destruct() {
+      for (var i = 0, l = this.paths.length; i < l; ++i) {
+        this.paths[i].removeObserver( this );
+      }
+    }
   }
 
   /*==================================================================
@@ -564,7 +564,11 @@ module hd.model {
      * Order two instances
      */
     compare( a: ConstraintInstance, b: ConstraintInstance ) {
-      return compareAnys( a.all, b.all );
+      var cmp = compareAnys( a.all, b.all );
+      if (cmp == 0 && a.touchVariables) {
+        cmp = compareAnys( a.touchVariables, b.touchVariables );
+      }
+      return cmp;
     }
 
     /*----------------------------------------------------------------
@@ -704,6 +708,7 @@ module hd.model {
   }
 
   class TouchDepTemplate extends Template {
+    name: string;
     from: Path;
     to: Path;
 
@@ -714,6 +719,7 @@ module hd.model {
       super();
       this.addPath( this.from = lookup.get( spec.from ) );
       this.addPath( this.to = lookup.get( spec.to ) );
+      this.name = this.from + '=>' + this.to;
     }
 
     /*----------------------------------------------------------------
@@ -761,6 +767,7 @@ module hd.model {
   }
 
   class OutputTemplate extends Template {
+    name: string;
     variable: Path;
 
     /*----------------------------------------------------------------
@@ -769,6 +776,7 @@ module hd.model {
     constructor( spec: OutputSpec, lookup: PathLookup ) {
       super();
       this.addPath( this.variable = lookup.get( spec.variable ) );
+      this.name = '@' + spec.variable;
     }
 
     /*----------------------------------------------------------------
@@ -809,60 +817,162 @@ module hd.model {
    */
   class ContextData extends r.BasicObservable<Context> {
 
-    // Variables
-    variables: Variable[]                 = [];
+    // The context object this belongs to
+    context: Context;
 
-    // Nested contexts
-    nesteds: Context[]                    = [];
+    // The static elements
+    elements: u.ArraySet<ContextElement> = [];
 
-    // Constraints
-    constraints: Constraint[]             = [];
-    constraintTmpls: ConstraintTemplate[] = [];
+    // Templates for dynamic elements
+    templates: Template[] = [];
 
-    // Commands
-    commands: Command[]                   = [];
-    commandTmpls: CommandTemplate[]       = [];
+    // Any static elements added since the last update
+    added: ContextElement[] = [];
 
-    // Touch dependencies
-    touchDeps: TouchDep[]                 = [];
-    touchDepTmpls: TouchDepTemplate[]     = [];
+    // Any static elements removed since the last update
+    removed: ContextElement[] = [];
 
-    // Outputs
-    outputs: Output[]                     = [];
-    outputTmpls: OutputTemplate[]         = [];
+    // Templates whose paths have changed since last update
+    outdated: Template[] = [];
 
-    // All paths we are watching
-    paths: u.Dictionary<any>              = {};
+    // Have any changes been made since last update?
+    changed = false;
 
-    // Templates that need to be updated
-    outdated: Template[]                  = null;
+    // All paths used by this context (to promote sharing among templates)
+    paths: u.Dictionary<any> = {};
 
     // Init
-    constructor( public ctx: Context ) {
+    constructor( ctx: Context ) {
       super();
+      this.context = ctx;
     }
 
-    // Implement PathLookup
-    get( name: string ) {
-      var path = this.paths[name];
-      if (! path) {
-        path = this.paths[name] = new Path( this.ctx, name );
+    /*----------------------------------------------------------------
+     * Ensure this sends only a single changed message between
+     * updates.
+     */
+    reportChanged() {
+      if (! this.changed) {
+        this.changed = true;
+        this.sendNext( this.context );
       }
-      return path;
     }
 
-    // Implement Observable<Template>
-    onNext( tmpl: Template ) {
-      if (this.outdated) {
-        this.outdated.push( tmpl );
+    /*----------------------------------------------------------------
+     * Return all elements currently in the context.
+     */
+    getElements() {
+      return (<ContextElement[]>this.elements).concat(
+        u.concatmap( this.templates, function( tmpl: Template ) {
+          return tmpl.getElements()
+        } )
+      );
+    }
+
+    /*----------------------------------------------------------------
+     * Adds a static element to the context
+     */
+    addStatic( element: ContextElement ): boolean {
+      var added = false;
+      if (u.arraySet.remove( this.removed, element )) {
+        added = true;
+      }
+
+      if (! u.arraySet.contains( this.elements, element ) &&
+          u.arraySet.add( this.added, element )             ) {
+        added = true;
+        this.reportChanged();
+      }
+
+      return added;
+    }
+
+    /*----------------------------------------------------------------
+     * Removes a static element to the context
+     */
+    removeStatic( element: ContextElement ): boolean {
+      var removed = false;
+      if (u.arraySet.remove( this.added, element )) {
+        removed = true;
+      }
+
+      if (u.arraySet.contains( this.elements, element ) &&
+          u.arraySet.add( this.removed, element )         ) {
+        removed = true;
+        this.reportChanged();
+      }
+
+      return removed;
+    }
+
+    /*----------------------------------------------------------------
+     * Adds a template to the context
+     */
+    addTemplate( tmpl: Template ) {
+      if (tmpl.isConstant()) {
+        var changes: ContextChanges = {removes: [], adds: []};
+        tmpl.update( changes );
+        if (changes.adds.length > 0) {
+          changes.adds.forEach( this.addStatic, this );
+        }
+        else {
+          console.warn( "Could not instantiate constant template: " );
+        }
       }
       else {
-        this.outdated = [tmpl];
-        this.sendNext( this.ctx );
+        if (u.arraySet.add( this.templates, tmpl )) {
+          tmpl.addObserver( this );
+        }
       }
+    }
+
+    /*----------------------------------------------------------------
+     */
+    update(): ContextChanges {
+      var removed = this.removed;
+      this.removed = [];
+      if (removed.length > 0) {
+        this.elements = u.arraySet.difference( this.elements, removed );
+      }
+
+      var added = this.added;
+      this.added = [];
+      if (added.length > 0) {
+        Array.prototype.push.apply( this.elements, added );
+      }
+
+      var result = {adds: added, removes: removed};
+      if (this.outdated.length > 0) {
+        for (var i = 0, l = this.outdated.length; i < l; ++i) {
+          this.outdated[i].update( result );
+        }
+        this.outdated = [];
+      }
+
+      this.changed = false;
+      return result;
+    }
+
+    /*----------------------------------------------------------------
+     * Implement Observable<Template>
+     */
+    onNext( tmpl: Template ) {
+      this.outdated.push( tmpl );
+      this.reportChanged();
     }
     onError() { }
     onCompleted() { }
+
+    /*----------------------------------------------------------------
+     * Implement PathLookup
+     */
+    get( name: string ) {
+      var path = this.paths[name];
+      if (! path) {
+        path = this.paths[name] = new Path( this.context, name );
+      }
+      return path;
+    }
 
     /*----------------------------------------------------------------
      * Overload addObserver so that subscribing to a context needing
@@ -890,8 +1000,8 @@ module hd.model {
       else {
         added = super.addObserver( object, onNext, onError, onCompleted, id );
       }
-      if (added && this.outdated) {
-        added.onNext( this.ctx );
+      if (added && this.changed) {
+        added.onNext( this.context );
       }
       return added;
     }
@@ -979,22 +1089,21 @@ module hd.model {
      * Add variable
      */
     static
-    addVariable( ctx: Context, spec: VariableSpec, init: any ): Variable {
+    addVariable( ctx: Context, spec: VariableSpec, init: any ) {
       var hd_data = ctx['#hd_data'];
       var vv = new Variable( spec.loc, init === undefined ? spec.init : init, spec.eq );
       if (spec.optional !== Optional.Default) {
         vv.optional = spec.optional;
       }
-      hd_data.variables.push( vv );
+      hd_data.addStatic( vv );
       ctx[spec.loc] = vv;
-      return vv;
     }
 
     /*----------------------------------------------------------------
      * Add nested context
      */
     static
-    addNestedContext( ctx: Context, spec: NestedSpec, init: u.Dictionary<any> ): Context {
+    addNestedContext( ctx: Context, spec: NestedSpec, init: u.Dictionary<any> ) {
       var hd_data = ctx['#hd_data'];
       var nested: Context;
       if (spec.klass) {
@@ -1006,19 +1115,17 @@ module hd.model {
       if (spec.spec) {
         Context.construct( nested, spec.spec );
       }
-      hd_data.nesteds.push( nested );
+      hd_data.addStatic( nested );
       ctx[spec.loc] = nested;
-      return nested;
     }
 
     /*----------------------------------------------------------------
      * Add dynamic reference
      */
     static
-    addReference( ctx: Context, spec: ReferenceSpec, init: any ): r.Signal<any> {
+    addReference( ctx: Context, spec: ReferenceSpec, init: any ) {
       var prop = new r.BasicSignal<any>( init, spec.eq );
       Context.defineReferenceAccessors( ctx, spec.loc, prop );
-      return prop;
     }
 
     static
@@ -1044,20 +1151,7 @@ module hd.model {
       var hd_data = ctx['#hd_data'];
 
       var tmpl = new ConstraintTemplate( spec, hd_data );
-      if (tmpl.isConstant()) {
-        var changes: ContextChanges = {removes: [], adds: []};
-        tmpl.update( changes );
-        if (changes.adds.length > 0) {
-          hd_data.constraints.push.apply( hd_data.constraints, changes.adds );
-        }
-        else {
-          console.warn( "Invalid instantiation of constant constraint " + tmpl.name );
-        }
-      }
-      else {
-        hd_data.constraintTmpls.push( tmpl );
-        tmpl.addObserver( hd_data );
-      }
+      hd_data.addTemplate( tmpl );
 
       if (spec.loc) {
         ctx[spec.loc] = tmpl;
@@ -1072,20 +1166,7 @@ module hd.model {
       var hd_data = ctx['#hd_data'];
 
       var tmpl = new CommandTemplate( spec, hd_data );
-      if (tmpl.isConstant()) {
-        var changes: ContextChanges = {removes: [], adds: []};
-        tmpl.update( changes );
-        if (changes.adds.length > 0) {
-          hd_data.commands.push.apply( hd_data.commands, changes.adds );
-        }
-        else {
-          console.warn( "Invalid instantiation of constant command " + tmpl.name );
-        }
-      }
-      else {
-        hd_data.commandTmpls.push( tmpl );
-        tmpl.addObserver( hd_data );
-      }
+      hd_data.addTemplate( tmpl );
 
       if (spec.loc) {
         ctx[spec.loc] = tmpl;
@@ -1099,22 +1180,7 @@ module hd.model {
     addTouchDep( ctx: Context, spec: TouchDepSpec ) {
       var hd_data = ctx['#hd_data'];
 
-      var tmpl = new TouchDepTemplate( spec, hd_data );
-      if (tmpl.isConstant()) {
-        var changes: ContextChanges = {removes: [], adds: []};
-        tmpl.update( changes );
-        if (changes.adds.length > 0) {
-          hd_data.touchDeps.push.apply( hd_data.touchDeps, changes.adds );
-        }
-        else {
-          console.warn( "Invalid instantiation of constant touch dependency: " + spec.from +
-                        " => " + spec.to );
-        }
-      }
-      else {
-        hd_data.touchDepTmpls.push( tmpl );
-        tmpl.addObserver( hd_data );
-      }
+      hd_data.addTemplate( new TouchDepTemplate( spec, hd_data ) );
     }
 
     /*----------------------------------------------------------------
@@ -1124,21 +1190,7 @@ module hd.model {
     addOutput( ctx: Context, spec: OutputSpec ) {
       var hd_data = ctx['#hd_data'];
 
-      var tmpl = new OutputTemplate( spec, hd_data );
-      if (tmpl.isConstant()) {
-        var changes: ContextChanges = {removes: [], adds: []};
-        tmpl.update( changes );
-        if (changes.adds.length > 0) {
-          hd_data.outputs.push.apply( hd_data.outputs, changes.adds );
-        }
-        else {
-          console.warn( "Invalid instantiation constant output " + spec.variable );
-        }
-      }
-      else {
-        hd_data.outputTmpls.push( tmpl );
-        tmpl.addObserver( hd_data );
-      }
+      hd_data.addTemplate( new OutputTemplate( spec, hd_data ) );
     }
 
     /*----------------------------------------------------------------
@@ -1148,14 +1200,8 @@ module hd.model {
     static
     update( ctx: Context ): ContextChanges {
       var hd_data = ctx['#hd_data'];
-      var result: ContextChanges = {removes: [], adds: []};
-      if (hd_data.outdated) {
-        for (var i = 0, l = hd_data.outdated.length; i < l; ++i) {
-          hd_data.outdated[i].update( result );
-        }
-        hd_data.outdated = null;
-      }
-      return result;
+
+      return hd_data.update();
     }
 
     /*----------------------------------------------------------------
@@ -1170,76 +1216,39 @@ module hd.model {
      * Getter
      */
     static
-    nesteds( ctx: Context ): Context[] {
-      return ctx['#hd_data'].nesteds;
-    }
-
-    /*----------------------------------------------------------------
-     * Getter
-     */
-    static
-    variables( ctx: Context ): Variable[] {
+    elements( ctx: Context ): ContextElement[] {
       var hd_data = ctx['#hd_data'];
-      return hd_data.variables;
+
+      return hd_data.getElements();
     }
 
     /*----------------------------------------------------------------
-     * Getter
      */
     static
-    constraints( ctx: Context ): Constraint[] {
+    claim( ctx: Context, el: Context|Variable ): boolean {
       var hd_data = ctx['#hd_data'];
-      var ccs = hd_data.constraints.slice( 0 );
-      hd_data.constraintTmpls.forEach( function( tmpl: ConstraintTemplate ) {
-        ccs.push.apply( ccs, tmpl.getElements() );
-      } );
-      return ccs;
+
+      return hd_data.addStatic( el );
     }
 
     /*----------------------------------------------------------------
-     * Getter
      */
     static
-    commands( ctx: Context ): Command[] {
+    release( ctx: Context, el: Context|Variable ): boolean {
       var hd_data = ctx['#hd_data'];
-      var cmds = hd_data.commands.slice( 0 );
-      hd_data.commandTmpls.forEach( function( tmpl: CommandTemplate ) {
-        cmds.push.apply( cmds, tmpl.getElements() );
-      } );
-      return cmds;
+
+      return hd_data.removeStatic( el );
     }
 
     /*----------------------------------------------------------------
-     * Getter
      */
     static
-    touchDeps( ctx: Context ): TouchDep[] {
+    destruct( ctx: Context ) {
       var hd_data = ctx['#hd_data'];
-      var tds = hd_data.touchDeps.slice( 0 );
-      hd_data.touchDepTmpls.forEach( function( tmpl: TouchDepTemplate ) {
-        tds.push.apply( tds, tmpl.getElements() );
-      } );
-      return tds;
-    }
 
-    /*----------------------------------------------------------------
-     * Getter
-     */
-    static
-    outputs( ctx: Context ): Output[] {
-      var hd_data = ctx['#hd_data'];
-      var ops = hd_data.outputs.slice( 0 );
-      hd_data.outputTmpls.forEach( function( tmpl: OutputTemplate ) {
-        ops.push.apply( ops, tmpl.getElements() );
-      } );
-      return ops;
-    }
-
-    /*----------------------------------------------------------------
-     */
-    static
-    claim( ctx: Context, nested: Context ) {
-
+      for (var i = 0, l = hd_data.templates.length; i < l; ++i) {
+        hd_data.templates[i].destruct();
+      }
     }
   }
 

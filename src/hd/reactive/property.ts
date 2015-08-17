@@ -126,7 +126,7 @@ module hd.reactive {
         return this.eq( this.value, value );
       }
       else {
-        return false;
+        return this.value === undefined && value === undefined;
       }
     }
 

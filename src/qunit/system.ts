@@ -82,7 +82,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
 
     checkVariable( ctx.x, 3, "x_1" );
@@ -125,7 +125,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
     checkVariables( ctx, {a: 2, b: 4, c: 6, d: 6, e: 12, f: 8, g: 20}, "1" );
 
@@ -189,7 +189,7 @@ module hd.qunit {
     ps = [];
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
     checkVariables( ctx, {a: 5, b: 7, c: 12, d: 6, e: 6}, "1" );
     ps.push( ctx.d.getCurrentPromise() );
@@ -241,7 +241,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
 
     checkVariables( ctx, {a: 1, b: 2, c: 3, d: 7, e:3, f: 4}, "1" );
@@ -326,7 +326,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
     checkVariables( ctx, {x: 4, y: 4, z: 4}, "1" );
 
@@ -362,39 +362,49 @@ module hd.qunit {
           .spec();
 
     var ctx: any = new m.ContextBuilder()
-          .nested( "a", m.ArrayContext )
-          .nested( "b", m.ArrayContext )
+          .nested( "a", m.ArrayContext.bind( null, null, rowspec ) )
+          .nested( "b", m.ArrayContext.bind( null, m.Variable ) )
           .constraint( "a[i].begin, a[i].end, b[i]" )
             .method( "a[i].end, a[i].begin -> b[i]", diff )
             .method( "a[i].end, b[i] -> a[i].begin", diff )
-            .method( "a[i].begin, b[i] -> a[i.end]", sum )
+            .method( "a[i].begin, b[i] -> a[i].end", sum )
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
 
-    var a: any = m.Context.construct( new m.Context(), rowspec );
-    pm.addComponents( a );
-    ctx.a.push( a );
-    var b = new m.Variable( "b0" );
-    pm.addVariable( b );
-    ctx.b.push( b );
+    ctx.a.expand( 1 );
+    ctx.b.expand( 1 );
     pm.update();
+
+    // var a: any = m.Context.construct( new m.Context(), rowspec );
+    // pm.addComponent( a );
+    // ctx.a.push( a );
+    // var b = new m.Variable( "b0" );
+    // pm.addVariable( b );
+    // ctx.b.push( b );
+    // pm.update();
 
     checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
     checkVariable( ctx.a[0].end, 10, "a[0].end" );
     checkVariable( ctx.b[0], 10, "b[0]" );
 
-    a = m.Context.construct( new m.Context(), rowspec );
-    pm.addComponents( a );
-    ctx.a.push( a );
-    a.begin.set( 5 );
-    a.end.set( 20 );
-    b = new m.Variable( "b1" );
-    pm.addVariable( b );
-    ctx.b.push( b );
+    ctx.a.expand( 1 );
+    ctx.a[1].begin.set( 5 );
+    ctx.a[1].end.set( 20 );
+    ctx.b.expand( 1 );
     pm.update();
+
+    // a = m.Context.construct( new m.Context(), rowspec );
+    // pm.addComponent( a );
+    // ctx.a.push( a );
+    // a.begin.set( 5 );
+    // a.end.set( 20 );
+    // b = new m.Variable( "b1" );
+    // pm.addVariable( b );
+    // ctx.b.push( b );
+    // pm.update();
 
     checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
     checkVariable( ctx.a[0].end, 10, "a[0].end" );
@@ -428,7 +438,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
     checkVariables( ctx, {a: 3, b: 4, c: 14, x: 3, y: 5, z: 6}, "1" );
 
@@ -471,7 +481,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
     checkVariables( ctx, {x: 3, y: 5, z: 8}, "1" );
 
@@ -498,17 +508,20 @@ module hd.qunit {
           .command( "cmd", "a -> x", plus1 )
           .spec();
 
+    var pm = new s.PropertyModel
+
     var ctx1: any = new m.Context();
     m.Context.construct( ctx1, spec );
+    pm.addComponent( ctx1 );
 
     var ctx2: any = new m.Context();
     m.Context.construct( ctx2, spec );
+    pm.addComponent( ctx2 );
 
     var ctx3: any = new m.Context();
     m.Context.construct( ctx3, spec );
+    pm.addComponent( ctx3 );
 
-    var pm = new s.PropertyModel
-    pm.addComponents( ctx1, ctx2, ctx3 );
     pm.update();
     checkVariables( ctx1, {a: 12, x: 3, y: 5, z: 8}, "1.1" );
     checkVariables( ctx2, {a: 12, x: 3, y: 5, z: 8}, "1.2" );

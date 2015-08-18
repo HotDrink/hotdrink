@@ -397,13 +397,13 @@ module hd.model {
       }
       // Constant because pos is fixed
       else if (pos !== null) {
-        if (leg.inverse( pos ) === idx) {
+        if (leg.apply( pos ) === idx) {
           update = true;
         }
       }
       // Variable
       else {
-        pos = leg.apply( idx );
+        pos = leg.inverse( idx );
         update = true;
       }
 

@@ -91,7 +91,7 @@ module hd.model {
       }
       else {
         leftShared.push( a[i] );
-        rightShared.push( b[i] );
+        rightShared.push( b[j] );
         ++i; ++j;
       }
     }
@@ -1041,28 +1041,33 @@ module hd.model {
     construct( ctx: Context,
                spec: ContextSpec,
                init?: u.Dictionary<any> ): Context {
-      if (init && typeof init !== 'Object') {
-        throw "Invalid initialization object passed to Context.construct: " + init;
+      if (init) {
+        if (typeof init !== 'object') {
+          throw "Invalid initialization object passed to Context.construct: " + init;
+        }
+      }
+      else {
+        init = {};
       }
 
       for (var i = 0, l = spec.variables.length; i < l; ++i) {
         var vspec = spec.variables[i];
         if (! (vspec.loc in ctx)) {
-          Context.addVariable( ctx, vspec, init ? init[vspec.loc] : undefined );
+          Context.addVariable( ctx, vspec, (vspec.loc in init) ? init[vspec.loc] : undefined );
         }
       }
 
       for (var i = 0, l = spec.nesteds.length; i < l; ++i) {
         var nspec = spec.nesteds[i];
         if (! (nspec.loc in ctx)) {
-          Context.addNestedContext( ctx, nspec, init ? init[nspec.loc] : undefined );
+          Context.addNestedContext( ctx, nspec, (nspec.loc in init) ? init[nspec.loc] : undefined );
         }
       }
 
       for (var i = 0, l = spec.references.length; i < l; ++i) {
         var rspec = spec.references[i];
         if (! (rspec.loc in ctx)) {
-          Context.addReference( ctx, rspec, init ? init[rspec.loc] : undefined );
+          Context.addReference( ctx, rspec, (rspec.loc in init) ? init[rspec.loc] : undefined );
         }
       }
 

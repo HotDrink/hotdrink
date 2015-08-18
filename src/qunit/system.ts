@@ -42,6 +42,38 @@ module hd.qunit {
     return q;
   }
 
+  function differences( a: string[], b: string[] ) {
+    var diff = {add: 0, drop: 0};
+    var i = 0, j = 0, l = a.length, m = b.length;
+    while (i < l && j < m) {
+      var cmp = a[i].localeCompare( b[j] )
+      if (cmp < 0) {
+        ++diff.drop;
+        ++i;
+      }
+      else if (cmp > 0) {
+        ++diff.add;
+        ++j;
+      }
+      else {
+        ++i;
+        ++j;
+      }
+    }
+
+    while (i < l) {
+      ++diff.drop;
+      ++i;
+    }
+
+    while (j < m) {
+      ++diff.add;
+      ++j;
+    }
+
+    return diff;
+  }
+
   asyncTest( "empty property model", function() {
     expect( 3 );
     var pm = new s.PropertyModel();
@@ -355,7 +387,7 @@ module hd.qunit {
   } );
 
   asyncTest( "array constraints", function() {
-    expect( 9 );
+    expect( 63 );
 
     var rowspec = new m.ContextBuilder()
           .variables( "begin, end", {begin: 0, end: 10} )
@@ -378,14 +410,6 @@ module hd.qunit {
     ctx.b.expand( 1 );
     pm.update();
 
-    // var a: any = m.Context.construct( new m.Context(), rowspec );
-    // pm.addComponent( a );
-    // ctx.a.push( a );
-    // var b = new m.Variable( "b0" );
-    // pm.addVariable( b );
-    // ctx.b.push( b );
-    // pm.update();
-
     checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
     checkVariable( ctx.a[0].end, 10, "a[0].end" );
     checkVariable( ctx.b[0], 10, "b[0]" );
@@ -396,22 +420,123 @@ module hd.qunit {
     ctx.b.expand( 1 );
     pm.update();
 
-    // a = m.Context.construct( new m.Context(), rowspec );
-    // pm.addComponent( a );
-    // ctx.a.push( a );
-    // a.begin.set( 5 );
-    // a.end.set( 20 );
-    // b = new m.Variable( "b1" );
-    // pm.addVariable( b );
-    // ctx.b.push( b );
-    // pm.update();
-
     checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
     checkVariable( ctx.a[0].end, 10, "a[0].end" );
     checkVariable( ctx.b[0], 10, "b[0]" );
     checkVariable( ctx.a[1].begin, 5, "a[1].begin" );
     checkVariable( ctx.a[1].end, 20, "a[1].end" );
     checkVariable( ctx.b[1], 15, "b[1]" );
+
+
+    var EventSpec = new hd.ContextBuilder()
+          .variables( "begin, end, length" )
+          .equation( "begin + length == end" )
+          .spec();
+
+    var schedule: any = new hd.ContextBuilder()
+          .nested( "events", hd.ArrayContext.bind( null, null, EventSpec ) )
+          .constraint( "events[i].end, events[i+1].begin" )
+          .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
+          .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
+          .context();
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( schedule );
+
+    schedule.events.expand( {begin: 0, end: 10} );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 10, length: 10}, "[0]_1" );
+
+    var ccs = Object.keys( pm.constraints );
+    ccs.sort();
+
+    schedule.events.expand( {begin: 20, length: 5} );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 10, length: 10}, "[0]_2" );
+    checkVariables( schedule.events[1], {begin: 20, end: 25, length: 5}, "[1]_2" );
+
+    var ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    var d = differences( ccs, ccs2 );
+    equal( d.drop, 0,
+           "Removed zero constraints" );
+    equal( d.add, 2,
+           "Added two constraints" );
+    ccs = ccs2;
+
+    schedule.events.expand( {begin: 5, length: 20}, 1 );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 5, length: 5}, "[0]_3" );
+    checkVariables( schedule.events[1], {begin: 5, end: 25, length: 20}, "[1]_3" );
+    checkVariables( schedule.events[2], {begin: 25, end: 30, length: 5}, "[2]_3" );
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 1,
+           "Removed one constraints" );
+    equal( d.add, 3,
+           "Added three constraints" );
+    ccs = ccs2;
+
+    schedule.events[0].length.set( 10 );
+    schedule.events[1].length.set( 20 );
+    schedule.events[2].length.set( 30 );
+    schedule.events.expand( {begin: 0, length: 5}, 0 );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 5, length: 5}, "[0]_4" );
+    checkVariables( schedule.events[1], {begin: 5, end: 15, length: 10}, "[1]_4" );
+    checkVariables( schedule.events[2], {begin: 15, end: 35, length: 20}, "[2]_4" );
+    checkVariables( schedule.events[3], {begin: 35, end: 65, length: 30}, "[3]_4" );
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 0,
+           "Removed zero constraints" );
+    equal( d.add, 2,
+           "Added two constraints" );
+    ccs = ccs2;
+
+    schedule.events.collapse( 1, 1 );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 5, length: 5}, "[0]_5" );
+    checkVariables( schedule.events[1], {begin: 15, end: 35, length: 20}, "[2]_5" );
+    checkVariables( schedule.events[2], {begin: 35, end: 65, length: 30}, "[3]_5" );
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 3,
+           "Removed three constraints" );
+    equal( d.add, 1,
+           "Added one constraints" );
+    ccs = ccs2;
+
+    schedule.events.expand( [{begin: 0, length: 10}, {begin: 10, length: 20}, {begin: 30, length: 10}], 0 );
+    pm.update();
+    checkVariables( schedule.events[5], {begin: 65, end: 95, length: 30}, "[5]_6" );
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 0,
+           "Removed zero constraints" );
+    equal( d.add, 6,
+           "Added six constraints" );
+    ccs = ccs2;
+
+    schedule.events.collapse( 2, 2 );
+    pm.update()
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 5,
+           "Removed five constraints" );
+    equal( d.add, 1,
+           "Added one constraints" );
+    ccs = ccs2;
 
     u.schedule( 3, start );
   } );

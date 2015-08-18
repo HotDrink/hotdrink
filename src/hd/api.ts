@@ -44,6 +44,7 @@ module hd {
   export var isExtension = b.isExtension;
 
   export var Context = m.Context;
+  export var ArrayContext = m.ArrayContext;
 
   // RunTime
   export var PropertyModel = s.PropertyModel;

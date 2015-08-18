@@ -131,7 +131,23 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    expand( count: number, start = this.elements.length ) {
+    expand( init: u.Dictionary<any>, start: number ): void;
+    expand( inits: u.Dictionary<any>[], start: number ): void;
+    expand( count: number, start: number ): void;
+    expand( desc: any, start = this.elements.length ) {
+      var count: number, inits: u.Dictionary<any>[];
+      if (typeof desc === 'number') {
+        count = desc;
+        inits = [];
+      }
+      else if (Array.isArray( desc )) {
+        inits = desc;
+        count = desc.length;
+      }
+      else {
+        inits = [desc];
+        count = 1;
+      }
       if (count > 0) {
         // Set length
         var oldLength = this.getLength();
@@ -147,12 +163,12 @@ module hd.model {
         if (this.klass || this.spec) {
           var klass = this.klass || Context;
           var spec = this.spec;
-          for (var i = start, l = start + count; i < l; ++i) {
+          for (var i = 0, l = count; i < l; ++i) {
             var ctx = new klass();
             if (spec) {
-              Context.construct( ctx, spec );
+              Context.construct( ctx, spec, inits[i] );
             }
-            this.set( i, ctx );
+            this.set( start + i, ctx );
             Context.claim( this, ctx );
           }
         }
@@ -177,7 +193,7 @@ module hd.model {
           if (ctx !== undefined &&
               Context.release( this, ctx ) &&
               ctx instanceof Context         ) {
-            ctx.destruct();
+            Context.destruct( ctx );
           }
         }
 

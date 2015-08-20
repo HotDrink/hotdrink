@@ -1,0 +1,87 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+    {
+      function toTime( n ) {
+        var sign = 1;
+        if (n < 0) {
+          sign = -1;
+          n = -n;
+        }
+
+        var hours = Math.floor( n / 60 );
+        var minutes = Math.floor( n % 60 );
+
+        if (sign < 0) {
+          hours = -hours - 1;
+          minutes = 60 - minutes;
+        }
+
+        hours += 9;
+
+        return hours + ':' + (minutes < 10 ? '0' + minutes : minutes);
+      }
+
+      function fromTime( t ) {
+        var m = t.match( /^(\d+)(?:\:(\d+)?)?$/ );
+        if (!m) {
+          throw "Invalid time";
+        }
+
+        var hours = Number( m[1] );
+        var minutes = Number( m[2] || 0 );
+        if (minutes > 60) {
+          throw "Invalid minutes";
+        }
+
+        return (hours - 9)*60 + minutes;
+      }
+
+      var EventSpec = new hd.ContextBuilder()
+          .variables( "title, begin, end, length" )
+          .constraint( "begin, end, length" )
+            .method( "begin, length -> end", hd.sum )
+            .method( "end, length -> begin", hd.diff )
+          .spec();
+
+      var schedule = new hd.ContextBuilder()
+          .nested( "events", hd.ArrayContext.bind( null, null, EventSpec ) )
+          .constraint( "events[i].end, events[i+1].begin" )
+            .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
+            .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
+          .context();
+
+      schedule.events.expand( [{title: "Do something", begin: 0, length: 30},
+                               {title: "Do something else", begin: 40, length: 60},
+                               {title: "Do nothing", begin: 60, length: 90}] );
+
+      pm = new hd.PropertyModel();
+      pm.addComponent( schedule );
+
+      window.addEventListener( "load", function() {
+        hd.performDeclaredBindings( schedule );
+      } )
+    }
+    </script>
+    <style type="text/css">
+      input.title { width: 30ex; }
+      input.num   { width: 8ex; text-align: right; }
+      .error, .stale { color: #900; }
+      div.event { margin: 1em; }
+    </style>
+  </head>
+  <body>
+    <div data-bind="hd.forEach( events )">
+      <div class="event">
+        <input type="text" class="title" data-bind="hd.editVar( title )">
+        Begin:  <input type="text" class="num"
+                       data-bind="hd.editVar( begin, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+        End:    <input type="text" class="num"
+                       data-bind="hd.editVar( end, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+        Length: <input type="text" class="num" data-bind="hd.numVar( length, 0 )"/> min
+      </div>
+    </div>
+  </body>
+</html>

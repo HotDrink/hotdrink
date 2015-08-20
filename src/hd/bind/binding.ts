@@ -235,9 +235,6 @@ module hd.bindings {
     if (el.nodeType === Node.ELEMENT_NODE) {
       searchForBindings( el, ctx, bindings );
     }
-    else {
-      console.error( "Invalid argument to performDeclaredBindings" );
-    }
     return bindings;
   }
 

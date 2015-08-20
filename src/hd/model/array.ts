@@ -14,32 +14,6 @@ module hd.model {
   interface MultiArray<T> extends Array<T|MultiArray<T>> { };
 
   /*==================================================================
-   */
-  export
-  class SingleElement extends r.BasicObservable<any> {
-    private index: number;
-
-    constructor( index: number ) {
-      super();
-      this.index = index;
-    }
-
-    onNext( index: number ) {
-      if (index == this.index) {
-        this.sendNext( index );
-      }
-    }
-
-    onError( error: any ) {
-      this.sendError( error );
-    }
-
-    onCompleted() {
-      this.sendCompleted();
-    }
-  }
-
-  /*==================================================================
    * The ArrayContext class.
    */
   export
@@ -57,6 +31,10 @@ module hd.model {
 
     // Observable for changes to the array
     changes = new r.BasicObservable<number>();
+
+    observers: r.Observer<ArrayContext>[];
+
+    scheduled = false;
 
     /*----------------------------------------------------------------
      */
@@ -80,6 +58,7 @@ module hd.model {
           if (this.elements[i] !== undefined) {
             this.elements[i] = undefined;
             this.changes.sendNext( i );
+            this.scheduleNext();
           }
         }
       }
@@ -118,6 +97,7 @@ module hd.model {
       if (this.elements[i] !== undefined || v !== undefined) {
         this.elements[i] = v;
         this.changes.sendNext( i );
+        this.scheduleNext();
       }
     }
 
@@ -204,6 +184,48 @@ module hd.model {
 
         // Set length
         this.setLength( newLength )
+      }
+    }
+
+    /*----------------------------------------------------------------
+     */
+    addObserver( observer: r.Observer<ArrayContext> ) {
+      if (this.observers) {
+        this.observers.push( observer );
+      }
+      else {
+        this.observers = [observer];
+      }
+    }
+
+    removeObserver( observer: r.Observer<ArrayContext> ) {
+      if (this.observers) {
+        this.observers = this.observers.filter( function( ver: r.Observer<ArrayContext> ) {
+          return observer !== ver;
+        } );
+        if (this.observers.length == 0) {
+          this.observers = undefined;
+        }
+      }
+    }
+
+    private
+    scheduleNext() {
+      if (! this.scheduled) {
+        this.scheduled = true;
+        u.schedule( r.SignalPriority, this.sendNext, this );
+      }
+    }
+
+    private
+    sendNext() {
+      this.scheduled = false;
+      if (this.observers) {
+        for (var i = 0, l = this.observers.length; i < l; ++i) {
+          if (this.observers[i].onNext) {
+            this.observers[i].onNext( this );
+          }
+        }
       }
     }
 

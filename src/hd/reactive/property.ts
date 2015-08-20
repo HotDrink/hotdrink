@@ -24,6 +24,7 @@ module hd.reactive {
                                id: U                                  ): Observer<T>;
   }
 
+  export
   var SignalPriority = 3;
 
   enum Scheduled { None, Init, Update };

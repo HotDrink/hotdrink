@@ -42,8 +42,11 @@ module hd {
 
   export
   function max() {
-    var n = arguments[0];
-    for (var i = 1, l = arguments.length; i < l; ++i) {
+    var n: any;
+    for (var i = 0, l = arguments.length; i < l && n === undefined; ++i) {
+      n = arguments[i];
+    }
+    for (; i < l; ++i) {
       if (arguments[i] > n) {
         n = arguments[i];
       }
@@ -53,8 +56,11 @@ module hd {
 
   export
   function min() {
-    var n = arguments[0];
-    for (var i = 1, l = arguments.length; i < l; ++i) {
+    var n: any;
+    for (var i = 0, l = arguments.length; i < l && n === undefined; ++i) {
+      n = arguments[i];
+    }
+    for (; i < l; ++i) {
       if (arguments[i] < n) {
         n = arguments[i];
       }

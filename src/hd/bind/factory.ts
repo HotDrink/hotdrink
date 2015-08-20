@@ -210,4 +210,14 @@ module hd.bindings {
             toView: toView
            };
   }
+
+  export
+  function forEach( target: Target,
+                    toView?: r.Extension<any,any> ): Binding {
+    return {mkview: ForEach,
+            model: target,
+            dir: Direction.m2v,
+            toView: toView
+           };
+  }
 }

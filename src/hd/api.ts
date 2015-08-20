@@ -71,6 +71,7 @@ module hd {
   export var date = b.date;
   export var dateVar = b.dateVar;
   export var enabled = b.enabled;
+  export var forEach = b.forEach;
   export var mousePosition = b.getMousePosition;
   export var num = b.num;
   export var numVar = b.numVar;

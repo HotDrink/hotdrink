@@ -212,12 +212,10 @@ module hd.bindings {
   }
 
   export
-  function forEach( target: Target,
-                    toView?: r.Extension<any,any> ): Binding {
-    return {mkview: ForEach,
+  function forEach( name: string, target: Target ): Binding {
+    return {mkview: ForEach.bind( null, name ),
             model: target,
             dir: Direction.m2v,
-            toView: toView,
             halt: true
            };
   }

@@ -36,6 +36,8 @@ module hd.model {
 
     scheduled = false;
 
+    indexVar: string;
+
     /*----------------------------------------------------------------
      */
     constructor( private klass?: ContextClass,
@@ -96,6 +98,9 @@ module hd.model {
       }
       if (this.elements[i] !== undefined || v !== undefined) {
         this.elements[i] = v;
+        if (v !== undefined && this.indexVar) {
+          v[this.indexVar] = i;
+        }
         this.changes.sendNext( i );
         this.scheduleNext();
       }

@@ -4,6 +4,10 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
     {
+      function plus1( n ) {
+        return n + 1;
+      }
+
       function toTime( n ) {
         var sign = 1;
         if (n < 0) {
@@ -41,6 +45,7 @@
 
       var EventSpec = new hd.ContextBuilder()
           .variables( "title, begin, end, length", {length: 10} )
+          .reference( "ord" )
           .constraint( "begin, end, length" )
             .method( "begin, length -> end", hd.sum )
             .method( "end, length -> begin", hd.diff )
@@ -53,6 +58,11 @@
             .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
           .context();
 
+      schedule.remove = function( event ) {
+        alert( event.begin.get() + ' -- ' + event.end.get() );
+      }
+
+      schedule.events.indexVar = 'ord';
       schedule.events.expand( [{title: "Do something", begin: 0, length: 30},
                                {title: "Do something else", begin: 40, length: 60},
                                {title: "Do nothing", begin: 60, length: 90}] );
@@ -89,26 +99,33 @@
           <th>Duration</th>
         </tr>
       </thead>
-      <tbody data-bind="hd.forEach( events )">
+      <tbody data-bind="hd.forEach( 'e', events )">
         <tr>
           <td>
+            <span data-bind="hd.text( e.$ord, hd.fn( plus1 ) )"></span>
+          </td>
+          <td>
             <input type="text" class="title" placeholder="Enter event title"
-                   data-bind="hd.editVar( title )"/>
+                   data-bind="hd.editVar( e.title )"/>
           </td>
           <td>
             <input type="text" class="num"
-                   data-bind="hd.editVar( begin, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+                   data-bind="hd.editVar( e.begin, hd.fn( toTime ), hd.fn( fromTime ) )"/>
           </td>
           <td>
             <input type="text" class="num"
-                   data-bind="hd.editVar( end, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+                   data-bind="hd.editVar( e.end, hd.fn( toTime ), hd.fn( fromTime ) )"/>
           </td>
           <td>
-            <input type="text" class="num" data-bind="hd.numVar( length, 0 )"/> min
+            <input type="text" class="num" data-bind="hd.numVar( e.length, 0 )"/> min
+          </td>
+          <td>
+            <input type="button" value="Remove" data-bind="hd.clicked( hd.fn( remove, e ) )">
           </td>
         </tr>
       </tbody>
       <tfoot>
+        <td></td>
         <td colspan="4">
           <input type="button" value="Add Event"
                  data-bind="hd.clicked( hd.fn( addEvent ) )"/>

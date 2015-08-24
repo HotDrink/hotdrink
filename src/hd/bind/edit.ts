@@ -36,7 +36,7 @@ module hd.bindings {
     /*----------------------------------------------------------------
      * Initialize and subscribe to HTML editing events.
      */
-    constructor( el: HTMLElement, time_ms?: number ) {
+    constructor( el: HTMLElement, scope: Scope, time_ms?: number ) {
       this.el = checkHtml( el, HTMLInputElement );
       this.stable = new r.Stabilizer( time_ms, flush );
 

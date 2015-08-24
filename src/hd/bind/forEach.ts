@@ -1,4 +1,5 @@
 module hd.bindings {
+  import u = hd.utility;
 
   export class ForEach {
 
@@ -6,8 +7,14 @@ module hd.bindings {
 
     body: Node[] = [];
 
-    constructor( el: HTMLElement ) {
+    scope: Scope;
+
+    name: string;
+
+    constructor( name: string, el: HTMLElement, scope: Scope ) {
+      this.name = name;
       this.root = checkHtml( el, HTMLElement );
+      this.scope = scope;
       for (var i = el.childNodes.length - 1; i >= 0; --i) {
         this.body[i] = el.childNodes[i];
         el.removeChild( el.childNodes[i] );
@@ -23,7 +30,9 @@ module hd.bindings {
         for (var j = 0, m = this.body.length; j < m; ++j) {
           var n = this.body[j].cloneNode( true );
           this.root.appendChild( n );
-          performDeclaredBindings( v, <HTMLElement>n );
+          var local = localScope( this.scope );
+          local[this.name] = v;
+          performDeclaredBindings( local, <HTMLElement>n );
         }
       }
     }

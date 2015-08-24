@@ -18,17 +18,37 @@ module hd.bindings {
 
   /*==================================================================
    */
+
+  export
+  interface Scope { [name: string]: any }
+
+  export
+  function mkScope( ctx: m.Context ): Scope {
+    var scope = Object.create( ctx );
+    scope.$this = ctx;
+    return scope;
+  }
+
+  export
+  function localScope( scope: Scope ): Scope {
+    var local = Object.create( scope );
+    return local;
+  }
+
+  /*==================================================================
+   */
   export
   enum Direction { bi, v2m, m2v }
 
   export
   interface Binding {
     view?: Target;
-    mkview?: {new (el: HTMLElement): Target};
+    mkview?: {new (el: HTMLElement, scope?: Scope): Target};
     model: Target;
     dir: Direction;
     toView?: (r.Extension<any,any>|r.Extension<any,any>[]);
     toModel?: (r.Extension<any,any>|r.Extension<any,any>[]);
+    localize?: Function;
     halt?: boolean;
   }
 
@@ -38,6 +58,7 @@ module hd.bindings {
     dir: Direction;
     toView?: r.Extension<any,any>;
     toModel?: r.Extension<any,any>;
+    localize?: Function;
     halt?: boolean;
   }
 
@@ -220,11 +241,11 @@ module hd.bindings {
    * Entry point
    */
   export
-  function performDeclaredBindings(ctx: m.Context, el?: HTMLElement ): Binding[];
+  function performDeclaredBindings(scope: Scope, el?: HTMLElement ): Binding[];
   export
-  function performDeclaredBindings(ctx: m.Context, el: string ): Binding[];
+  function performDeclaredBindings(scope: Scope, el: string ): Binding[];
   export
-  function performDeclaredBindings(ctx: m.Context, el: any ): Binding[] {
+  function performDeclaredBindings(scope: Scope, el: any ): Binding[] {
     if (el) {
       if (typeof el === 'string') {
         el = document.getElementById( el );
@@ -235,7 +256,10 @@ module hd.bindings {
     }
     var bindings: Binding[] = [];
     if (el.nodeType === Node.ELEMENT_NODE) {
-      searchForBindings( el, ctx, bindings );
+      if (scope instanceof m.Context) {
+        scope = mkScope( <m.Context>scope );
+      }
+      searchForBindings( el, scope, bindings );
     }
     return bindings;
   }
@@ -245,20 +269,20 @@ module hd.bindings {
    * Recursive search function.
    */
   function searchForBindings( el: HTMLElement,
-                              ctx: m.Context,
+                              scope: Scope,
                               bindings: Binding[] ) {
 
     // Look for declarative binding specification
     var spec = el.getAttribute( 'data-bind' );
     var descend = true;
     if (spec) {
-      descend = bindElement( spec, el, ctx, bindings );
+      scope = bindElement( spec, el, scope, bindings );
     }
 
-    if (descend) {
+    if (scope) {
       for (var i = 0, l = el.childNodes.length; i < l; ++i) {
         if (el.childNodes[i].nodeType === Node.ELEMENT_NODE) {
-          searchForBindings( <HTMLElement>el.childNodes[i], ctx, bindings );
+          searchForBindings( <HTMLElement>el.childNodes[i], scope, bindings );
         }
       }
     }
@@ -269,34 +293,40 @@ module hd.bindings {
    */
   function bindElement( spec: string,
                         el: HTMLElement,
-                        ctx: m.Context,
-                        bindings: Binding[] ): boolean {
+                        scope: Scope,
+                        bindings: Binding[] ): Scope {
     // Eval binding string as JS
     var functionBody = compile( spec );
     if (!functionBody) {
-      return true;
+      return scope;
     }
     try {
       var elBindingsFn = new Function( functionBody );
-      var elNestedBindings: any[] = elBindingsFn.call( ctx );
+      var elNestedBindings: any[] = elBindingsFn.call( scope );
       var elBindings: Binding[] = [];
       flatten( elNestedBindings, elBindings );
     }
     catch (e) {
       console.error( "Invalid binding declaration: "
                      + JSON.stringify( spec ), e );
-      return true;
+      return scope;
     }
 
-    var descend = true;
+    var local: Scope;
 
     // Invoke all specified binders
     elBindings.forEach( function( b: Binding ) {
       if (! b.view && typeof b.mkview === 'function') {
-        b.view = new b.mkview( el );
+        b.view = new b.mkview( el, scope );
       }
       if (b.halt) {
-        descend = false;
+        local = null;
+      }
+      if (b.localize && local !== null) {
+        if (! local) {
+          local = Object.create( scope );
+        }
+        b.localize( local );
       }
       try {
         bind( b );
@@ -307,7 +337,7 @@ module hd.bindings {
       }
     } );
 
-    return descend;
+    return local === undefined ? scope : local;
   }
 
   /*------------------------------------------------------------------

@@ -196,6 +196,7 @@ module hd.model {
       else {
         this.observers = [observer];
       }
+      observer.onNext( this );
     }
 
     removeObserver( observer: r.Observer<ArrayContext> ) {

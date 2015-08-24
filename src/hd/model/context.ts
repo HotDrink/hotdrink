@@ -331,13 +331,21 @@ module hd.model {
     update( changes: ContextChanges ) {
       var newInstances = <TemplateInstance[]> [];
 
-      // Take all positions from master and try to create instance
-      this.master.forEach( function( vv: any, pos: Position ) {
-        var inst = this.define( pos );
+      if (this.master) {
+        // Take all positions from master and try to create instance
+        this.master.forEach( function( vv: any, pos: Position ) {
+          var inst = this.define( pos );
+          if (inst) {
+            newInstances.push( inst );
+          }
+        }, this );
+      }
+      else {
+        var inst = this.define( null );
         if (inst) {
           newInstances.push( inst );
         }
-      }, this );
+      }
 
       // Sort the list
       newInstances.sort( this.compare );
@@ -619,6 +627,7 @@ module hd.model {
       this.fn = cmdspec.fn;
       this.synchronous = cmdspec.synchronous;
       this.name = [cmdspec.inputs.join( ',' ), cmdspec.outputs.join( ',' )].join( '->' );
+      this.activate = this.activate.bind( this );
     }
 
     /*----------------------------------------------------------------
@@ -1050,24 +1059,35 @@ module hd.model {
         init = {};
       }
 
+      // Initialized variables first
       for (var i = 0, l = spec.variables.length; i < l; ++i) {
         var vspec = spec.variables[i];
-        if (! (vspec.loc in ctx)) {
-          Context.addVariable( ctx, vspec, (vspec.loc in init) ? init[vspec.loc] : undefined );
+        if (! (vspec.loc in ctx) &&
+            (vspec.init !== undefined || init[vspec.loc] !== undefined)) {
+          Context.addVariable( ctx, vspec, init[vspec.loc] );
+        }
+      }
+
+      // Uninitialized variables second
+      for (var i = 0, l = spec.variables.length; i < l; ++i) {
+        var vspec = spec.variables[i];
+        if (! (vspec.loc in ctx) &&
+            vspec.init === undefined && init[vspec.loc] === undefined) {
+          Context.addVariable( ctx, vspec, init[vspec.loc] );
         }
       }
 
       for (var i = 0, l = spec.nesteds.length; i < l; ++i) {
         var nspec = spec.nesteds[i];
         if (! (nspec.loc in ctx)) {
-          Context.addNestedContext( ctx, nspec, (nspec.loc in init) ? init[nspec.loc] : undefined );
+          Context.addNestedContext( ctx, nspec, init[nspec.loc] );
         }
       }
 
       for (var i = 0, l = spec.references.length; i < l; ++i) {
         var rspec = spec.references[i];
         if (! (rspec.loc in ctx)) {
-          Context.addReference( ctx, rspec, (rspec.loc in init) ? init[rspec.loc] : undefined );
+          Context.addReference( ctx, rspec, init[rspec.loc] );
         }
       }
 
@@ -1099,6 +1119,9 @@ module hd.model {
       var vv = new Variable( spec.loc, init === undefined ? spec.init : init, spec.eq );
       if (spec.optional !== Optional.Default) {
         vv.optional = spec.optional;
+      }
+      else {
+        vv.optional = (init === undefined ? Optional.Min : Optional.Max);
       }
       hd_data.addStatic( vv );
       ctx[spec.loc] = vv;

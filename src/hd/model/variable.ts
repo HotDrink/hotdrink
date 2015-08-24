@@ -86,11 +86,7 @@ module hd.model {
                                null
                              );
 
-      if (value === undefined) {
-        this.optional = Optional.Min;
-      }
-      else {
-        this.optional = Optional.Max;
+      if (value !== undefined) {
         var p: r.Promise<any>;
         if (value instanceof r.Promise) {
           p = <r.Promise<any>>value;

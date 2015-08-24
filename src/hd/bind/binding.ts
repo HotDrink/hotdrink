@@ -29,6 +29,7 @@ module hd.bindings {
     dir: Direction;
     toView?: (r.Extension<any,any>|r.Extension<any,any>[]);
     toModel?: (r.Extension<any,any>|r.Extension<any,any>[]);
+    halt?: boolean;
   }
 
   interface VerifiedBinding {
@@ -37,6 +38,7 @@ module hd.bindings {
     dir: Direction;
     toView?: r.Extension<any,any>;
     toModel?: r.Extension<any,any>;
+    halt?: boolean;
   }
 
   /*==================================================================
@@ -248,13 +250,16 @@ module hd.bindings {
 
     // Look for declarative binding specification
     var spec = el.getAttribute( 'data-bind' );
+    var descend = true;
     if (spec) {
-      bindElement( spec, el, ctx, bindings );
+      descend = bindElement( spec, el, ctx, bindings );
     }
 
-    for (var i = 0, l = el.childNodes.length; i < l; ++i) {
-      if (el.childNodes[i].nodeType === Node.ELEMENT_NODE) {
-        searchForBindings( <HTMLElement>el.childNodes[i], ctx, bindings );
+    if (descend) {
+      for (var i = 0, l = el.childNodes.length; i < l; ++i) {
+        if (el.childNodes[i].nodeType === Node.ELEMENT_NODE) {
+          searchForBindings( <HTMLElement>el.childNodes[i], ctx, bindings );
+        }
       }
     }
   }
@@ -265,8 +270,7 @@ module hd.bindings {
   function bindElement( spec: string,
                         el: HTMLElement,
                         ctx: m.Context,
-                        bindings: Binding[] ) {
-
+                        bindings: Binding[] ): boolean {
     // Eval binding string as JS
     var functionBody = compile( spec );
     if (!functionBody) {
@@ -284,10 +288,15 @@ module hd.bindings {
       return true;
     }
 
+    var descend = true;
+
     // Invoke all specified binders
     elBindings.forEach( function( b: Binding ) {
       if (! b.view && typeof b.mkview === 'function') {
         b.view = new b.mkview( el );
+      }
+      if (b.halt) {
+        descend = false;
       }
       try {
         bind( b );
@@ -298,7 +307,7 @@ module hd.bindings {
       }
     } );
 
-    return true;
+    return descend;
   }
 
   /*------------------------------------------------------------------

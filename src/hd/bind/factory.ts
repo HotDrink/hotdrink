@@ -217,7 +217,8 @@ module hd.bindings {
     return {mkview: ForEach,
             model: target,
             dir: Direction.m2v,
-            toView: toView
+            toView: toView,
+            halt: true
            };
   }
 }

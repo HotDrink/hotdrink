@@ -36,8 +36,6 @@ module hd.model {
 
     scheduled = false;
 
-    indexVar: string;
-
     /*----------------------------------------------------------------
      */
     constructor( private klass?: ContextClass,
@@ -98,9 +96,6 @@ module hd.model {
       }
       if (this.elements[i] !== undefined || v !== undefined) {
         this.elements[i] = v;
-        if (v !== undefined && this.indexVar) {
-          v[this.indexVar] = i;
-        }
         this.changes.sendNext( i );
         this.scheduleNext();
       }
@@ -119,7 +114,7 @@ module hd.model {
     expand( init: u.Dictionary<any>, start: number ): void;
     expand( inits: u.Dictionary<any>[], start: number ): void;
     expand( count: number, start: number ): void;
-    expand( desc: any, start = this.elements.length ) {
+    expand( desc: any, start = this._length ) {
       var count: number, inits: u.Dictionary<any>[];
       if (typeof desc === 'number') {
         count = desc;
@@ -167,7 +162,7 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    collapse( count: number, start = this.elements.length - count ) {
+    collapse( count: number, start = this._length - count ) {
       if (count > 0) {
         var oldLength = this.getLength();
         var newLength = oldLength - count;

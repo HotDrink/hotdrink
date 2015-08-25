@@ -212,11 +212,19 @@ module hd.bindings {
   }
 
   export
-  function forEach( name: string, target: Target ): Binding {
-    return {mkview: ForEach.bind( null, name ),
+  function forEach( name: string, target: Target, idx: string ): Binding {
+    return {mkview: ForEach.bind( null, name, idx ),
             model: target,
             dir: Direction.m2v,
             halt: true
+           };
+  }
+
+  export
+  function when( target: Target ) {
+    return {mkview: When,
+            model: target,
+            dir: Direction.m2v
            };
   }
 }

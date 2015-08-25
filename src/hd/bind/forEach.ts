@@ -1,7 +1,9 @@
 module hd.bindings {
   import u = hd.utility;
+  import r = hd.reactive;
 
-  export class ForEach {
+  export
+  class ForEach {
 
     root: HTMLElement;
 
@@ -10,9 +12,11 @@ module hd.bindings {
     scope: Scope;
 
     name: string;
+    idx: string;
 
-    constructor( name: string, el: HTMLElement, scope: Scope ) {
+    constructor( name: string, idx: string, el: HTMLElement, scope: Scope ) {
       this.name = name;
+      this.idx = idx;
       this.root = checkHtml( el, HTMLElement );
       this.scope = scope;
       for (var i = el.childNodes.length - 1; i >= 0; --i) {
@@ -32,6 +36,9 @@ module hd.bindings {
           this.root.appendChild( n );
           var local = localScope( this.scope );
           local[this.name] = v;
+          if (this.idx) {
+            local[this.idx] = new r.Constant( i );
+          }
           performDeclaredBindings( local, <HTMLElement>n );
         }
       }

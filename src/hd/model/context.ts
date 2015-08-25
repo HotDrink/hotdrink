@@ -148,6 +148,12 @@ module hd.model {
    ******************************************************************/
 
   export
+  interface ConstantSpec {
+    loc: string;
+    value: any;
+  }
+
+  export
   interface VariableSpec {
     loc: string;
     init: any;
@@ -208,6 +214,7 @@ module hd.model {
 
   export
   interface ContextSpec {
+    constants: ConstantSpec[];
     variables: VariableSpec[];
     nesteds: NestedSpec[];
     references: ReferenceSpec[];
@@ -1059,6 +1066,13 @@ module hd.model {
         init = {};
       }
 
+      for (var i = 0, l = spec.constants.length; i < l; ++i) {
+        var tspec = spec.constants[i];
+        if (! (tspec.loc in ctx)) {
+          Context.addConstant( ctx, spec.constants[i] );
+        }
+      }
+
       // Initialized variables first
       for (var i = 0, l = spec.variables.length; i < l; ++i) {
         var vspec = spec.variables[i];
@@ -1108,6 +1122,13 @@ module hd.model {
       }
 
       return ctx;
+    }
+
+    /*----------------------------------------------------------------
+     */
+    static
+    addConstant( ctx: Context, spec: ConstantSpec ) {
+      ctx[spec.loc] = spec.value;
     }
 
     /*----------------------------------------------------------------

@@ -8,6 +8,10 @@
         return n + 1;
       }
 
+      function positive( n ) {
+        return n > 0;
+      }
+
       function toTime( n ) {
         var sign = 1;
         if (n < 0) {
@@ -19,8 +23,11 @@
         var minutes = Math.floor( n % 60 );
 
         if (sign < 0) {
-          hours = -hours - 1;
-          minutes = 60 - minutes;
+          hours = -hours;
+          if (minutes > 0) {
+            --hours;
+            minutes = 60 - minutes;
+          }
         }
 
         hours += 9;
@@ -45,7 +52,6 @@
 
       var EventSpec = new hd.ContextBuilder()
           .variables( "title, begin, end, length", {length: 10} )
-          .reference( "ord" )
           .constraint( "begin, end, length" )
             .method( "begin, length -> end", hd.sum )
             .method( "end, length -> begin", hd.diff )
@@ -56,13 +62,19 @@
           .constraint( "events[i].end, events[i+1].begin" )
             .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
             .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
+          .constant( 'remove', function( event ) {
+            for (var i = 0; i < schedule.events.length; ++i) {
+              if (this.events[i] === event) {
+                break;
+              }
+            }
+            if (i < this.events.length) {
+              this.events.collapse( 1, i );
+              pm.update();
+            }
+          } )
           .context();
 
-      schedule.remove = function( event ) {
-        alert( event.begin.get() + ' -- ' + event.end.get() );
-      }
-
-      schedule.events.indexVar = 'ord';
       schedule.events.expand( [{title: "Do something", begin: 0, length: 30},
                                {title: "Do something else", begin: 40, length: 60},
                                {title: "Do nothing", begin: 60, length: 90}] );
@@ -87,22 +99,26 @@
       .error, .stale { color: #900; }
       div.event { margin: 1em; }
       th { font-weight: normal; text-decoration: underline; }
+      a.control { text-decoration: none; }
+      td:first-child { padding-right: 1em; }
+      td:last-child { padding-left: 1em; font-size: 70%; vertical-align: middle }
     </style>
   </head>
   <body>
     <table>
       <thead>
         <tr>
+          <th></th>
           <th>Title</th>
           <th>Begin</th>
           <th>End</th>
           <th>Duration</th>
         </tr>
       </thead>
-      <tbody data-bind="hd.forEach( 'e', events )">
+      <tbody data-bind="hd.forEach( 'e', events, 'idx' )">
         <tr>
           <td>
-            <span data-bind="hd.text( e.$ord, hd.fn( plus1 ) )"></span>
+            <span data-bind="hd.text( idx, hd.fn( plus1 ) )"></span>
           </td>
           <td>
             <input type="text" class="title" placeholder="Enter event title"
@@ -117,10 +133,12 @@
                    data-bind="hd.editVar( e.end, hd.fn( toTime ), hd.fn( fromTime ) )"/>
           </td>
           <td>
-            <input type="text" class="num" data-bind="hd.numVar( e.length, 0 )"/> min
+            <input type="text" class="num" data-bind="hd.numVar( e.length, 0 )"/><small style="margin-left: 0.2ex">min</small>
           </td>
           <td>
-            <input type="button" value="Remove" data-bind="hd.clicked( hd.fn( remove, e ) )">
+            <span data-bind="hd.when( hd.cn( events.length > 1 ) )"</span>
+            [<a class="control" href="#" onclick="return false;"
+                data-bind="hd.clicked( hd.fn( this, remove, e ) )">X</a>]
           </td>
         </tr>
       </tbody>
@@ -130,6 +148,7 @@
           <input type="button" value="Add Event"
                  data-bind="hd.clicked( hd.fn( addEvent ) )"/>
         </td>
+        <td></td>
       </tfoot>
     </table>
   </body>

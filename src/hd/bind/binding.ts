@@ -256,9 +256,6 @@ module hd.bindings {
     }
     var bindings: Binding[] = [];
     if (el.nodeType === Node.ELEMENT_NODE) {
-      if (scope instanceof m.Context) {
-        scope = mkScope( <m.Context>scope );
-      }
       searchForBindings( el, scope, bindings );
     }
     return bindings;

@@ -212,8 +212,7 @@ module hd.system {
     //--------------------------------------------
     // Remove variable
     removeVariable( vv: m.Variable ) {
-      if ((vv.id in this.variables) &&
-          this.cgraph.constraintsWhichUse( vv.id ).length == 0) {
+      if (vv.id in this.variables) {
         var stayConstraintId = g.stayConstraint( vv.id );
 
         // Remove all references
@@ -267,6 +266,17 @@ module hd.system {
         if (cc.touchVariables) {
           cc.touchVariables.forEach( function( v: m.Variable ) {
             this.removeTouchDependency( v, cc );
+          }, this );
+        }
+
+        // For all variables being written to by this constraint:
+        //   add stay constraint to needEnforcing
+        if (this.sgraph) {
+          var mid = this.sgraph.selectedForConstraint( cc.id );
+          this.sgraph.outputsForMethod( mid ).forEach( function( vid: string ) {
+            if (this.variables[vid]) {
+              this.needEnforcing[g.stayConstraint( vid )] = true;
+            }
           }, this );
         }
 

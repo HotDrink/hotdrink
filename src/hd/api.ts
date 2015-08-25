@@ -78,9 +78,11 @@ module hd {
   export var position = b.position;
   export var text = b.text;
   export var value = b.value;
+  export var when = b.when;
 
   // Extensions
   export var chain = b.chain;
+  export var cn = b.cn;
   export var dateToMilliseconds = b.dateToMilliseconds;
   export var dateToDateString = b.dateToDateString;
   export var dateToString = b.dateToString;

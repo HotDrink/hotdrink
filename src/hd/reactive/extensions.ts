@@ -37,9 +37,9 @@ module hd.reactive {
 
     fn: Function;
 
-    constructor( fn: Function, boundArgs: any[] ) {
+    constructor( fn: Function, thisArg: Object, boundArgs: any[] ) {
       super();
-      this.fn = (boundArgs && boundArgs.length) ? fn.bind.apply( fn, (<any[]>[null]).concat( boundArgs ) ) : fn;
+      this.fn = (boundArgs && boundArgs.length) ? fn.bind.apply( fn, (<any[]>[thisArg || null]).concat( boundArgs ) ) : fn;
     }
 
     onNext( value: any ) {
@@ -59,6 +59,20 @@ module hd.reactive {
       this.sendCompleted();
     }
   }
+
+  /*==================================================================
+   */
+  export class Constant<T>  {
+    constructor( private value: T ) { }
+    addObserver( observer: Observer<T> ) {
+      observer.onNext( this.value );
+    }
+    removeObserver( observer: Observer<T> ) { }
+    onNext() { }
+    onError() { }
+    onCompleted() { }
+  }
+
 
   /*==================================================================
    * Basically a linked list of extensions, treated as a single

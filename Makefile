@@ -50,7 +50,7 @@ system_UNITS    := pm activate topo
 system_DEPS     := utility reactive graph model plan enable
 
 bind_LOC        := hd/
-bind_UNITS      := binding text edit css select checked enable mouse position clicked time forEach rx factory
+bind_UNITS      := binding text edit css select checked enable mouse position clicked time forEach when rx factory
 bind_DEPS       := utility reactive model
 
 async_LOC       := hd/

@@ -22,6 +22,7 @@ module hd.model {
     // The spec we are building
     private
     target: ContextSpec = {
+      constants:   [],
       variables:   [],
       nesteds:     [],
       references:  [],
@@ -58,6 +59,14 @@ module hd.model {
       var ctx = new Context( init );
       Context.construct( ctx, this.target );
       return ctx;
+    }
+
+    /*----------------------------------------------------------------
+     * Add a constant.
+     */
+    constant( loc: string, value: any ): ContextBuilder {
+      this.target.constants.push( {loc: loc, value: value} );
+      return this;
     }
 
     /*----------------------------------------------------------------

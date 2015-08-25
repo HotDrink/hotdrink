@@ -57,8 +57,23 @@ module hd.bindings {
     return new r.ReadWrite( read, write );
   }
 
-  export function fn( f: Function, ...args: any[] ) {
-    return new r.FunctionExtension( f, args );
+  export function fn( thisArg: Object, f: Function, ...args: any[] ): r.FunctionExtension;
+  export function fn( f: Function, ...args: any[] ): r.FunctionExtension;
+  export function fn() {
+    if (typeof arguments[0] === 'function') {
+      return new r.FunctionExtension( arguments[0],
+                                      null,
+                                      Array.prototype.slice.call( arguments, 1 ) );
+    }
+    else {
+      return new r.FunctionExtension( arguments[1],
+                                      arguments[0],
+                                      Array.prototype.slice.call( arguments, 2 ) );
+    }
+  }
+
+  export function cn( value: any ) {
+    return new r.Constant( value );
   }
 
   export

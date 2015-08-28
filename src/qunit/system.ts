@@ -6,6 +6,7 @@ module hd.qunit {
 
   import u = hd.utility;
   import r = hd.reactive;
+  import g = hd.graph;
   import m = hd.model;
   import s = hd.system;
 
@@ -101,6 +102,67 @@ module hd.qunit {
 
     u.schedule( 3, start );
   } );
+
+  test( "initial priorities", function() {
+    expect( 12 );
+
+    var ctx: any = new m.ContextBuilder()
+          .variables( "a, b, c, d", {a: 1, b: 2} )
+          .variables( "l, m, n, o", {l: 3, m: 4} )
+          .optional( true )
+          .variables( "w, x, y, z", {w: 5, x: 6} )
+          .optional( false )
+          .context( {b: 7, c: 8, m: 9, n: 10, x: 11, y: 12} );
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( ctx );
+
+    // a = default/spec-init  =>  min/init  =>  II
+    // b = default/both-init  =>  max/init  =>  IIII
+    // c = default/inst-init  =>  max/init  =>  IIII
+    // d = default            =>  min/unin  =>  I
+    // l = max/spec-init      =>  max/init  =>  IIII
+    // m = max/both-init      =>  max/init  =>  IIII
+    // n = max/inst-init      =>  max/init  =>  IIII
+    // o = max                =>  max/unin  =>  III
+    // w = min/spec-init      =>  min/init  =>  II
+    // x = min/both-init      =>  min/init  =>  II
+    // y = min/inst-init      =>  min/init  =>  II
+    // z = min                =>  min/unin  =>  I
+
+    // d = default            =>  min/unin  =>  I
+    // z = min                =>  min/unin  =>  I
+    // a = default/spec-init  =>  min/init  =>  II
+    // w = min/spec-init      =>  min/init  =>  II
+    // x = min/both-init      =>  min/init  =>  II       ^
+    // y = min/inst-init      =>  min/init  =>  II       |
+    // =================================================
+    // o = max                =>  max/unin  =>  III      |
+    // b = default/both-init  =>  max/init  =>  IIII     v
+    // c = default/inst-init  =>  max/init  =>  IIII
+    // l = max/spec-init      =>  max/init  =>  IIII
+    // m = max/both-init      =>  max/init  =>  IIII
+    // n = max/inst-init      =>  max/init  =>  IIII
+
+    var opt = (<any>pm).planner.getOptionals();
+
+    var pri = [g.stayConstraint( ctx.d.id ),
+               g.stayConstraint( ctx.z.id ),
+               g.stayConstraint( ctx.a.id ),
+               g.stayConstraint( ctx.w.id ),
+               g.stayConstraint( ctx.x.id ),
+               g.stayConstraint( ctx.y.id ),
+               g.stayConstraint( ctx.o.id ),
+               g.stayConstraint( ctx.b.id ),
+               g.stayConstraint( ctx.c.id ),
+               g.stayConstraint( ctx.l.id ),
+               g.stayConstraint( ctx.m.id ),
+               g.stayConstraint( ctx.n.id )];
+
+    for (var i = 0, l = pri.length; i < l; ++i) {
+      equal( opt[i], pri[i], "Correct priority assignment " + i );
+    }
+  } )
 
   asyncTest( "simple constraint", function() {
     expect( 12 );

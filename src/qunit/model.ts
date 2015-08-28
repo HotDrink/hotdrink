@@ -140,16 +140,16 @@ module hd.qunit {
   } );
 
   test( "context builder", function() {
-    expect( 11 );
+    expect( 12 );
 
     var context: any = new m.ContextBuilder()
-          .variables( "x, y, z", {x: 3, z: 5} )
+          .variables( "x, y, z", {x: 3} )
           .constraint( "c", "x, y" )
             .method( "x -> y", id )
             .method( "y -> x", id )
           .output( "x" )
           .touchDep( "z", "x" )
-          .context();
+          .context( {z: 5} );
     var x = m.Context.update( context );
 
     ok( context instanceof m.Context, "ContextBuilder creates a context" );
@@ -165,9 +165,11 @@ module hd.qunit {
         context.z instanceof m.Variable,
         "ContextBuilder exposes variables" );
 
-    strictEqual( context.x.optional, m.Optional.Max, "Variable is max-optional" );
+    strictEqual( context.x.optional, m.Optional.Min, "Variable is min-optional" );
 
     strictEqual( context.y.optional, m.Optional.Min, "Variable is min-optional" );
+
+    strictEqual( context.z.optional, m.Optional.Max, "Variable is max-optional" );
 
     var ccs = <m.Constraint[]>x.adds.filter( u.isType( m.Constraint ) );
     ok( ccs.length == 1 &&

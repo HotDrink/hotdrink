@@ -1039,13 +1039,9 @@ module hd.model {
     /*----------------------------------------------------------------
      * Copies any fields found in init
      */
-    constructor( init?: u.Dictionary<any> ) {
-      if (init) {
-        for (var key in init) {
-          if (key !== '#hd_data' && init.hasOwnProperty( key )) {
-            this[key] = init[key];
-          }
-        }
+    constructor( spec?: ContextSpec, init?: u.Dictionary<any> ) {
+      if (spec) {
+        Context.construct( this, spec, init );
       }
     }
 
@@ -1073,20 +1069,49 @@ module hd.model {
         }
       }
 
-      // Initialized variables first
-      for (var i = 0, l = spec.variables.length; i < l; ++i) {
-        var vspec = spec.variables[i];
-        if (! (vspec.loc in ctx) &&
-            (vspec.init !== undefined || init[vspec.loc] !== undefined)) {
+      var variables = spec.variables.filter( function( vspec: VariableSpec ) {
+        return ! (vspec.loc in ctx);
+      } );
+
+      // Initialized/min
+      for (var i = variables.length - 1; i >= 0; --i) {
+        var vspec = variables[i];
+        if ((vspec.optional === Optional.Min &&
+             (vspec.init !== undefined || init[vspec.loc] !== undefined)) ||
+            (vspec.optional === Optional.Default &&
+             init[vspec.loc] === undefined &&
+             vspec.init !== undefined)) {
           Context.addVariable( ctx, vspec, init[vspec.loc] );
         }
       }
 
-      // Uninitialized variables second
-      for (var i = 0, l = spec.variables.length; i < l; ++i) {
-        var vspec = spec.variables[i];
-        if (! (vspec.loc in ctx) &&
-            vspec.init === undefined && init[vspec.loc] === undefined) {
+      // Uninitialized/min
+      for (var i = variables.length - 1; i >= 0; --i) {
+        var vspec = variables[i];
+        if ((vspec.optional === Optional.Default || vspec.optional === Optional.Min) &&
+            vspec.init === undefined &&
+            init[vspec.loc] === undefined) {
+          Context.addVariable( ctx, vspec, init[vspec.loc] );
+        }
+      }
+
+      // Uninitialized/max
+      for (var i = 0, l = variables.length; i < l; ++i) {
+        var vspec = variables[i];
+        if (vspec.optional === Optional.Max &&
+            vspec.init === undefined &&
+            init[vspec.loc] === undefined) {
+          Context.addVariable( ctx, vspec, init[vspec.loc] );
+        }
+      }
+
+      // Initialized/max
+      for (var i = 0, l = variables.length; i < l; ++i) {
+        var vspec = variables[i];
+        if ((vspec.optional === Optional.Max &&
+             (vspec.init !== undefined || init[vspec.loc] !== undefined)) ||
+            (vspec.optional === Optional.Default &&
+             init[vspec.loc] !== undefined)) {
           Context.addVariable( ctx, vspec, init[vspec.loc] );
         }
       }

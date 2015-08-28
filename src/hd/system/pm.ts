@@ -494,7 +494,9 @@ module hd.system {
           var deps = this.touchDeps[vid];
           if (deps) {
             deps.forEach( function( dep: string ) {
-              if (! visited[dep] && this.constraints[dep].optional !== m.Optional.Default) {
+              if (! visited[dep] &&
+                  (! this.constraints[dep] ||
+                   this.constraints[dep].optional !== m.Optional.Default)) {
                 sub.push( dep );
                 visited[dep] = true;
               }

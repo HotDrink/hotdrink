@@ -63,7 +63,7 @@ module hd.reactive {
   /*==================================================================
    */
   export class Constant<T>  {
-    constructor( private value: T ) { }
+    constructor( public value: T ) { }
     addObserver( observer: Observer<T> ) {
       observer.onNext( this.value );
     }

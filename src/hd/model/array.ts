@@ -23,7 +23,7 @@ module hd.model {
     private elements: any[] = [];
 
     // The length of the array; this controls how many properties are defined
-    private _length = 0;
+    $length = new r.BasicSignal( 0 );
     length: number;
 
     // Just to indicate that you can access this as an array
@@ -46,15 +46,16 @@ module hd.model {
     /*----------------------------------------------------------------
      * Length getter
      */
-    getLength() { return this._length; }
+    getLength() { return this.$length.get(); }
 
     /*----------------------------------------------------------------
      * Length setter
      */
     setLength( n: number ) {
+      var curlen = this.$length.get();
       // If we're decreasing length
-      if (n < this._length) {
-        for (var i = this._length - 1; i >= n; --i) {
+      if (n < curlen) {
+        for (var i = curlen - 1; i >= n; --i) {
           if (this.elements[i] !== undefined) {
             this.elements[i] = undefined;
             this.changes.sendNext( i );
@@ -64,7 +65,7 @@ module hd.model {
       }
       // If we're increasing length, define properties for new indices
       else {
-        for (var i = this._length; i < n; ++i) {
+        for (var i = curlen; i < n; ++i) {
           if (! ArrayContext.prototype.hasOwnProperty( i.toString() )) {
             Object.defineProperty( ArrayContext.prototype, i.toString(), {
               configurable: false,
@@ -76,7 +77,7 @@ module hd.model {
         }
       }
 
-      this._length = n;
+      this.$length.set( n );
     }
 
     /*----------------------------------------------------------------
@@ -91,7 +92,7 @@ module hd.model {
      */
     set( i: number, v: any ) {
       // Ensure length is big enough to hold this
-      if (this._length <= i) {
+      if (this.$length.get() <= i) {
         this.setLength( i + 1 );
       }
       if (this.elements[i] !== undefined || v !== undefined) {
@@ -105,7 +106,7 @@ module hd.model {
      * Push operation
      */
     push( v: any ) {
-      var i = this._length;
+      var i = this.$length.get();
       this.set( i, v );
     }
 
@@ -114,7 +115,7 @@ module hd.model {
     expand( init: u.Dictionary<any>, start: number ): void;
     expand( inits: u.Dictionary<any>[], start: number ): void;
     expand( count: number, start: number ): void;
-    expand( desc: any, start = this._length ) {
+    expand( desc: any, start = this.$length.get() ) {
       var count: number, inits: u.Dictionary<any>[];
       if (typeof desc === 'number') {
         count = desc;
@@ -162,7 +163,7 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    collapse( count: number, start = this._length - count ) {
+    collapse( count: number, start = this.$length.get() - count ) {
       if (count > 0) {
         var oldLength = this.getLength();
         var newLength = oldLength - count;

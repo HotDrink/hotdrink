@@ -56,9 +56,7 @@ module hd.model {
      */
     context( init?: u.Dictionary<any> ) {
       this.endAll();
-      var ctx = new Context( init );
-      Context.construct( ctx, this.target );
-      return ctx;
+      return new Context( this.target, init );
     }
 
     /*----------------------------------------------------------------
@@ -347,8 +345,26 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a touch dependency
      */
-    touchDep( from: string, to: string ): ContextBuilder {
+    touchDep( signature: string ): ContextBuilder;
+    touchDep( from: string, to: string ): ContextBuilder;
+    touchDep() {
       this.endAll();
+      var from: string, to: string;
+      if (arguments.length == 1) {
+        var split = (<string>arguments[0]).trim().split( /\s*=>\s*/ );
+        if (split.length == 2) {
+          from = split[0];
+          to = split[1];
+        }
+        else {
+          console.error( 'Invalid touch dependency signature: "' + arguments[0] + '"' );
+          return this;
+        }
+      }
+      else {
+        from = arguments[0];
+        to = arguments[1];
+      }
       if (invalidPath( from ) || invalidPath( to )) {
         return this;
       }

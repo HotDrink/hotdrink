@@ -221,10 +221,12 @@ module hd.bindings {
   }
 
   export
-  function when( target: Target ) {
+  function when( target: Target,
+                 toView?: r.Extension<any,boolean> ) {
     return {mkview: When,
             model: target,
-            dir: Direction.m2v
+            dir: Direction.m2v,
+            toView: toView
            };
   }
 }

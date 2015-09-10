@@ -6,14 +6,6 @@ module hd.model {
   import r = hd.reactive;
 
   /*==================================================================
-   * JavaScript does not have multi-dimensional arrays, just
-   * arrays-of-arrays.  This interface just supports generic
-   * arrays-of-arrays without specifying a depth.
-   */
-  export
-  interface MultiArray<T> extends Array<T|MultiArray<T>> { };
-
-  /*==================================================================
    * The ArrayContext class.
    */
   export

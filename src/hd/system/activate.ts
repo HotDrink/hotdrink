@@ -18,13 +18,13 @@ module hd.system {
     // Inputs to pass to the function, in the order they should be passed
     // Variables in this list will be replaced with their value; everything
     // else will be treated as constants to be passed to the function.
-    inputs: any[];
+    inputs: u.MultiArray<any>;
 
     // Parallel to inputs; true means input comes from prior generation
-    priorFlags: boolean[];
+    priorFlags: u.MultiArray<boolean>;
 
     // Outputs to write to, in the order they are returned form the function
-    outputs: m.Variable[];
+    outputs: u.MultiArray<m.Variable>;
 
     // Is this an external operation?  (Does it trigger an update after execution?)
     external: boolean;
@@ -73,55 +73,66 @@ module hd.system {
 
   export
   function activate( op: Operation ): ActivationRecord {
-    var params: any[] = [];
-
     var priorLookup: u.Dictionary<r.Promise<any>> = {};
     var inputLookup: u.Dictionary<r.Promise<any>> = {};
     var outputLookup: u.Dictionary<r.Promise<any>> = {};
 
-    // Collect parameter promises
-    for (var i = 0, l = op.inputs.length; i < l; ++i) {
-      var param: r.Promise<any>;
+    var collectParams = function collectParams( inputs: u.MultiArray<any>, priors: u.MultiArray<boolean> ) {
+      var params: u.MultiArray<r.Promise<any>> = [];
 
-      // An input is either a variable or a constant
-      var input = op.inputs[i];
-      if (input instanceof m.Variable) {
+      // Collect parameter promises
+      for (var i = 0, l = inputs.length; i < l; ++i) {
 
-        // If it's a variable, determine what promise to use
-        if (op.priorFlags && op.priorFlags[i]) {
-          if (! (param = priorLookup[input.id])) {
-            if (config.forwardPriorGens) {
-              param = priorLookup[input.id] = input.getForwardedPromise();
-            }
-            else {
-              param = priorLookup[input.id] = input.getCurrentPromise();
+        // An input is either a variable, a pack, or a constant
+        var input = inputs[i];
+        var prior = priors ? priors[i] : undefined;
+        if (input instanceof m.Variable) {
+          var param: r.Promise<any>;
+
+          // If it's a variable, determine what promise to use
+          if (prior) {
+            if (! (param = priorLookup[input.id])) {
+              if (config.forwardPriorGens) {
+                param = priorLookup[input.id] = input.getForwardedPromise();
+              }
+              else {
+                param = priorLookup[input.id] = input.getCurrentPromise();
+              }
             }
           }
+          else {
+            if (! (param = inputLookup[input.id])) {
+              // Make a dependent promise for parameter
+              param = inputLookup[input.id] = new r.Promise();
+              var oldp = input.getStagedPromise();
+              if (r.plogger) {
+                r.plogger.register( param, input.name, 'input parameter' );
+              }
+              param.resolve( oldp );
+              param.ondropped.addObserver( oldp );
+            }
+          }
+          params.push( param );
+        }
+        else if (Array.isArray( input )) {
+          params.push( collectParams( <u.MultiArray<any>>input, <u.MultiArray<boolean>>prior ) );
         }
         else {
-          if (! (param = inputLookup[input.id])) {
-            // Make a dependent promise for parameter
-            param = inputLookup[input.id] = new r.Promise();
-            var oldp = input.getStagedPromise();
-            if (r.plogger) {
-              r.plogger.register( param, input.name, 'input parameter' );
-            }
-            param.resolve( oldp );
-            param.ondropped.addObserver( oldp );
+          // If it's a constant, we create a satisfied promise
+          var param = new r.Promise<any>();
+          if (r.plogger) {
+            r.plogger.register( param, op.inputs[i], 'constant parameter' );
           }
+          param.resolve( op.inputs[i] );
+          params.push( param );
         }
-      }
-      else {
-        // If it's a constant, we create a satisfied promise
-        param = new r.Promise();
-        if (r.plogger) {
-          r.plogger.register( param, op.inputs[i], 'constant parameter' );
-        }
-        param.resolve( op.inputs[i] );
+
       }
 
-      params.push( param );
+      return params;
     }
+
+    var params = collectParams( op.inputs, op.priorFlags );
 
     // Invoke the operation
     try {

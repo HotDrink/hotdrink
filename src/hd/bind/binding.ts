@@ -299,9 +299,9 @@ module hd.bindings {
     }
     try {
       var elBindingsFn = new Function( functionBody );
-      var elNestedBindings: any[] = elBindingsFn.call( scope );
+      var elNestedBindings: u.MultiArray<Binding> = elBindingsFn.call( scope );
       var elBindings: Binding[] = [];
-      flatten( elNestedBindings, elBindings );
+      u.multiArray.flatten( elNestedBindings, elBindings );
     }
     catch (e) {
       console.error( "Invalid binding declaration: "
@@ -348,21 +348,6 @@ module hd.bindings {
     return "with (this) {" +
            "  return [" + spec + "]" +
            "}";
-  }
-
-  /*------------------------------------------------------------------
-   * Flatten nested lists into a single list.
-   */
-
-  function flatten<T>( from: any[], to: T[] ) {
-    for (var i = 0, l = from.length; i < l; ++i) {
-      if (Array.isArray( from[i] )) {
-        flatten( from[i], to );
-      }
-      else {
-        to.push( from[i] );
-      }
-    }
   }
 
 }

@@ -472,8 +472,10 @@ module hd.model {
   /*==================================================================
    * Test for invalid variable path
    */
+  var pathRegEx = /^[a-zA-Z][\w$]*(\.[a-zA-Z][\w$]*|\[\s*(\d+|\*)\s*\]|\[\s*(\d+\s*)?[a-zA-Z][\w$]*\s*([+-]\s*\d+\s*)?\])*$/;
+
   function invalidPath( path: string ): boolean {
-    if (! path.match( /^[a-zA-Z][\w$]*(\.[a-zA-Z][\w$]*|\[\s*(\d+|\*)\s*\]|\[\s*(\d+\s*)?[a-zA-Z][\w$]*\s*([+-]\s*\d+\s*)?\])*$/ )) {
+    if (! path.match( pathRegEx )) {
       console.error( 'Invalid variable path: "' + path + '"' );
       return true;
     }
@@ -527,7 +529,36 @@ module hd.model {
             priorFlags: priorFlags.length == 0 ? null : priorFlags,
             outputs: outputs
            };
-    }
+  }
+
+  export
+  var tokensRegEx = /([\w$.]+(\[[^\]]*\][\w$.]*)*|\S)/g;
+
+  export
+  function parseList( tokens: string[], i: number, list: u.MultiArray<string> ) {
+    do {
+      if (tokens[i] === '[') {
+        var sub: string[] = [];
+        list.push( sub );
+        i = parseList( tokens, i+1, sub );
+        if (tokens[i++] !== ']') {
+          throw 'Expecting "]"';
+        }
+      }
+      else if (tokens[i] === ',' || tokens[i] === ']') {
+        throw 'Unexpected token "' + tokens[i] + '"';
+      }
+      else {
+        list.push( tokens[i++] );
+      }
+      var more = false;
+      if (tokens[i] === ',') {
+        ++i;
+        more = true;
+      }
+    } while (more);
+    return i;
+  }
 
   /*================================================================
    * Strip one-character prefixes from front of names

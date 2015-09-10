@@ -110,8 +110,10 @@ module hd.model {
       var properties: r.ProxyObservable<any>[] = [];
       for (var i = 0, l = inputs.length; i < l; ++i) {
         var vv = inputs[i];
-        properties.push( vv.pending );
-        properties.push( vv.error );
+        if (vv instanceof Variable) {
+          properties.push( vv.pending );
+          properties.push( vv.error );
+        }
       }
       this.ready = new None( properties );
     }

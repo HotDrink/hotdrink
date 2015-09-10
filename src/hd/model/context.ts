@@ -56,6 +56,9 @@ module hd.model {
         else if (typeof ai === 'string' && typeof bi === 'string') {
           cmp = ai.localeCompare( bi );
         }
+        else if (Array.isArray( ai ) && Array.isArray( bi )) {
+          cmp = compareAnys( ai, bi );
+        }
         else {
           cmp = (ai + "").localeCompare( bi + "" );
         }
@@ -176,9 +179,9 @@ module hd.model {
 
   export
   interface MethodSpec {
-    inputs: string[];
+    inputs: u.MultiArray<string>;
     priorFlags: boolean[];
-    outputs: string[];
+    output: string|u.MultiArray<string>;
     fn: Function;
   }
 
@@ -194,9 +197,9 @@ module hd.model {
   export
   interface CommandSpec {
     loc: string;
-    inputs: string[];
+    inputs: u.MultiArray<string>;
     priorFlags: boolean[];
-    outputs: string[];
+    output: string|u.MultiArray<string>;
     fn: Function;
     synchronous: boolean;
   }
@@ -427,7 +430,7 @@ module hd.model {
 
   class MethodTemplate {
     name: string;
-    inputs: Path[];
+    inputs: u.MultiArray<Path>;
     priorFlags: boolean[];
     outputs: Path[];
     fn: Function;
@@ -437,13 +440,13 @@ module hd.model {
      * handles that
      */
     constructor( mspec: MethodSpec, lookup: PathLookup ) {
-      this.inputs = mspec.inputs.map( lookup.get, lookup );
+      this.inputs = u.multiArray.map( mspec.inputs, lookup.get, lookup );
       if (mspec.priorFlags) {
         this.priorFlags = mspec.priorFlags.slice( 0 );
       }
       this.outputs = mspec.outputs.map( lookup.get, lookup );
       this.fn = mspec.fn;
-      this.name = [mspec.inputs.join( ',' ), mspec.outputs.join( ',' )].join( '->' );
+      this.name = [u.multiArray.join( mspec.inputs, ',' ), mspec.outputs.join( ',' )].join( '->' );
     }
 
     /*----------------------------------------------------------------
@@ -451,7 +454,7 @@ module hd.model {
      */
     define( pos: Position ): MethodInstance {
       var get = function( p: Path ) { return p.get( pos ) };
-      var ins = this.inputs.map( get );
+      var ins = u.multiArray.map( this.inputs, get );
       var outs = this.outputs.map( get );
 
       // Cannot have same variable as input and output
@@ -615,7 +618,7 @@ module hd.model {
 
   class CommandTemplate extends Template {
     name: string;
-    inputs: Path[];
+    inputs: u.MultiArray<Path>;
     priorFlags: boolean[];
     outputs: Path[];
     fn: Function;
@@ -626,14 +629,18 @@ module hd.model {
      */
     constructor( cmdspec: CommandSpec, lookup: PathLookup ) {
       super();
-      this.addPaths( this.inputs = cmdspec.inputs.map( lookup.get, lookup ) )
+      this.inputs = u.multiArray.map( cmdspec.inputs, lookup.get, lookup )
+      var inputPaths: Path[] = [];
+      u.multiArray.flatten( this.inputs, inputPaths );
+      this.addPaths( inputPaths )
       if (cmdspec.priorFlags) {
         this.priorFlags = cmdspec.priorFlags.slice( 0 );
       }
       this.addPaths( this.outputs = cmdspec.outputs.map( lookup.get, lookup ) )
       this.fn = cmdspec.fn;
       this.synchronous = cmdspec.synchronous;
-      this.name = [cmdspec.inputs.join( ',' ), cmdspec.outputs.join( ',' )].join( '->' );
+      this.name = [u.multiArray.join( cmdspec.inputs, ',' ),
+                   cmdspec.outputs.join( ',' )].join( '->' );
       this.activate = this.activate.bind( this );
     }
 
@@ -642,7 +649,7 @@ module hd.model {
      */
     define( pos: Position ) {
       var get = function( p: Path ) { return p.get( pos ) };
-      var ins = this.inputs.map( get );
+      var ins = u.multiArray.map( this.inputs, get );
       var outs = this.outputs.map( get );
 
       // Ensure all paths have values

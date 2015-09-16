@@ -70,6 +70,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a variable.
      */
+    v: <T>(loc: string, init?: T, eq?: u.EqualityPredicate<T> ) => ContextBuilder;
     variable<T>( loc: string,
                  init?: T,
                  eq?: u.EqualityPredicate<T> ): ContextBuilder {
@@ -127,6 +128,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a nested context.
      */
+    n: (loc: string, klass: {new (): Context}, spec?: ContextSpec) => ContextBuilder;
     nested( loc: string, klass: {new (): Context}, spec?: ContextSpec ): ContextBuilder {
       this.endAll();
 
@@ -141,6 +143,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a reference.
      */
+    r: (loc: string, eq?: u.EqualityPredicate<any> ) => ContextBuilder;
     reference( loc: string, eq?: u.EqualityPredicate<any> ): ContextBuilder {
       this.endAll();
 
@@ -165,6 +168,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a constraint to the property modelcule.
      */
+    c: ((signature: string) => ContextBuilder);
     constraint( loc: string, signature: string ): ContextBuilder;
     constraint( signature: string ): ContextBuilder;
     constraint(): ContextBuilder {
@@ -226,6 +230,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a method
      */
+    m: (signature: string, fn: Function, lift?: boolean ) => ContextBuilder;
     method( signature: string, fn: Function, lift = true ): ContextBuilder {
       if (! this.lastConstraint) {
         console.error( 'Builder function "method" called with no constraint' );
@@ -247,17 +252,17 @@ module hd.model {
 
       };
 
-      if (p.inputs.some( isNotConstraintVar ) || p.outputs.some( isNotConstraintVar ) ) {
+      if (u.multiArray.some( p.inputs, isNotConstraintVar ) ||
+          u.multiArray.some( p.outputs, isNotConstraintVar )) {
         return this;
       }
 
-      u.arraySet.addKnownDistinct(
-        this.lastConstraint.methods,
-        {inputs: p.inputs,
-         priorFlags: p.priorFlags,
-         outputs: p.outputs,
-         fn: lift ? r.liftFunction( fn, p.outputs.length, p.promiseFlags ) : fn}
-      );
+      u.arraySet.addKnownDistinct( this.lastConstraint.methods, {
+        inputs: p.inputs,
+        priorFlags: p.priorFlags,
+        outputs: p.outputs,
+        fn: lift ? r.liftFunction( fn, p.promiseFlags ) : fn
+      } );
 
       return this;
     }
@@ -288,18 +293,23 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    command( loc: string,
-             signature: string,
-             fn: Function,
-             lift = true, sync = false ): ContextBuilder {
+    command(
+      loc: string,
+      signature: string,
+      fn: Function,
+      lift = true,
+      sync = false
+    ): ContextBuilder {
+
       this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
 
-      var p = parseActivation( 'method', signature );
+      var p = parseActivation( 'command', signature );
       if (p == null) { return this; }
 
-      if (p.inputs.some( invalidPath ) || p.outputs.some( invalidPath )) {
+      if (u.multiArray.some( p.inputs, invalidPath ) ||
+          u.multiArray.some( p.outputs, invalidPath )) {
         return this;
       }
 
@@ -308,7 +318,7 @@ module hd.model {
         inputs: p.inputs,
         priorFlags: p.priorFlags,
         outputs: p.outputs,
-        fn: lift ? r.liftFunction( fn, p.outputs.length, p.promiseFlags ) : fn,
+        fn: lift ? r.liftFunction( fn, p.promiseFlags ) : fn,
         synchronous: sync
       } );
 
@@ -527,7 +537,7 @@ module hd.model {
     return {inputs: inputs,
             promiseFlags: promiseFlags.length == 0 ? null : promiseFlags,
             priorFlags: priorFlags.length == 0 ? null : priorFlags,
-            outputs: outputs
+            outputs: outputs.length == 1 ? outputs : [outputs]
            };
   }
 

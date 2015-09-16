@@ -1,5 +1,6 @@
 module hd.model {
 
+  import u = hd.utility;
   import r = hd.reactive;
 
   export
@@ -20,22 +21,22 @@ module hd.model {
     // Inputs to pass to the function, in the order they should be passed
     // Variables in this list will be replaced with their value; everything
     // else will be treated as constants to be passed to the function.
-    inputs: any[];
+    inputs: u.MultiArray<any>;
 
     // Parallel to inputs; true means input comes from prior generation
-    priorFlags: boolean[];
+    priorFlags: u.MultiArray<boolean>;
 
     // Outputs to write to, in the order they are returned form the function
-    outputs: Variable[];
+    outputs: u.MultiArray<Variable>;
 
     // Is this an external operation?  (Does it trigger an update after execution?)
     external = true;
 
     constructor( name: string,
                  fn: any,
-                 inputs: any[],
-                 priorFlags: boolean[],
-                 outputs: Variable[] ) {
+                 inputs: u.MultiArray<any>,
+                 priorFlags: u.MultiArray<boolean>,
+                 outputs: u.MultiArray<Variable> ) {
       super();
       this.id = makeId( name );
       this.name = name;
@@ -101,11 +102,14 @@ module hd.model {
 
     ready: r.Signal<boolean>;
 
-    constructor( name: string,
-                 fn: Function,
-                 inputs: any[],
-                 usePriors: boolean[],
-                 outputs: any[]        ) {
+    constructor(
+      name: string,
+      fn: Function,
+      inputs: u.MultiArray<any>,
+      usePriors: u.MultiArray<boolean>,
+      outputs: u.MultiArray<Variable>
+    ) {
+
       super( name, fn, inputs, usePriors, outputs );
       var properties: r.ProxyObservable<any>[] = [];
       for (var i = 0, l = inputs.length; i < l; ++i) {

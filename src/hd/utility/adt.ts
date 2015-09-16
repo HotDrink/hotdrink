@@ -41,11 +41,29 @@ module hd.utility {
   export
   interface MultiArray<T> extends Array<T|MultiArray<T>> { };
 
-  export module multiArray {
+  export
+  module multiArray {
 
     /*------------------------------------------------------------------
      */
-    export function map<T, U>(
+    export
+    function copy<T>( ts: MultiArray<T> ) {
+      var t2s = <MultiArray<T>>[];
+      for (var i = 0, l = ts.length; i < l; ++i) {
+        if (Array.isArray( ts[i] )) {
+          t2s.push( copy( <MultiArray<T>>ts[i] ) );
+        }
+        else {
+          t2s.push( ts[i] );
+        }
+      }
+      return t2s;
+    }
+
+    /*------------------------------------------------------------------
+     */
+    export
+    function map<T, U>(
       ts:      MultiArray<T>,
       fn:      (t: T, i: number, ts: MultiArray<T>) => U,
       thisArg: Object = null
@@ -65,15 +83,40 @@ module hd.utility {
 
     /*----------------------------------------------------------------
      */
-    export function join<T>( ts: MultiArray<T>, separator: string ) {
+    export
+    function some<T>(
+      ts:      MultiArray<T>,
+      fn:      (t: T, i: number, ts: MultiArray<T>) => boolean,
+      thisArg: Object = null
+    ):         boolean {
+
+      for (var i = 0, l = ts.length; i < l; ++i) {
+        if (Array.isArray( ts[i] )) {
+          if (some( <MultiArray<T>>ts[i], fn, thisArg )) {
+            return true;
+          }
+        }
+        else {
+          if (fn.call( thisArg, <T>ts[i], i, ts )) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    /*----------------------------------------------------------------
+     */
+    export
+    function toString<T>( ts: MultiArray<T> ) {
       var result: (T|string)[] = [];
       for (var i = 0, l = ts.length; i < l; ++i) {
         if (i > 0) {
-          result.push( separator );
+          result.push( ',' );
         }
         if (Array.isArray( ts[i] )) {
           result.push( '[' );
-          result.push( join( <MultiArray<T>>ts[i], separator ) );
+          result.push( toString( <MultiArray<T>>ts[i] ) );
           result.push( ']' );
         }
         else {
@@ -85,7 +128,8 @@ module hd.utility {
 
     /*----------------------------------------------------------------
      */
-    export function flatten<T>( from: MultiArray<T>, to: T[] ) {
+    export
+    function flatten<T>( from: MultiArray<T>, to: T[] = [] ) {
       for (var i = 0, l = from.length; i < l; ++i) {
         if (Array.isArray( from[i] )) {
           flatten( <MultiArray<T>>from[i], to );
@@ -94,7 +138,9 @@ module hd.utility {
           to.push( <T>from[i] );
         }
       }
+      return to;
     }
+
   }
 
   /*==================================================================

@@ -8,7 +8,7 @@ module hd {
   import s = hd.system;
   import b = hd.bindings;
 
-  export function arrayOf( elementType: m.ContextClass|m.ContextSpec ) {
+  export function arrayOf( elementType: u.Constructor|m.ContextSpec ) {
     return m.ArrayContext.bind( null, elementType );
   }
 

@@ -742,4 +742,50 @@ module hd.qunit {
     u.schedule( 3, start );
   } );
 
+  asyncTest( "array moving", function() {
+    expect( 36 );
+
+    var rowspec = new ContextBuilder()
+          .variables( "begin, end, length", {length: 20} )
+          .equation( "begin + length == end" )
+          .spec();
+
+    var ctx: any = new m.ContextBuilder()
+          .nested( "a", m.ArrayContext.bind( null, null, rowspec ) )
+          .constraint( "a[i].end, a[i+1].begin" )
+            .method( "a[i].end, !a[i+1].begin -> a[i+1].begin", hd.max )
+            .method( "!a[i].end, a[i+1].begin -> a[i].end", hd.min )
+          .context();
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( ctx );
+
+    ctx.a.expand( 4 );
+    pm.commitModifications();
+    ctx.a[0].begin.set( 100 );
+    pm.update();
+
+    checkVariables( ctx.a[0], {begin: 100, end: 120, length: 20}, "0.0" );
+    checkVariables( ctx.a[1], {begin: 120, end: 140, length: 20}, "0.1" );
+    checkVariables( ctx.a[2], {begin: 140, end: 160, length: 20}, "0.2" );
+    checkVariables( ctx.a[3], {begin: 160, end: 180, length: 20}, "0.3" );
+
+    ctx.a.move( 0, 2 );
+    pm.update();
+
+    checkVariables( ctx.a[0], {begin:  80, end: 100, length: 20}, "1.0" );
+    checkVariables( ctx.a[1], {begin: 100, end: 120, length: 20}, "1.1" );
+    checkVariables( ctx.a[2], {begin: 120, end: 140, length: 20}, "1.2" );
+    checkVariables( ctx.a[3], {begin: 160, end: 180, length: 20}, "1.3" );
+
+    ctx.a.move( 2, 1, 2 );
+    pm.update();
+
+    checkVariables( ctx.a[0], {begin:  60, end:  80, length: 20}, "2.0" );
+    checkVariables( ctx.a[1], {begin:  80, end: 100, length: 20}, "2.1" );
+    checkVariables( ctx.a[2], {begin: 100, end: 120, length: 20}, "2.2" );
+    checkVariables( ctx.a[3], {begin: 120, end: 140, length: 20}, "2.3" );
+
+    u.schedule( 3, start );
+  } );
 }

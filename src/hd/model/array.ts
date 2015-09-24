@@ -191,13 +191,13 @@ module hd.model {
     /*----------------------------------------------------------------
      */
     move( destination: number, source: number, count = 1 ) {
-      if (destination < this.elements.length) {
-        destination = this.elements.length;
+      if (destination > this.elements.length - 1) {
+        destination = this.elements.length - 1;
       }
       if (destination < 0) {
         destination = 0;
       }
-      if (source < this.elements.length - count) {
+      if (source > this.elements.length - count) {
         source = this.elements.length - count;
       }
       if (source < 0) {
@@ -206,22 +206,19 @@ module hd.model {
       if (count > this.elements.length) {
         count = this.elements.length;
       }
-      if (count < 0) {
-        return;
-      }
-      if (source >= destination && source < destination + count) {
+      if (count < 0 || destination == source) {
         return;
       }
 
       if (destination < source) {
         var a = destination;
         var b = source;
-        var c = source = count;
+        var c = source + count;
       }
       else {
         var a = source;
         var b = source + count;
-        var c = destination;
+        var c = destination + count;
       }
 
       var s = this.elements.slice( a, b );
@@ -230,6 +227,9 @@ module hd.model {
       Array.prototype.splice.apply( this.elements, [a, t.length].concat( t ) );
       Array.prototype.splice.apply( this.elements, [a + t.length, s.length].concat( s ) );
 
+      for (var i = a; i < c; ++i) {
+        this.changes.sendNext( i );
+      }
       this.scheduleNext();
     }
 

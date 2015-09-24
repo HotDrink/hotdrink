@@ -50,53 +50,37 @@
         return (hours - 8)*60 + minutes;
       }
 
-      hd.config.forwardPriorGens = true;
-
       var EventSpec = new hd.ContextBuilder()
-          .variables( "title, begin, begin1, end, end1, length", {length: 10} )
-          .touchDep( "begin => begin1" )
-          .touchDep( "end => end1" )
-          .constraint( "begin, begin1, end, end1, length" )
-          .method( "end, !begin -> length, begin",
-                   function( end, begin ) {
-                     if (end - 10 >= begin) {
-                       return [end - begin, begin];
-                     }
-                     else {
-                       return [10, end - 10]
-                     }
-                   } )
-          .method( "!end, begin -> length, end",
-                   function( end, begin ) {
-                     if (end >= begin + 10) {
-                       return [end - begin, end];
-                     }
-                     else {
-                       return [10, begin + 10];
-                     }
-                   } )
-          .method( "end, length -> begin, begin1",
-                   function( end, length ) {
-                     return [end - length, 0];
-                   } )
-          .method( "begin, length -> end, end1",
-                   function( begin, length ) {
-                     return [begin + length, 0]
-                   } )
+          .variables( "title, begin, end, length", {length: 10} )
+          .variables( {tooEarly: false, tooLate: false} )
+          .constraint( "begin, end, length" )
+            .method( "begin, length -> end", hd.sum )
+            .method( "end, length -> begin", hd.diff )
+          .constraint( "tooEarly" )
+            .optional( true )
+            .method( "-> tooEarly", function() {
+              return false;
+            } )
+          .constraint( "tooLate" )
+            .optional( true )
+            .method( "-> tooLate", function() {
+              return false;
+            } )
           .spec();
-
 
       var schedule = new hd.ContextBuilder()
           .nested( "events", hd.ArrayContext.bind( null, null, EventSpec ) )
-          .constraint( "events[i].end, events[i+1].begin" )
-            .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
-            .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
-          .constant( 'remove', function( i ) {
-            if (i < this.events.length) {
-              this.events.collapse( 1, i );
-              pm.update();
-            }
-          } )
+          .constraint( "events[i].end, events[i].tooLate, events[i+1].begin, events[i+1].tooEarly" )
+            .method( "events[i].end, events[i+1].begin -> events[i].tooLate, events[i+1].tooEarly",
+              function( end, begin ) {
+                if (end > begin) {
+                  return [true, true];
+                }
+                else {
+                  return [false, false];
+                }
+              }
+            )
           .context();
 
       schedule.events.expand( [{title: "Do something", begin: 0, length: 30},
@@ -107,8 +91,18 @@
       pm.addComponent( schedule );
       pm.update();
 
+      function removeEvent( i ) {
+        if (i < schedule.events.length) {
+          schedule.events.collapse( 1, i );
+          pm.update();
+        }
+      }
+
       function addEvent() {
+        var l = schedule.events.length;
         schedule.events.expand( 1 );
+        pm.commitModifications();
+        schedule.events[l].begin.set( schedule.events[l-1].end.getCurrentPromise() );
         pm.update();
       }
 
@@ -118,11 +112,11 @@
 
       var draggingTr;
       var mouseBinding;
-
       function startDragging( tr ) {
         stopDragging();
-        tr.classList.add( 'selected' );
+        document.getElementById( 'schedule' ).classList.add( 'dragging' );
         tr.style.position = 'absolute';
+        tr.classList.add( 'selected' );
         mouseBinding = {
           view: hd.bindings.getMousePosition(),
           model: new hd.bindings.Position( tr ),
@@ -133,9 +127,10 @@
 
       function stopDragging() {
         if (mouseBinding) {
+          document.getElementById( 'schedule' ).classList.remove( 'dragging' );
           hd.unbind( mouseBinding );
-          draggingTr.classList.remove( 'selected' );
           draggingTr.style.removeProperty( 'position' );
+          draggingTr.classList.remove( 'selected' );
           mouseBinding = undefined;
           draggingTr = undefined;
         }
@@ -193,19 +188,21 @@
           </td>
           <td>
             <input type="text" class="num"
-                   data-bind="hd.editVar( e.begin, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+                   data-bind="hd.edit( e.begin, hd.fn( toTime ), hd.fn( fromTime ) ),
+                              hd.cssClass( hd.or( e.begin.error, e.tooEarly ), 'error' )"/>
           </td>
           <td>
             <input type="text" class="num"
-                   data-bind="hd.editVar( e.end, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+                   data-bind="hd.edit( e.end, hd.fn( toTime ), hd.fn( fromTime ) ),
+                              hd.cssClass( hd.or( e.end.error, e.tooLate ), 'error' )"/>
           </td>
           <td>
             <input type="text" class="num" data-bind="hd.numVar( e.length, 0 )"/><small style="margin-left: 0.2ex">min</small>
           </td>
           <td>
-            <span data-bind="hd.when( events.$length, hd.fn( gt1 ) )"</span>
+            <span data-bind="hd.when( events.$length, hd.fn( gt1 ) )">
             [<a class="control" href="#" onclick="return false;"
-                data-bind="hd.clicked( hd.fn( this, remove, idx ) )">X</a>]
+                data-bind="hd.clicked( hd.fn( removeEvent, idx ) )">X</a>]</span>
           </td>
         </tr>
       </tbody>
@@ -214,7 +211,7 @@
           <td></td>
           <td colspan="4">
             <input type="button" value="Add Event"
-                   data-bind="hd.clicked( hd.fn( addEvent ) )"/>
+                   onclick="addEvent()"/>
           </td>
           <td></td>
         </tr>

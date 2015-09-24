@@ -275,7 +275,12 @@ module hd.system {
           var mid = this.sgraph.selectedForConstraint( cc.id );
           this.sgraph.outputsForMethod( mid ).forEach( function( vid: string ) {
             if (this.variables[vid]) {
-              this.needEnforcing[g.stayConstraint( vid )] = true;
+              var cids = this.cgraph.constraintsWhichOutput( vid );
+              for (var i = 0, l = cids.length; i < l; ++i) {
+                if (! this.sgraph.selectedForConstraint( cids[i] )) {
+                  this.needEnforcing[cids[i]] = true;
+                }
+              }
             }
           }, this );
         }
@@ -608,7 +613,7 @@ module hd.system {
     update() {
       if (this.isUpdateNeeded) {
         this.isUpdateNeeded = false;
-        this.updateModel();
+        this.commitModifications();
         this.plan();
         this.evaluate();
         if (this.pendingCount == 0) {
@@ -619,8 +624,7 @@ module hd.system {
 
     /*----------------------------------------------------------------
      */
-    private
-    updateModel() {
+    commitModifications() {
       while (this.needUpdating.length > 0) {
         var ctx = this.needUpdating.shift();
         var changes = m.Context.update( ctx );

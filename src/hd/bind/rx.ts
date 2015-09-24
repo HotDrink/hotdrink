@@ -180,4 +180,9 @@ module hd.bindings {
   function pointToString() {
     return new r.PointToString();
   }
+
+  export
+  function or( ...observables: r.Observable<any>[] ) {
+    return new r.Or( observables );
+  }
 }

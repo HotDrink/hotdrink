@@ -240,7 +240,7 @@ module hd.model {
       var isNotConstraintVar = function( name: string ) {
         if (constraintVars.indexOf( name ) < 0) {
           console.error( "Variable " + name +
-                         "does not belong to constraint in method " + signature );
+                         " does not belong to constraint in method " + signature );
           return true;
         }
         else { return false; }

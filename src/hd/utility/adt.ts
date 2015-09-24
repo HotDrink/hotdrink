@@ -18,6 +18,14 @@ module hd.utility {
     y: number;
   }
 
+  export
+  module point {
+    export
+    function difference( a: Point, b: Point ): Point {
+      return {x: a.x - b.x, y: a.y - b.y};
+    }
+  }
+
   /*==================================================================
    * An object whose sole purpose is to store string/value pairs.
    */

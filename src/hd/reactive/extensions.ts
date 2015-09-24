@@ -765,4 +765,52 @@ module hd.reactive {
       this.sendNext( '(' + value.x + ', ' + value.y + ')' );
     }
   }
+
+  /*==================================================================
+   */
+  export
+  class Or extends BasicObservable<boolean> {
+    values: any[] = [];
+    mine: any;
+    completed = 0;
+
+    constructor( observables: Observable<any>[] ) {
+      super();
+      for (var i = 0, l = observables.length; i < l; ++i) {
+        observables[i].addObserver(
+          new ProxyObserver( this, this.onNext, this.onError, this.onCompleted, i )
+        );
+      }
+    }
+
+    onNext( value: any, i: number ) {
+      this.values[i] = value;
+      this.update();
+    }
+
+    onError( value: any, i: number ) {
+      this.values[i] = undefined;
+      this.update();
+    }
+
+    onCompleted() {
+      ++this.completed;
+      if (this.completed == this.values.length) {
+        this.sendCompleted();
+      }
+    }
+
+    update() {
+      var x = this.values[0];
+      for (var i = 1, l = this.values.length; !x && i < l; ++i) {
+        if (this.values[i]) {
+          x = this.values[i];
+        }
+      }
+      if (x !== this.mine) {
+        this.mine = x;
+        this.sendNext( x );
+      }
+    }
+  }
 }

@@ -96,6 +96,7 @@ module hd {
   export var msg = b.msg;
   export var offset = b.offset;
   export var path = b.path;
+  export var or = b.or;
   export var pointToString = b.pointToString;
   export var prec = b.prec;
   export var rw = b.rw;

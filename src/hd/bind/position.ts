@@ -9,7 +9,6 @@ module hd.bindings {
 
     constructor( el: HTMLElement ) {
       this.el = checkHtml( el, HTMLElement );
-      el.style.position = 'absolute';
     }
 
     onNext( p: u.Point ) {

@@ -462,7 +462,7 @@ module hd.model {
         legs.push( m[1] );
       }
       else if (m = cindex.exec( s )) {
-        legs.push( {scale: 0, index: 0, offset: Number( m[1] )} );
+        legs.push( new IndexPattern( 0, Number( m[1] ) ) );
       }
       else if (m = vindex.exec( s )) {
         if (m[2] == indexName) {

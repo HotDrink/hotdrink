@@ -142,7 +142,7 @@ module hd.system {
         this.removeVariable( el );
       }
       else if (el instanceof m.Context) {
-        this.removeComponents( el );
+        this.removeComponent( el );
       }
       else if (el instanceof m.Constraint) {
         this.removeConstraint( el );
@@ -170,7 +170,7 @@ module hd.system {
 
     //--------------------------------------------
     // Remove context
-    removeComponents( context: m.Context ) {
+    removeComponent( context: m.Context ) {
       m.Context.elements( context ).forEach( this.remove, this );
       m.Context.changes( context ).removeObserver( this );
       this.removeContextRecords( context );

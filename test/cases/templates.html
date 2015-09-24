@@ -4,21 +4,6 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
     {
-
-      function atmost( x, y ) {
-        if (x === undefined || x > y) {
-          return y;
-        }
-        return x;
-      }
-
-      function atleast( x, y ) {
-        if (x === undefined || x < y) {
-          return y;
-        }
-        return x;
-      }
-
       function positive( x ) {
         if (x <= 0) {
           throw "Must be positive number";
@@ -31,19 +16,15 @@
             .variables( 'begin, end, length', {length: 10} )
             .references( 'next' )
             .constraint( 'begin, length, end' )
-              .method( 'begin, length -> end', function( b, l ) {
-                return b + l;
-              } )
-              .method( 'end, length -> begin', function( e, l ) {
-                return e - l;
-              } )
+              .method( 'begin, length -> end', hd.sum )
+              .method( 'end, length -> begin', hd.diff )
             .constraint( 'end, next.begin' )
-              .method( '!end, next.begin -> end', atmost )
-              .method( '!next.begin, end -> next.begin', atleast )
+              .method( '!end, next.begin -> end', hd.min )
+              .method( '!next.begin, end -> next.begin', hd.max )
             .spec();
 
-      function Item() {
-        hd.Context.construct( this, ItemSpec );
+      function Item( b ) {
+        hd.Context.construct( this, ItemSpec, {begin: b} );
       }
 
       Item.prototype = Object.create( hd.Context.prototype );
@@ -63,10 +44,7 @@
       var head;
       var tail;
       function addItem( init ) {
-        var item = new Item();
-        if (init !== undefined) {
-          item.begin.onNext( init );
-        }
+        var item = new Item( init );
         pm.addComponent( item );
         if (! head) {
           head = item;

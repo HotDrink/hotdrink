@@ -52,7 +52,7 @@ module hd.bindings {
       if (el) {
         var boundUpdate = this.update.bind( this );
         el.addEventListener( 'input', boundUpdate );
-        el.addEventListener( 'change', boundUpdate );
+        // el.addEventListener( 'change', boundUpdate );
       }
     }
 

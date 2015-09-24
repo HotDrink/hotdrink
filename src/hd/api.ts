@@ -95,7 +95,7 @@ module hd {
   export var millisecondsToDate = b.millisecondsToDate;
   export var msg = b.msg;
   export var offset = b.offset;
-  // export var path = b.path;
+  export var path = b.path;
   export var pointToString = b.pointToString;
   export var prec = b.prec;
   export var rw = b.rw;

@@ -190,6 +190,51 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
+    move( destination: number, source: number, count = 1 ) {
+      if (destination < this.elements.length) {
+        destination = this.elements.length;
+      }
+      if (destination < 0) {
+        destination = 0;
+      }
+      if (source < this.elements.length - count) {
+        source = this.elements.length - count;
+      }
+      if (source < 0) {
+        source = 0;
+      }
+      if (count > this.elements.length) {
+        count = this.elements.length;
+      }
+      if (count < 0) {
+        return;
+      }
+      if (source >= destination && source < destination + count) {
+        return;
+      }
+
+      if (destination < source) {
+        var a = destination;
+        var b = source;
+        var c = source = count;
+      }
+      else {
+        var a = source;
+        var b = source + count;
+        var c = destination;
+      }
+
+      var s = this.elements.slice( a, b );
+      var t = this.elements.slice( b, c );
+
+      Array.prototype.splice.apply( this.elements, [a, t.length].concat( t ) );
+      Array.prototype.splice.apply( this.elements, [a + t.length, s.length].concat( s ) );
+
+      this.scheduleNext();
+    }
+
+    /*----------------------------------------------------------------
+     */
     addObserver( observer: r.Observer<ArrayContext> ) {
       if (this.observers) {
         this.observers.push( observer );

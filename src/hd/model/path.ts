@@ -493,4 +493,19 @@ module hd.model {
     return legs;
   }
 
+  /*==================================================================
+   */
+  export
+  class PathValue extends r.BasicSignal<any> {
+
+    constructor( private path: Path ) {
+      super();
+      path.addObserver( this, this.onPositionChange, null, null );
+      this.set( path.get( null ) );
+    }
+
+    onPositionChange() {
+      this.set( this.path.get( null ) );
+    }
+  }
 }

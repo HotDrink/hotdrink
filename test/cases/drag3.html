@@ -33,7 +33,7 @@
           .context();
 
         pm = new hd.PropertyModel();
-        pm.addComponents( ctx );
+        pm.addComponent( ctx );
         hd.performDeclaredBindings( ctx );
         hd.bind( {view: hd.mousePosition(), model: hd.path( ctx, 'drag' )} );
 

@@ -1242,8 +1242,8 @@ module hd.model {
       var tmpl = new CommandTemplate( spec, hd_data );
       hd_data.addTemplate( tmpl );
 
-      if (spec.loc) {
-        ctx[spec.loc] = tmpl;
+      if (spec.loc && tmpl.isConstant()) {
+        ctx[spec.loc] = tmpl.instances[0].element;
       }
     }
 

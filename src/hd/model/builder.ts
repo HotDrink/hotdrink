@@ -265,9 +265,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Change optional policy on last constraint or variable.
      */
-    optional( enforce: boolean ) {
-      var opt = enforce ? Optional.Max : Optional.Min;
-
+    optional( opt: Optional = Optional.Max ) {
       if (this.lastConstraint) {
         this.lastConstraint.optional = opt;
       }

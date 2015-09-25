@@ -38,8 +38,7 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    constructor( private klass?: ContextClass,
-                 private spec?: ContextSpec    ) {
+    constructor( private elementType?: ContextClass|ContextSpec    ) {
       super();
     }
 
@@ -141,9 +140,16 @@ module hd.model {
         }
 
         // Initialize new spaces
-        if (this.klass || this.spec) {
-          var klass = this.klass || Context;
-          var spec = this.spec;
+        if (this.elementType) {
+          var klass: ContextClass;
+          var spec: ContextSpec;
+          if ((typeof this.elementType) == 'function') {
+            klass = <ContextClass>this.elementType;
+          }
+          else {
+            klass = Context;
+            spec = <ContextSpec>this.elementType;
+          }
           for (var i = 0, l = count; i < l; ++i) {
             var ctx = new klass();
             if (spec) {

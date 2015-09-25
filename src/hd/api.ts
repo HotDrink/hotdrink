@@ -8,6 +8,12 @@ module hd {
   import s = hd.system;
   import b = hd.bindings;
 
+  export function arrayOf( elementType: m.ContextClass|m.ContextSpec ) {
+    return m.ArrayContext.bind( null, elementType );
+  }
+
+  export var array = m.ArrayContext;
+
   /*==================================================================
    * Enablement functions
    */
@@ -45,6 +51,8 @@ module hd {
 
   export var Context = m.Context;
   export var ArrayContext = m.ArrayContext;
+  export var MaxOptional = m.Optional.Max;
+  export var MinOptional = m.Optional.Min;
 
   // RunTime
   export var PropertyModel = s.PropertyModel;

@@ -4,6 +4,10 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
     {
+      /*--------------------------------------------------------------
+       * Helper functions
+       */
+
       function plus1( n ) {
         return n + 1;
       }
@@ -18,10 +22,8 @@
           sign = -1;
           n = -n;
         }
-
         var hours = Math.floor( n / 60 );
         var minutes = Math.floor( n % 60 );
-
         if (sign < 0) {
           hours = -hours;
           if (minutes > 0) {
@@ -29,9 +31,7 @@
             minutes = 60 - minutes;
           }
         }
-
         hours += 8;
-
         return hours + ':' + (minutes < 10 ? '0' + minutes : minutes);
       }
 
@@ -40,23 +40,26 @@
         if (!m) {
           throw "Invalid time";
         }
-
         var hours = Number( m[1] );
         var minutes = Number( m[2] || 0 );
         if (minutes > 60) {
           throw "Invalid minutes";
         }
-
         return (hours - 8)*60 + minutes;
       }
 
+      /*----------------------------------------------------------------
+       * Property model
+       */
+
       hd.config.forwardPriorGens = true;
 
+      // Spec for each row
       var EventSpec = new hd.ContextBuilder()
-          .variables( "title, begin, begin1, end, end1, length", {length: 10} )
-          .touchDep( "begin => begin1" )
-          .touchDep( "end => end1" )
-          .constraint( "begin, begin1, end, end1, length" )
+          .variables( "title, begin, begin2, end, end2, length", {length: 10} )
+          .touchDep( "begin => begin2" )
+          .touchDep( "end => end2" )
+          .constraint( "begin, begin2, end, end2, length" )
           .method( "end, !begin -> length, begin",
                    function( end, begin ) {
                      if (end - 10 >= begin) {
@@ -75,46 +78,57 @@
                        return [10, begin + 10];
                      }
                    } )
-          .method( "end, length -> begin, begin1",
+          .method( "end, length -> begin, begin2",
                    function( end, length ) {
                      return [end - length, 0];
                    } )
-          .method( "begin, length -> end, end1",
+          .method( "begin, length -> end, end2",
                    function( begin, length ) {
                      return [begin + length, 0]
                    } )
           .spec();
 
-
-      var schedule = new hd.ContextBuilder()
-          .nested( "events", hd.ArrayContext.bind( null, null, EventSpec ) )
+      // Root component
+      var ScheduleSpec = new hd.ContextBuilder()
+          .nested( "events", hd.arrayOf( EventSpec ) )
           .constraint( "events[i].end, events[i+1].begin" )
             .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
             .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
-          .constant( 'remove', function( i ) {
-            if (i < this.events.length) {
-              this.events.collapse( 1, i );
-              pm.update();
-            }
-          } )
-          .context();
+          .spec();
 
-      schedule.events.expand( [{title: "Do something", begin: 0, length: 30},
-                               {title: "Do something else", begin: 40, length: 60},
-                               {title: "Do nothing", begin: 60, length: 90}] );
+      var schedule = new hd.Context( ScheduleSpec );
+      schedule.events.expand( [{title: "Registration", begin: 0, length: 30},
+                               {title: "Keynote", length: 60},
+                               {title: "Break", length: 15},
+                               {title: "Session I", length: 90}] );
 
+      // Property model
       pm = new hd.PropertyModel();
       pm.addComponent( schedule );
       pm.update();
 
+      // Modification
       function addEvent() {
         schedule.events.expand( 1 );
         pm.update();
       }
 
+      // Modification
+      function removeEvent( i ) {
+        if (i < schedule.events.length) {
+          schedule.events.collapse( 1, i );
+          pm.update();
+        }
+      }
+
+      // Binding
       window.addEventListener( "load", function() {
         hd.performDeclaredBindings( schedule );
       } )
+
+      /*--------------------------------------------------------------
+       * Drag and drop rows
+       */
 
       var draggingTr;
       var mouseBinding;
@@ -168,7 +182,7 @@
       td:first-child { padding-right: 1em; cursor: default }
       td:last-child { padding-left: 1em; font-size: 70%; vertical-align: middle }
       tr { background-color: white }
-      tr.selected { pointer-events: none }
+      tr.selected { pointer-events: none; outline: 1px solid #abc }
     </style>
   </head>
   <body>
@@ -182,6 +196,7 @@
           <th>Duration</th>
         </tr>
       </thead>
+
       <tbody data-bind="hd.forEach( 'e', events, 'idx' )">
         <tr onmouseup="insertDraggingBefore( this )">
           <td onmousedown="startDragging(this.parentElement); return false">
@@ -205,10 +220,11 @@
           <td>
             <span data-bind="hd.when( events.$length, hd.fn( gt1 ) )"</span>
             [<a class="control" href="#" onclick="return false;"
-                data-bind="hd.clicked( hd.fn( this, remove, idx ) )">X</a>]
+                data-bind="hd.clicked( hd.fn( this, removeEvent, idx ) )">X</a>]
           </td>
         </tr>
       </tbody>
+
       <tfoot>
         <tr onmouseup="insertDraggingAtEnd()">
           <td></td>

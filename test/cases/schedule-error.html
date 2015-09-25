@@ -4,6 +4,10 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
     {
+      /*--------------------------------------------------------------
+       * Helper functions
+       */
+
       function plus1( n ) {
         return n + 1;
       }
@@ -18,10 +22,8 @@
           sign = -1;
           n = -n;
         }
-
         var hours = Math.floor( n / 60 );
         var minutes = Math.floor( n % 60 );
-
         if (sign < 0) {
           hours = -hours;
           if (minutes > 0) {
@@ -29,9 +31,7 @@
             minutes = 60 - minutes;
           }
         }
-
         hours += 8;
-
         return hours + ':' + (minutes < 10 ? '0' + minutes : minutes);
       }
 
@@ -40,16 +40,19 @@
         if (!m) {
           throw "Invalid time";
         }
-
         var hours = Number( m[1] );
         var minutes = Number( m[2] || 0 );
         if (minutes > 60) {
           throw "Invalid minutes";
         }
-
         return (hours - 8)*60 + minutes;
       }
 
+      /*----------------------------------------------------------------
+       * Property model
+       */
+
+      // Spec for each row
       var EventSpec = new hd.ContextBuilder()
           .variables( "title, begin, end, length", {length: 10} )
           .variables( {tooEarly: false, tooLate: false} )
@@ -57,21 +60,22 @@
             .method( "begin, length -> end", hd.sum )
             .method( "end, length -> begin", hd.diff )
           .constraint( "tooEarly" )
-            .optional( true )
+            .optional()
             .method( "-> tooEarly", function() {
               return false;
             } )
           .constraint( "tooLate" )
-            .optional( true )
+            .optional()
             .method( "-> tooLate", function() {
               return false;
             } )
           .spec();
 
-      var schedule = new hd.ContextBuilder()
-          .nested( "events", hd.ArrayContext.bind( null, null, EventSpec ) )
+      // Root component
+      var ScheduleSpec = new hd.ContextBuilder()
+          .nested( "events", hd.arrayOf( EventSpec ) )
           .constraint( "events[i].end, events[i].tooLate, events[i+1].begin, events[i+1].tooEarly" )
-            .method( "events[i].end, events[i+1].begin -> events[i].tooLate, events[i+1].tooEarly",
+          .method( "events[i].end, events[i+1].begin -> events[i].tooLate, events[i+1].tooEarly",
               function( end, begin ) {
                 if (end > begin) {
                   return [true, true];
@@ -81,23 +85,20 @@
                 }
               }
             )
-          .context();
+          .spec();
 
-      schedule.events.expand( [{title: "Do something", begin: 0, length: 30},
-                               {title: "Do something else", begin: 40, length: 60},
-                               {title: "Do nothing", begin: 60, length: 90}] );
+      var schedule = new hd.Context( ScheduleSpec );
+      schedule.events.expand( [{title: "Registration", begin: 0, length: 30},
+                               {title: "Keynote", begin: 45, length: 60},
+                               {title: "Break", begin: 90, length: 15},
+                               {title: "Session I", begin: 180, length: 90}] );
 
+      // Property Model
       pm = new hd.PropertyModel();
       pm.addComponent( schedule );
       pm.update();
 
-      function removeEvent( i ) {
-        if (i < schedule.events.length) {
-          schedule.events.collapse( 1, i );
-          pm.update();
-        }
-      }
-
+      // Modification
       function addEvent() {
         var l = schedule.events.length;
         schedule.events.expand( 1 );
@@ -106,12 +107,26 @@
         pm.update();
       }
 
+      // Modification
+      function removeEvent( i ) {
+        if (i < schedule.events.length) {
+          schedule.events.collapse( 1, i );
+          pm.update();
+        }
+      }
+
+      // Binding
       window.addEventListener( "load", function() {
         hd.performDeclaredBindings( schedule );
       } )
 
+      /*--------------------------------------------------------------
+       * Drag and drop rows
+       */
+
       var draggingTr;
       var mouseBinding;
+
       function startDragging( tr ) {
         stopDragging();
         document.getElementById( 'schedule' ).classList.add( 'dragging' );
@@ -163,7 +178,7 @@
       td:first-child { padding-right: 1em; cursor: default }
       td:last-child { padding-left: 1em; font-size: 70%; vertical-align: middle }
       tr { background-color: white }
-      tr.selected { pointer-events: none }
+      tr.selected { pointer-events: none; outline: 1px solid #abc }
     </style>
   </head>
   <body>
@@ -177,6 +192,7 @@
           <th>Duration</th>
         </tr>
       </thead>
+
       <tbody data-bind="hd.forEach( 'e', events, 'idx' )">
         <tr onmouseup="insertDraggingBefore( this )">
           <td onmousedown="startDragging(this.parentElement); return false">
@@ -206,6 +222,7 @@
           </td>
         </tr>
       </tbody>
+
       <tfoot>
         <tr onmouseup="insertDraggingAtEnd()">
           <td></td>

@@ -109,9 +109,9 @@ module hd.qunit {
     var ctx: any = new m.ContextBuilder()
           .variables( "a, b, c, d", {a: 1, b: 2} )
           .variables( "l, m, n, o", {l: 3, m: 4} )
-          .optional( true )
+          .optional( hd.MaxOptional )
           .variables( "w, x, y, z", {w: 5, x: 6} )
-          .optional( false )
+          .optional( hd.MinOptional )
           .context( {b: 7, c: 8, m: 9, n: 10, x: 11, y: 12} );
 
     var pm = new hd.PropertyModel();
@@ -456,8 +456,8 @@ module hd.qunit {
           .spec();
 
     var ctx: any = new m.ContextBuilder()
-          .nested( "a", m.ArrayContext.bind( null, null, rowspec ) )
-          .nested( "b", m.ArrayContext.bind( null, m.Variable ) )
+          .nested( "a", hd.arrayOf( rowspec ) )
+          .nested( "b", hd.arrayOf( <any>m.Variable ) )
           .constraint( "a[i].begin, a[i].end, b[i]" )
             .method( "a[i].end, a[i].begin -> b[i]", diff )
             .method( "a[i].end, b[i] -> a[i].begin", diff )
@@ -496,7 +496,7 @@ module hd.qunit {
           .spec();
 
     var schedule: any = new hd.ContextBuilder()
-          .nested( "events", hd.ArrayContext.bind( null, null, EventSpec ) )
+          .nested( "events", hd.arrayOf( EventSpec ) )
           .constraint( "events[i].end, events[i+1].begin" )
           .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
           .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
@@ -747,11 +747,13 @@ module hd.qunit {
 
     var rowspec = new ContextBuilder()
           .variables( "begin, end, length", {length: 20} )
-          .equation( "begin + length == end" )
+          .constraint( "begin, length, end" )
+          .method( "begin, length -> end", hd.sum )
+          .method( "end, length -> begin", hd.diff )
           .spec();
 
     var ctx: any = new m.ContextBuilder()
-          .nested( "a", m.ArrayContext.bind( null, null, rowspec ) )
+          .nested( "a", hd.arrayOf( rowspec ) )
           .constraint( "a[i].end, a[i+1].begin" )
             .method( "a[i].end, !a[i+1].begin -> a[i+1].begin", hd.max )
             .method( "!a[i].end, a[i+1].begin -> a[i].end", hd.min )

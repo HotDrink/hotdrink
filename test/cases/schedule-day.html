@@ -194,7 +194,7 @@
           <td>
             <span data-bind="hd.when( events.$length, hd.fn( gt1 ) )"</span>
             [<a class="control" href="#" onclick="return false;"
-                data-bind="hd.clicked( hd.fn( removeEvent, idx ) )">X</a>]
+                data-bind="hd.click( hd.fn( removeEvent, idx ) )">X</a>]
           </td>
         </tr>
       </tbody>
@@ -204,7 +204,7 @@
           <td></td>
           <td colspan="4">
             <input type="button" value="Add Event"
-                   data-bind="hd.clicked( hd.fn( addEvent ) )"/>
+                   data-bind="hd.click( hd.fn( addEvent ) )"/>
           </td>
           <td></td>
         </tr>

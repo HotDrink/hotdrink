@@ -1,0 +1,115 @@
+<html>
+  <head>
+    <title>HotDrink Test Case</title>
+    <style type="text/css">
+      .puck {
+        position: absolute;
+        width: 60px; height: 60px;
+        line-height: 60px;
+        text-align: center; vertical-align: middle;
+        cursor: default;
+        user-select: none; -moz-user-select: none; -webkit-user-select: none; -ms-user-select: none;
+      }
+    </style>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+    {
+      var pm, context;
+
+      function init() {
+
+        var BallSpec = new hd.ContextBuilder()
+            .vs( "txt, pos" )
+            .spec();
+
+        context = new hd.ContextBuilder()
+            .n( 'balls', hd.arrayOf( BallSpec ) )
+            .r( 'drag' )
+
+            .c( 'balls[i].pos, balls[i+1].pos' )
+            .m( 'balls[i].pos, !balls[i+1].pos -> balls[i+1].pos', pull )
+            .m( 'balls[i+1].pos, !balls[i].pos -> balls[i].pos', pull )
+
+            .context();
+
+        context.balls.expand( [{txt: 1, pos: {x: 60, y: 60}},
+                               {txt: 2, pos: {x: 60, y: 60}},
+                               {txt: 3, pos: {x: 60, y: 60}}] )
+
+        pm = new hd.PropertyModel();
+        pm.addComponent( context );
+        hd.performDeclaredBindings( context );
+        hd.bind( {view: hd.mousePosition(), model: hd.path( context, 'drag.pos' )} );
+
+        function resolve( p, v ) {
+          var x = Math.random() * 6;
+          if (x < 1) {
+            p.resolve( v );
+          }
+          else if (x < 3) {
+            setTimeout( p.resolve.bind( p, v ), 20 );
+          }
+          else if (x < 5) {
+            setTimeout( p.resolve.bind( p, v ), 50 );
+          }
+          else {
+            setTimeout( p.resolve.bind( p, v ), 100 );
+          }
+        }
+
+        function pull( pa, pb ) {
+          var dx = pb.x - pa.x;
+          var dy = pb.y - pa.y;
+          var distance = Math.sqrt( dx*dx + dy*dy );
+          var qb = new hd.Promise();
+          if (distance > 60) {
+            dx = (dx / distance) * 60;
+            dy = (dy / distance) * 60;
+            resolve( qb, {x: pa.x + dx, y: pa.y + dy} );
+          }
+          else {
+            resolve( qb, pb );
+          }
+          return qb;
+        }
+
+        (function() {
+          var canvas = document.createElement( 'canvas' );
+          var ctx = canvas.getContext( '2d' );
+          ctx.fillStyle = '#eef'
+          ctx.strokeStyle = '#00f'
+          ctx.beginPath();
+          ctx.arc( 30, 30, 29, 0, 6.3 );
+          ctx.stroke();
+          ctx.fill();
+          document.styleSheets[0].insertRule( ".puck { background: url(" + canvas.toDataURL() + ") }", 0 );
+        })();
+
+      }
+
+      function addPoint( i ) {
+        p = context.balls[i].pos.get();
+        context.balls.expand( [{txt: context.balls.length + 1,
+                                pos: context.balls[i].pos.get()}], i + 1 );
+      }
+
+      function startDragging( p ) {
+        context.drag = p;
+      }
+
+      function stopDragging( p ) {
+        if (context.drag === p) {
+          context.drag = null;
+        }
+      }
+    }
+    </script>
+  </head>
+  <body onload="init()" data-bind="hd.forEach( 'p', balls, 'idx' )">
+    <div class="puck"
+         data-bind="hd.text( p.txt ), hd.position( p.pos, hd.offset( -30, -30 ) ),
+                    hd.mousedown( hd.fn( startDragging, p ) ),
+                    hd.mouseup( hd.fn( stopDragging, p ) ),
+                    hd.dblclick( hd.fn( addPoint, idx ) )"><div>
+  </body>
+</html>

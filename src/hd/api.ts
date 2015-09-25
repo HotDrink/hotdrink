@@ -49,6 +49,9 @@ module hd {
   export var isObserver = b.isObserver;
   export var isExtension = b.isExtension;
 
+  export var Variable = m.Variable;
+  export var Constraint = m.Constraint;
+  export var Method = m.Method;
   export var Context = m.Context;
   export var ArrayContext = m.ArrayContext;
   export var MaxOptional = m.Optional.Max;
@@ -60,10 +63,13 @@ module hd {
 
   // Bindings
   export var Checked = b.Checked;
-  export var Clicked = b.Clicked;
+  export var Click = b.Click;
   export var CssClass = b.CssClass;
+  export var DblClick = b.DblClick;
   export var Edit = b.Edit;
   export var Enabled = b.Enabled;
+  export var MouseDown = b.MouseDown;
+  export var MouseUp = b.MouseUp;
   export var MousePosition = b.MousePosition;
   export var Position = b.Position;
   export var Text = b.Text;
@@ -72,14 +78,17 @@ module hd {
 
   // Factories
   export var checked = b.checked;
-  export var clicked = b.clicked;
+  export var click = b.click;
   export var cssClass = b.cssClass;
+  export var dblclick = b.dblclick;
   export var edit = b.edit;
   export var editVar = b.editVar;
   export var date = b.date;
   export var dateVar = b.dateVar;
   export var enabled = b.enabled;
   export var forEach = b.forEach;
+  export var mousedown = b.mousedown;
+  export var mouseup = b.mouseup;
   export var mousePosition = b.getMousePosition;
   export var num = b.num;
   export var numVar = b.numVar;

@@ -192,9 +192,39 @@ module hd.bindings {
                     }
 
   export
-  function clicked( target: Target,
-                    toModel?: r.Extension<any, any> ) {
-    return {mkview: Clicked.bind( null, true ),
+  function mousedown( target: Target,
+                      toModel?: r.Extension<any, any> ) {
+    return {mkview: MouseDown,
+            model: target,
+            dir: Direction.v2m,
+            toModel: toModel
+           };
+  }
+
+  export
+  function mouseup( target: Target,
+                      toModel?: r.Extension<any, any> ) {
+    return {mkview: MouseUp,
+            model: target,
+            dir: Direction.v2m,
+            toModel: toModel
+           };
+  }
+
+  export
+  function click( target: Target,
+                  toModel?: r.Extension<any, any> ) {
+    return {mkview: Click,
+            model: target,
+            dir: Direction.v2m,
+            toModel: toModel
+           };
+  }
+
+  export
+  function dblclick( target: Target,
+                     toModel?: r.Extension<any, any> ) {
+    return {mkview: DblClick,
             model: target,
             dir: Direction.v2m,
             toModel: toModel

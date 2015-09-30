@@ -6,27 +6,12 @@ module hd.qunit {
 
   import u = hd.utility;
   import r = hd.reactive;
+  import g = hd.graph;
   import m = hd.model;
   import s = hd.system;
 
-  function id<T>( x: T ): T {
-    return x;
-  }
-
-  function sum() {
-    var s = arguments[0];
-    for (var i = 1, l = arguments.length; i < l; ++i) {
-      s+= arguments[i];
-    }
-    return s;
-  }
-
-  function diff() {
-    var s = arguments[0];
-    for (var i = 1, l = arguments.length; i < l; ++i) {
-      s-= arguments[i];
-    }
-    return s;
+  function plus1( x: number ): number {
+    return x + 1;
   }
 
   function checkVariable( vv: m.Variable, value: number, text: string ) {
@@ -58,6 +43,127 @@ module hd.qunit {
     return q;
   }
 
+  function differences( a: string[], b: string[] ) {
+    var diff = {add: 0, drop: 0};
+    var i = 0, j = 0, l = a.length, m = b.length;
+    while (i < l && j < m) {
+      var cmp = a[i].localeCompare( b[j] )
+      if (cmp < 0) {
+        ++diff.drop;
+        ++i;
+      }
+      else if (cmp > 0) {
+        ++diff.add;
+        ++j;
+      }
+      else {
+        ++i;
+        ++j;
+      }
+    }
+
+    while (i < l) {
+      ++diff.drop;
+      ++i;
+    }
+
+    while (j < m) {
+      ++diff.add;
+      ++j;
+    }
+
+    return diff;
+  }
+
+  asyncTest( "empty property model", function() {
+    expect( 3 );
+    var pm = new s.PropertyModel();
+    pm.update();
+
+    var x = new m.Variable( "x", 4 );
+    var y = new m.Variable( "y", 5 );
+    var z = new m.Variable( "z", 6 );
+    pm.addVariable( x );
+    pm.addVariable( y );
+    pm.addVariable( z );
+
+    var c = new m.Constraint( "x,y,z", [x, y, z] );
+    pm.addConstraint( c );
+    pm.update();
+
+    pm.removeConstraint( c );
+    c.addMethod( new m.Method( "x,y->z", hd.reactive.liftFunction( sum ), [x,y], null, [z], [x,y] ) );
+    pm.addConstraint( c );
+    pm.update();
+
+    checkVariable( x, 4, "x" );
+    checkVariable( y, 5, "y" );
+    checkVariable( z, 9, "z" );
+
+    u.schedule( 3, start );
+  } );
+
+  test( "initial priorities", function() {
+    expect( 12 );
+
+    var ctx: any = new m.ContextBuilder()
+          .variables( "a, b, c, d", {a: 1, b: 2} )
+          .variables( "l, m, n, o", {l: 3, m: 4} )
+          .optional( hd.MaxOptional )
+          .variables( "w, x, y, z", {w: 5, x: 6} )
+          .optional( hd.MinOptional )
+          .context( {b: 7, c: 8, m: 9, n: 10, x: 11, y: 12} );
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( ctx );
+
+    // a = default/spec-init  =>  min/init  =>  II
+    // b = default/both-init  =>  max/init  =>  IIII
+    // c = default/inst-init  =>  max/init  =>  IIII
+    // d = default            =>  min/unin  =>  I
+    // l = max/spec-init      =>  max/init  =>  IIII
+    // m = max/both-init      =>  max/init  =>  IIII
+    // n = max/inst-init      =>  max/init  =>  IIII
+    // o = max                =>  max/unin  =>  III
+    // w = min/spec-init      =>  min/init  =>  II
+    // x = min/both-init      =>  min/init  =>  II
+    // y = min/inst-init      =>  min/init  =>  II
+    // z = min                =>  min/unin  =>  I
+
+    // d = default            =>  min/unin  =>  I
+    // z = min                =>  min/unin  =>  I
+    // a = default/spec-init  =>  min/init  =>  II
+    // w = min/spec-init      =>  min/init  =>  II
+    // x = min/both-init      =>  min/init  =>  II       ^
+    // y = min/inst-init      =>  min/init  =>  II       |
+    // =================================================
+    // o = max                =>  max/unin  =>  III      |
+    // b = default/both-init  =>  max/init  =>  IIII     v
+    // c = default/inst-init  =>  max/init  =>  IIII
+    // l = max/spec-init      =>  max/init  =>  IIII
+    // m = max/both-init      =>  max/init  =>  IIII
+    // n = max/inst-init      =>  max/init  =>  IIII
+
+    var opt = (<any>pm).planner.getOptionals();
+
+    var pri = [g.stayConstraint( ctx.d.id ),
+               g.stayConstraint( ctx.z.id ),
+               g.stayConstraint( ctx.a.id ),
+               g.stayConstraint( ctx.w.id ),
+               g.stayConstraint( ctx.x.id ),
+               g.stayConstraint( ctx.y.id ),
+               g.stayConstraint( ctx.o.id ),
+               g.stayConstraint( ctx.b.id ),
+               g.stayConstraint( ctx.c.id ),
+               g.stayConstraint( ctx.l.id ),
+               g.stayConstraint( ctx.m.id ),
+               g.stayConstraint( ctx.n.id )];
+
+    for (var i = 0, l = pri.length; i < l; ++i) {
+      equal( opt[i], pri[i], "Correct priority assignment " + i );
+    }
+  } )
+
   asyncTest( "simple constraint", function() {
     expect( 12 );
 
@@ -70,7 +176,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
 
     checkVariable( ctx.x, 3, "x_1" );
@@ -113,7 +219,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
     checkVariables( ctx, {a: 2, b: 4, c: 6, d: 6, e: 12, f: 8, g: 20}, "1" );
 
@@ -177,7 +283,7 @@ module hd.qunit {
     ps = [];
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
     checkVariables( ctx, {a: 5, b: 7, c: 12, d: 6, e: 6}, "1" );
     ps.push( ctx.d.getCurrentPromise() );
@@ -229,7 +335,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
 
     checkVariables( ctx, {a: 1, b: 2, c: 3, d: 7, e:3, f: 4}, "1" );
@@ -314,7 +420,7 @@ module hd.qunit {
           .context();
 
     var pm = new s.PropertyModel();
-    pm.addComponents( ctx );
+    pm.addComponent( ctx );
     pm.update();
     checkVariables( ctx, {x: 4, y: 4, z: 4}, "1" );
 
@@ -342,4 +448,346 @@ module hd.qunit {
     u.schedule( 3, start );
   } );
 
+  asyncTest( "array constraints", function() {
+    expect( 63 );
+
+    var rowspec = new m.ContextBuilder()
+          .variables( "begin, end", {begin: 0, end: 10} )
+          .spec();
+
+    var ctx: any = new m.ContextBuilder()
+          .nested( "a", hd.arrayOf( rowspec ) )
+          .nested( "b", hd.arrayOf( <any>m.Variable ) )
+          .constraint( "a[i].begin, a[i].end, b[i]" )
+            .method( "a[i].end, a[i].begin -> b[i]", diff )
+            .method( "a[i].end, b[i] -> a[i].begin", diff )
+            .method( "a[i].begin, b[i] -> a[i].end", sum )
+          .context();
+
+    var pm = new s.PropertyModel();
+    pm.addComponent( ctx );
+    pm.update();
+
+    ctx.a.expand( 1 );
+    ctx.b.expand( 1 );
+    pm.update();
+
+    checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
+    checkVariable( ctx.a[0].end, 10, "a[0].end" );
+    checkVariable( ctx.b[0], 10, "b[0]" );
+
+    ctx.a.expand( 1 );
+    ctx.a[1].begin.set( 5 );
+    ctx.a[1].end.set( 20 );
+    ctx.b.expand( 1 );
+    pm.update();
+
+    checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
+    checkVariable( ctx.a[0].end, 10, "a[0].end" );
+    checkVariable( ctx.b[0], 10, "b[0]" );
+    checkVariable( ctx.a[1].begin, 5, "a[1].begin" );
+    checkVariable( ctx.a[1].end, 20, "a[1].end" );
+    checkVariable( ctx.b[1], 15, "b[1]" );
+
+
+    var EventSpec = new hd.ContextBuilder()
+          .variables( "begin, end, length" )
+          .equation( "begin + length == end" )
+          .spec();
+
+    var schedule: any = new hd.ContextBuilder()
+          .nested( "events", hd.arrayOf( EventSpec ) )
+          .constraint( "events[i].end, events[i+1].begin" )
+          .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
+          .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
+          .context();
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( schedule );
+
+    schedule.events.expand( {begin: 0, end: 10} );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 10, length: 10}, "[0]_1" );
+
+    var ccs = Object.keys( pm.constraints );
+    ccs.sort();
+
+    schedule.events.expand( {begin: 20, length: 5} );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 10, length: 10}, "[0]_2" );
+    checkVariables( schedule.events[1], {begin: 20, end: 25, length: 5}, "[1]_2" );
+
+    var ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    var d = differences( ccs, ccs2 );
+    equal( d.drop, 0,
+           "Removed zero constraints" );
+    equal( d.add, 2,
+           "Added two constraints" );
+    ccs = ccs2;
+
+    schedule.events.expand( {begin: 5, length: 20}, 1 );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 5, length: 5}, "[0]_3" );
+    checkVariables( schedule.events[1], {begin: 5, end: 25, length: 20}, "[1]_3" );
+    checkVariables( schedule.events[2], {begin: 25, end: 30, length: 5}, "[2]_3" );
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 1,
+           "Removed one constraints" );
+    equal( d.add, 3,
+           "Added three constraints" );
+    ccs = ccs2;
+
+    schedule.events[0].length.set( 10 );
+    schedule.events[1].length.set( 20 );
+    schedule.events[2].length.set( 30 );
+    schedule.events.expand( {begin: 0, length: 5}, 0 );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 5, length: 5}, "[0]_4" );
+    checkVariables( schedule.events[1], {begin: 5, end: 15, length: 10}, "[1]_4" );
+    checkVariables( schedule.events[2], {begin: 15, end: 35, length: 20}, "[2]_4" );
+    checkVariables( schedule.events[3], {begin: 35, end: 65, length: 30}, "[3]_4" );
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 0,
+           "Removed zero constraints" );
+    equal( d.add, 2,
+           "Added two constraints" );
+    ccs = ccs2;
+
+    schedule.events.collapse( 1, 1 );
+    pm.update();
+    checkVariables( schedule.events[0], {begin: 0, end: 5, length: 5}, "[0]_5" );
+    checkVariables( schedule.events[1], {begin: 15, end: 35, length: 20}, "[2]_5" );
+    checkVariables( schedule.events[2], {begin: 35, end: 65, length: 30}, "[3]_5" );
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 3,
+           "Removed three constraints" );
+    equal( d.add, 1,
+           "Added one constraints" );
+    ccs = ccs2;
+
+    schedule.events.expand( [{begin: 0, length: 10}, {begin: 10, length: 20}, {begin: 30, length: 10}], 0 );
+    pm.update();
+    checkVariables( schedule.events[5], {begin: 65, end: 95, length: 30}, "[5]_6" );
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 0,
+           "Removed zero constraints" );
+    equal( d.add, 6,
+           "Added six constraints" );
+    ccs = ccs2;
+
+    schedule.events.collapse( 2, 2 );
+    pm.update()
+
+    ccs2 = Object.keys( pm.constraints );
+    ccs2.sort();
+    d = differences( ccs, ccs2 );
+    equal( d.drop, 5,
+           "Removed five constraints" );
+    equal( d.add, 1,
+           "Added one constraints" );
+    ccs = ccs2;
+
+    u.schedule( 3, start );
+  } );
+
+  asyncTest( "topological sorting", function() {
+    expect( 42 );
+
+    var ctx: any = new m.ContextBuilder()
+          .variables( "a, b, c, x, y, z", {a: 3, b: 4, z: 6} )
+          .constraint( "a => a, x" )
+            .method( "a -> x", id )
+          .constraint( "b, y" )
+            .method( "b -> y", plus1 )
+            .method( "y -> b", plus1 )
+          .constraint( "c, x, y, z" )
+            .method( "x, y, z -> c",
+                     function( x: number, y: number, z: number ) {
+                       return x + y + z
+                     }
+                   )
+            .method( "c -> x, y, z",
+                     function( c: number ) { return [c/3, c/3, c/3]; }
+                   )
+          .context();
+
+    var pm = new s.PropertyModel();
+    pm.addComponent( ctx );
+    pm.update();
+    checkVariables( ctx, {a: 3, b: 4, c: 14, x: 3, y: 5, z: 6}, "1" );
+
+    ctx.c.set( 21 );
+    pm.update();
+    checkVariables( ctx, {a: 3, b: 8, c: 21, x: 7, y: 7, z: 7}, "2" );
+
+    ctx.z.set( 2 );
+    pm.update();
+    checkVariables( ctx, {a: 3, b: 8, c: 16, x: 7, y: 7, z: 2}, "3" );
+
+    ctx.a.set( 4 );
+    pm.update();
+    checkVariables( ctx, {a: 4, b: 8, c: 13, x: 4, y: 7, z: 2}, "4" );
+
+    ctx.b.set( 5 );
+    pm.update();
+    checkVariables( ctx, {a: 4, b: 5, c: 12, x: 4, y: 6, z: 2}, "5" );
+
+    ctx.c.set( 3 );
+    pm.update();
+    checkVariables( ctx, {a: 4, b: 2, c: 3, x: 1, y: 1, z: 1}, "6" );
+
+    ctx.z.set( 8 );
+    pm.update();
+    checkVariables( ctx, {a: 4, b: 2, c: 10, x: 1, y: 1, z: 8}, "7" );
+
+    u.schedule( 3, start );
+  } );
+
+  asyncTest( "set commands", function() {
+    expect( 12 );
+
+    var ctx: any = new m.ContextBuilder()
+          .variables( "x, y, z", {x: 3, y: 5} )
+          .constraint( "x, y, z" )
+          .method( "x, y -> z", sum )
+          .method( "z, x -> y", diff )
+          .method( "z, y -> x", diff )
+          .context();
+
+    var pm = new s.PropertyModel
+    pm.addComponent( ctx );
+    pm.update();
+    checkVariables( ctx, {x: 3, y: 5, z: 8}, "1" );
+
+    ctx.x.commandSet( 4 );
+    pm.performCommands();
+    checkVariables( ctx, {x: 4, y: 5, z: 9}, "2" );
+
+    ctx.y.commandSet( 3 );
+    ctx.z.commandSet( 10 );
+    checkVariables( ctx, {x: 4, y: 5, z: 9}, "2 (again)" );
+
+    pm.performCommands();
+    checkVariables( ctx, {x: 7, y: 3, z: 10}, "4" );
+
+    u.schedule( 3, start );
+  } );
+
+  asyncTest( "command queue", function() {
+    var spec = new m.ContextBuilder()
+          .variables( "a, x, y, z", {a: 12, x: 3, y: 5} )
+          .constraint( "x, y, z" )
+          .method( "x, y -> z", sum )
+          .method( "z -> x, y", function( z: number ) { return [z/2, z/2]; } )
+          .command( "cmd", "a -> x", plus1 )
+          .spec();
+
+    var pm = new s.PropertyModel
+
+    var ctx1: any = new m.Context();
+    m.Context.construct( ctx1, spec );
+    pm.addComponent( ctx1 );
+
+    var ctx2: any = new m.Context();
+    m.Context.construct( ctx2, spec );
+    pm.addComponent( ctx2 );
+
+    var ctx3: any = new m.Context();
+    m.Context.construct( ctx3, spec );
+    pm.addComponent( ctx3 );
+
+    pm.update();
+    checkVariables( ctx1, {a: 12, x: 3, y: 5, z: 8}, "1.1" );
+    checkVariables( ctx2, {a: 12, x: 3, y: 5, z: 8}, "1.2" );
+    checkVariables( ctx3, {a: 12, x: 3, y: 5, z: 8}, "1.3" );
+
+    ctx1.z.commandSet( 12 );
+    ctx2.z.commandSet( 12 );
+    ctx3.z.commandSet( 12 );
+
+    ctx2.a.commandSet( 9 );
+    ctx3.a.commandSet( 9 );
+
+    ctx3.cmd.activate();
+
+    checkVariables( ctx1, {a: 12, x: 3, y: 5, z: 8}, "1.1 (again)" );
+    checkVariables( ctx2, {a: 12, x: 3, y: 5, z: 8}, "1.2 (again)" );
+    checkVariables( ctx3, {a: 12, x: 3, y: 5, z: 8}, "1.3 (again)" );
+
+    u.schedule( 3, function() {
+      checkVariables( ctx1, {a: 12, x: 6, y: 6, z: 12}, "2.1" );
+    } );
+
+    u.schedule( 3, function() {
+      checkVariables( ctx2, {a: 9, x: 6, y: 6, z: 12}, "3.2" );
+    } );
+
+    u.schedule( 3, function() {
+      checkVariables( ctx3, {a: 9, x: 10, y: 6, z: 16}, "3.2" );
+    } );
+
+    u.schedule( 3, start );
+  } );
+
+  asyncTest( "array moving", function() {
+    expect( 36 );
+
+    var rowspec = new ContextBuilder()
+          .variables( "begin, end, length", {length: 20} )
+          .constraint( "begin, length, end" )
+          .method( "begin, length -> end", hd.sum )
+          .method( "end, length -> begin", hd.diff )
+          .spec();
+
+    var ctx: any = new m.ContextBuilder()
+          .nested( "a", hd.arrayOf( rowspec ) )
+          .constraint( "a[i].end, a[i+1].begin" )
+            .method( "a[i].end, !a[i+1].begin -> a[i+1].begin", hd.max )
+            .method( "!a[i].end, a[i+1].begin -> a[i].end", hd.min )
+          .context();
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( ctx );
+
+    ctx.a.expand( 4 );
+    pm.commitModifications();
+    ctx.a[0].begin.set( 100 );
+    pm.update();
+
+    checkVariables( ctx.a[0], {begin: 100, end: 120, length: 20}, "0.0" );
+    checkVariables( ctx.a[1], {begin: 120, end: 140, length: 20}, "0.1" );
+    checkVariables( ctx.a[2], {begin: 140, end: 160, length: 20}, "0.2" );
+    checkVariables( ctx.a[3], {begin: 160, end: 180, length: 20}, "0.3" );
+
+    ctx.a.move( 0, 2 );
+    pm.update();
+
+    checkVariables( ctx.a[0], {begin:  80, end: 100, length: 20}, "1.0" );
+    checkVariables( ctx.a[1], {begin: 100, end: 120, length: 20}, "1.1" );
+    checkVariables( ctx.a[2], {begin: 120, end: 140, length: 20}, "1.2" );
+    checkVariables( ctx.a[3], {begin: 160, end: 180, length: 20}, "1.3" );
+
+    ctx.a.move( 2, 1, 2 );
+    pm.update();
+
+    checkVariables( ctx.a[0], {begin:  60, end:  80, length: 20}, "2.0" );
+    checkVariables( ctx.a[1], {begin:  80, end: 100, length: 20}, "2.1" );
+    checkVariables( ctx.a[2], {begin: 100, end: 120, length: 20}, "2.2" );
+    checkVariables( ctx.a[3], {begin: 120, end: 140, length: 20}, "2.3" );
+
+    u.schedule( 3, start );
+  } );
 }

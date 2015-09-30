@@ -34,13 +34,20 @@ module hd.model {
     //   with max or min priority?
     optional: Optional = Optional.Default;
 
+    touchVariables: u.ArraySet<Variable>;
+
     /*----------------------------------------------------------------
      * Initialize members
      */
-    constructor( name: string, variables: u.ArraySet<Variable> ) {
+    constructor( name: string,
+                 variables: u.ArraySet<Variable>,
+                 touchVariables?: u.ArraySet<Variable> ) {
       this.id = makeId( name );
       this.name = name;
       this.variables = variables;
+      if (touchVariables && touchVariables.length) {
+        this.touchVariables = touchVariables;
+      }
     }
 
     /*----------------------------------------------------------------

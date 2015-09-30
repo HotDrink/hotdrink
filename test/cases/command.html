@@ -57,7 +57,7 @@
             .context();
 
         var pm = new hd.PropertyModel;
-        pm.addComponents( context );
+        pm.addComponent( context );
 
         window.addEventListener( 'load', function() {
           hd.performDeclaredBindings( context );
@@ -74,12 +74,12 @@
       End: <input type="text" data-bind="hd.numVar( end )"/><br/>
       Length: <input type="text" data-bind="hd.numVar( length )"/>
     </div>
-    <p><button data-bind="hd.clicked( go ), hd.enabled( go.ready )">Go</button></p>
+    <p><button data-bind="hd.click( go ), hd.enabled( go.ready )">Go</button></p>
     <div>
-      <input type="button" data-bind="hd.clicked( incx )" value="++"/>
+      <input type="button" data-bind="hd.click( incx )" value="++"/>
       <input type="text" data-bind="hd.numVar( x )"/> + 10 =
       <input type="text" data-bind="hd.numVar( y )"/>
-      <input type="button" data-bind="hd.clicked( incy )" value="++"/>
+      <input type="button" data-bind="hd.click( incy )" value="++"/>
     </div>
   </body>
 </html>

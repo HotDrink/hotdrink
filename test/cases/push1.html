@@ -13,46 +13,25 @@
     </style>
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
-      var system, ctx;
       function init() {
 
-        ctx = new hd.ContextBuilder()
+        var ctx = new hd.ContextBuilder()
           .v( 'p1', {x: 200, y: 50} )
           .v( 'p2', {x: 150, y: 150} )
           .v( 'p3', {x: 50, y: 200} )
-          .v( 'p1s', {x: 200, y: 50} )
-          .v( 'p2s', {x: 150, y: 150} )
-          .v( 'p3s', {x: 50, y: 200} )
           .r( 'drag' )
 
-          .c( 'p1, p2, p3, p1s, p2s, p3s' )
-          .m( 'p1, !p2, !p3 -> p1s, p2s, p3s, p2, p3', bump2delay )
-          .m( 'p2, !p1, !p3 -> p2s, p1s, p3s, p1, p3', bump2delay )
-          .m( 'p3, !p1, !p2 -> p3s, p1s, p2s, p1, p2', bump2delay )
+          .c( 'p1, p2, p3' )
+          .m( 'p1, !p2, !p3 -> p2, p3', bump2 )
+          .m( 'p2, !p1, !p3 -> p1, p3', bump2 )
+          .m( 'p3, !p1, !p2 -> p1, p2', bump2 )
 
           .context();
 
-        pm = new hd.PropertyModel();
-        pm.addComponents( ctx );
+        var pm = new hd.PropertyModel();
+        pm.addComponent( ctx );
         hd.performDeclaredBindings( ctx );
         hd.bind( {view: hd.mousePosition(), model: hd.path( ctx, 'drag' )} );
-
-        function copy( p ) {
-          return {x: p.x, y: p.y}
-        }
-
-        function bump2delay( pa, pb, pc ) {
-          var out = bump2( pa, pb, pc );
-          var qas = new hd.Promise();
-          var qb = new hd.Promise();
-          var qc = new hd.Promise();
-          setTimeout( function() {
-            qas.resolve( {x: pa.x, y: pa.y} );
-            qb.resolve( out[0] );
-            qc.resolve( out[1] );
-          }, 50 );
-          return [qas, qb, qc, qb, qc];
-        }
 
         function bump2( pa, pb, pc ) {
           var dx1 = pb.x - pa.x;
@@ -94,27 +73,13 @@
         (function() {
           var canvas = document.createElement( 'canvas' );
           var ctx = canvas.getContext( '2d' );
-          ctx.fillStyle = '#eef';
-          ctx.strokeStyle = '#00f';
+          ctx.fillStyle = '#eef'
+          ctx.strokeStyle = '#00f'
           ctx.beginPath();
           ctx.arc( 30, 30, 29, 0, 6.3 );
           ctx.stroke();
           ctx.fill();
           document.styleSheets[0].insertRule( ".puck { background: url(" + canvas.toDataURL() + ") }", 0 );
-          ctx.fillStyle = '#dde';
-          ctx.strokeStyle = '#009';
-          ctx.beginPath();
-          ctx.arc( 30, 30, 29, 0, 6.3 );
-          ctx.stroke();
-          ctx.fill();
-          document.styleSheets[0].insertRule( ".puck.pending { background: url(" + canvas.toDataURL() + ") }", 0 );
-          ctx.fillStyle = '#ddd';
-          ctx.strokeStyle = '#999';
-          ctx.beginPath();
-          ctx.arc( 30, 30, 29, 0, 6.3 );
-          ctx.stroke();
-          ctx.fill();
-          document.styleSheets[0].insertRule( ".puck.shadow { background: url(" + canvas.toDataURL() + ") }", 0 );
         })();
 
         ['p1', 'p2', 'p3'].forEach( function( id ) {
@@ -128,21 +93,17 @@
         }
 
         function mouseup( e ) {
-          ctx.drag = null;
+          if (ctx.drag === ctx[e.currentTarget.id]) {
+            ctx.drag = null;
+          }
         }
 
       }
     </script>
   </head>
   <body onload="init()">
-    <div class="puck shadow" data-bind="hd.position( p1s, hd.offset( -30, -30 ) )">1</div>
-    <div class="puck shadow" data-bind="hd.position( p2s, hd.offset( -30, -30 ) )">2</div>
-    <div class="puck shadow" data-bind="hd.position( p3s, hd.offset( -30, -30 ) )">3</div>
-    <div id="p1" class="puck" data-bind="hd.position( p1, hd.offset( -30, -30 ) ),
-                                         hd.cssClass( p1.pending, 'pending' )">1</div>
-    <div id="p2" class="puck" data-bind="hd.position( p2, hd.offset( -30, -30 ) ),
-                                         hd.cssClass( p2.pending, 'pending' )">2</div>
-    <div id="p3" class="puck" data-bind="hd.position( p3, hd.offset( -30, -30 ) ),
-                                         hd.cssClass( p3.pending, 'pending' )">3</div>
+    <div id="p1" class="puck" data-bind="hd.position( p1, hd.offset( -30, -30 ) )">1</div>
+    <div id="p2" class="puck" data-bind="hd.position( p2, hd.offset( -30, -30 ) )">2</div>
+    <div id="p3" class="puck" data-bind="hd.position( p3, hd.offset( -30, -30 ) )">3</div>
   </body>
 </html>

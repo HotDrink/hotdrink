@@ -50,15 +50,30 @@ module hd.bindings {
   }
 
   export function path( model: m.Context, name: string ) {
-    return new r.HotSwap<any>( new m.Path( model, name ) );
+    return new r.HotSwap<any>( new m.PathValue( new m.Path( model, name ) ) );
   }
 
   export function rw<T, U>( read: r.Observable<U>, write: r.Observer<T> ) {
     return new r.ReadWrite( read, write );
   }
 
-  export function fn( f: Function, ...args: any[] ) {
-    return new r.FunctionExtension( f, args );
+  export function fn( thisArg: Object, f: Function, ...args: any[] ): r.FunctionExtension;
+  export function fn( f: Function, ...args: any[] ): r.FunctionExtension;
+  export function fn() {
+    if (typeof arguments[0] === 'function') {
+      return new r.FunctionExtension( arguments[0],
+                                      null,
+                                      Array.prototype.slice.call( arguments, 1 ) );
+    }
+    else {
+      return new r.FunctionExtension( arguments[1],
+                                      arguments[0],
+                                      Array.prototype.slice.call( arguments, 2 ) );
+    }
+  }
+
+  export function cn( value: any ) {
+    return new r.Constant( value );
   }
 
   export
@@ -164,5 +179,10 @@ module hd.bindings {
   export
   function pointToString() {
     return new r.PointToString();
+  }
+
+  export
+  function or( ...observables: r.Observable<any>[] ) {
+    return new r.Or( observables );
   }
 }

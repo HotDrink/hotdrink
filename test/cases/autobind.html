@@ -16,7 +16,8 @@
         var context2 = new hd.ContextBuilder().variable( 'x', 3 ).context();
 
         var pm = new hd.PropertyModel();
-        pm.addComponents( context, context2 );
+        pm.addComponent( context );
+        pm.addComponent( context2 );
         pm.update();
 
         window.addEventListener( 'load', function() {

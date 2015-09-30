@@ -6,10 +6,10 @@ module hd.bindings {
   export
   class Enabled {
 
-    el: HTMLElement;
+    el: HTMLInputElement;
 
     constructor( el: HTMLElement ) {
-      this.el = checkHtml( el, HTMLElement );
+      this.el = <HTMLInputElement>checkHtml( el, HTMLElement );
     }
 
     onNext( value: u.Fuzzy ) {

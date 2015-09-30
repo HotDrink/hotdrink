@@ -192,9 +192,39 @@ module hd.bindings {
                     }
 
   export
-  function clicked( target: Target,
-                    toModel?: r.Extension<any, any> ) {
-    return {mkview: Clicked.bind( null, true ),
+  function mousedown( target: Target,
+                      toModel?: r.Extension<any, any> ) {
+    return {mkview: MouseDown,
+            model: target,
+            dir: Direction.v2m,
+            toModel: toModel
+           };
+  }
+
+  export
+  function mouseup( target: Target,
+                      toModel?: r.Extension<any, any> ) {
+    return {mkview: MouseUp,
+            model: target,
+            dir: Direction.v2m,
+            toModel: toModel
+           };
+  }
+
+  export
+  function click( target: Target,
+                  toModel?: r.Extension<any, any> ) {
+    return {mkview: Click,
+            model: target,
+            dir: Direction.v2m,
+            toModel: toModel
+           };
+  }
+
+  export
+  function dblclick( target: Target,
+                     toModel?: r.Extension<any, any> ) {
+    return {mkview: DblClick,
             model: target,
             dir: Direction.v2m,
             toModel: toModel
@@ -205,6 +235,25 @@ module hd.bindings {
   function position( target: Target,
                      toView?: r.Extension<any,u.Point> ): Binding {
     return {mkview: Position,
+            model: target,
+            dir: Direction.m2v,
+            toView: toView
+           };
+  }
+
+  export
+  function forEach( name: string, target: Target, idx: string ): Binding {
+    return {mkview: ForEach.bind( null, name, idx ),
+            model: target,
+            dir: Direction.m2v,
+            halt: true
+           };
+  }
+
+  export
+  function when( target: Target,
+                 toView?: r.Extension<any,boolean> ) {
+    return {mkview: When,
             model: target,
             dir: Direction.m2v,
             toView: toView

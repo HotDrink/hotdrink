@@ -6,12 +6,19 @@ module hd.bindings {
   export
   class MousePosition extends r.BasicObservable<u.Point> {
 
+    pos: u.Point;
+
     constructor() {
       super();
       var that = this;
       document.addEventListener( 'mousemove', function( event: MouseEvent ) {
-        that.sendNext( {x: event.clientX, y: event.clientY} );
+        that.pos = {x: event.clientX, y: event.clientY};
+        that.sendNext( that.pos );
       } );
+    }
+
+    get(): u.Point {
+      return this.pos;
     }
 
   }

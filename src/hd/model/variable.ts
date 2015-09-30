@@ -6,13 +6,14 @@ module hd.model {
   import u = hd.utility;
   import r = hd.reactive;
 
-  export
-  enum VariableEventType { changed, touched, pending, settled }
+  export const
+  enum VariableEventType { changed, touched, pending, settled, command }
 
   export
   interface VariableEvent {
     type: VariableEventType;
     vv: Variable;
+    cmd?: Command;
   }
 
   /*==================================================================
@@ -62,12 +63,15 @@ module hd.model {
     private
     ladder: r.PromiseLadder<any>;
 
+    private
+    setCommand: Command;
+
     /*----------------------------------------------------------------
      * Initialize members.  Optional EqualityPredicate is used to
      * determine when value has changed.
      */
     constructor( name: string,
-                 value: any,
+                 value?: any,
                  eq?: u.EqualityPredicate<any> ) {
       this.id = makeId( name );
       this.name = name;
@@ -82,11 +86,7 @@ module hd.model {
                                null
                              );
 
-      if (value === undefined) {
-        this.optional = Optional.Min;
-      }
-      else {
-        this.optional = Optional.Max;
+      if (value !== undefined) {
         var p: r.Promise<any>;
         if (value instanceof r.Promise) {
           p = <r.Promise<any>>value;
@@ -100,6 +100,8 @@ module hd.model {
         }
         this.makePromise( p );
       }
+
+      this.setCommand = new Command( "set " + name, undefined, [], [], [this] );
     }
 
     /*----------------------------------------------------------------
@@ -175,7 +177,16 @@ module hd.model {
     /*----------------------------------------------------------------
      */
     set( value: any ) {
-      this.onNext( value );
+      this.makePromise( value );
+      this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
+    }
+
+    /*----------------------------------------------------------------
+     */
+    commandSet( value: any ) {
+      var cmd = Object.create( this.setCommand );
+      cmd.result = value;
+      this.changes.sendNext( {type: VariableEventType.command, vv: this, cmd: cmd} );
     }
 
     /*----------------------------------------------------------------
@@ -195,10 +206,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Observable: widget produces a value
      */
-    onNext( value: any ): void {
-      this.makePromise( value );
-      this.changes.sendNext( {type: VariableEventType.changed, vv: this} );
-    }
+    onNext: ( value: any ) => void;
 
     /*----------------------------------------------------------------
      * Observable: widget produces an error
@@ -248,5 +256,7 @@ module hd.model {
     }
 
   }
+
+  Variable.prototype.onNext = Variable.prototype.commandSet;
 
 }

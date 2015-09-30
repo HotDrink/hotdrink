@@ -38,14 +38,15 @@
           .v( 't', 'goodbye' )
 
           .c( "copy", "s, t" )
+          .optional()
           .m( "s -> t", function( x ) { return x; } )
 
-          .end();
+          .context();
 
       var pm = new hd.PropertyModel();
       pm.addComponent( context );
       pm.addTouchSet( [context.a, context.b, context.c] );
-      pm.makeConstraintOptional( context.copy );
+
       pm.addTouchDependency( context.s, context.copy );
 
       window.addEventListener( 'load', function() {

@@ -22,6 +22,7 @@ module hd.model {
     // The spec we are building
     private
     target: ContextSpec = {
+      constants:   [],
       variables:   [],
       nesteds:     [],
       references:  [],
@@ -55,9 +56,15 @@ module hd.model {
      */
     context( init?: u.Dictionary<any> ) {
       this.endAll();
-      var ctx = new Context( init );
-      Context.construct( ctx, this.target );
-      return ctx;
+      return new Context( this.target, init );
+    }
+
+    /*----------------------------------------------------------------
+     * Add a constant.
+     */
+    constant( loc: string, value: any ): ContextBuilder {
+      this.target.constants.push( {loc: loc, value: value} );
+      return this;
     }
 
     /*----------------------------------------------------------------
@@ -120,12 +127,12 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a nested context.
      */
-    nested( loc: string, spec: ContextSpec ): ContextBuilder {
+    nested( loc: string, klass: {new (): Context}, spec?: ContextSpec ): ContextBuilder {
       this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
 
-      this.target.nesteds.push( {loc: loc, spec: spec} );
+      this.target.nesteds.push( {loc: loc, klass: klass, spec: spec} );
       this.usedLocs[loc] = true;
 
       return this;
@@ -233,7 +240,7 @@ module hd.model {
       var isNotConstraintVar = function( name: string ) {
         if (constraintVars.indexOf( name ) < 0) {
           console.error( "Variable " + name +
-                         "does not belong to constraint in method " + signature );
+                         " does not belong to constraint in method " + signature );
           return true;
         }
         else { return false; }
@@ -258,9 +265,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Change optional policy on last constraint or variable.
      */
-    optional( enforce: boolean ) {
-      var opt = enforce ? Optional.Max : Optional.Min;
-
+    optional( opt: Optional = Optional.Max ) {
       if (this.lastConstraint) {
         this.lastConstraint.optional = opt;
       }
@@ -338,8 +343,26 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a touch dependency
      */
-    touchDep( from: string, to: string ): ContextBuilder {
+    touchDep( signature: string ): ContextBuilder;
+    touchDep( from: string, to: string ): ContextBuilder;
+    touchDep() {
       this.endAll();
+      var from: string, to: string;
+      if (arguments.length == 1) {
+        var split = (<string>arguments[0]).trim().split( /\s*=>\s*/ );
+        if (split.length == 2) {
+          from = split[0];
+          to = split[1];
+        }
+        else {
+          console.error( 'Invalid touch dependency signature: "' + arguments[0] + '"' );
+          return this;
+        }
+      }
+      else {
+        from = arguments[0];
+        to = arguments[1];
+      }
       if (invalidPath( from ) || invalidPath( to )) {
         return this;
       }
@@ -450,7 +473,7 @@ module hd.model {
    * Test for invalid variable path
    */
   function invalidPath( path: string ): boolean {
-    if (! path.match( /^[a-zA-Z][\w$]*(\.[a-zA-Z][\w$]*)*$/ )) {
+    if (! path.match( /^[a-zA-Z][\w$]*(\.[a-zA-Z][\w$]*|\[\s*(\d+|\*)\s*\]|\[\s*(\d+\s*)?[a-zA-Z][\w$]*\s*([+-]\s*\d+\s*)?\])*$/ )) {
       console.error( 'Invalid variable path: "' + path + '"' );
       return true;
     }

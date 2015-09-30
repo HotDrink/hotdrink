@@ -30,7 +30,7 @@ graph_UNITS     := walker digraph cgraph sgraph stay
 graph_DEPS      := utility reactive
 
 model_LOC       := hd/
-model_UNITS     := ids variable method constraint context eqn builder path command
+model_UNITS     := ids variable method constraint context eqn builder path command array
 model_DEPS      := utility reactive
 
 dfa_LOC         := hd/
@@ -46,22 +46,22 @@ enable_UNITS    := egraph report check
 enable_DEPS     := utility reactive graph
 
 system_LOC      := hd/
-system_UNITS    := pm topo
+system_UNITS    := pm activate topo
 system_DEPS     := utility reactive graph model plan enable
 
 bind_LOC        := hd/
-bind_UNITS      := binding text edit css select checked enable mouse position clicked time rx factory
+bind_UNITS      := binding text edit css select checked enable mouse position clicked time forEach when rx factory
 bind_DEPS       := utility reactive model
 
 async_LOC       := hd/
 async_UNITS     := worker ajax
 async_DEPS      := utility reactive
 
-hd_UNITS        := api
+hd_UNITS        := api methods
 hd_DEPS         := utility reactive model graph plan enable bind system
 
 qunit_UNITS     := qunit.d utility reactive ladder graph model system
-qunit_DEPS      := $(hd_DEPS)
+qunit_DEPS      := hd $(hd_DEPS)
 
 compile-dfa_LOC   := apps/
 compile-dfa_UNITS := ../node.d output main

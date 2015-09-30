@@ -37,9 +37,9 @@ module hd.reactive {
 
     fn: Function;
 
-    constructor( fn: Function, boundArgs: any[] ) {
+    constructor( fn: Function, thisArg: Object, boundArgs: any[] ) {
       super();
-      this.fn = (boundArgs && boundArgs.length) ? fn.bind.apply( fn, (<any[]>[null]).concat( boundArgs ) ) : fn;
+      this.fn = (boundArgs && boundArgs.length) ? fn.bind.apply( fn, (<any[]>[thisArg || null]).concat( boundArgs ) ) : fn;
     }
 
     onNext( value: any ) {
@@ -59,6 +59,20 @@ module hd.reactive {
       this.sendCompleted();
     }
   }
+
+  /*==================================================================
+   */
+  export class Constant<T>  {
+    constructor( public value: T ) { }
+    addObserver( observer: Observer<T> ) {
+      observer.onNext( this.value );
+    }
+    removeObserver( observer: Observer<T> ) { }
+    onNext() { }
+    onError() { }
+    onCompleted() { }
+  }
+
 
   /*==================================================================
    * Basically a linked list of extensions, treated as a single
@@ -749,6 +763,54 @@ module hd.reactive {
   class PointToString extends Extension<u.Point, string> {
     onNext( value: u.Point ) {
       this.sendNext( '(' + value.x + ', ' + value.y + ')' );
+    }
+  }
+
+  /*==================================================================
+   */
+  export
+  class Or extends BasicObservable<boolean> {
+    values: any[] = [];
+    mine: any;
+    completed = 0;
+
+    constructor( observables: Observable<any>[] ) {
+      super();
+      for (var i = 0, l = observables.length; i < l; ++i) {
+        observables[i].addObserver(
+          new ProxyObserver( this, this.onNext, this.onError, this.onCompleted, i )
+        );
+      }
+    }
+
+    onNext( value: any, i: number ) {
+      this.values[i] = value;
+      this.update();
+    }
+
+    onError( value: any, i: number ) {
+      this.values[i] = undefined;
+      this.update();
+    }
+
+    onCompleted() {
+      ++this.completed;
+      if (this.completed == this.values.length) {
+        this.sendCompleted();
+      }
+    }
+
+    update() {
+      var x = this.values[0];
+      for (var i = 1, l = this.values.length; !x && i < l; ++i) {
+        if (this.values[i]) {
+          x = this.values[i];
+        }
+      }
+      if (x !== this.mine) {
+        this.mine = x;
+        this.sendNext( x );
+      }
     }
   }
 }

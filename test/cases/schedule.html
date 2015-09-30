@@ -1,0 +1,240 @@
+<html>
+  <head>
+    <title>HotDrink Test</title>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+    {
+      /*--------------------------------------------------------------
+       * Helper functions
+       */
+
+      function plus1( n ) {
+        return n + 1;
+      }
+
+      function gt1( n ) {
+        return n > 1;
+      }
+
+      function toTime( n ) {
+        var sign = 1;
+        if (n < 0) {
+          sign = -1;
+          n = -n;
+        }
+        var hours = Math.floor( n / 60 );
+        var minutes = Math.floor( n % 60 );
+        if (sign < 0) {
+          hours = -hours;
+          if (minutes > 0) {
+            --hours;
+            minutes = 60 - minutes;
+          }
+        }
+        hours += 8;
+        return hours + ':' + (minutes < 10 ? '0' + minutes : minutes);
+      }
+
+      function fromTime( t ) {
+        var m = t.match( /^(\d+)(?:\:(\d+)?)?$/ );
+        if (!m) {
+          throw "Invalid time";
+        }
+        var hours = Number( m[1] );
+        var minutes = Number( m[2] || 0 );
+        if (minutes > 60) {
+          throw "Invalid minutes";
+        }
+        return (hours - 8)*60 + minutes;
+      }
+
+      /*----------------------------------------------------------------
+       * Property model
+       */
+
+      hd.config.forwardPriorGens = true;
+
+      // Spec for each row
+      var EventSpec = new hd.ContextBuilder()
+          .variables( "title, begin, begin2, end, end2, length", {length: 10} )
+          .touchDep( "begin => begin2" )
+          .touchDep( "end => end2" )
+          .constraint( "begin, begin2, end, end2, length" )
+          .method( "end, !begin -> length, begin",
+                   function( end, begin ) {
+                     if (end - 10 >= begin) {
+                       return [end - begin, begin];
+                     }
+                     else {
+                       return [10, end - 10]
+                     }
+                   } )
+          .method( "!end, begin -> length, end",
+                   function( end, begin ) {
+                     if (end >= begin + 10) {
+                       return [end - begin, end];
+                     }
+                     else {
+                       return [10, begin + 10];
+                     }
+                   } )
+          .method( "end, length -> begin, begin2",
+                   function( end, length ) {
+                     return [end - length, 0];
+                   } )
+          .method( "begin, length -> end, end2",
+                   function( begin, length ) {
+                     return [begin + length, 0]
+                   } )
+          .spec();
+
+      // Root component
+      var ScheduleSpec = new hd.ContextBuilder()
+          .nested( "events", hd.arrayOf( EventSpec ) )
+          .constraint( "events[i].end, events[i+1].begin" )
+            .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
+            .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
+          .spec();
+
+      var schedule = new hd.Context( ScheduleSpec );
+      schedule.events.expand( [{title: "Registration", begin: 0, length: 30},
+                               {title: "Keynote", length: 60},
+                               {title: "Break", length: 15},
+                               {title: "Session I", length: 90}] );
+
+      // Property model
+      pm = new hd.PropertyModel();
+      pm.addComponent( schedule );
+      pm.update();
+
+      // Modification
+      function addEvent() {
+        schedule.events.expand( 1 );
+        pm.update();
+      }
+
+      // Modification
+      function removeEvent( i ) {
+        if (i < schedule.events.length) {
+          schedule.events.collapse( 1, i );
+          pm.update();
+        }
+      }
+
+      // Binding
+      window.addEventListener( "load", function() {
+        hd.performDeclaredBindings( schedule );
+      } )
+
+      /*--------------------------------------------------------------
+       * Drag and drop rows
+       */
+
+      var draggingTr;
+      var mouseBinding;
+
+      function startDragging( tr ) {
+        stopDragging();
+        tr.classList.add( 'selected' );
+        tr.style.position = 'absolute';
+        mouseBinding = {
+          view: hd.bindings.getMousePosition(),
+          model: new hd.bindings.Position( tr ),
+        }
+        draggingTr= tr;
+        hd.bind( mouseBinding );
+      }
+
+      function stopDragging() {
+        if (mouseBinding) {
+          hd.unbind( mouseBinding );
+          draggingTr.classList.remove( 'selected' );
+          draggingTr.style.removeProperty( 'position' );
+          mouseBinding = undefined;
+          draggingTr = undefined;
+        }
+      }
+
+      document.addEventListener( 'mouseup', stopDragging );
+
+      function insertDraggingBefore( tr ) {
+        if (draggingTr) {
+          schedule.events.move( tr.rowIndex - 1, draggingTr.rowIndex - 1 )
+        }
+      }
+
+      function insertDraggingAtEnd() {
+        if (draggingTr) {
+          schedule.events.move( schedule.events.length - 1, draggingTr.rowIndex - 1 );
+        }
+      }
+    }
+    </script>
+    <style type="text/css">
+      input.title { width: 30ex; }
+      input.num   { width: 8ex; text-align: right; }
+      .error, .stale { color: #900; }
+      div.event { margin: 1em; }
+      th { font-weight: normal; text-decoration: underline; }
+      a.control { text-decoration: none; }
+      table { border-spacing: 0 }
+      td { padding: 0.2em }
+      td:first-child { padding-right: 1em; cursor: default }
+      td:last-child { padding-left: 1em; font-size: 70%; vertical-align: middle }
+      tr { background-color: white }
+      tr.selected { pointer-events: none; outline: 1px solid #abc }
+    </style>
+  </head>
+  <body>
+    <table id="schedule">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Title</th>
+          <th>Begin</th>
+          <th>End</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+
+      <tbody data-bind="hd.forEach( 'e', events, 'idx' )">
+        <tr onmouseup="insertDraggingBefore( this )">
+          <td onmousedown="startDragging(this.parentElement); return false">
+            <span data-bind="hd.text( $idx, hd.fn( plus1 ) )"></span>
+          </td>
+          <td>
+            <input type="text" class="title" placeholder="Enter event title"
+                   data-bind="hd.edit( e.title )"/>
+          </td>
+          <td>
+            <input type="text" class="num"
+                   data-bind="hd.editVar( e.begin, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+          </td>
+          <td>
+            <input type="text" class="num"
+                   data-bind="hd.editVar( e.end, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+          </td>
+          <td>
+            <input type="text" class="num" data-bind="hd.numVar( e.length, 0 )"/><small style="margin-left: 0.2ex">min</small>
+          </td>
+          <td>
+            <span data-bind="hd.when( events.$length, hd.fn( gt1 ) )"</span>
+            [<a class="control" href="#" onclick="return false;"
+                data-bind="hd.click( hd.fn( this, removeEvent, idx ) )">X</a>]
+          </td>
+        </tr>
+      </tbody>
+
+      <tfoot>
+        <tr onmouseup="insertDraggingAtEnd()">
+          <td></td>
+          <td colspan="4">
+            <input type="button" value="Add Event"
+                   data-bind="hd.click( hd.fn( addEvent ) )"/>
+          </td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </body>
+</html>

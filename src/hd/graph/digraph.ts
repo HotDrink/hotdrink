@@ -56,17 +56,21 @@ module hd.graph {
      * Add node to the graph.  Has no effect if node already in graph.
      */
     addNode( n: string, label?: LabelT ): void {
-      if (label !== undefined) {
-        this.labels[n] = label;
+      if (! this.outs[n]) {
+        if (label !== undefined) {
+          this.labels[n] = label;
+        }
+        this.outs[n] = {};
+        this.ins[n] = {};
       }
-      this.outs[n] = {};
-      this.ins[n] = {};
     }
 
     /*----------------------------------------------------------------
      * Add edge to the graph.
      */
     addEdge( from: string, to: string ): void {
+      this.addNode( from );
+      this.addNode( to );
       this.outs[from][to] = true;
       this.ins[to][from] = true;
     }

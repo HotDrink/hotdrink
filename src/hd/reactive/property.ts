@@ -7,19 +7,31 @@ module hd.reactive {
 
   export interface Signal<T> extends Observable<T> {
     get(): T;
+    addObserverChangesOnly( observer: Observer<T> ): Observer<T>;
   }
 
   export interface ProxySignal<T> extends ProxyObservable<T> {
     get(): T;
+    addObserverChangesOnly( observer: Observer<T> ): Observer<T>;
+    addObserverChangesOnly( object: Object,
+                            onNext: (value: T) => void,
+                            onError: (error: any) => void,
+                            onCompleted: () => void        ): Observer<T>;
+    addObserverChangesOnly<U>( object: Object,
+                               onNext: (value: T, id?: U) => void,
+                               onError: (error: any, id?: U) => void,
+                               onCompleted: (id?: U) => void,
+                               id: U                                  ): Observer<T>;
   }
 
+  export
   var SignalPriority = 3;
 
   enum Scheduled { None, Init, Update };
 
   export class BasicSignal<T> extends BasicObservable<T> {
-    private value: T;
-    private eq: u.EqualityPredicate<T>;
+    value: T;
+    eq: u.EqualityPredicate<T>;
 
     constructor( value?: T, eq?: u.EqualityPredicate<T> ) {
       super();
@@ -115,7 +127,7 @@ module hd.reactive {
         return this.eq( this.value, value );
       }
       else {
-        return false;
+        return this.value === undefined && value === undefined;
       }
     }
 

@@ -1,9 +1,7 @@
 module hd.bindings {
 
-  import u = hd.utility;
-
   export
-  class Position {
+  class When {
 
     el: HTMLElement;
 
@@ -11,14 +9,19 @@ module hd.bindings {
       this.el = checkHtml( el, HTMLElement );
     }
 
-    onNext( p: u.Point ) {
-      this.el.style.left = p.x + 'px';
-      this.el.style.top = p.y + 'px';
+    onNext( value: boolean ) {
+      if (value) {
+        this.el.style.removeProperty( 'display' );
+      }
+      else {
+        this.el.style.display = 'none';
+      }
     }
 
     onError() { }
 
     onCompleted() { }
+
   }
 
 }

@@ -1,9 +1,10 @@
 module hd.bindings {
 
   import u = hd.utility;
+  import r = hd.reactive;
 
   export
-  class Position {
+  class Visible {
 
     el: HTMLElement;
 
@@ -11,14 +12,19 @@ module hd.bindings {
       this.el = checkHtml( el, HTMLElement );
     }
 
-    onNext( p: u.Point ) {
-      this.el.style.left = p.x + 'px';
-      this.el.style.top = p.y + 'px';
+    onNext( value: u.Fuzzy ) {
+      if (value) {
+        this.el.style.visibility = 'visible';
+      }
+      else {
+        this.el.style.visibility = 'hidden';
+      }
     }
 
     onError() { }
 
     onCompleted() { }
+
   }
 
 }

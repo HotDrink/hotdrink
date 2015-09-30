@@ -7,6 +7,7 @@
     </style>
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
+    {
       function sum( a ) {
         var total = 0;
         for (var i = 0, l = a.length; i < l; ++i) {
@@ -16,31 +17,45 @@
       }
 
       var context = new hd.ContextBuilder()
-      .variables( {miles: 50, mpg: 30, gallons: undefined, gas: 3.5, travel: undefined} )
-      .equation( 'miles / gallons == mpg' )
-      .equation( 'gallons * gas == travel' )
+          .variables( {miles: 50, mpg: 30, gallons: undefined, gas: 3.5, travelCost: undefined} )
+          .equation( 'miles / gallons == mpg' )
+          .equation( 'gallons * gas == travelCost' )
 
-      .variables( {checkin: new Date().setHours( 0, 0, 0, 0 ),
-                   nights: 1, checkout: undefined, rate: 150, hotel: undefined} )
-      .equation( 'checkout - checkin == nights * 86400000')
-      .equation( 'nights * rate == hotel' )
+          .variables( {usetravel: true, travel: 0} )
+          .constraint( 'usetravel, travel, travelCost' )
+          .method( 'usetravel, *travelCost -> travel',
+                   function( usetravel, travelCost ) {
+                     return usetravel ? travelCost : 0;
+                   } )
 
-      .variables( {food: 30, tip: 0.15, meals: undefined} )
-      .equation( 'food * (1 + tip) == meals' )
+          .variables( {checkin: new Date().setHours( 0, 0, 0, 0 ),
+                       nights: 1, checkout: undefined, rate: 150, hotelCost: undefined} )
+          .equation( 'checkout - checkin == nights * 86400000')
+          .equation( 'nights * rate == hotelCost' )
 
-      .variables( {usetravel: true, usehotel: true, usemeals: true, total: undefined} )
-      .output( 'total' )
-      .constraint( 'usetravel, travel, usehotel, hotel, usemeals, meals, total' )
-      .method( 'usetravel, *travel, usehotel, *hotel, usemeals, *meals -> total',
-               function( usetravel, travel, usehotel, hotel, usemeals, meals ) {
-                 if (! usetravel) { travel = new hd.Promise( 0 ); }
-                 if (! usehotel)  { hotel  = new hd.Promise( 0 ); }
-                 if (! usemeals)  { meals  = new hd.Promise( 0 ); }
-                 return hd.Promise.all( travel, hotel, meals ).then( sum );
-               }
-             )
+          .variables( {usehotel: true, hotel: 0} )
+          .constraint( 'usehotel, hotel, hotelCost' )
+          .method( 'usehotel, *hotelCost -> hotel',
+                   function( usehotel, hotelCost ) {
+                     return usehotel ? hotelCost : 0;
+                   } )
 
-      .context();
+          .variables( {food: 30, tip: 0.15, mealsCost: undefined} )
+          .equation( 'food * (1 + tip) == mealsCost' )
+
+          .variables( {usemeals: true, meals: 0} )
+          .constraint( 'usemeals, meals, mealsCost' )
+          .method( 'usemeals, *mealsCost -> meals',
+                   function( usemeals, mealsCost ) {
+                     return usemeals ? mealsCost : 0;
+                   } )
+
+          .variables( {total: undefined} )
+          .output( 'total' )
+          .constraint( 'travel, hotel, meals, total' )
+          .method( 'travel, hotel, meals -> total', hd.sum )
+
+          .context();
 
       var pm = new hd.PropertyModel();
       pm.addComponent( context );
@@ -48,6 +63,7 @@
       window.addEventListener( 'load', function() {
         hd.performDeclaredBindings( context );
       } );
+    }
     </script>
   </head>
   <body>
@@ -71,7 +87,7 @@
         </tr>
         <tr>
           <td>Total Cost:</td>
-          <td><input type="text" data-bind="hd.numVar( travel, 2 )"/></td>
+          <td><input type="text" data-bind="hd.numVar( travelCost, 2 )"/></td>
         </tr>
       </table>
     </fieldset>
@@ -97,7 +113,7 @@
         </tr>
         <tr>
           <td>Total Cost:</td>
-          <td><input type="text" data-bind="hd.numVar( hotel, 2 )"/></td>
+          <td><input type="text" data-bind="hd.numVar( hotelCost, 2 )"/></td>
         </tr>
       </table>
     </fieldset>
@@ -117,7 +133,7 @@
         </tr>
         <tr>
           <td>Total Cost:</td>
-          <td><input type="text" data-bind="hd.numVar( meals, 2 )"></td>
+          <td><input type="text" data-bind="hd.numVar( mealsCost, 2 )"></td>
         </tr>
       </table>
     </fieldset>

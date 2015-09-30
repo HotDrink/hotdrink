@@ -247,6 +247,7 @@ module hd.model {
    * - in destructor, unsubscribe to all paths
    */
   class Template extends r.BasicObservable<Template> {
+    name: string;
 
     // All paths used by this template
     paths: u.ArraySet<Path> = [];
@@ -505,7 +506,6 @@ module hd.model {
   }
 
   class ConstraintTemplate extends Template {
-    name: string;
     variables: Path[];
     methods: MethodTemplate[];
     optional: Optional;
@@ -614,7 +614,6 @@ module hd.model {
   }
 
   class CommandTemplate extends Template {
-    name: string;
     inputs: Path[];
     priorFlags: boolean[];
     outputs: Path[];
@@ -724,7 +723,6 @@ module hd.model {
   }
 
   class TouchDepTemplate extends Template {
-    name: string;
     from: Path;
     to: Path;
 
@@ -783,7 +781,6 @@ module hd.model {
   }
 
   class OutputTemplate extends Template {
-    name: string;
     variable: Path;
 
     /*----------------------------------------------------------------
@@ -932,7 +929,7 @@ module hd.model {
           changes.adds.forEach( this.addStatic, this );
         }
         else {
-          console.warn( "Could not instantiate constant template: " );
+          console.warn( "Could not instantiate constant template: " + tmpl.name );
         }
       }
       else {

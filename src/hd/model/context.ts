@@ -335,10 +335,10 @@ module hd.model {
       var newInstances = <TemplateInstance[]> [];
 
       if (this.paths.length > 0) {
-        for (var pos = Path.beginAll( <Path[]>this.paths );
-             pos !== null;
-             pos = Path.nextAll( <Path[]>this.paths, pos )) {
-          var inst = this.define( pos );
+        for (var itr = new PathSetIterator( <Path[]>this.paths );
+             itr.pos !== null;
+             itr.next()) {
+          var inst = this.define( itr.pos );
           if (inst) {
             newInstances.push( inst );
           }

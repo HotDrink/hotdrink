@@ -175,6 +175,46 @@ module hd.model {
     onCompleted() { }
   }
 
+  /*==================================================================
+   */
+  export
+  class PathSetIterator {
+
+    private paths: Path[];
+    private locks: Position[];
+    pos: Position;
+
+    constructor( paths: Path[] ) {
+      this.paths = paths;
+      this.locks = [{}];
+      this.pos = this.multiPosition( 0, 1 );
+    }
+
+    next() {
+      if (this.pos !== null) {
+        this.pos = this.multiPosition( this.paths.length - 1, -1 );
+      }
+    }
+
+    private multiPosition( idx: number, dir: number ): Position {
+      for (var l = this.paths.length; idx >= 0 && idx < l; idx += dir) {
+        if (dir > 0) {
+          this.locks[idx + 1] = this.paths[idx].begin( this.locks[idx] );
+        }
+        else {
+          this.locks[idx + 1] = this.paths[idx].next( this.locks[idx], this.locks[idx + 1] );
+        }
+        dir = this.locks[idx + 1] === null ? -1 : 1;
+      }
+
+      if (idx == l) {
+        return this.locks[idx];
+      }
+      else {
+        return null;
+      }
+    }
+  }
 
   /*==================================================================
    * An observable representing a particular property path in a
@@ -518,70 +558,12 @@ module hd.model {
       }
 
       // Either we made it all the way to the end, or we regressed to the beginning
-      if (idx == values.length) {
+      if (idx == l) {
         return locks[idx];
       }
       else {
         return null;
       }
-    }
-
-    /*----------------------------------------------------------------
-     * This is basically the same as the previous, except that,
-     * instead of iterating over a list of intermediate values from
-     * the same path, we're iterating over a list of paths.
-     */
-    private static
-    multiPosition(
-      paths: Path[],
-      lock:  Position,
-      from?: Position
-    ):       Position {
-
-      var locks: Position[], dir: number;
-      // The position at locks[i] is used to query a position from values[i].
-      // The position returned becomes the lock for the next value.
-      // If dir == 1, then the previous position query worked and we're moving
-      //   ahead to try the next one ==> use begin
-      // If dir == -1, then the previous position query failed and we're backing
-      //   up to try to find a different lock ==> use next
-
-      if (from) {
-        locks = [lock, from];
-        dir = -1;
-      }
-      else {
-        locks = [lock];
-        dir = 1;
-      }
-
-      for (var idx = 0, l = paths.length; idx >= 0 && idx < l; idx += dir) {
-        if (dir > 0) {
-          locks[idx + 1] = paths[idx].begin( locks[idx] );
-        }
-        else {
-          locks[idx + 1] = paths[idx].next( locks[idx], locks[idx + 1] );
-        }
-        dir = locks[idx + 1] === null ? -1 : 1;
-      }
-
-      // Either we made it all the way to the end, or we regressed to the beginning
-      if (idx == paths.length) {
-        return locks[idx];
-      }
-      else {
-        return null;
-      }
-    }
-
-    static
-    beginAll( paths: Path[] ): Position {
-      return Path.multiPosition( paths, {} );
-    }
-
-    static
-    nextAll( paths: Path[], pos: Position ): Position {
-      return Path.multiPosition( paths, {}, pos );
     }
 
     /*----------------------------------------------------------------

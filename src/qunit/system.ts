@@ -856,7 +856,7 @@ module hd.qunit {
           .n( "a", Matrix )
           .n( "b", Matrix )
           .n( "c", Matrix )
-          .c( "c[i][j], a[i][*], b[*][j]" )
+          .c( "a[i][*], b[*][j], c[i][j]" )
           .m( "a[i][*], b[*][j] -> c[i][j]", dotProduct )
           .context();
 

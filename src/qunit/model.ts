@@ -10,11 +10,11 @@ module hd.qunit {
 
   function checkSequence( paths: m.Path[], poss: m.Position[] ) {
     var i = 0;
-    var pos = m.Path.beginAll( paths );
-    while (pos != null) {
-      deepEqual( pos, poss[i], "Path list has expected position" );
+    var itr = new m.PathSetIterator( paths );
+    while (itr.pos != null) {
+      deepEqual( itr.pos, poss[i], "Path list has expected position" );
       i++;
-      pos = m.Path.nextAll( paths, pos );
+      itr.next();
     }
     if (i < poss.length) {
       ok( false, "Expected more positions for path list" );

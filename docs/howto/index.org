@@ -1,11 +1,9 @@
 #+TITLE: How to use HotDrink
 #+LANGUAGE:  en
-#+OPTIONS: H:2 author:nil creator:nil
-#+INFOJS_OPT: sdepth:1 toc:nil
+#+OPTIONS: H:2 author:nil creator:nil toc:nil
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
-* About this documentation
 
 The purpose of this document collection is to explain how to use the HotDrink
 library.  It is not intended to showcase HotDrink, but rather to lay the

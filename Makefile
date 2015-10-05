@@ -199,14 +199,17 @@ $(TARGET_MAPS) : $(TARGET_DIR)/%.js.map : $(TARGET_DIR)/%.js ;
 
 .SECONDEXPANSION :
 $(TARGET_FILES) :: $(TARGET_DIR)/%.js : $$($$*_TGT_MAPS) $$($$*_TGT_FILES) | $(TARGET_DIR)
-	@if which -s mapcat ; then                                                   \
+	@if which mapcat ; then                                                      \
 	  echo mapcat -j $(TARGET_DIR)/$*.js -m $(TARGET_DIR)/$*.js.map              \
 	    $($*_TGT_MAPS) ;                                                         \
 	  mapcat -j $(TARGET_DIR)/$*.js -m $(TARGET_DIR)/$*.js.map $($*_TGT_MAPS) ;  \
 	else                                                                         \
 	  echo "make: *** Missing mapcat - cannot make scripts/$*.js.map" 1>&2 ;     \
 	  echo cat $($*_TGT_FILES) ">" $@ ;                                          \
-	  cat $($*_TGT_FILES) > $@ ;                                                 \
+	  for file in $($*_TGT_FILES) ; do                                           \
+	    cat "$${file}" ;                                                         \
+	    echo ;                                                                   \
+	  done > $@ ;                                                                \
 	fi
 
 .SECONDEXPANSION :

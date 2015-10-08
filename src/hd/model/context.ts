@@ -1047,9 +1047,14 @@ module hd.model {
      * given context.
      */
     static
-    construct( ctx: Context,
-               spec: ContextSpec,
-               init?: u.Dictionary<any> ): Context {
+    construct(
+      ctx: Context,
+      spec: ContextSpec,
+      init?: u.Dictionary<any>
+    ): Context {
+      if (! (ctx instanceof Context)) {
+        throw "Attempting to construct context using specification failed:  object not a context!";
+      }
       if (init) {
         if (typeof init !== 'object') {
           throw "Invalid initialization object passed to Context.construct: " + init;

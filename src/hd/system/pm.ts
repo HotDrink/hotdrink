@@ -303,8 +303,7 @@ module hd.system {
         this.cgraph.addMethod( mm.id,
                                cid,
                                mm.inputVars.map( u.getId ),
-                               mm.outputs.map( u.getId )
-                             );
+                               mm.outputVars.map( u.getId ) );
       }
     }
 

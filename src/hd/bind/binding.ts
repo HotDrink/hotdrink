@@ -298,10 +298,10 @@ module hd.bindings {
       return scope;
     }
     try {
-      var elBindingsFn = new Function( functionBody );
-      var elNestedBindings: any[] = elBindingsFn.call( scope );
+      var elBindingsFn = new Function( 'model', functionBody );
+      var elNestedBindings: u.MultiArray<Binding> = elBindingsFn.call( el, scope );
       var elBindings: Binding[] = [];
-      flatten( elNestedBindings, elBindings );
+      u.multiArray.flatten( elNestedBindings, elBindings );
     }
     catch (e) {
       console.error( "Invalid binding declaration: "
@@ -345,24 +345,9 @@ module hd.bindings {
    * of the constructs John implemented.
    */
   function compile( spec: string ): string {
-    return "with (this) {" +
+    return "with (model) {" +
            "  return [" + spec + "]" +
            "}";
-  }
-
-  /*------------------------------------------------------------------
-   * Flatten nested lists into a single list.
-   */
-
-  function flatten<T>( from: any[], to: T[] ) {
-    for (var i = 0, l = from.length; i < l; ++i) {
-      if (Array.isArray( from[i] )) {
-        flatten( from[i], to );
-      }
-      else {
-        to.push( from[i] );
-      }
-    }
   }
 
 }

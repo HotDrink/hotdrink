@@ -1,9 +1,10 @@
 module hd {
 
+  import u = hd.utility;
   import m = hd.model;
 
   // shortcuts for arrays
-  export function arrayOf( elementType: m.ContextClass|m.ContextSpec ) {
+  export function arrayOf( elementType: u.Constructor|m.ContextSpec ) {
     return m.ArrayContext.bind( null, elementType );
   }
 

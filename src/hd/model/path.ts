@@ -6,86 +6,120 @@ module hd.model {
   import u = hd.utility;
   import r = hd.reactive;
 
-  // A position in a path; null for 0 dimensions, number for 1
-  export
-  type Position = number;
-
   /*==================================================================
-   * Pattern for an array index in a path
+   * A /position/ is a particular assignment of values to index
+   * variables.  For example, given the path template "a[i].b[j+1]",
+   * the position "{i: 2, j: 4}" would yield "a[2].b[5]".
+   *
+   * A position which does not specify values for one or more index
+   * variables represents all possible values of the unspecified index
+   * variables.  So, in the above example, the position "{i: 2}" would
+   * yield "a[2].b[0]", "a[2].b[1]", "a[2].b[2]", etc.
+   *
+   * If P and Q are positions, then Q is a sub-position of P iff every
+   * index variable/value pair in P are also in Q.  So the position
+   * "{i: 2, k: 6}" is a sub-position of "{i: 2, j: 4, k: 6}", and the
+   * position "{}" is a sub-position of every position.
    */
   export
+  type Position = u.Dictionary<number>;
+
+  /*==================================================================
+   * Legs in a path
+   */
+
+  export
+  type Leg = String | IndexPattern;
+
+  ////////////////////////////////////////////////
+  // Array index pattern
+  export
   class IndexPattern {
-    constructor( public scale: number,
-                 public offset: number ) { }
+    public offset: number;
+    public scale: number;
+    public index: string;
+    public slice: boolean;
+
+    // Init
+    constructor( offset: number );
+    constructor( scale: number, index: string, offset: number );
+    constructor() {
+      if (arguments.length == 1) {
+        this.scale = 0;
+        this.offset = arguments[0];
+      }
+      else {
+        this.scale = arguments[0];
+        this.index = arguments[1];
+        this.offset = arguments[2];
+      }
+    }
 
     // Get the result for this pattern at a particular position
-    apply( pos: Position ): Position {
+    apply( pos: Position ) {
       if (this.scale == 0) {
         return this.offset;
       }
-      else if (pos === null) {
+      else if (pos[this.index] === undefined) {
         return undefined;
       }
       else {
-        return this.scale * pos + this.offset;
+        return this.scale * pos[this.index] + this.offset;
       }
     }
 
-    // Inverse of apply: is there an index that maps to the given position?
-    inverse( pos: Position ): Position {
-      if (pos === null) { return undefined; }
+    // Inverse of apply: what sub-postion of the current position
+    // would result in this index pattern mapping to n?
+    inverse( pos: Position, n: number ) {
       if (this.scale == 0) {
-        return pos === this.offset ? null : undefined;
+        return n == this.offset ? pos : undefined;
       }
-      var i = (pos - this.offset) / this.scale;
-      if (Math.floor( i ) === i) {
-        return i;
-      }
-      else {
+      var i = (n - this.offset) / this.scale;
+      if (Math.floor( i ) !== i) {
         return undefined;
       }
+      if (pos[this.index] !== undefined) {
+        return i == pos[this.index] ? pos : undefined;
+      }
+      pos = u.shallowCopy( pos );
+      pos[this.index] = i;
+      return pos;
     }
   }
 
   /*==================================================================
-   * Defines names of index variable
+   * Observers for the different types of legs in a path
    */
 
-  // index variable names, in order
-  var indexName: string;
-
-  // define names for array indices
-  function defineArrayIndexName( name: string ) {
-    indexName = name;
-  }
-
-  // Default: i
-  defineArrayIndexName( 'i' );
-
-  /*==================================================================
-   * Observer of one leg of a path
-   */
-
+  export
   type LegObserver = PropertyObserver | ArrayObserver;
 
   ////////////////////////////////////////////////
   // Observer the property for a specific field
+  export
   class PropertyObserver {
-    constructor( public path: Path,
-                 public property: r.Signal<any>,
-                 public legi: number,
-                 public pos: Position          ) {
+    public child: LegObserver;
+
+    constructor(
+      public path:     Path,
+      public property: r.Signal<any>,
+      public legi:     number,
+      public pos:      Position
+    ) {
       this.property.addObserverChangesOnly( this );
     }
 
-    // No longer needed
+    // Observer no longer needed
     destruct() {
       this.property.removeObserver( this );
+      if (this.child) {
+        this.child.destruct();
+      }
     }
 
     // Property changes
     onNext() {
-      this.path.onNextProperty( this.legi, this.pos );
+      this.path.onNextProperty( this );
     }
 
     onError() { }
@@ -93,59 +127,125 @@ module hd.model {
   }
 
   ////////////////////////////////////////////////
-  // Observe an array for all indexes
+  // Observe an entire array
+  export
   class ArrayObserver {
-    constructor( public path: Path,
-                 public ctx: ArrayContext,
-                 public legi: number,
-                 public pos: Position      ) {
-      this.ctx.changes.addObserver( this );
+    // Whether there is just one child or multiple children depends on
+    // whether we are observing the entire array or just one element
+    public children: LegObserver[] = [];
+
+    constructor(
+      public path: Path,
+      public ctx:  ArrayContext,
+      public legi: number,
+      public pos:  Position
+    ) {
+      if (ctx instanceof ArrayContext) {
+        this.ctx.changes.addObserver( this );
+      }
     }
 
-    // No longer needed
+    alsoWatchLength() {
+      this.ctx.$length.addObserver( this, this.onNextLength, null, null );
+    }
+
+    // Observer no longer needed
     destruct() {
       this.ctx.changes.removeObserver( this );
+      this.ctx.$length.removeObserver( this );
+      if (this.hasOwnProperty( 'children' )) {
+        for (var i = 0, l = this.children.length; i < l; ++i) {
+          var child = this.children[i];
+          if (child) {
+            child.destruct();
+          }
+        }
+      }
     }
 
     onNext( idx: number ) {
-      this.path.onNextArray( idx, this.legi, this.pos );
+      this.path.onNextArray( this, idx );
+    }
+
+    onNextLength( legnth: number ) {
+      this.path.onNextArrayLength( this );
     }
 
     onError() { }
     onCompleted() { }
+  }
+
+  /*==================================================================
+   */
+  export
+  class PathSetIterator {
+
+    private paths: Path[];
+    private locks: Position[];
+    pos: Position;
+
+    constructor( paths: Path[] ) {
+      this.paths = paths;
+      this.locks = [{}];
+      this.pos = this.multiPosition( 0, 1 );
+    }
+
+    next() {
+      if (this.pos !== null) {
+        this.pos = this.multiPosition( this.paths.length - 1, -1 );
+      }
+    }
+
+    private multiPosition( idx: number, dir: number ): Position {
+      for (var l = this.paths.length; idx >= 0 && idx < l; idx += dir) {
+        if (dir > 0) {
+          this.locks[idx + 1] = this.paths[idx].begin( this.locks[idx] );
+        }
+        else {
+          this.locks[idx + 1] = this.paths[idx].next( this.locks[idx], this.locks[idx + 1] );
+        }
+        dir = this.locks[idx + 1] === null ? -1 : 1;
+      }
+
+      if (idx == l) {
+        return this.locks[idx];
+      }
+      else {
+        return null;
+      }
+    }
   }
 
   /*==================================================================
    * An observable representing a particular property path in a
    * context.
+   *
+   * Each path can use arbitrary variables.  The path will assign
+   * an order to its variables -- i.e., i_0, i_1, i_2, ...
+   *
+   * Each slice is assigned a unique variable name.  These are
+   * considered internal variable names.  They will not be included in
+   * any positions published by the path, nor will they be looked for
+   * in any positions passed to this path from the outside.  Internal
+   * variable names will always come after external variable names in
+   * the ordering.
    */
   export
   class Path extends r.BasicObservable<Position> {
 
+    slices: number;
+
     // The context at which to begin the search
-    start: Context;
+    private start: Context;
 
     // The path broken down into legs
-    legs: (string|IndexPattern)[];
+    private legs: Leg[];
 
-    // Maximum index variable used
-    cardinality: number;
-
-    // Is the path going to stay the same, or could it change?
-    constant = true;
-
-    // The branch point for the path--first variable index pattern
-    private branchi = 0;
-
-    // Observers corresponding to legs
-    private observers0: LegObserver[] = null;
-    private observers1: LegObserver[][] = null;
-
-    // Path result (0-dimension) or array of results (1-dimension)
-    // This not only caches the result, it's also used to decide whether
-    //   a particular position had a previous result so that we can know
-    //   whether anything changed
-    private result: any;
+    // The observer tree consists of observers for every property/arrray
+    // accessible by this path.  Because it is a tree, whenever any
+    // property/array changes we can simply prune the entire subtree
+    // under that node and rebuild using createObservers.
+    private rootObserver: LegObserver;
 
     /*----------------------------------------------------------------
      * Perform initial search.
@@ -154,307 +254,374 @@ module hd.model {
       super();
 
       // Break path down into property names and index patterns
-      this.legs = parse( path );
-      if (this.legs) {
+      var legs = parse( path );
+      if (legs) {
         this.start = start;
-        this.cardinality = 0;
-
-        // Decide whether this is 0- or 1-dimensional
-        for (var i = 0, l = this.legs.length; i < l; ++i) {
-          if ((<any>this.legs[i]) instanceof IndexPattern &&
-              (<IndexPattern>this.legs[i]).scale != 0       ) {
-            this.branchi = i + 1;
-            this.cardinality = 1;
-            this.result = [];
-            break;
-          }
-        }
+        this.legs = legs;
       }
       else {
         // Create a path which always just returns undefined
         this.start = undefined;
         this.legs = [];
-        this.cardinality = 0;
       }
+
+      this.slices = countSlices( this.legs );
 
       // Initialize
-      this.followPath( this.start, 0, null );
+      this.rootObserver = this.createObservers( this.start, 0, {} );
     }
 
     /*----------------------------------------------------------------
-     * Get the current result for the path serach (from cache)
+     * We're no longer needed; prune observer tree
      */
-    get( pos: Position ): any {
-      if (this.cardinality == 0) {
-        return this.result;
-      }
-      else if (pos !== null) {
-        return this.result[pos]
+    destruct() {
+      if (this.rootObserver) {
+        this.rootObserver.destruct();
+        this.rootObserver = undefined;
       }
     }
 
     /*----------------------------------------------------------------
-     * Called internally to add result to cache
+     * Is this path constant (no references/arrays)?
      */
-    private
-    addResult( pos: Position, val: any ) {
-      if (this.cardinality == 0) {
-        this.result = val;
-        this.sendNext( null );
-      }
-      else if (pos !== null) {
-        this.result[pos] = val;
-        this.sendNext( pos );
-      }
+    isConstant(): boolean {
+      return this.rootObserver === undefined;
     }
 
     /*----------------------------------------------------------------
-     * Called internally to remove result from cache.
-     * For 1-dimensional, position == null means remove all results.
+     * Get the current result for a position
+     */
+    get( pos: Position = {} ): any {
+      return this.getRec( this.start, 0, pos, this.legs.length );
+    }
+
+    /*----------------------------------------------------------------
+     * Get the result for a position up to the specified depth.
      */
     private
-    removeResult( pos: Position ) {
-      if (this.cardinality == 0) {
-        if (this.result !== undefined) {
-          this.result = undefined;
-          this.sendNext( pos );
-        }
+    getRec( value: any, legi: number, pos: Position, limit: number ): any {
+      if (value === undefined) { return undefined; }
+
+      // If we reach the end, return the value
+      if (legi >= limit) { return value; }
+
+      // Consider current leg
+      var leg = this.legs[legi];
+      if (typeof leg === 'string' && value != null) {
+        // Field lookup
+        return this.getRec( value[leg], legi + 1, pos, limit );
       }
-      else if (pos !== null) {
-        if (this.result[pos] !== undefined) {
-          this.result[pos] = undefined;
-          this.sendNext( pos );
+      else if (leg instanceof IndexPattern) {
+        if (leg.scale == 0 || leg.index in pos) {
+          // Index can be determined: single value
+          var idx = leg.apply( pos );
+          if (idx === undefined) { return undefined; }
+          return this.getRec( value[idx], legi + 1, pos, limit );
         }
-      }
-      else {
-        for (var i = 0, l = this.result.length; i < l; ++i) {
-          if (this.result[i] !== undefined) {
-            this.sendNext( i );
+        else {
+          // Index undetermined: array of all values
+          var results: any[] = [];
+          for (var i = 0, l = value.length; i < l; ++i) {
+            var newpos = leg.inverse( pos, i );
+            var result = this.getRec( value[i], legi + 1, newpos, limit );
+            if (result === undefined) { return undefined; }
+            results.push( result );
           }
+          return results;
         }
-        this.result = [];
       }
+      return undefined;
     }
 
     /*----------------------------------------------------------------
-     * We only cache the end result; this looks up a node in the
-     * middle by following the path.
+     * Examine every possible value for this path, creating observers
+     * for any references found along the way.
      */
     private
-    getUpTo( limit: number, pos: Position, ctx = this.start, legi = 0 ): any {
-      for (; legi <= limit && ctx instanceof Context; ++legi) {
-        var leg = this.legs[legi];
-        if (typeof leg === 'string') {
-          ctx = ctx[leg];
-        }
-        else if (leg instanceof IndexPattern) {
-          var n = leg.apply( pos );
-          if (n === undefined) {
-            ctx = undefined;
-          }
-          else {
-            ctx = ctx[n];
-          }
-        }
-      }
-      return legi > limit ? ctx : undefined;
-    }
+    createObservers( value: any, legi: number, pos: Position ): LegObserver {
+      if (value === undefined) { return; }
 
-    /*----------------------------------------------------------------
-     * Store a leg observer; assumes observer is already subscribed
-     */
-    private
-    addLegObserver( ver: LegObserver, legi: number, pos: Position ) {
-      this.constant = false;
-      if (pos === null) {
-        if (! this.observers0) { this.observers0 = []; }
-        this.observers0[legi] = ver;
-      }
-      else {
-        if (! this.observers1) { this.observers1 = []; }
-        if (! this.observers1[pos]) { this.observers1[pos] = []; }
-        this.observers1[pos][legi - this.branchi] = ver;
-      }
-    }
-
-    /*----------------------------------------------------------------
-     * Unsubscribes and removes all leg observers for position,
-     * beginning at start.
-     * Assumes pos === null => start < this.branchi
-     *         pos !== null => start >= this.branchi
-     */
-    private
-    removeLegObservers( start: number, pos: Position ) {
-      if (pos === null) {
-        if (this.observers0) {
-          for (var i = start, l = this.observers0.length; i < l; ++i) {
-            var ver = this.observers0[i]
-            if (ver) {
-              ver.destruct();
-              this.observers0[i] = undefined;
-            }
-          }
-        }
-        if (this.observers1) {
-          for (var i = 0, l = this.observers1.length; i < l; ++i) {
-            var vers1 = this.observers1[i];
-            if (vers1) {
-              for (var j = 0, m = vers1.length; j < m; ++j) {
-                var ver = vers1[j];
-                if (ver) {
-                  ver.destruct();
-                  vers1[j] = undefined;
-                }
-              }
-            }
-          }
-        }
-      }
-      else if (this.observers1) {
-        var vers1 = this.observers1[pos];
-        if (vers1) {
-          for (var j = start - this.branchi, m = vers1.length; j < m; ++j) {
-            var ver = vers1[j];
-            if (ver) {
-              ver.destruct();
-              vers1[j] = undefined;
-            }
-          }
-        }
-      }
-    }
-
-    /*----------------------------------------------------------------
-     * Perform the search, subscribing to any properties encountered.
-     */
-    private
-    followPath( ctx: Context, legi: number, pos: Position ) {
-
-      for (var l = this.legs.length; legi < l && ctx instanceof Context; ++legi) {
+      // Iterate until we finish or we find a reference to observe.
+      // If we find a reference, we create an observer, recurse to
+      //   finish out the rest of the path, and return the observer.
+      for (var l = this.legs.length; legi < l; ++legi) {
         var leg = this.legs[legi];
         // Field access
-        if (typeof leg === 'string') {
-          var propname = '$' + leg;
-          if (propname in ctx) {
-            var prop = ctx[propname];
-            this.addLegObserver( new PropertyObserver( this, prop, legi, pos ), legi, pos );
-            ctx = prop.get();
+        if (typeof leg === 'string' && value !== null) {
+          if (value instanceof Context) {
+            var propname = '$' + leg;
+            if (propname in value) {
+              var prop = value[propname];
+              var pobs = new PropertyObserver( this, prop, legi, pos );
+              pobs.child = this.createObservers( prop.get(), legi + 1, pos );
+              return pobs;
+            }
           }
-          else {
-            ctx = ctx[leg];
-          }
+          value = value[leg]; // continue iteration
         }
         // Array access
-        else if (leg instanceof IndexPattern && ctx instanceof ArrayContext) {
+        else if (leg instanceof IndexPattern &&
+                 (value instanceof ArrayContext || value instanceof Array)) {
           // Constant array access
-          if (leg.scale == 0 || pos !== null) {
+          if (leg.scale == 0 || pos[leg.index] !== undefined) {
             var idx = leg.apply( pos );
-            this.addLegObserver( new ArrayObserver( this, <ArrayContext>ctx, legi, pos ),
-                                 legi, pos                                                );
-            ctx = ctx[idx];
+            if (value instanceof ArrayContext) {
+              var aobs = new ArrayObserver( this, value, legi, pos );
+              aobs.children[idx] = this.createObservers( value[idx], legi + 1, pos );
+              return aobs;
+            }
+            value = value[idx]; // continue iteration
           }
           // Variable array access
           else {
-            this.addLegObserver( new ArrayObserver( this, <ArrayContext>ctx, legi, pos ),
-                                 legi, pos                                                );
-            for (var j = 0, m = (<ArrayContext>ctx).length; j < m; ++j) {
-              if (ctx[j] !== undefined) {
-                var n = leg.inverse( j );
-                if (n !== undefined) {
-                  this.followPath( ctx[j], legi + 1, n );
+            if (value instanceof ArrayContext) {
+              // Note: an array observer for an Array (as opposed to an ArrayContext)
+              //       will not actually observe, but it will manage its children
+              var aobs = new ArrayObserver( this, value, legi, pos );
+              for (var j = 0, m = value.length; j < m; ++j) {
+                if (value[j] !== undefined) {
+                  var n = leg.inverse( pos, j );
+                  if (n !== undefined) {
+                    aobs.children[j] = this.createObservers( value[j], legi + 1, n );
+                  }
+                }
+              }
+              if (leg.slice) {
+                aobs.alsoWatchLength();
+              }
+            }
+            return aobs;
+          }
+        }
+        else {
+          break;
+        }
+      }
+    }
+
+    /*----------------------------------------------------------------
+     * Find first position that (1) has a value, and (2) is a
+     * superposition of lock.  Lock may be empty to allow all
+     * positions.
+     */
+    begin( lock: Position ): Position {
+      return this.beginRec( this.start, 0, lock );
+    }
+
+    private
+    beginRec( value: any, legi: number, lock: Position ): Position {
+      // Undefined means no valid positions
+      if (value === undefined) { return null; }
+
+      // If we reach the end, then the lock indicates a valid position
+      if (legi == this.legs.length) { return lock; }
+
+      // Consider the current leg
+      var leg = this.legs[legi];
+      if (typeof leg === 'string' && value !== null) {
+        // Only one possibility for a field
+        return this.beginRec( value[leg], legi + 1, lock );
+      }
+      else if (leg instanceof IndexPattern &&
+               (value instanceof ArrayContext || value instanceof Array)) {
+        if (leg.slice) {
+          // We need to find the first that works for every element of value
+          return this.multiPosition( value, legi, lock );
+        }
+        else {
+          // Is index variable locked down?
+          if (leg.index in lock) {
+            // Yes:  only one thing we can try
+            var idx = leg.apply( lock );
+            if (idx !== undefined) {
+              return this.beginRec( value[idx], legi + 1, lock );
+            }
+          }
+          else {
+            // No: let's try them all and take the first one that works
+            for (var idx = 0, l = value.length; idx < l; ++idx) {
+              var newlock = leg.inverse( lock, idx );
+              if (newlock !== undefined) {
+                var found = this.beginRec( value[idx], legi + 1, newlock );
+                if (found) {
+                  return found;
                 }
               }
             }
-            break; // we followed everything else recursively
           }
         }
       }
-      if (l == legi && ctx !== undefined) {
-        this.addResult( pos, ctx );
+      // If we make it here, then nothing worked
+      return null;
+    }
+
+    /*----------------------------------------------------------------
+     * Find first position /after/ specified position which is a
+     * subposition of lock.  Lock may be empty to allow all
+     * positions
+     */
+    next( lock: Position, pos: Position ): Position {
+      return this.nextRec( this.start, 0, lock, pos );
+    }
+
+    private
+    nextRec( value: any, legi: number, lock: Position, pos: Position ): Position {
+      // If we run out of values or reach the end, then there's nothing
+      //   more that we can do:  there is no next value
+      if (value === undefined) { return null; }
+      if (legi == this.legs.length) { return null; }
+
+      // Consider the current leg
+      var leg = this.legs[legi];
+      if (typeof leg === 'string' && value !== null) {
+        // A field cannot be changed; we'll have to keep looking
+        return this.nextRec( value[leg], legi + 1, lock, pos );
+      }
+      else if (leg instanceof IndexPattern &&
+               (value instanceof ArrayContext || value instanceof Array)) {
+        if (leg.slice) {
+          // We need to find the next that works for every element of value
+          return this.multiPosition( value, legi, lock, pos );
+        }
+        else {
+          // Figure out which element is currently being used
+          var idx = leg.apply( pos );
+          if (idx === undefined) { return null; } // shouldn't happen --
+                                                  // pos should be a valid position
+          if (leg.index in lock) {
+            // If it's locked, it cannot be changed; we'll have to keep looking
+            return this.nextRec( value[idx], legi + 1, lock, pos );
+          }
+          else {
+            // First see if we can do a next while staying on the current element
+            //   by locking down this index
+            var extLock = u.shallowCopy( lock );
+            extLock[leg.index] = idx;
+            var found = this.nextRec( value[idx], legi + 1, extLock, pos );
+            if (found) { return found; }
+
+            // If that didn't work, try remaining elements to see if we
+            //   can find something
+            var l: number;
+            for (++idx, l = value.length; idx < l; ++idx) {
+              var newpos = leg.inverse( lock, idx );
+              if (newpos !== undefined) {
+                var found = this.beginRec( value[idx], legi + 1, newpos );
+                if (found) { return found; }
+              }
+            }
+          }
+        }
+      }
+      // If we make it here, then nothing worked
+      return null;
+    }
+
+    /*----------------------------------------------------------------
+     * Find the first/next position which (1) produces valid results
+     * for /all/ values, and (2) is a superposition of lock. (If
+     * from is specified, it's next; if not, it's first.)
+     */
+    private
+    multiPosition(
+      values: ArrayContext | Array<any>,
+      legi:   number,
+      lock:   Position,
+      from?:  Position
+    ):        Position {
+
+      var locks: Position[], dir: number;
+      // The position at locks[i] is used to query a position from values[i].
+      // The position returned becomes the lock for the next value.
+      // If dir == 1, then the previous position query worked and we're moving
+      //   ahead to try the next one ==> use begin
+      // If dir == -1, then the previous position query failed and we're backing
+      //   up to try to find a different lock ==> use next
+
+      if (from) {
+        locks = [lock, from];
+        dir = -1;
+      }
+      else {
+        locks = [lock];
+        dir = 1;
+      }
+
+      for (var idx = 0, l = values.length; idx >= 0 && idx < l; idx += dir) {
+        if (dir > 0) {
+          locks[idx + 1] = this.beginRec( values[idx], legi + 1, locks[idx] );
+        }
+        else {
+          locks[idx + 1] = this.nextRec( values[idx], legi + 1, locks[idx], locks[idx + 1] );
+        }
+        dir = locks[idx + 1] === null ? -1 : 1;
+      }
+
+      // Either we made it all the way to the end, or we regressed to the beginning
+      if (idx == l) {
+        return locks[idx];
+      }
+      else {
+        return null;
       }
     }
 
     /*----------------------------------------------------------------
      * Property changed
      */
-    onNextProperty( legi: number, pos: Position ) {
-      this.removeResult( pos );
-      this.removeLegObservers( legi + 1, pos );
-      this.followPath( this.getUpTo( legi, pos ), legi + 1, pos );
+    onNextProperty( obs: PropertyObserver ) {
+      if (obs.child) {
+        obs.child.destruct();
+      }
+      obs.child = this.createObservers(
+        this.getRec( this.start, 0, obs.pos, obs.legi + 1 ),
+        obs.legi + 1,
+        obs.pos
+      );
+      this.sendNext( obs.pos );
     }
 
     /*----------------------------------------------------------------
      * Array changed
      */
-    onNextArray( idx: number, legi: number, pos: Position ) {
-      var update = false;
-      var leg = <IndexPattern>this.legs[legi];
-      // Always constant
-      if (leg.scale == 0) {
-        if (leg.offset === idx) {
-          update = true;
+    onNextArray( obs: ArrayObserver, idx: number ) {
+      var leg = <IndexPattern>this.legs[obs.legi];
+      var newpos = leg.inverse( obs.pos, idx );
+      if (newpos !== undefined) {
+        if (obs.children[idx]) {
+          obs.children[idx].destruct();
         }
-      }
-      // Constant because pos is fixed
-      else if (pos !== null) {
-        if (leg.apply( pos ) === idx) {
-          update = true;
-        }
-      }
-      // Variable
-      else {
-        pos = leg.inverse( idx );
-        update = true;
-      }
-
-      if (update) {
-        this.removeResult( pos );
-        this.removeLegObservers( legi + 1, pos );
-        this.followPath( this.getUpTo( legi, pos ), legi + 1, pos );
+        obs.children[idx] = this.createObservers(
+          this.getRec( this.start, 0, newpos, obs.legi + 1 ),
+          obs.legi + 1,
+          newpos
+        );
+        this.sendNext( newpos );
       }
     }
 
     /*----------------------------------------------------------------
+     * Array size changed (only for slices)
      */
-    forEach( fn: (value: any, pos: Position) => void, thisObj: Object = null ) {
-      if (this.cardinality == 0) {
-        if (this.result !== undefined) {
-          fn.call( thisObj, this.result, null );
-        }
-      }
-      else {
-        var lasti = this.legs.length - 1;
-        var idxpat = <IndexPattern>this.legs[this.branchi - 1];
-        var ctx = <ArrayContext>this.getUpTo( this.branchi - 2, null );
-        if (ctx instanceof ArrayContext) {
-          for (var i = 0, l = ctx.length; i < l; ++i) {
-            if (ctx[i] !== undefined) {
-              var pos = idxpat.inverse( i );
-              if (pos !== null) {
-                var val = this.getUpTo( lasti, pos, ctx[i], this.branchi );
-                if (val) {
-                  fn.call( thisObj, val, pos );
-                }
-              }
-            }
-          }
-        }
-      }
+    onNextArrayLength( obs: ArrayObserver ) {
+      this.sendNext( obs.pos );
     }
 
   }
 
   /*==================================================================
+   * Parse path into legs
    */
 
   export
-  function parse( pathstr: string ): (string|IndexPattern)[] {
+  function parse( pathstr: string ): Leg[] {
     var s = pathstr;
     var nonempty = /\S/;
     var field = /^\s*\.?([a-zA-Z][\w$]*)/;
     var cindex = /^\s*\[\s*(\d+)\s*\]/;
-    var vindex = /^\s*\[\s*(?:(\d+)\s*\*\s*)?([a-zA-Z][\w$]*)\s*(?:([+-])\s*(\d+)\s*)?\]/;
-    var legs: any[] = [];
+    var vindex = /^\s*\[\s*(\d+)?\s*(\*|[a-zA-Z][\w$]*)\s*(?:([+-])\s*(\d+)\s*)?\]/;
+    var legs: Leg[] = [];
+    var temps = 0;
 
     while (nonempty.test( s )) {
       var m : string[];
@@ -462,27 +629,36 @@ module hd.model {
         legs.push( m[1] );
       }
       else if (m = cindex.exec( s )) {
-        legs.push( new IndexPattern( 0, Number( m[1] ) ) );
+        legs.push( new IndexPattern( Number( m[1] ) ) );
       }
       else if (m = vindex.exec( s )) {
-        if (m[2] == indexName) {
-          var scale = 1;
-          var offset = 0;
-          if (m[1]) {
-            scale = Number( m[1] );
-          }
-          if (m[4]) {
-            offset = Number( m[4] );
-            if (m[3] == '-') {
-              offset = -offset;
-            }
-          }
-          legs.push( new IndexPattern( scale, offset ) );
+        var index: string;
+        var slice: boolean;
+        if (m[2] == '*') {
+          index = '#' + temps++;
+          slice = true;
         }
         else {
-          console.error( 'Unknown array index in "' + pathstr + '"' );
-          return null;
+          index = m[2];
+          slice = false;
         }
+
+        var scale = 1;
+        var offset = 0;
+        if (m[1]) {
+          scale = Number( m[1] );
+        }
+        if (m[4]) {
+          offset = Number( m[4] );
+          if (m[3] == '-') {
+            offset = -offset;
+          }
+        }
+        var pat = new IndexPattern( scale, index, offset);
+        if (slice) {
+          pat.slice = true;
+        }
+        legs.push( pat );
       }
       else {
         console.error( 'Unable to parse path "' + pathstr + '"' );
@@ -493,6 +669,32 @@ module hd.model {
     return legs;
   }
 
+  function countDimensions( legs: Leg[] ) {
+    var dimensions = 0;
+    var variables: u.Dictionary<boolean> = {};
+    for (var i = 0, l = legs.length; i < l; ++i) {
+      var leg = legs[i];
+      if (leg instanceof IndexPattern &&
+          ! leg.slice &&
+          ! variables[leg.index]) {
+        ++dimensions;
+        variables[leg.index] = true;
+      }
+    }
+    return dimensions;
+  }
+
+  function countSlices( legs: Leg[] ) {
+    var slices = 0;
+    for (var i = 0, l = legs.length; i < l; ++i) {
+      var leg = legs[i];
+      if (leg instanceof IndexPattern && leg.slice) {
+        ++slices;
+      }
+    }
+    return slices;
+  }
+
   /*==================================================================
    */
   export
@@ -501,11 +703,12 @@ module hd.model {
     constructor( private path: Path ) {
       super();
       path.addObserver( this, this.onPositionChange, null, null );
-      this.set( path.get( null ) );
+      this.set( path.get( {} ) );
     }
 
     onPositionChange() {
-      this.set( this.path.get( null ) );
+      this.set( this.path.get( {} ) );
     }
   }
+
 }

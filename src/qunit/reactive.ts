@@ -105,12 +105,14 @@ module hd.qunit {
     o.addObserver( stabilizer );
     var count = 0;
     stabilizer.addObserver( null,
-      function( n: number ) {
+      function( p: r.Promise<number> ) {
         equal( ++count, 1, "stabilizer only notified once" );
-        equal( n, 10, "stabilizer received correct value" );
-        hd.utility.schedule( 1, function() { start(); } );
+        p.then( function( n: number ) {
+          equal( n, 10, "stabilizer received correct value" );
+          hd.utility.schedule( 1, function() { start(); } );
+        } );
       },
-      function( n: number ) {
+      function( e: any ) {
         ok( false, "stabilizer received error" );
       },
       null

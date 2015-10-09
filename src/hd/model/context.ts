@@ -166,8 +166,7 @@ module hd.model {
   export
   interface NestedSpec {
     loc: string;
-    klass?: ContextClass;
-    spec?: ContextSpec;
+    ctxType?: ContextClass|ContextSpec;
   }
 
   export
@@ -1237,14 +1236,14 @@ module hd.model {
     addNestedContext( ctx: Context, spec: NestedSpec, init: u.Dictionary<any> ) {
       var hd_data = ctx['#hd_data'];
       var nested: Context;
-      if (spec.klass) {
-        nested = new spec.klass();
+      if (typeof spec.ctxType === 'function') {
+        nested = new (<ContextClass>spec.ctxType)();
       }
       else {
         nested = new Context();
-      }
-      if (spec.spec) {
-        Context.construct( nested, spec.spec );
+        if (spec.ctxType) {
+          Context.construct( nested, <ContextSpec>spec.ctxType );
+        }
       }
       hd_data.addStatic( nested );
       ctx[spec.loc] = nested;

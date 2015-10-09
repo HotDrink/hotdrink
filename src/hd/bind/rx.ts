@@ -82,8 +82,8 @@ module hd.bindings {
   }
 
   export
-  function stabilize( time_ms: number, flush?: Object ) {
-    return new r.Stabilizer( time_ms, flush );
+  function stabilize( time_ms: number ) {
+    return new r.Stabilizer( time_ms );
   }
 
   export

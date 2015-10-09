@@ -443,6 +443,7 @@ module hd.reactive {
       // Clean up
       delete this.dependencies;
       this.sendCompleted();
+      delete this.observers;
       u.schedule( DroppedPriority, this.ondropped.sendCompleted, this.ondropped );
     }
 

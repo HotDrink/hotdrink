@@ -37,7 +37,7 @@ module hd.bindings {
             model: target,
             dir: Direction.bi,
             toView: toView,
-            toModel: toModel
+            toModel: concat( toModel, new r.Stabilizer() )
            };
   }
 
@@ -61,7 +61,8 @@ module hd.bindings {
               model: target,
               dir: Direction.bi,
               toView: toView,
-              toModel: concat( new r.ToNumber(), toModel )
+              toModel: concat( concat( new r.ToNumber(), toModel ),
+                               new r.Stabilizer() )
              };
     }
     else {
@@ -71,7 +72,8 @@ module hd.bindings {
               toView: concat( toView, places >= 0 ? new r.NumberToFixed( places )
                                                   : new r.Round( places )
                             ),
-              toModel: concat( [new r.ToNumber(), new r.Round( places )], toModel )
+              toModel: concat( concat( [new r.ToNumber(), new r.Round( places )], toModel ),
+                               new r.Stabilizer() )
              };
     }
   }
@@ -95,7 +97,8 @@ module hd.bindings {
             model: target,
             dir: Direction.bi,
             toView: concat( toView, new r.DateToDateString() ),
-            toModel: concat( new r.ToDate(), toModel )
+            toModel: concat( concat( new r.ToDate(), toModel ),
+                             new r.Stabilizer() )
            };
   }
 

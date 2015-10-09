@@ -78,9 +78,9 @@ module hd.qunit {
     equal( p6.get(), ctx.a.b.k, "shortcut path" );
     strictEqual( p5.get(), undefined, "dangling path" );
     strictEqual( p4.get(), undefined, "dangling path" );
-    ok( (<any>o1.property)['#observers'][0] === o1, "still watching" );
-    ok( (<any>o2.property)['#observers'][1] === o2, "still watching" );
-    ok( (<any>o3.property)['#observers'].length == 0, "done watching" );
+    ok( (<any>o1.property).observers[0] === o1, "still watching" );
+    ok( (<any>o2.property).observers[1] === o2, "still watching" );
+    ok( (<any>o3.property).observers.length == 0, "done watching" );
 
     checkSequence( [p6], [{}] );
     checkSequence( [p4], [] );
@@ -101,7 +101,7 @@ module hd.qunit {
     var o2 = <m.ArrayObserver>o1.child;
     ok( o2 instanceof m.ArrayObserver, "array observer" );
     ok( o2.ctx === ctx1.x, "watching array" );
-    ok( ctx1.x.changes['#observers'][0] === o2, "array being watched" );
+    ok( ctx1.x.changes.observers[0] === o2, "array being watched" );
     var t1 = new ObservableTest( [new Result( E.next, {i: 2} ),
                                   new Result( E.next, {i: 8} ),
                                   new Result( E.next, {i: 5} ),

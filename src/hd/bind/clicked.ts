@@ -5,7 +5,6 @@ module hd.bindings {
   export
   class MouseDown extends r.BasicObservable<any> {
 
-    value: any;
     el: HTMLElement;
 
     constructor( el: HTMLElement ) {
@@ -22,7 +21,6 @@ module hd.bindings {
   export
   class MouseUp extends r.BasicObservable<any> {
 
-    value: any;
     el: HTMLElement;
 
     constructor( el: HTMLElement ) {

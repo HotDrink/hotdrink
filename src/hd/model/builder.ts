@@ -129,12 +129,12 @@ module hd.model {
      * Add a nested context.
      */
     n: (loc: string, klass: {new (): Context}, spec?: ContextSpec) => ContextBuilder;
-    nested( loc: string, klass: {new (): Context}, spec?: ContextSpec ): ContextBuilder {
+    nested( loc: string, ctxType?: ContextSpec ): ContextBuilder {
       this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
 
-      this.target.nesteds.push( {loc: loc, klass: klass, spec: spec} );
+      this.target.nesteds.push( {loc: loc, ctxType: ctxType} );
       this.usedLocs[loc] = true;
 
       return this;
@@ -475,6 +475,7 @@ module hd.model {
   (<any>ContextBuilder).prototype['rs']  = ContextBuilder.prototype.references;
   (<any>ContextBuilder).prototype['c']   = ContextBuilder.prototype.constraint;
   (<any>ContextBuilder).prototype['m']   = ContextBuilder.prototype.method;
+  (<any>ContextBuilder).prototype['cmd'] = ContextBuilder.prototype.command;
   (<any>ContextBuilder).prototype['o']   = ContextBuilder.prototype.output;
   (<any>ContextBuilder).prototype['os']  = ContextBuilder.prototype.outputs;
   (<any>ContextBuilder).prototype['td']  = ContextBuilder.prototype.touchDep;

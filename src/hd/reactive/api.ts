@@ -8,7 +8,6 @@ module hd {
   export var Extension = r.Extension;
   export var liftFunction = r.liftFunction;
 
-
   /*==================================================================
    * Enablement functions
    */

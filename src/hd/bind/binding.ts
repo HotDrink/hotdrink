@@ -84,9 +84,7 @@ module hd.bindings {
   export
   function isObserver( t: Target ): boolean {
     return (typeof t === 'object' &&
-            typeof t.onNext === 'function' &&
-            typeof t.onError === 'function' &&
-            typeof t.onCompleted === 'function');
+            typeof t.onNext === 'function');
   }
 
   // Make sure object is observable
@@ -102,8 +100,6 @@ module hd.bindings {
   function isExtension( t: Target ): boolean {
     return (typeof t === 'object' &&
             typeof t.onNext === 'function' &&
-            typeof t.onError === 'function' &&
-            typeof t.onCompleted === 'function' &&
             typeof t.addObserver === 'function' &&
             typeof t.removeObserver === 'function');
   }

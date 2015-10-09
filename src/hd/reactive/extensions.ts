@@ -424,10 +424,13 @@ module hd.reactive {
    */
   enum StabilizerState { None, Next, Error };
 
-  export class Stabilizer<T> extends Extension<T, T> {
+  export class Stabilizer<T> extends Extension<T, Promise<T>> {
 
     // What event we are waiting on
     private state: StabilizerState = StabilizerState.None;
+
+    // Promise for result
+    private promise: Promise<T>;
 
     // The argument for the event we are waiting on
     private arg: any;
@@ -438,15 +441,12 @@ module hd.reactive {
     // How many milliseconds to wait
     private time: number;
 
-    private flush: Object;
-
     /*----------------------------------------------------------------
      * Initialize
      */
-    constructor( time_ms = 400, flush?: Object ) {
+    constructor( time_ms = 400 ) {
       super();
       this.time = time_ms;
-      this.flush = flush;
 
       // Make personalized version of this callback which
       //   always invokes on this object
@@ -458,20 +458,17 @@ module hd.reactive {
      * this one.
      */
     onNext( value: T ) {
-      if (this.flush !== undefined && value === this.flush) {
-        if (this.task) {
-          clearTimeout( this.task );
-          this.onTimeout();
-        }
+      if (! this.promise) {
+        this.promise = new Promise<T>();
+        this.sendNext( this.promise );
       }
-      else {
-        this.state = StabilizerState.Next;
-        this.arg = value;
-        if (this.task) {
-          clearTimeout( this.task );
-        }
-        this.task = setTimeout( this.onTimeout, this.time );
+
+      this.state = StabilizerState.Next;
+      this.arg = value;
+      if (this.task) {
+        clearTimeout( this.task );
       }
+      this.task = setTimeout( this.onTimeout, this.time );
     }
 
     /*----------------------------------------------------------------
@@ -479,6 +476,11 @@ module hd.reactive {
      * this one.
      */
     onError( error: any ) {
+      if (! this.promise) {
+        this.promise = new Promise<T>();
+        this.sendNext( this.promise );
+      }
+
       this.state = StabilizerState.Error;
       this.arg = error;
       if (this.task) {
@@ -496,7 +498,6 @@ module hd.reactive {
         clearTimeout( this.task );
         this.onTimeout();
       }
-      this.sendCompleted();
     }
 
     /*----------------------------------------------------------------
@@ -504,12 +505,16 @@ module hd.reactive {
      */
     onTimeout() {
       if (this.state == StabilizerState.Next) {
-        this.sendNext( this.arg );
+        this.promise.resolve( this.arg );
       }
       else if (this.state == StabilizerState.Error) {
-        this.sendError( this.arg );
+        this.promise.reject( this.arg );
+      }
+      else {
+        this.promise.reject( 'Unknown error' );
       }
       this.state = StabilizerState.None;
+      this.promise = null;
       this.task = null;
     }
   }

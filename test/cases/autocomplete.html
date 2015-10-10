@@ -52,7 +52,7 @@
        * On document ready
        */
       $(function() {
-        new AutoComplete( 'nohd' );
+        autocomplete( document.getElementById( 'nohd' ) );
 
         context = new hd.ContextBuilder()
             .nested( 'ac', HdAutoComplete )

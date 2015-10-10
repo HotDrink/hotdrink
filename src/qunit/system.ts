@@ -657,7 +657,7 @@ module hd.qunit {
   } );
 
   asyncTest( "set commands", function() {
-    expect( 12 );
+    expect( 9 );
 
     var ctx: any = new m.ContextBuilder()
           .variables( "x, y, z", {x: 3, y: 5} )
@@ -673,20 +673,18 @@ module hd.qunit {
     checkVariables( ctx, {x: 3, y: 5, z: 8}, "1" );
 
     ctx.x.commandSet( 4 );
-    pm.performCommands();
     checkVariables( ctx, {x: 4, y: 5, z: 9}, "2" );
 
     ctx.y.commandSet( 3 );
     ctx.z.commandSet( 10 );
-    checkVariables( ctx, {x: 4, y: 5, z: 9}, "2 (again)" );
-
-    pm.performCommands();
     checkVariables( ctx, {x: 7, y: 3, z: 10}, "4" );
 
     u.schedule( 3, start );
   } );
 
   asyncTest( "command queue", function() {
+    expect( 24 );
+
     var spec = new m.ContextBuilder()
           .variables( "a, x, y, z", {a: 12, x: 3, y: 5} )
           .constraint( "x, y, z" )
@@ -722,10 +720,6 @@ module hd.qunit {
     ctx3.a.commandSet( 9 );
 
     ctx3.cmd.activate();
-
-    checkVariables( ctx1, {a: 12, x: 3, y: 5, z: 8}, "1.1 (again)" );
-    checkVariables( ctx2, {a: 12, x: 3, y: 5, z: 8}, "1.2 (again)" );
-    checkVariables( ctx3, {a: 12, x: 3, y: 5, z: 8}, "1.3 (again)" );
 
     u.schedule( 3, function() {
       checkVariables( ctx1, {a: 12, x: 6, y: 6, z: 12}, "2.1" );

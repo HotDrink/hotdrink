@@ -426,17 +426,8 @@ module hd.reactive {
 
   export class Stabilizer<T> extends Extension<T, Promise<T>> {
 
-    // What event we are waiting on
-    private state: StabilizerState = StabilizerState.None;
-
     // Promise for result
-    private promise: Promise<T>;
-
-    // The argument for the event we are waiting on
-    private arg: any;
-
-    // The timer id for the event we are waiting on
-    private task: number = null;
+    private promise: AccumulatingPromise<T>;
 
     // How many milliseconds to wait
     private time: number;
@@ -447,10 +438,6 @@ module hd.reactive {
     constructor( time_ms = 400 ) {
       super();
       this.time = time_ms;
-
-      // Make personalized version of this callback which
-      //   always invokes on this object
-      this.onTimeout = this.onTimeout.bind( this );
     }
 
     /*----------------------------------------------------------------
@@ -458,17 +445,13 @@ module hd.reactive {
      * this one.
      */
     onNext( value: T ) {
-      if (! this.promise) {
-        this.promise = new Promise<T>();
+      if (! this.promise || this.promise.isSettled()) {
+        this.promise = new AccumulatingPromise<T>();
+        this.promise.setDelay( this.time );
         this.sendNext( this.promise );
       }
 
-      this.state = StabilizerState.Next;
-      this.arg = value;
-      if (this.task) {
-        clearTimeout( this.task );
-      }
-      this.task = setTimeout( this.onTimeout, this.time );
+      this.promise.updateResolve( value );
     }
 
     /*----------------------------------------------------------------
@@ -476,17 +459,13 @@ module hd.reactive {
      * this one.
      */
     onError( error: any ) {
-      if (! this.promise) {
-        this.promise = new Promise<T>();
+      if (! this.promise || this.promise.isSettled()) {
+        this.promise = new AccumulatingPromise<T>();
+        this.promise.setDelay( this.time );
         this.sendNext( this.promise );
       }
 
-      this.state = StabilizerState.Error;
-      this.arg = error;
-      if (this.task) {
-        clearTimeout( this.task );
-      }
-      this.task = setTimeout( this.onTimeout, this.time );
+      this.promise.updateReject( error );
     }
 
     /*----------------------------------------------------------------
@@ -494,28 +473,10 @@ module hd.reactive {
      * "completed" event.
      */
     onCompleted() {
-      if (this.task) {
-        clearTimeout( this.task );
-        this.onTimeout();
+      if (this.promise) {
+        this.promise.settle();
+        this.promise = null;
       }
-    }
-
-    /*----------------------------------------------------------------
-     * Done waiting - fire the event being waited on
-     */
-    onTimeout() {
-      if (this.state == StabilizerState.Next) {
-        this.promise.resolve( this.arg );
-      }
-      else if (this.state == StabilizerState.Error) {
-        this.promise.reject( this.arg );
-      }
-      else {
-        this.promise.reject( 'Unknown error' );
-      }
-      this.state = StabilizerState.None;
-      this.promise = null;
-      this.task = null;
     }
   }
 

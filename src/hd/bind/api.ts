@@ -2,10 +2,12 @@ module hd {
 
   import b = hd.bindings;
 
+
   // Export
   export var bind = b.bind;
   export var unbind = b.unbind;
   export var performDeclaredBindings = b.performDeclaredBindings;
+  export var Direction = b.Direction;
   export var isObservable = b.isObservable;
   export var isObserver = b.isObserver;
   export var isExtension = b.isExtension;

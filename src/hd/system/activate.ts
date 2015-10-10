@@ -287,7 +287,7 @@ module hd.system {
         result = op.fn.apply( null, params );
       }
       else {
-        result = constantFunction( op.result, op.outputs.length );
+        result = op.result;
       }
     }
     catch (e) {

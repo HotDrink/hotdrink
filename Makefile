@@ -22,7 +22,7 @@ utility_LOC     := hd/
 utility_UNITS   := adt helpers console schedule api
 
 reactive_LOC    := hd/
-reactive_UNITS  := observable property extensions promise ladder function logger api
+reactive_UNITS  := observable property extensions promise accum ladder function logger api
 reactive_DEPS   := utility
 
 graph_LOC       := hd/

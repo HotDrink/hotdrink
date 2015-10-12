@@ -79,8 +79,8 @@
         context.drag = p;
       }
 
-      function stopDragging( p ) {
-        if (context.drag === p) {
+      function stopDragging() {
+        if (context.drag) {
           context.drag = null;
         }
       }
@@ -91,7 +91,7 @@
     <div class="puck"
          data-bind="hd.text( p.txt ), hd.position( p.pos, hd.offset( -30, -30 ) ),
                     hd.mousedown( hd.fn( startDragging, p ) ),
-                    hd.mouseup( hd.fn( stopDragging, p ) ),
+                    hd.mouseup( hd.fn( stopDragging ) ),
                     hd.dblclick( hd.fn( addPoint, idx ) )"><div>
   </body>
 </html>

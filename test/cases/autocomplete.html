@@ -31,6 +31,7 @@
           border-color: black;
           border-style: solid none;
           border-width: 1px;
+          cursor: pointer;
       }
       .menu td:first-child {
           border-top-style: none;
@@ -41,7 +42,14 @@
       .menu td.on {
           background-color: #026;
           color: #fff;
-          cursor: pointer;
+      }
+      .menu.disabled td {
+          background-color: #ddd;
+          cursor: default;
+      }
+      .menu.disabled td.on {
+          background-color: #999;
+          color: #ddd;
       }
     </style>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>

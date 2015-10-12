@@ -39,7 +39,8 @@ function autocomplete( input ) {
     }
   ).keyup(
     function( e ) {
-      if (e.keyCode != 38 && e.keyCode != 40 && e.keyCode != 13) {
+      if (e.keyCode != 37 && e.keyCode != 38 &&
+          e.keyCode != 39 && e.keyCode != 40 && e.keyCode != 13) {
         if (timeout) {
           clearTimeout( timeout );
         }
@@ -101,6 +102,8 @@ function autocomplete( input ) {
 
       td.appendChild( document.createTextNode( menu[i] ) );
     }
+
+    setIndex( 0 );
   }
 
   function clearMenu() {
@@ -111,10 +114,19 @@ function autocomplete( input ) {
 
   function setIndex( to ) {
     index = to;
-    value = menu[index];
+    if (index >= 0 && index < menu.length) {
+      value = menu[index];
+    }
     for (var i = 0, l = table.rows.length; i < l; ++i) {
       if (i == index) {
-        table.rows[i].firstElementChild.classList.add( 'on' );
+        var td = table.rows[i].firstElementChild;
+        td.classList.add( 'on' );
+        if (td.scrollIntoViewIfNeeded) {
+          td.scrollIntoViewIfNeeded();
+        }
+        else {
+          td.scrollIntoView();
+        }
       }
       else {
         table.rows[i].firstElementChild.classList.remove( 'on' );
@@ -124,20 +136,13 @@ function autocomplete( input ) {
 
   function incIndex( howmany ) {
     var to = index + howmany;
-    if (to < 0) {
-      to = 0;
+    if (to < -1) {
+      to = -1;
     }
-    if (to >= menu.length) {
-      to = menu.length - 1;
+    if (to > menu.length) {
+      to = menu.length;
     }
     setIndex( to );
-    var td = table.rows[index].cells[0];
-    if (td.scrollIntoViewIfNeeded) {
-      td.scrollIntoViewIfNeeded();
-    }
-    else {
-      td.scrollIntoView();
-    }
   }
 }
 
@@ -203,7 +208,8 @@ $(function() {
       .c( 'query => menu, index' )
       .m( '!value, menu -> index',
           function( value, menu ) {
-            return menu.indexOf( value );
+            var i = menu.indexOf( value );
+            return i < 0 ? 0 : i;
           } )
 
       // Increment index
@@ -238,9 +244,11 @@ $(function() {
 
 function AutoCompleteMenu( input ) {
   var table = document.getElementById( input.id + '-menu');
+  var menuVisible = false;
+  var menuEnabled = true;
 
   // Extra logic: hide menu when input finalized
-    input.addEventListener( 'change', function( e ) {
+  input.addEventListener( 'change', function( e ) {
     menuVisible = false;
     while (table.rows.length > 0) {
       table.deleteRow( 0 );
@@ -250,7 +258,6 @@ function AutoCompleteMenu( input ) {
   // Observables for increment and decrement command
   var inc = this.inc = new hd.BasicObservable();
   var dec = this.dec = new hd.BasicObservable();
-  var menuVisible = false;
 
   input.addEventListener( 'keydown', function( e ) {
     if (menuVisible) {
@@ -264,6 +271,9 @@ function AutoCompleteMenu( input ) {
       }
     }
   } );
+  input.addEventListener( 'input', function() {
+    menuVisible = true;
+  } );
 
   // Observable for mouse over row
   var hover = new hd.BasicObservable();
@@ -273,10 +283,24 @@ function AutoCompleteMenu( input ) {
     hover.sendNext( -1 );
   } );
 
+  this.disabled = {
+    onNext: function( disable ) {
+      if (disable == menuEnabled) {
+        if (disable) {
+          table.classList.add( 'disabled' );
+        }
+        else {
+          table.classList.remove( 'disabled' );
+        }
+        menuEnabled = !disable;
+      }
+    }
+  }
+
   // Observer for menu items
   this.items = {
     onNext: function( items ) {
-      menuVisible = true;
+      if (! menuVisible) { return }
       while (table.rows.length > 0) {
         table.deleteRow( 0 );
       }
@@ -284,10 +308,14 @@ function AutoCompleteMenu( input ) {
         var tr = table.insertRow( i );
         var td = tr.insertCell( 0 );
         td.addEventListener( 'mouseenter', function() {
-          hover.sendNext( this.parentElement.rowIndex );
+          if (menuEnabled) {
+            hover.sendNext( this.parentElement.rowIndex );
+          }
         } );
         td.addEventListener( 'click', function() {
-          input.dispatchEvent( new Event( 'change', {bubbles: true, cancelable: false} ) );
+          if (menuEnabled) {
+            input.dispatchEvent( new Event( 'change', {bubbles: true, cancelable: false} ) );
+          }
         } )
         td.appendChild( document.createTextNode( items[i] ) );
       }
@@ -337,6 +365,11 @@ function hdAutoComplete( input, ac ) {
     // Menu items
     {view:  menu.items,
      model: ac.menu,
+     dir:   hd.Direction.m2v},
+
+    // Menu disabled while pending
+    {view:  menu.disabled,
+     model: ac.menu.pending,
      dir:   hd.Direction.m2v},
 
     // Index to highlight

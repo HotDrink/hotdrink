@@ -507,4 +507,5 @@ module hd.qunit {
 
     checkSequence( [p1], [{i: 0, k: 0}, {i: 0, k: 2}, {i: 1, k: 1}, {i: 2, k: 1}] );
   } );
+
 }

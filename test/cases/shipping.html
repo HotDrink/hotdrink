@@ -13,7 +13,7 @@
       fieldset input[type="text"] { font-size: 80% }
       td.padr { padding-right: 2em; }
       small { font-size: 70% }
-      input[type="button"] { display: block; }
+      button { display: block; margin: 1em 0; }
     </style>
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
@@ -21,13 +21,25 @@
       var q = [];
 
       function delay( v, n ) {
-        var p = new hd.Promise();
+        var p;
+        if (Array.isArray( v )) {
+          p = v.map( function() { return new hd.Promise(); } );
+        }
+        else {
+          p = new hd.Promise();
+        }
 
-        var b = document.createElement( 'input' );
-        b.type = 'button';
-        b.value = n;
+        var b = document.createElement( 'button' );
+        b.innerHTML = n;
         b.onclick = function() {
-          p.resolve( v );
+          if (Array.isArray( v )) {
+            for (var i = 0, l = v.length; i < l; ++i) {
+              p[i].resolve( v[i] );
+            }
+          }
+          else {
+            p.resolve( v );
+          }
           document.getElementById( 'buttons' ).removeChild( b );
         }
         var bs= document.getElementById( 'buttons' ).appendChild( b );
@@ -62,7 +74,7 @@
             default:  perkm = 0.1;
                       break;
             }
-            return [delay(distance*perkm, 'target'), delay(distance*perkm, 'price')];
+            return delay( [distance*perkm, distance*perkm], 'distance, class &rarr; target, price' );
           } )
           .m( 'target, klass -> distance, price', function( target, klass ) {
             var perkm;
@@ -79,7 +91,7 @@
                       break;
             }
             var distance = Math.floor( target/perkm );
-            return [delay(distance, 'distance'), delay(distance*perkm, 'price')];
+            return delay( [distance, distance*perkm], 'target, class &rarr; distance, price' );
           } )
           .m( 'target, distance -> klass, price', function( target, distance ) {
             var perkm = target / distance;
@@ -105,7 +117,7 @@
               klass = 'A';
             }
 
-            return [delay(klass, 'class'), delay(distance*perkm, 'price')];
+            return delay( [klass, distance*perkm], 'target, distance &rarr; class, price' );
           } )
 
           .c( 'volume, weight, klass' )
@@ -119,7 +131,7 @@
             else if (weight <= 25)   klass = 'C';
             else if (weight <= 50)   klass = 'D';
             else                     klass = 'E';
-            return delay( klass, 'class' );
+            return delay( klass, 'volume, weight &rarr; class' );
           } )
           .m( 'klass -> volume, weight', function( klass ) {
             var weight;
@@ -130,7 +142,7 @@
             case 'D': weight = 50;  break;
             default:  weight = 100; break;
             }
-            return [delay(weight * 0.025, 'volume'), delay(weight, 'weight')];
+            return delay( [weight * 0.025, weight], 'class &rarr; volume, weight' );
           } )
 
       .eq( 'width*height*depth == volume*1000000' )

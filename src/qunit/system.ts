@@ -915,4 +915,28 @@ module hd.qunit {
 
     u.schedule( 4, start );
   } );
+
+  asyncTest( "array params", function() {
+
+    var ctx: any = new hd.ContextBuilder()
+          .vs( 'a, b, c, d, e', {a: 8, d: 4} )
+
+          .c( 'a, b, c' )
+          .m( 'b, c -> a', function( b: number, c: number ) {
+            return b + c;
+          } )
+          .m( 'a -> b, c', function( a: number ) {
+            return [a/2, a/2];
+          } )
+
+          .context();
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( ctx );
+    pm.update();
+
+    checkVariables( ctx, {a: 8, b: 4, c: 4}, "_1" );
+
+    u.schedule( 4, start );
+  } );
 }

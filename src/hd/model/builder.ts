@@ -95,6 +95,7 @@ module hd.model {
      * This convenience method allows the creation of a bunch of
      * variables at once.
      */
+    vs: ( a: string|u.Dictionary<any>, b?: u.Dictionary<any> ) => ContextBuilder;
     variables( varorder: string, vardefs?: u.Dictionary<any> ): ContextBuilder;
     variables( vardefs: u.Dictionary<any> ): ContextBuilder;
     variables() {

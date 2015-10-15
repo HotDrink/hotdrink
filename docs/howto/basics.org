@@ -12,11 +12,11 @@ that property model operates and interacts with the rest of your web
 application.  We feel that you should not have to use a library without
 understanding exactly how it is working and what it is doing for you.
 Therefore, in this document we set aside the shortcuts and convenience
-functions of HotDrink so that it will be clear to see exactly how a property
-model works.  Then we slowly lay the groundwork for the shortcuts, making it
-clear what they are doing for you.  After reading this document, you should
-have a foundation for understanding what HotDrink is doing without feeling
-like it is \ldquo{}magic\rdquo.
+functions of HotDrink so that it will be clear exactly how a property model
+works.  Then we slowly lay the groundwork for the shortcuts, making it clear
+what they are doing for you.  After reading this document, you should have a
+foundation for understanding what HotDrink is doing without feeling like it is
+\ldquo{}magic\rdquo.
 
 * Creating a constraint system
 
@@ -36,8 +36,9 @@ is a comma-delimited list of email addresses.  The value of /filter/ is any
 string.  The value of /result/ is the comma-delimited list of just those
 addresses in /emails/ which contain /filter/ as a substring.
 
-Click the "Get Result" button to see the value of the /result/ variable.  You
-can use the "Set" buttons to set the values of
+You can use the "Set" buttons to set the values of the /emails/ and /filter/
+variables.  Then click the "Get Result" button to see the value of the
+/result/ variable.
 
 #+HTML: <div class="results">
 #+INCLUDE: tangle/barebone.html html
@@ -57,10 +58,9 @@ defines the View-Model, and the JavaScript that binds the View to the
 View-Model.  In the remainder of this section we will reproduce and examine
 snippets of this code.
 
-Note that, in this example, we deliberately avoid using any of HotDrink's
-binding mechanisms and write our own interactions with the property model so
-that they will be explicit.  This makes the example a little awkward, but also
-makes clear what the property model is doing.
+Note that, in this example, we deliberately avoid using any sort of binding
+mechanisms and interact directly with the property model.  This makes the
+example a little awkward, but also makes clear how the property model works.
 
 #+CAPTION: /View/ (show/hide)
 #+BEGIN_SRC html -n :exports code :tangle tangle/barebone.html :padline no
@@ -71,12 +71,10 @@ makes clear what the property model is doing.
   </style>
   <tr>
     <th>Emails:</th>
-    <td><span id="emailsSpan"></span></td>
     <td><input type="button" value="Set" onclick="setEmails()"/></td>
   </tr>
   <tr>
     <th>Filter:</th>
-    <td><span id="filterSpan"></span></td>
     <td><input type="button" value="Set" onclick="setFilter()"/></td>
   </tr>
 </table>
@@ -105,11 +103,6 @@ pm.addComponent( context );
 
 #+CAPTION: /Binding/ (show/hide)
 #+BEGIN_SRC js -n :exports code :tangle tangle/barebone.js :padline no :noweb yes
-// Initialize web page when it loads
-window.addEventListener( 'load', function() {
-  setSpan( 'emailsSpan', context.emails.get() );
-  setSpan( 'filterSpan', context.filter.get() );
-} )
 
 // Allow user to set emails variable
 <<setemails>>
@@ -120,19 +113,11 @@ setFilter = function setFilter() {
   if (filter !== null) {
     context.filter.set( filter );
     pm.update();
-    setSpan( 'filterSpan', filter );
   }
 }
 
 // Present result to user
 <<getResult>>
-
-// Helper function to update the contents of a <span> tag
-function setSpan( id, value ) {
-  var span = document.getElementById( id );
-  while (span.lastChild) { span.removeChild( span.lastChild ); }
-  span.appendChild( document.createTextNode( value ) );
-}
 #+END_SRC
 
 ** Working with the context builder
@@ -149,7 +134,7 @@ Generally, building a context involves the following steps.
 
 Just as in a programming language, values in HotDrink are stored in variables.
 Note, however, that HotDrink variables are /not/ the same as JavaScript
-variables---HotDrink variables are actually JavaScript objects.  Variables are
+variables; HotDrink variables are actually JavaScript objects.  Variables are
 created with the model builder using the ~variable~ member function and then
 stored in the model.  To create a variable you must specify a name; you may
 optionally specify an initial value.  As with JavaScript variables,
@@ -214,13 +199,14 @@ than one method per constraint; we'll discuss this further in later examples.
 
 #+NAME: emailmth
 #+BEGIN_SRC js
-    .method( 'emails, filter -> result', function( emails, filter ) {
-      var words = emails.trim().split( /\s*,\s*/ );
-      var filteredWords = words.filter( function( word ) {
-        return word.indexOf( filter ) > -1;
-      } );
-      return filteredWords.join( ', ' );
-    } )
+    .method( 'emails, filter -> result',
+             function( emails, filter ) {
+               var words = emails.trim().split( /\s*,\s*/ );
+               var filteredWords = words.filter( function( word ) {
+                 return word.indexOf( filter ) > -1;
+               } );
+               return filteredWords.join( ', ' );
+             } )
 #+END_SRC
 
 Note that in this example we provide an anonymous function as our method, but
@@ -239,8 +225,8 @@ examples.
 ** Interacting with variables
 
 Variables can be accessed via the context; for example, if your context is
-held in a variable named ~context~, then the variable ~emails~ is accessed as
-~context.emails~.  The value of variables can be retrieved using the ~get~
+stored in a variable named ~context~, then the variable ~emails~ is accessed
+as ~context.emails~.  The value of variables can be retrieved using the ~get~
 member function and modified using the variable's ~set~ member function.  If a
 variable is registered with a property model (i.e., the variable is in a
 context that has been added to the constraint system), then changes to the
@@ -263,9 +249,7 @@ The following function is called every time the user clicks the "Set" button
 for the email address list.  The function calls ~context.emails.get()~ to
 retrieve the current value of the ~emails~ variable; this is used to
 initialize the prompt.  Once the user enters a new value, it uses
-~context.emails.set()~ to store it in the variable.  It also updates the web
-page using our custom ~setSpan~ function.  (Check the full source to see the
-code for ~setSpan~.)
+~context.emails.set()~ to store it in the variable.
 
 #+NAME: setemails
 #+BEGIN_SRC js
@@ -274,18 +258,16 @@ setEmails = function setEmails() {
   if (emails !== null) {
     context.emails.set( emails );
     pm.update();
-    setSpan( 'emailsSpan', emails );
   }
 }
 #+END_SRC
 
-This code provides a very rudimentary sort of binding: updating the web page
-so that it reflects the value of a variable.  We'll show you a better solution
-to binding in the next section.
+Note that in the next section we will introduce binding, which is a better way
+to set and get variable values.
 
-** Updating the constraint system
+** Updating the property model
 
-To /update/ the constraint system means to respond to changes that have been
+To /update/ the property model means to respond to changes that have been
 made---such as added constraints or modified variables---by enforcing any
 constraints which may no longer be satisfied.  The constraint system notices
 when changes occur, and remembers the changes.  However, the constraint system
@@ -299,36 +281,36 @@ property model, as well as after setting a variable.
 pm.update();
 #+END_SRC
 
-If you would prefer, you can have the system automatically /schedule/ an
-update after it notices changes---meaning that it will set an immediate
-timer event (using ~window.setTimeout~) that will cause the system to update.
-HotDrink will only schedule one update at a time; thus, you can make several
-changes to the property model, and they will all be processed by a single
-timer event.
+A more common way of updating the property model is by executing a /command/.
+We will discuss commands a little later.
 
-In fact, scheduling updates is the default behavior for a property model.
-Thus, in the example above, we could remove all calls to ~pm.update()~ and the
-example would continue to behave exactly the same: it would schedule calls to
-~update~ after every change.  Note that calling ~update~ when no update is
-needed has no effect; we do not need to worry about calling it too often.
+* Simplified binding
 
-Scheduling offers convenience at the price of loosing precise control over
-when property model updates happen.  If you would like to turn off this
-behavior, simply set the property model's ~scheduleUpdateOnChange~ property to
-~false~, as shown below.
+The previous example illustrates the simplest possible interaction with the
+property model: getting and setting a variable's value, and updating the
+property model.  However, most commonly we do not get and set variable value's
+directly; instead we rely on /bindings/ to get and set them for us.  In this
+example, we'll write our own very simple bindings to illustrate how this
+process works.
 
-#+BEGIN_SRC js
-pm.scheduleUpdateOnChange = false;
-#+END_SRC
-
-* Binding to variables
 
 The previous example interacted with the property model using only the ~get~
 and ~set~ functions for variables.  In actuality, this is not the best way to
-interact with variables of the property model.  Variables have a second
-interface which is designed specifically for /binding/ variables to the View.
-In this example, we write our own simple binders so that the web page will
-automatically reflect the View-Model.
+interact with variables of the property model because the property model
+updates /asynchronously/.  This means that calling ~pm.update()~ does not
+actually force the property model to update, but rather requests that it
+update itself at the next available time.  Thus, you cannot be sure when a
+variable's value will be updated.
+
+A better way to interact with variables of the property model is by letting
+them tell /you/ when they have updated.  A variable has an event that is
+triggered every time its value changes.  We can register a callback function
+for this event so that we update the web page every time the variable changes.
+Similarly, most HTML input elements have an event that is triggered every time
+their value changes.  We can register a callback function for this event so
+that every time its.  Together, these callback functions represent a
+/binding/---a connection between an element of the View and an element of the
+View-Model.
 
 ** The example
 
@@ -350,9 +332,9 @@ automatically.
 
 *Source Code*
 
-In this example we use HotDrink's binding interfaces, but write our own
-binding objects.  In fact, HotDrink comes with several built-in binding
-objects; however, writing our own makes it clear what is happening.
+Again, in this example we forgo using HotDrink's binding mechanisms and write
+our own binding mechanisms instead.  The purpose of this is to illustrate the
+work involved in binding.
 
 Note that the View-Model of this example is identical to the previous example;
 only the View and Binding have changed.
@@ -388,13 +370,14 @@ var context = new hd.ContextBuilder()
     .v( 'result' )
 
     .c( 'emails, filter, result' )
-    .m( 'emails, filter -> result', function( emails, filter ) {
-      var words = emails.trim().split( /\s*,\s*/ );
-      var filteredWords = words.filter( function( word ) {
-        return word.indexOf( filter ) > -1;
-      } );
-      return filteredWords.join( ', ' );
-    } )
+    .m( 'emails, filter -> result',
+        function( emails, filter ) {
+          var words = emails.trim().split( /\s*,\s*/ );
+          var filteredWords = words.filter( function( word ) {
+            return word.indexOf( filter ) > -1;
+          } );
+          return filteredWords.join( ', ' );
+        } )
 
     .context();
 
@@ -408,148 +391,125 @@ pm.addComponent( context );
 // To be done when the document has loaded...
 window.addEventListener( 'load', function() {
 
-<<emailobservable>>
-
-  // Initialize filter text box with variable value
-  var filterEdit = document.getElementById( 'filterEdit' );
-  filterEdit.value = context.filter.get();
-
-  // Make an observable for every time the text box is edited
-  var filterObservable = new hd.BasicObservable();
-  filterEdit.addEventListener( 'input', function() {
-    filterObservable.sendNext( filterEdit.value );
-  } );
-
-  // Subscribe the variable to the observable
-  filterObservable.addObserver( context.filter );
-
-<<resultobserver>>
-
-<<addobserver>>
-} )
-
-// Helper function to update the contents of a <span> tag
-function setSpan( id, value ) {
-  var span = document.getElementById( id );
-  while (span.lastChild) { span.removeChild( span.lastChild ); }
-  span.appendChild( document.createTextNode( value ) );
-}
-#+END_SRC
-
-
-** The Observer pattern
-
-You may have noticed that, in the previous example, we waited for the user to
-click the \ldquo{}Get Result\rdquo button before reading the value of the /result/
-variable.  That was done intentionally.  The reason is that property models
-execute /asynchronously/.  This means that, when you update the property model
-by calling ~update~, it does not immediately do all the work of solving the
-constraint system.  Instead, it does some of the work right away, and then
-/schedules/ the rest to be completed later.  The ability of a property model
-to run asynchronously means it cooperates well with other asynchronous
-programming techniques, such as Ajax calls and web workers.  However, it also
-means that, had we tried to read the value of ~result~ immediately after
-calling ~update~, we would have read the old value of ~result~.
-
-Rather than asking the ~result~ variable for its value, the correct approach
-is to ask it to tell us whenever a new value becomes available.  Typically we
-might do this by registering a callback function to be executed as soon as the
-value was ready.  This technique is sometimes known as the /observer pattern/
---- the observer provides a function, and the object being observed calls the
-function whenever an event occurs.  In HotDrink, we use a variation of the
-observer pattern inspired by Microsoft's [[https://rx.codeplex.com/][reactive extensions]].  In this
-pattern, an observer has three associated callbacks: one to be called for
-normal event values, one for erroneous event values, and one without a value
-indicating that no more events will occur.  Thus, in HotDrink, an /observer/
-is any object which has the following three properties:
-
-- ~onNext( value )~ :: function called on normal event; takes value associated
-     with the event
-
-- ~onError( error )~ :: function called when error occurs; takes value
-     associated with the error
-
-- ~onCompleted()~ :: function called when no more events can occur
-
-It does not matter what type of object it is, nor what other properties it
-has; only that it has these three properties.  Here's an example of an
-observer for the result variable.  Whenever the variable takes a new value, it
-will call ~onNext~, which will update the web page with the new value.
-
-#+NAME: resultobserver
-#+BEGIN_SRC js
-  // An observer for the result variable
-  var resultObserver = {
-    onNext: function( v ) { setSpan( 'resultSpan', v ) },
-    onError: function( e ) { },
-    onCompleted: function() { }
-  };
-#+END_SRC
-
-** The Observable pattern
-
-The counterpart to an observer is an /observable/.  An observable is an object
-which publishes values an observer would want to know about.  An observer may
-/subscribe/ to an observable, in which case the observable will notify it of
-each new value by calling the observer's ~onNext~ callback.  In HotDrink, an
-observable is any object which has the following two properties:
-
-- ~addObserver( observer )~ :: Subscribe the observer to the observable so
-     that it will receive notifications
-
-- ~removeObserver( observer )~ :: Unsubsribe the observer so that it will no
-     longer receive notifiactions.
-
-As you have probably guessed, variables of the property model are observable.
-Thus, we may subscribe our observer to the result variable like so:
-
-#+NAME: addobserver
-#+BEGIN_SRC js
-  // Subscribe the observer to the variable
-  context.result.addObserver( resultObserver );
-#+END_SRC
-
-Now, as soon as the property model updates the result variable, our callback
-will be executed and the web page will be updated.
-
-** The ~BasicObservable~ type
-
-Variables of the property model are not only observable, they are observers as
-well.  When a variable observes some other observable, every value produced by
-that observable is treated as a ~set~ of the variable.  (In fact, a variable's
-~onNext~ and ~set~ functions do the exact same thing.)  Thus, if we want
-changes to a text box to be reflected in a variable of the property model, we
-can create an observable that represents the value of the text box.
-
-Creating an observable object is not hard, but it does tend to involve a lot
-of boiler-plate code.  For this reason, HotDrink provides a simple
-implementation of an observable object called ~BasicObservable~.  You may
-create instances of this type, or use it as a prototype for your own
-JavaScript types.  A ~BasicObservable~ keeps a list of observers in a property
-named ~observers~.  It also provides three functions, ~sendNext~, ~sendError~,
-and ~sendCompleted~, for invoking callbacks of all subscribed observers.
-
-The code below creates a ~BasicObservable~ to represent the text box for the
-~email~ variable.  An event listener is created for the text box so that every
-time it is edited, the observable will notify any subscribers of the new
-value.  Then we subscribe the ~emails~ variable to this new observable.  In
-this way, any changes to the text box will be relayed to the variable.
-
-#+NAME: emailobservable
-#+BEGIN_SRC js
-  // Initialize email text box with variable value
+  // Obtain DOM node for editing emails
   var emailsEdit = document.getElementById( 'emailsEdit' );
+
+  // Initialize using variable
   emailsEdit.value = context.emails.get();
 
-  // Make an observable for every time the text box is edited
-  var emailsObservable = new hd.BasicObservable();
-  emailsEdit.addEventListener( 'input', function() {
-    emailsObservable.sendNext( emailsEdit.value );
+<<emailsEdit>>
+
+  // Obtain DOM node for editing filter
+  var filterEdit = document.getElementById( 'filterEdit' );
+
+  // Initialize using variable
+  filterEdit.value = context.filter.get();
+
+  // Add event handler to edit box which updates variable
+  filterEdit.addEventListener( 'input', function() {
+    context.filter.set( filterEdit.value );
+    pm.update()
   } );
 
-  // Subscribe the variable to the observable
-  emailsObservable.addObserver( context.emails );
+
+  // Obtain DOM node for displaying result
+  var resultSpan = document.getElementById( 'resultSpan' );
+
+  // Initialize using variable
+  resultSpan.appendChild( document.createTextNode( context.result.get() ) );
+
+<<resultSpan>>
+
+} )
 #+END_SRC
+
+** A view-to-model binding
+
+One job of a binding is to ensure that, if the user modifies a value in the
+View, the corresponding variable is modified as well.  To accomplish this, we
+register an event handler for the ~input~ event of the text-edit input, as
+shown below.  The ~addEventListener~ function is the standard function for
+registering a callback function for an HTML DOM node.
+
+#+NAME: emailsEdit
+#+BEGIN_SRC js
+  // Add event handler to edit box which updates variable
+  emailsEdit.addEventListener( 'input', function() {
+    context.emails.set( emailsEdit.value );
+    pm.update()
+  } );
+#+END_SRC
+
+The callback function we register simply uses the value of the text-edit input
+to update the property model variable, then updates the property model.  Now,
+every time the user edits the text input, the variable will be set to the same
+value.
+
+** A model-to-view binding
+
+The other job of a binding is to ensure that, if the value of a variable
+changes, the corresponding element of the View is modified as well.  Just like
+DOM nodes, variables have an event that triggers every time its value is
+modified.  Although the syntax for registering a callback is slightly
+different, the semantics is the same.
+
+#+NAME: resultSpan
+#+BEGIN_SRC js
+  // Add event handler to variable which updates span
+  context.result.addObserver( { onNext: function() {
+    resultSpan.removeChild( resultSpan.lastChild );
+    resultSpan.appendChild( document.createTextNode( context.result.get() ) );
+  } } );
+#+END_SRC
+
+The callback function we register here simply deletes the old contents of the
+~<span>~ tag and then adds the value of the variable as the new contents.
+Now, every time the variable is modified, the span tag will be updated to
+reflect the same value.
+
+The interfaces for registering callbacks for events and for publishing your
+own events for HotDrink to listen to is discussed in the [[file:binding.org][Advanced Binding
+Concepts]] howto.
+
+** A bi-directional binding
+
+A bi-directional binding is simply a pair of bindings: one from view-to-model,
+and one from model-to-view.  Together, these bindings ensure that any changes
+in the View are propagated to the property model, and any changes in the
+property model are propagated to the view.
+
+** The importance of binding
+
+Binding code tends to be highly reusable.  For example, we might write a
+binding for a text-edit input, or for a span tag, and then reuse them any time
+we want to bind to these elements.  This can often make binding a simple
+matter of a few lines of code.
+
+There is another important reason why we should use binding instead of simply
+using the ~get~ and ~set~ methods of a variable directly.  Property models
+update /asynchronously/.  This is discussed in depth in the [[file:async.org][Asynchronous
+Methods]], but the important detail for now is that calling ~update~ on the
+property model does /not/ execute any methods of the property model.  Instead,
+it /schedules/ them to be run as soon as their inputs are available.
+
+For example, consider the following code segment.
+
+#+BEGIN_SRC js
+context.filter.set( '.edu' );
+pm.update();
+alert( context.result.get() );
+#+END_SRC
+
+In this segment we set the value of a variable, update the property model,
+then read the value of a different variable.  If you were to execute this
+code, you would find the value of ~result~ that you read is /not/ the updated
+value of ~result~; it is still the old value.  The new value won't be ready
+until your method has a chance to execute.
+
+This is why it is so important that we register a callback to run when the
+variable changes.  As a general rule, we cannot be sure when the new value of
+a variable will be ready.  By registering a callback, we allow the property
+model to tell us when a new value of the variable is available.
 
 * Adapters and translators
 
@@ -620,9 +580,10 @@ var context = new hd.ContextBuilder()
     .v( 'profit' )
 
     .c( 'income, expenses, profit' )
-    .m( 'income, expenses -> profit', function( income, expenses ) {
-      return income - expenses;
-    } )
+    .m( 'income, expenses -> profit',
+        function( income, expenses ) {
+          return income - expenses;
+        } )
 
     .context();
 
@@ -856,9 +817,10 @@ var context = new hd.ContextBuilder()
     .v( 'total' )
 
     .c( 'subtotal, tax, total' )
-    .m( 'subtotal, tax -> total', function( subtotal, tax ) {
-      return Math.round( subtotal * (100+tax) ) / 100;
-    } )
+    .m( 'subtotal, tax -> total',
+        function( subtotal, tax ) {
+          return Math.round( subtotal * (100+tax) ) / 100;
+        } )
 
     .context();
 
@@ -1204,9 +1166,10 @@ var context = new hd.ContextBuilder()
    // Constraint: begin < end
   .c( 'begin, end' )
 <<previous>>
-  .m( '!begin, end -> begin', function( begin, end ) {
-    return begin > end - 1 ? end - 1 : begin;
-  } )
+  .m( '!begin, end -> begin',
+      function( begin, end ) {
+        return begin > end - 1 ? end - 1 : begin;
+      } )
 
   .context();
 
@@ -1250,9 +1213,10 @@ variable name.  For example, the following method uses the previous value of
 
 #+NAME: previous
 #+BEGIN_SRC js
-  .m( 'begin, !end -> end', function( begin, end ) {
-    return end < begin + 1 ? begin + 1 : end;
-  } )
+  .m( 'begin, !end -> end',
+      function( begin, end ) {
+        return end < begin + 1 ? begin + 1 : end;
+      } )
 #+END_SRC
 
 ** Caveat
@@ -1262,9 +1226,10 @@ method, including how often your method will be run.  Thus, you should avoid
 methods like the following.
 
 #+BEGIN_SRC js
-.method( "!n, x -> n", function( n ) {
-  return n + x;
-} )
+.m( "!n, x -> n",
+    function( n ) {
+      return n + x;
+    } )
 #+END_SRC
 
 Such a method may lead to poorly defined behavior, since its effect depends on
@@ -1330,12 +1295,6 @@ var context = new hd.ContextBuilder()
 
   .c( 'q1, q2, q3, q4, year' )
 <<multiout>>
-  .m( 'year, !q1, !q2, !q3, !q4 -> q1, q2, q3, q4',
-      function( year, q1, q2, q3, q4 ) {
-        var diff = (year - q1 - q2 - q3 - q4) / 4;
-        return [q1 + diff, q2 + diff, q3 + diff, q4 + diff ];
-      }
-  )
 
   .context();
 
@@ -1383,7 +1342,7 @@ signature, and values are assigned to the corresponding variables.
 
 #+NAME: multiout
 #+BEGIN_SRC js
-  .m( 'year, !q1, !q2, !q3, !q4 -> [q1, q2, q3, q4]',
+  .m( 'year, !q1, !q2, !q3, !q4 -> q1, q2, q3, q4',
       function( year, q1, q2, q3, q4 ) {
         var diff = (year - q1 - q2 - q3 - q4) / 4;
         return [q1 + diff, q2 + diff, q3 + diff, q4 + diff ];

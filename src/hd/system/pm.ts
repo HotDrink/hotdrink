@@ -84,6 +84,7 @@ module hd.system {
     private hasOptionals: boolean;
 
     private commandQueue: m.Command[] = [];
+    private accumPromises: r.AccumulatingPromise<any>[] = [];
     private isCommandScheduled = false;
 
     /*----------------------------------------------------------------
@@ -303,8 +304,7 @@ module hd.system {
         this.cgraph.addMethod( mm.id,
                                cid,
                                mm.inputVars.map( u.getId ),
-                               mm.outputs.map( u.getId )
-                             );
+                               mm.outputVars.map( u.getId ) );
       }
     }
 
@@ -323,7 +323,7 @@ module hd.system {
     //--------------------------------------------
     // Add command
     addCommand( cmd: m.Command ) {
-      cmd.addObserver( this, this.scheduleCommand, null, null );
+      cmd.addObserver( this, this.performCommand, null, null );
     }
 
     //--------------------------------------------
@@ -471,7 +471,7 @@ module hd.system {
         break;
 
       case m.VariableEventType.command:
-        this.scheduleCommand( event.cmd );
+        this.performCommand( event.cmd );
         break;
       }
     }
@@ -808,11 +808,31 @@ module hd.system {
       this.isCommandScheduled = false;
       while (this.commandQueue.length > 0) {
         var cmd = this.commandQueue.shift();
-        activate( cmd );
+        var ar = activate( cmd );
+        for (var id in ar.outputs) {
+          if (ar.outputs[id] instanceof r.AccumulatingPromise) {
+            console.log( 'Found one' );
+          }
+        }
         if (cmd.external) {
           this.update();
         }
       }
+    }
+
+    performCommand( cmd: m.Command ) {
+      for (var i = 0, l = this.accumPromises.length; i < l; ++i) {
+        this.accumPromises[i].settle();
+      }
+      var ar = activate( cmd );
+      this.accumPromises = [];
+      for (var id in ar.outputs) {
+        var p = ar.outputs[id];
+        if (p instanceof r.AccumulatingPromise) {
+          this.accumPromises.push( p );
+        }
+      }
+      this.update();
     }
 
   }

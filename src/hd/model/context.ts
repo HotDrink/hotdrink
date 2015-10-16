@@ -12,7 +12,7 @@ module hd.model {
 
   // getter for constant
   function pathConstant( p: Path ) {
-    return p.constant;
+    return p.isConstant();
   }
 
   // object that can retrieve a path for a string
@@ -25,20 +25,6 @@ module hd.model {
     id: string;
   }
 
-  // lexicographical comparison for arrays of HasId
-  function compareIds( a: HasId[], b: HasId[] ) {
-    for (var i = 0, l = a.length, m = b.length; i < l && i < m; ++i) {
-      if (a[i] !== b[i]) {
-        var cmp = a[i].id.localeCompare( b[i].id );
-        if (cmp != 0) {
-          return cmp;
-        }
-      }
-    }
-
-    return l - m;
-  }
-
   // lexicographical comparison for array
   function compareAnys( a: any[], b: any[] ) {
     for (var i = 0, l = a.length, m = b.length; i < l && i < m; ++i) {
@@ -49,6 +35,9 @@ module hd.model {
         if ((ai instanceof Variable || ai instanceof Constraint || ai instanceof Command) &&
             (bi instanceof Variable || bi instanceof Constraint || bi instanceof Command)   ) {
           cmp = ai.id.localeCompare( bi.id );
+        }
+        else if (Array.isArray( ai ) && Array.isArray( bi )) {
+          cmp = compareAnys( ai, bi );
         }
         else if (typeof ai === 'number' && typeof bi === 'number') {
           cmp = ai - bi;
@@ -110,6 +99,19 @@ module hd.model {
             rightOnly: rightOnly, rightShared: rightShared};
   }
 
+  function addToList( list: any[], value: any, interpolations: number ) {
+    if (interpolations == 0) {
+      list.push( value );
+    }
+    else if (interpolations == 1) {
+      list.push.apply( list, value );
+    }
+    else {
+      for (var i = 0, l = value.length; i < l; ++i) {
+        addToList( list, value[i], interpolations - 1 );
+      }
+    }
+  }
 
   /*******************************************************************
     Context elements
@@ -164,8 +166,7 @@ module hd.model {
   export
   interface NestedSpec {
     loc: string;
-    klass?: ContextClass;
-    spec?: ContextSpec;
+    ctxType?: ContextClass|ContextSpec;
   }
 
   export
@@ -176,9 +177,9 @@ module hd.model {
 
   export
   interface MethodSpec {
-    inputs: string[];
-    priorFlags: boolean[];
-    outputs: string[];
+    inputs: u.MultiArray<string>;
+    priorFlags: u.MultiArray<boolean>;
+    outputs: u.MultiArray<string>;
     fn: Function;
   }
 
@@ -194,9 +195,9 @@ module hd.model {
   export
   interface CommandSpec {
     loc: string;
-    inputs: string[];
-    priorFlags: boolean[];
-    outputs: string[];
+    inputs: u.MultiArray<string>;
+    priorFlags: u.MultiArray<boolean>;
+    outputs: u.MultiArray<string>;
     fn: Function;
     synchronous: boolean;
   }
@@ -247,12 +248,10 @@ module hd.model {
    * - in destructor, unsubscribe to all paths
    */
   class Template extends r.BasicObservable<Template> {
+    name: string;
 
     // All paths used by this template
     paths: u.ArraySet<Path> = [];
-
-    // Any path with same cardinality as the template
-    master: Path;
 
     // All instances created from this template, in sorted order
     instances : TemplateInstance[] = [];
@@ -265,9 +264,6 @@ module hd.model {
     addPath( path: Path ) {
       if (u.arraySet.add( this.paths, path )) {
         path.addObserver( this );
-        if (! this.master || this.master.cardinality < path.cardinality) {
-          this.master = path;
-        }
       }
     }
 
@@ -338,17 +334,18 @@ module hd.model {
     update( changes: ContextChanges ) {
       var newInstances = <TemplateInstance[]> [];
 
-      if (this.master) {
-        // Take all positions from master and try to create instance
-        this.master.forEach( function( vv: any, pos: Position ) {
-          var inst = this.define( pos );
+      if (this.paths.length > 0) {
+        for (var itr = new PathSetIterator( <Path[]>this.paths );
+             itr.pos !== null;
+             itr.next()) {
+          var inst = this.define( itr.pos );
           if (inst) {
             newInstances.push( inst );
           }
-        }, this );
+        }
       }
       else {
-        var inst = this.define( null );
+        var inst = this.define( {} );
         if (inst) {
           newInstances.push( inst );
         }
@@ -421,15 +418,15 @@ module hd.model {
    * from Template class); it's more a helper for ConstraintTemplate
    */
   interface MethodInstance {
-    inputs: any[];
-    outputs: Variable[];
+    inputs: u.MultiArray<any>;
+    outputs: u.MultiArray<Variable>;
   }
 
   class MethodTemplate {
     name: string;
-    inputs: Path[];
-    priorFlags: boolean[];
-    outputs: Path[];
+    inputs: u.MultiArray<Path>;
+    priorFlags: u.MultiArray<boolean>;
+    outputs: u.MultiArray<Path>;
     fn: Function;
 
     /*----------------------------------------------------------------
@@ -437,13 +434,14 @@ module hd.model {
      * handles that
      */
     constructor( mspec: MethodSpec, lookup: PathLookup ) {
-      this.inputs = mspec.inputs.map( lookup.get, lookup );
+      this.inputs = u.multiArray.map( mspec.inputs, lookup.get, lookup );
       if (mspec.priorFlags) {
-        this.priorFlags = mspec.priorFlags.slice( 0 );
+        this.priorFlags = u.multiArray.copy( mspec.priorFlags );
       }
-      this.outputs = mspec.outputs.map( lookup.get, lookup );
+      this.outputs = u.multiArray.map( mspec.outputs, lookup.get, lookup );
       this.fn = mspec.fn;
-      this.name = [mspec.inputs.join( ',' ), mspec.outputs.join( ',' )].join( '->' );
+      this.name = u.multiArray.toString( mspec.inputs ) + '->' +
+            u.multiArray.toString( mspec.outputs );
     }
 
     /*----------------------------------------------------------------
@@ -451,28 +449,52 @@ module hd.model {
      */
     define( pos: Position ): MethodInstance {
       var get = function( p: Path ) { return p.get( pos ) };
-      var ins = this.inputs.map( get );
-      var outs = this.outputs.map( get );
+      var ins = u.multiArray.map( this.inputs, get );
+      var outs = u.multiArray.map( this.outputs, get );
 
-      // Cannot have same variable as input and output
-      for (var i = 0, l = ins.length; i < l; ++i) {
-        if (ins[i] instanceof Variable &&
-            ! (this.priorFlags && this.priorFlags[i]) &&
-            outs.indexOf( ins[i] ) >= 0) {
-          console.warn( 'Method cannot be instantiated with same variable as input and output: ' +
-                        this.name );
+      // Check outputs:  all variables, no duplicates
+      var outVars = u.multiArray.flatten( outs );
+      for (var i = 0, l = outVars.length; i < l; ++i) {
+        if (outVars[i] === undefined) {
           return null;
+        }
+        if (! (outVars[i] instanceof Variable)) {
+          console.warn( 'Method cannot be instantiated with non-variable output: ' + this.name );
+          return null;
+        }
+        for (var j = i + 1; j < l; ++j) {
+          if (outVars[i] === outVars[j]) {
+            console.warn( 'Method cannot be instantiated with duplicate output: ' + this.name );
+            return null;
+          }
         }
       }
 
-      // outs should contain only variables; no duplicates
-      var outVars = u.arraySet.fromArray( <Variable[]>outs.filter( u.isType( Variable ) ) );
-      if (outs.length != outVars.length) {
-        console.warn( 'Method cannot be instantiated with non-variable or duplicate outputs: ' +
-                      this.name );
+      // Recursively check inputs:  current-value variable cannot be output
+      var checkInputs = function( ins: u.MultiArray<any>, priors: u.MultiArray<boolean> ) {
+        for (var i = 0, l = ins.length; i < l; ++i) {
+          if (ins[i] === undefined) {
+            return false;
+          }
+          else if (Array.isArray( ins[i] )) {
+            if (! checkInputs( ins[i], priors ? <u.MultiArray<boolean>>priors[i] : undefined )) {
+              return false;
+            }
+          }
+          else if (ins[i] instanceof Variable &&
+              !(priors && priors[i]) &&
+              outVars.indexOf( ins[i] ) >= 0) {
+            console.warn( 'Method cannot be instantiated with same variable as input and output: ' +
+                          this.name );
+            return false;
+          }
+        }
+        return true;
+      };
+
+      if (! checkInputs( ins, this.priorFlags )) {
         return null;
       }
-
 
       return {inputs: ins, outputs: outs};
     }
@@ -482,12 +504,14 @@ module hd.model {
      * in the constraint.
      */
     create( inst: MethodInstance, vars: u.ArraySet<Variable> ): Method {
+      var outVars = u.multiArray.flatten( inst.outputs );
       return new Method( this.name,
                          this.fn,
                          inst.inputs,
                          this.priorFlags,
                          inst.outputs,
-                         u.arraySet.difference( vars, inst.outputs )
+                         u.arraySet.difference( vars, outVars ),
+                         outVars
                        );
     }
   }
@@ -501,11 +525,11 @@ module hd.model {
     constructor( public all: any[],
                  public variables: Variable[],
                  public methods: MethodInstance[],
-                 public touchVariables: Variable[] ) { }
+                 public touchVariables: Variable[],
+                 public pos: Position ) { }
   }
 
   class ConstraintTemplate extends Template {
-    name: string;
     variables: Path[];
     methods: MethodTemplate[];
     optional: Optional;
@@ -532,18 +556,16 @@ module hd.model {
      */
     define( pos: Position ) {
       var all = <any[]> [];
-      var vvs = <Variable[]> [];
 
       for (var i = 0, l = this.variables.length; i < l; ++i) {
         var vv = this.variables[i].get( pos );
         if (vv === undefined) {
           return null;
         }
-        all.push( vv );
-        if (vv instanceof Variable) {
-          vvs.push( vv );
-        }
+        addToList( all, vv, this.variables[i].slices );
       }
+
+      var vvs = <Variable[]>all.filter( u.isType( Variable ) );
 
       var minsts = <MethodInstance[]> [];
       var hasMethods = false;
@@ -568,7 +590,7 @@ module hd.model {
           }
         }
 
-        return new ConstraintInstance( all, vvs, minsts, <Variable[]>tvs );
+        return new ConstraintInstance( all, vvs, minsts, <Variable[]>tvs, pos );
       }
       else {
         return null;
@@ -590,7 +612,11 @@ module hd.model {
      * Create element for instance
      */
     create( inst: ConstraintInstance ) {
-      var cc = new Constraint( this.name, inst.variables, inst.touchVariables );
+      var name = this.name.replace( /\[(\d*)([a-zA-Z][\w$]*)/g,
+                                    function( all, n, v ) {
+                                      return '[' + n + inst.pos[v];
+                                    } );
+      var cc = new Constraint( name, inst.variables, inst.touchVariables );
       cc.optional = this.optional;
       for (var i = 0, l = inst.methods.length; i < l; ++i) {
         if (inst.methods[i]) {
@@ -609,15 +635,14 @@ module hd.model {
   class CommandInstance {
     element: Command;
 
-    constructor( public inputs: any[],
-                 public outputs: Variable[] ) { }
+    constructor( public inputs: u.MultiArray<any>,
+                 public outputs: u.MultiArray<Variable> ) { }
   }
 
   class CommandTemplate extends Template {
-    name: string;
-    inputs: Path[];
-    priorFlags: boolean[];
-    outputs: Path[];
+    inputs: u.MultiArray<Path>;
+    priorFlags: u.MultiArray<boolean>;
+    outputs: u.MultiArray<Path>;
     fn: Function;
     synchronous: boolean;
 
@@ -626,14 +651,22 @@ module hd.model {
      */
     constructor( cmdspec: CommandSpec, lookup: PathLookup ) {
       super();
-      this.addPaths( this.inputs = cmdspec.inputs.map( lookup.get, lookup ) )
+
+      this.inputs = u.multiArray.map( cmdspec.inputs, lookup.get, lookup )
+      var inputPaths = u.multiArray.flatten( this.inputs );
+      this.addPaths( inputPaths )
+
       if (cmdspec.priorFlags) {
-        this.priorFlags = cmdspec.priorFlags.slice( 0 );
+        this.priorFlags = u.multiArray.copy( cmdspec.priorFlags );
       }
-      this.addPaths( this.outputs = cmdspec.outputs.map( lookup.get, lookup ) )
+      this.outputs = u.multiArray.map( cmdspec.outputs, lookup.get, lookup )
+      var outputPaths = u.multiArray.flatten( this.outputs );
+      this.addPaths( outputPaths )
+
       this.fn = cmdspec.fn;
       this.synchronous = cmdspec.synchronous;
-      this.name = [cmdspec.inputs.join( ',' ), cmdspec.outputs.join( ',' )].join( '->' );
+      this.name = u.multiArray.toString( cmdspec.inputs ) + '->' +
+            u.multiArray.toString( cmdspec.outputs );
       this.activate = this.activate.bind( this );
     }
 
@@ -642,30 +675,50 @@ module hd.model {
      */
     define( pos: Position ) {
       var get = function( p: Path ) { return p.get( pos ) };
-      var ins = this.inputs.map( get );
-      var outs = this.outputs.map( get );
+      var ins = u.multiArray.map( this.inputs, get );
+      var outs = u.multiArray.map( this.outputs, get );
 
-      // Ensure all paths have values
-      if (ins.some( u.isUndefined ) || outs.some( u.isUndefined )) {
-        return null;
-      }
-
-      // Cannot have same variable as input and output
-      for (var i = 0, l = ins.length; i < l; ++i) {
-        if (ins[i] instanceof Variable &&
-            ! (this.priorFlags && this.priorFlags[i]) &&
-            outs.indexOf( ins[i] ) >= 0) {
-          console.warn( 'Command cannot be instantiated with same variable as input and output: ' +
-                        this.name );
+      // Check outputs:  all variables, no duplicates
+      var outVars = u.multiArray.flatten( outs );
+      for (var i = 0, l = outVars.length; i < l; ++i) {
+        if (outVars[i] === undefined) {
           return null;
+        }
+        if (! (outVars[i] instanceof Variable)) {
+          console.warn( 'Command cannot be instantiated with non-variable output: ' + this.name );
+          return null;
+        }
+        for (var j = i + 1; j < l; ++j) {
+          if (outVars[i] === outVars[j]) {
+            console.warn( 'Command cannot be instantiated with duplicate output: ' + this.name );
+            return null;
+          }
         }
       }
 
-      // outs should contain only variables; no duplicates
-      var outVars = u.arraySet.fromArray( <Variable[]>outs.filter( u.isType( Variable ) ) );
-      if (outVars.length != outs.length) {
-        console.warn( 'Command cannot be instantiated with non-variable or duplicate outputs: ' +
-                      this.name );
+      // Recursively check inputs:  current-value variable cannot be output
+      var checkInputs = function( ins: u.MultiArray<any>, priors: u.MultiArray<boolean> ) {
+        for (var i = 0, l = ins.length; i < l; ++i) {
+          if (ins[i] === undefined) {
+            return false;
+          }
+          else if (Array.isArray( ins[i] )) {
+            if (! checkInputs( ins[i], priors ? <u.MultiArray<boolean>>priors[i] : undefined )) {
+              return false;
+            }
+          }
+          else if (ins[i] instanceof Variable &&
+              !(priors && priors[i]) &&
+              outVars.indexOf( ins[i] ) >= 0) {
+            console.warn( 'Command cannot be instantiated with same variable as input and output: ' +
+                          this.name );
+            return false;
+          }
+        }
+        return true;
+      };
+
+      if (! checkInputs( ins, this.priorFlags )) {
         return null;
       }
 
@@ -678,7 +731,7 @@ module hd.model {
     compare( a: CommandInstance, b: CommandInstance ) {
       var cmp = compareAnys( a.inputs, b.inputs );
       if (cmp == 0) {
-        cmp = compareIds( a.outputs, b.outputs );
+        cmp = compareAnys( a.outputs, b.outputs );
       }
       return cmp;
     }
@@ -724,7 +777,6 @@ module hd.model {
   }
 
   class TouchDepTemplate extends Template {
-    name: string;
     from: Path;
     to: Path;
 
@@ -783,7 +835,6 @@ module hd.model {
   }
 
   class OutputTemplate extends Template {
-    name: string;
     variable: Path;
 
     /*----------------------------------------------------------------
@@ -932,7 +983,7 @@ module hd.model {
           changes.adds.forEach( this.addStatic, this );
         }
         else {
-          console.warn( "Could not instantiate constant template: " );
+          console.warn( "Could not instantiate constant template: " + tmpl.name );
         }
       }
       else {
@@ -1050,9 +1101,14 @@ module hd.model {
      * given context.
      */
     static
-    construct( ctx: Context,
-               spec: ContextSpec,
-               init?: u.Dictionary<any> ): Context {
+    construct(
+      ctx: Context,
+      spec: ContextSpec,
+      init?: u.Dictionary<any>
+    ): Context {
+      if (! (ctx instanceof Context)) {
+        throw "Attempting to construct context using specification failed:  object not a context!";
+      }
       if (init) {
         if (typeof init !== 'object') {
           throw "Invalid initialization object passed to Context.construct: " + init;
@@ -1180,14 +1236,14 @@ module hd.model {
     addNestedContext( ctx: Context, spec: NestedSpec, init: u.Dictionary<any> ) {
       var hd_data = ctx['#hd_data'];
       var nested: Context;
-      if (spec.klass) {
-        nested = new spec.klass();
+      if (typeof spec.ctxType === 'function') {
+        nested = new (<ContextClass>spec.ctxType)();
       }
       else {
         nested = new Context();
-      }
-      if (spec.spec) {
-        Context.construct( nested, spec.spec );
+        if (spec.ctxType) {
+          Context.construct( nested, <ContextSpec>spec.ctxType );
+        }
       }
       hd_data.addStatic( nested );
       ctx[spec.loc] = nested;

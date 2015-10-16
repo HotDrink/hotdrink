@@ -92,7 +92,7 @@ module hd.qunit {
     pm.update();
 
     pm.removeConstraint( c );
-    c.addMethod( new m.Method( "x,y->z", hd.reactive.liftFunction( sum ), [x,y], null, [z], [x,y] ) );
+    c.addMethod( new m.Method( "x,y->z", hd.reactive.liftFunction( sum ), [x,y], null, [z], [x,y], [z] ) );
     pm.addConstraint( c );
     pm.update();
 
@@ -657,7 +657,7 @@ module hd.qunit {
   } );
 
   asyncTest( "set commands", function() {
-    expect( 12 );
+    expect( 9 );
 
     var ctx: any = new m.ContextBuilder()
           .variables( "x, y, z", {x: 3, y: 5} )
@@ -673,20 +673,18 @@ module hd.qunit {
     checkVariables( ctx, {x: 3, y: 5, z: 8}, "1" );
 
     ctx.x.commandSet( 4 );
-    pm.performCommands();
     checkVariables( ctx, {x: 4, y: 5, z: 9}, "2" );
 
     ctx.y.commandSet( 3 );
     ctx.z.commandSet( 10 );
-    checkVariables( ctx, {x: 4, y: 5, z: 9}, "2 (again)" );
-
-    pm.performCommands();
     checkVariables( ctx, {x: 7, y: 3, z: 10}, "4" );
 
     u.schedule( 3, start );
   } );
 
   asyncTest( "command queue", function() {
+    expect( 24 );
+
     var spec = new m.ContextBuilder()
           .variables( "a, x, y, z", {a: 12, x: 3, y: 5} )
           .constraint( "x, y, z" )
@@ -722,10 +720,6 @@ module hd.qunit {
     ctx3.a.commandSet( 9 );
 
     ctx3.cmd.activate();
-
-    checkVariables( ctx1, {a: 12, x: 3, y: 5, z: 8}, "1.1 (again)" );
-    checkVariables( ctx2, {a: 12, x: 3, y: 5, z: 8}, "1.2 (again)" );
-    checkVariables( ctx3, {a: 12, x: 3, y: 5, z: 8}, "1.3 (again)" );
 
     u.schedule( 3, function() {
       checkVariables( ctx1, {a: 12, x: 6, y: 6, z: 12}, "2.1" );
@@ -789,5 +783,160 @@ module hd.qunit {
     checkVariables( ctx.a[3], {begin: 120, end: 140, length: 20}, "2.3" );
 
     u.schedule( 3, start );
+  } );
+
+  asyncTest( "slice constraints", function() {
+    var ctx: any = new m.ContextBuilder()
+          .nested( "a", hd.arrayOf( hd.Variable ) )
+          .v( "sum" )
+          .c( "a[*], sum" )
+          .m( "a[*] -> sum", function( a: number[] ) {
+            var sum = 0;
+            for (var i = 0; i < a.length; ++i) {
+              sum+= a[i];
+            }
+            return sum;
+          } )
+          .context();
+
+    ctx.a.expand( [2, 4, 6, 8, 10] );
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( ctx );
+    pm.update();
+    checkVariables( ctx, {sum: 30}, "0" );
+
+    ctx.a[3].set( 12 );
+    pm.update();
+    checkVariables( ctx, {sum: 34}, "1" );
+
+    ctx.a.expand( [14] );
+    pm.update();
+    checkVariables( ctx, {sum: 48}, "2" );
+
+    ctx.a.collapse( 2 );
+    pm.update();
+    checkVariables( ctx, {sum: 24}, "3" );
+
+    ctx.a.length = 5;
+    ctx.a[0].set( 5 );
+    pm.update();
+    // Because ctx.a contains an undefined, constraint should be uninstantiated
+    // Therefore, sum should remain unchanged
+    checkVariables( ctx, {sum: 24}, "3" );
+
+    ctx.a.length = 4;
+    pm.update()
+    // Now they are all defined again
+    checkVariables( ctx, {sum: 27}, "4" );
+
+    u.schedule( 3, start );
+  } );
+
+  asyncTest( "matrix test", function() {
+    expect( 25 );
+
+    var Matrix = hd.arrayOf( hd.arrayOf( hd.Variable ) );
+
+    function dotProduct( n: number[], m: number[] ) {
+      var dot = 0;
+      for (var i = 0, l = n.length; i < l; ++i) {
+        dot += n[i] * m[i];
+      }
+      return dot;
+    }
+
+    var ctx: any = new m.ContextBuilder()
+          .n( "a", Matrix )
+          .n( "b", Matrix )
+          .n( "c", Matrix )
+          .c( "a[i][*], b[*][j], c[i][j]" )
+          .m( "a[i][*], b[*][j] -> c[i][j]", dotProduct )
+          .context();
+
+    ctx.a.expand( [[1, 2, 3],
+                   [4, 5, 6] ] );
+    ctx.b.expand( [[2, 4],
+                   [6, 8],
+                   [10, 12]] );
+    ctx.c.expand( [[0, 0],
+                   [0, 0]] );
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( ctx );
+    pm.update();
+    checkVariables( ctx.c[0], <any>[/* 1*2 + 2*6 + 3*10 == */44,
+                                    /* 1*4 + 2*8 + 3*12 == */56], "0.0" );
+    checkVariables( ctx.c[1], <any>[/* 4*2 + 5*6 + 6*10 == */98,
+                                    /* 4*4 + 5*8 + 6*12 == */128], "1.0" );
+
+    ctx.a[0][1].set( -2 );
+    pm.update();
+    checkVariables( ctx.c[0], <any>[/* 1*2 - 2*6 + 3*10 == */20,
+                                    /* 1*4 - 2*8 + 3*12 == */24], "0.1" );
+    checkVariables( ctx.c[1], <any>[/* 4*2 + 5*6 + 6*10 == */98,
+                                    /* 4*4 + 5*8 + 6*12 == */128], "1.1" );
+
+    ctx.a[1][2].set( 2 );
+    ctx.b[0][0].set( 1 );
+    pm.update();
+    checkVariables( ctx.c[0], <any>[/* 1*1 - 2*6 + 3*10 == */19,
+                                    /* 1*4 - 2*8 + 3*12 == */24], "0.2" );
+    checkVariables( ctx.c[1], <any>[/* 4*1 + 5*6 + 2*10 == */54,
+                                    /* 4*4 + 5*8 + 2*12 == */80], "1.2" );
+
+    ctx.a[0].expand( [4] );
+    ctx.a[1].expand( [5] );
+    ctx.b.expand( [[14, 16]] );
+    pm.update();
+    checkVariables( ctx.c[0], <any>[/* 1*1 - 2*6 + 3*10 + 4*14 == */75,
+                                    /* 1*4 - 2*8 + 3*12 + 4*16 == */88], "0.3" );
+    checkVariables( ctx.c[1], <any>[/* 4*1 + 5*6 + 2*10 + 5*14 == */124,
+                                    /* 4*4 + 5*8 + 2*12 + 5*16 == */160], "1.3" );
+
+    ctx.a.expand( [[1, 2, 1, 2]] );
+    ctx.b[0].expand( [1] );
+    ctx.b[1].expand( [-1] );
+    ctx.b[2].expand( [1] );
+    ctx.b[3].expand( [-1] );
+    ctx.c[0].expand( [0] );
+    ctx.c[1].expand( [0] );
+    ctx.c.expand( [[0, 0, 0]] );
+    pm.update();
+    checkVariables( ctx.c[0], <any>[/* 1*1 - 2*6 + 3*10 + 4*14 == */75,
+                                    /* 1*4 - 2*8 + 3*12 + 4*16 == */88,
+                                    /* 1*1 + 2*1 + 3*1  - 4*1  == */2], "0.4" );
+    checkVariables( ctx.c[1], <any>[/* 4*1 + 5*6 + 2*10 + 5*14 == */124,
+                                    /* 4*4 + 5*8 + 2*12 + 5*16 == */160,
+                                    /* 4*1 - 5*1 + 2*1  - 5*1  == */-4], "1.4" );
+    checkVariables( ctx.c[2], <any>[/* 1*1 + 2*6 + 1*10 + 2*14 == */51,
+                                    /* 1*4 + 2*8 + 1*12 + 2*16 == */64,
+                                    /* 1*1 - 2*1 + 1*1  - 2*1  == */-2], "2.4" );
+
+    u.schedule( 4, start );
+  } );
+
+  asyncTest( "array params", function() {
+
+    var ctx: any = new hd.ContextBuilder()
+          .vs( 'a, b, c, d, e', {a: 8, d: 4} )
+
+          .c( 'a, b, c' )
+          .m( 'b, c -> a', function( b: number, c: number ) {
+            return b + c;
+          } )
+          .m( 'a -> b, c', function( a: number ) {
+            return [a/2, a/2];
+          } )
+
+          .context();
+
+    var pm = new hd.PropertyModel();
+    pm.addComponent( ctx );
+    pm.update();
+
+    checkVariables( ctx, {a: 8, b: 4, c: 4}, "_1" );
+
+    u.schedule( 4, start );
   } );
 }

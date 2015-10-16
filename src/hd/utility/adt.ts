@@ -34,6 +34,116 @@ module hd.utility {
   }
 
   /*==================================================================
+   * JavaScript does not have multi-dimensional arrays, just
+   * arrays-of-arrays.  This interface just supports generic
+   * arrays-of-arrays without specifying a depth.
+   */
+  export
+  interface MultiArray<T> extends Array<T|MultiArray<T>> { };
+
+  export
+  module multiArray {
+
+    /*------------------------------------------------------------------
+     */
+    export
+    function copy<T>( ts: MultiArray<T> ) {
+      var t2s = <MultiArray<T>>[];
+      for (var i = 0, l = ts.length; i < l; ++i) {
+        if (Array.isArray( ts[i] )) {
+          t2s.push( copy( <MultiArray<T>>ts[i] ) );
+        }
+        else {
+          t2s.push( ts[i] );
+        }
+      }
+      return t2s;
+    }
+
+    /*------------------------------------------------------------------
+     */
+    export
+    function map<T, U>(
+      ts:      MultiArray<T>,
+      fn:      (t: T, i: number, ts: MultiArray<T>) => U,
+      thisArg: Object = null
+    ):         MultiArray<U> {
+
+      var results: MultiArray<U> = [];
+      for (var i = 0, l = ts.length; i < l; ++i) {
+        if (Array.isArray( ts[i] )) {
+          results.push( map( <MultiArray<T>>ts[i], fn, thisArg ) );
+        }
+        else {
+          results.push( fn.call( thisArg, <T>ts[i], i, ts ) );
+        }
+      }
+      return results
+    }
+
+    /*----------------------------------------------------------------
+     */
+    export
+    function some<T>(
+      ts:      MultiArray<T>,
+      fn:      (t: T, i: number, ts: MultiArray<T>) => boolean,
+      thisArg: Object = null
+    ):         boolean {
+
+      for (var i = 0, l = ts.length; i < l; ++i) {
+        if (Array.isArray( ts[i] )) {
+          if (some( <MultiArray<T>>ts[i], fn, thisArg )) {
+            return true;
+          }
+        }
+        else {
+          if (fn.call( thisArg, <T>ts[i], i, ts )) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    /*----------------------------------------------------------------
+     */
+    export
+    function toString<T>( ts: MultiArray<T> ) {
+      var result: (T|string)[] = [];
+      for (var i = 0, l = ts.length; i < l; ++i) {
+        if (i > 0) {
+          result.push( ',' );
+        }
+        if (Array.isArray( ts[i] )) {
+          result.push( '[' );
+          result.push( toString( <MultiArray<T>>ts[i] ) );
+          result.push( ']' );
+        }
+        else {
+          result.push( <T>ts[i] );
+        }
+      }
+      return result.join( '' );
+    }
+
+    /*----------------------------------------------------------------
+     */
+    export
+    function flatten<T>( from: MultiArray<T>, to: T[] = [] ) {
+      for (var i = 0, l = from.length; i < l; ++i) {
+        if (Array.isArray( from[i] )) {
+          flatten( <MultiArray<T>>from[i], to );
+        }
+        else {
+          to.push( <T>from[i] );
+        }
+      }
+      return to;
+    }
+
+  }
+
+  /*==================================================================
    * The standard Array interface, pared back to only support
    * operations that make sense on a set.
    */

@@ -19,10 +19,10 @@ MODULES         := utility reactive graph model dfa plan enable system bind \
                    async hd qunit compile-dfa fn-worker
 
 utility_LOC     := hd/
-utility_UNITS   := adt helpers console schedule
+utility_UNITS   := adt helpers console schedule api
 
 reactive_LOC    := hd/
-reactive_UNITS  := observable property extensions promise ladder function logger
+reactive_UNITS  := observable property extensions promise accum ladder function logger api
 reactive_DEPS   := utility
 
 graph_LOC       := hd/
@@ -30,7 +30,7 @@ graph_UNITS     := walker digraph cgraph sgraph stay
 graph_DEPS      := utility reactive
 
 model_LOC       := hd/
-model_UNITS     := ids variable method constraint context eqn builder path command array
+model_UNITS     := ids variable method constraint context eqn builder path command array api
 model_DEPS      := utility reactive
 
 dfa_LOC         := hd/
@@ -46,18 +46,18 @@ enable_UNITS    := egraph report check
 enable_DEPS     := utility reactive graph
 
 system_LOC      := hd/
-system_UNITS    := pm activate topo
+system_UNITS    := pm activate topo api
 system_DEPS     := utility reactive graph model plan enable
 
 bind_LOC        := hd/
-bind_UNITS      := binding text edit css select checked enable mouse position clicked time forEach when rx factory
+bind_UNITS      := binding text edit css select checked enable mouse position clicked key time forEach when rx factory api
 bind_DEPS       := utility reactive model
 
 async_LOC       := hd/
 async_UNITS     := worker ajax
 async_DEPS      := utility reactive
 
-hd_UNITS        := api methods
+hd_UNITS        := api
 hd_DEPS         := utility reactive model graph plan enable bind system
 
 qunit_UNITS     := qunit.d utility reactive ladder graph model system
@@ -83,9 +83,11 @@ howto_RES    := style.css collapse.js spinner.gif
 ######################################################################
 # Target definitions
 
-TARGETS          := hotdrink qunit compile-dfa fn-worker
+TARGETS          := hotdrink hotpdf qunit compile-dfa fn-worker
 
 hotdrink_MODS    := utility reactive graph model dfa plan enable system bind async hd
+
+hotpdf_MODS      := utility reactive graph model dfa plan enable system hd
 
 qunit_MODS       := qunit
 
@@ -164,7 +166,7 @@ help:
 $(TARGETS) : % : $(TARGET_DIR)/$$*.js
 
 .PHONY :
-all : $(TARGETS) hotdrink.min howto
+all : $(TARGETS) hotdrink.min hotpdf.min howto
 
 .PHONY :
 clean :
@@ -197,14 +199,17 @@ $(TARGET_MAPS) : $(TARGET_DIR)/%.js.map : $(TARGET_DIR)/%.js ;
 
 .SECONDEXPANSION :
 $(TARGET_FILES) :: $(TARGET_DIR)/%.js : $$($$*_TGT_MAPS) $$($$*_TGT_FILES) | $(TARGET_DIR)
-	@if which -s mapcat ; then                                                   \
+	@if which mapcat ; then                                                      \
 	  echo mapcat -j $(TARGET_DIR)/$*.js -m $(TARGET_DIR)/$*.js.map              \
 	    $($*_TGT_MAPS) ;                                                         \
 	  mapcat -j $(TARGET_DIR)/$*.js -m $(TARGET_DIR)/$*.js.map $($*_TGT_MAPS) ;  \
 	else                                                                         \
 	  echo "make: *** Missing mapcat - cannot make scripts/$*.js.map" 1>&2 ;     \
 	  echo cat $($*_TGT_FILES) ">" $@ ;                                          \
-	  cat $($*_TGT_FILES) > $@ ;                                                 \
+	  for file in $($*_TGT_FILES) ; do                                           \
+	    cat "$${file}" ;                                                         \
+	    echo ;                                                                   \
+	  done > $@ ;                                                                \
 	fi
 
 .SECONDEXPANSION :
@@ -222,6 +227,14 @@ hotdrink.min : $(TARGET_DIR)/hotdrink.min.js
 $(TARGET_DIR)/hotdrink.min.js.map: $(TARGET_DIR)/hotdrink.min.js
 
 $(TARGET_DIR)/hotdrink.min.js : $(TARGET_DIR)/hotdrink.js
+	uglifyjs $< -m -c warnings=false -o $@
+
+
+hotpdf.min : $(TARGET_DIR)/hotpdf.min.js
+
+$(TARGET_DIR)/hotpdf.min.js.map: $(TARGET_DIR)/hotpdf.min.js
+
+$(TARGET_DIR)/hotpdf.min.js : $(TARGET_DIR)/hotpdf.js
 	uglifyjs $< -m -c warnings=false -o $@
 
 

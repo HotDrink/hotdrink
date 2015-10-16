@@ -105,12 +105,14 @@ module hd.qunit {
     o.addObserver( stabilizer );
     var count = 0;
     stabilizer.addObserver( null,
-      function( n: number ) {
+      function( p: r.Promise<number> ) {
         equal( ++count, 1, "stabilizer only notified once" );
-        equal( n, 10, "stabilizer received correct value" );
-        hd.utility.schedule( 1, function() { start(); } );
+        p.then( function( n: number ) {
+          equal( n, 10, "stabilizer received correct value" );
+          hd.utility.schedule( 1, function() { start(); } );
+        } );
       },
-      function( n: number ) {
+      function( e: any ) {
         ok( false, "stabilizer received error" );
       },
       null
@@ -238,62 +240,8 @@ module hd.qunit {
 
   } );
 
-  // asyncTest( "ladder", function() {
-  //   expect( 8 );
-
-  //   var ladder = new r.PromiseLadder<number>( 4 );
-  //   ok( ladder.isSettled(), "Ladder created with fulfilled promise" );
-
-  //   var count = 0;
-  //   ladder.addObserver( null,
-  //     function( n: number ) {
-  //       switch (++count) {
-  //       case 1:
-  //         equal( n, 11, "First value correct" );
-  //         break;
-  //       case 2:
-  //         equal( n, 12, "Second value correct" );
-  //         break;
-  //       case 3:
-  //         equal( n, 14, "Third value correct" );
-  //         break;
-  //       default:
-  //         ok( false, "Too many values" );
-  //       }
-  //     },
-  //     null, null
-  //   );
-
-  //   var p1 = new r.Promise<number>();
-  //   var p2 = new r.Promise<number>();
-  //   var p3 = new r.Promise<number>();
-  //   var p4 = new r.Promise<number>();
-  //   var p5 = new r.Promise<number>();
-  //   ladder.addPromise( p1 );
-  //   ladder.addPromise( p2 );
-  //   ladder.addPromise( p3 );
-  //   strictEqual( ladder.currentPromise(), p3, "Current promise correct" );
-  //   ladder.addPromise( p4 );
-  //   ladder.addPromise( p5 );
-  //   strictEqual( ladder.currentPromise(), p5, "Current promise correct" );
-
-  //   ok( ! ladder.isSettled(), "Ladder has promises" );
-
-  //   p1.resolve( 11 );
-  //   p3.resolve( 12 );
-  //   p2.resolve( 13 );
-  //   p5.resolve( 14 );
-  //   p4.resolve( 15 );
-
-  //   hd.utility.schedule( 3, function() {
-  //     equal( count, 3, "Correct number of notifications" );
-  //     start();
-  //   } );
-
-  // } );
-
   asyncTest( "lifting functions", function() {
-    expect( 8 );
+    expect( 11 );
 
     var lifted1 =
           r.liftFunction( function( a: number, b: number ) {
@@ -303,7 +251,7 @@ module hd.qunit {
     var lifted2 =
           r.liftFunction( function( a: number, b: number ) {
             return [a + b, a * b];
-          }, 2 );
+          } );
 
     ok( typeof lifted1 === 'function' &&
         typeof lifted2 === 'function'   , "Lifting produces a function" );
@@ -311,28 +259,53 @@ module hd.qunit {
     var a = new r.Promise<number>();
     var b = new r.Promise<number>();
     var c = lifted1( a, b );
-    var ds = lifted2( a, b );
+    var d = lifted2( a, b );
 
     ok( c instanceof r.Promise, "Lifted function return promise" );
-    ok( Array.isArray( ds ), "Lifted function with multiple outputs returned array" );
-    ok( ds.length == 2, "Array was of length 2" );
-    ok( ds[0] instanceof r.Promise &&
-        ds[1] instanceof r.Promise   , "Array contained promises" );
+    ok( d instanceof r.Promise, "Lifted function return promise" );
 
     c.then( function( n: number ) {
       equal( n, 5, "Lifted function produced correct value" );
     } );
 
-    ds[0].then( function( n: number ) {
-      equal( n, 5, "Lifted function first output correct value" );
-    } );
-
-    ds[1].then( function( n: number ) {
-      equal( n, 6, "Lifted function second output correct value" );
+    d.then( function( ns: number[] ) {
+      ok( Array.isArray( ns ), "Lifted function produced an array" );
+      equal( ns[0], 5, "Lifted function first output correct value" );
+      equal( ns[1], 6, "Lifted function second output correct value" );
     } );
 
     a.resolve( 2 );
     b.resolve( 3 );
+
+    var lifted3 =
+          r.liftFunction( function( n: number, m: number ) {
+            return n + m;
+          } );
+
+    var n = new r.Promise<number>();
+    var m = new r.Promise<number>();
+    var o = lifted3( n, m );
+    var i = 0;
+
+    o.then(
+      function( n: number ) {
+        equal( n, 12, "Lifted function produced correct value" );
+      },
+      null,
+      function( n: number ) {
+        switch (i++) {
+        case 0: return equal( n, 7, "Lifted function produced correct notification" );
+        case 1: return equal( n, 9, "Lifted function produced correct notification" );
+        case 2: return equal( n, 11, "Lifted function produced correct notification" );
+        }
+      }
+    );
+
+    n.notify( 3 );
+    m.notify( 4 );
+    n.resolve( 5 );
+    m.notify( 6 );
+    m.resolve( 7 );
 
     hd.utility.schedule( 4, function() {
       start();

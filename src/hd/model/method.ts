@@ -35,13 +35,13 @@ module hd.model {
     // Inputs to pass to the function, in the order they should be passed
     // Variables in this list will be replaced with their value; everything
     // else will be treated as constants to be passed to the function.
-    inputs: any[];
+    inputs: u.MultiArray<any>;
 
     // Parallel to inputs; true means input comes from prior generation
-    priorFlags: boolean[];
+    priorFlags: u.MultiArray<boolean>;
 
     // Outputs to write to, in the order they are returned form the function
-    outputs: Variable[];
+    outputs: u.MultiArray<Variable>;
 
     // Is this an external operation?  (Does it trigger an update after execution?)
     external = false;
@@ -51,15 +51,22 @@ module hd.model {
     //   and does not contain duplicates.
     inputVars: u.ArraySet<Variable>;
 
+    // Set of variables used as output by this method
+    outputVars: u.ArraySet<Variable>;
+
     /*----------------------------------------------------------------
      * Initialize members
      */
-    constructor( name: string,
-                 fn: any,
-                 inputs: any[],
-                 priorFlags: boolean[],
-                 outputs: Variable[],
-                 inputVars: u.ArraySet<Variable> ) {
+    constructor(
+      name: string,
+      fn: any,
+      inputs: u.MultiArray<any>,
+      priorFlags: u.MultiArray<boolean>,
+      outputs: u.MultiArray<Variable>,
+      inputVars: u.ArraySet<Variable>,
+      outputVars: u.ArraySet<Variable>
+    ) {
+
       this.id = makeId( name );
       this.name = name;
       if (typeof fn === 'function') {
@@ -72,6 +79,7 @@ module hd.model {
       this.priorFlags = priorFlags;
       this.outputs = outputs;
       this.inputVars = inputVars;
+      this.outputVars = outputVars;
     }
 
     /*----------------------------------------------------------------

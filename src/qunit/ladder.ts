@@ -51,7 +51,7 @@ module hd.qunit {
           ok( false, "received " + received + " when expecting " + expecting );
         }
         else {
-          equal( value, expecting.value, "next received expected value " + expecting.value );
+          deepEqual( value, expecting.value, "next received expected value " + expecting.value );
         }
         if (expecting.cb) {
           expecting.cb();

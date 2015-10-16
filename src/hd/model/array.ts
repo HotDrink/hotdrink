@@ -6,14 +6,6 @@ module hd.model {
   import r = hd.reactive;
 
   /*==================================================================
-   * JavaScript does not have multi-dimensional arrays, just
-   * arrays-of-arrays.  This interface just supports generic
-   * arrays-of-arrays without specifying a depth.
-   */
-  export
-  interface MultiArray<T> extends Array<T|MultiArray<T>> { };
-
-  /*==================================================================
    * The ArrayContext class.
    */
   export
@@ -38,7 +30,7 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    constructor( private elementType?: ContextClass|ContextSpec    ) {
+    constructor( private elementType?: u.Constructor|ContextSpec    ) {
       super();
     }
 
@@ -76,6 +68,7 @@ module hd.model {
         }
       }
 
+      this.elements.length = n;
       this.$length.set( n );
     }
 
@@ -151,9 +144,20 @@ module hd.model {
             spec = <ContextSpec>this.elementType;
           }
           for (var i = 0, l = count; i < l; ++i) {
-            var ctx = new klass();
-            if (spec) {
-              Context.construct( ctx, spec, inits[i] );
+            var ctx: any;
+            if (klass === <any>Variable) {
+              ctx = new Variable( "el" + i, inits[i] );
+            }
+            else {
+              ctx = new klass();
+              if (ctx instanceof ArrayContext) {
+                if (inits[i] !== undefined) {
+                  ctx.expand( inits[i] );
+                }
+              }
+              else if (spec) {
+                Context.construct( ctx, spec, inits[i] );
+              }
             }
             this.set( start + i, ctx );
             Context.claim( this, ctx );

@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <title>HotDrink Test Case</title>
+    <style type="text/css">
+      body {
+          padding: 2em 0 0 2em;
+      }
+      td:nth-child(odd) {
+          width: 100px;
+      }
+      td:nth-child(even) {
+          width: 300px;
+      }
+      .ac {
+          width: 250px;
+          border: 1px solid black;
+          font-size: 12px;
+      }
+      .scroll {
+          width: 248px;
+          height: 180px;
+          overflow-y: auto;
+          border: 1px solid black;
+      }
+      .menu {
+          width: 248px;
+          border-collapse: collapse;
+          margin: 0;
+      }
+      .menu td {
+          border-color: black;
+          border-style: solid none;
+          border-width: 1px;
+          cursor: pointer;
+      }
+      .menu td:first-child {
+          border-top-style: none;
+      }
+      menu td:last-child {
+          border-bottom-style: none;
+      }
+      .menu td.on {
+          background-color: #026;
+          color: #fff;
+      }
+      .menu.disabled td {
+          background-color: #ddd;
+          cursor: default;
+      }
+      .menu.disabled td.on {
+          background-color: #999;
+          color: #ddd;
+      }
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript" src="autocomplete.js"></script>
+    <script type="text/javascript">
+      /*====================================================================
+       * On document ready
+       */
+      $(function() {
+        autocomplete( document.getElementById( 'nohd' ) );
+
+        context = new hd.ContextBuilder()
+            .nested( 'ac', HdAutoComplete )
+            .context();
+
+        pm = new hd.PropertyModel();
+        pm.addComponent( context );
+
+        hd.performDeclaredBindings( context );
+      } );
+    </script>
+  </head>
+  <body>
+    <table>
+      <tr>
+	<td>Manual:</td>
+        <td><input type="text" id="nohd" class="ac"/></td>
+	<td>HotDrink:</td>
+        <td><input type="text" id="hd" class="ac" data-bind="hdAutoComplete( this, ac )"/></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <div class="scroll">
+            <table id="nohd-menu" class="menu">
+            </table>
+          </div>
+        </td>
+        <td></td>
+        <td>
+          <div class="scroll">
+            <table id="hd-menu" class="menu">
+            </table>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td></td>
+        <td id="nohd-result"></td>
+        <td></td>
+        <td id="hd-result" data-bind="hd.text( ac.value )"></td>
+      </tr>
+    </table>
+  </body>
+</html>

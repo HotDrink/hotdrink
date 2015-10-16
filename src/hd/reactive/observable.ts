@@ -75,13 +75,13 @@ module hd.reactive {
 
     // List of observers
     // (Note: inherits empty list from prototype; copies on write)
-    '#observers': Observer<T>[];
+    observers: Observer<T>[];
 
     /*----------------------------------------------------------------
      * Predicate to tell if anyone's listening
      */
     hasObservers(): boolean {
-      return this['#observers'].length > 0
+      return this.observers.length > 0
     }
 
     /*----------------------------------------------------------------
@@ -109,12 +109,12 @@ module hd.reactive {
       else {
         observer = new ProxyObserver( object, onNext, onError, onCompleted, id );
       }
-      if (this.hasOwnProperty( '#observers' )) {
-        this['#observers'].push( observer );
+      if (this.hasOwnProperty( 'observers' )) {
+        this.observers.push( observer );
       }
       else {
         // copy on write
-        this['#observers'] = [observer];
+        this.observers = [observer];
       }
       return observer;
     }
@@ -124,12 +124,12 @@ module hd.reactive {
      */
     removeObserver( observer: Object ): boolean {
       var removed = false;
-      for (var i = this['#observers'].length; i >= 0; --i) {
-        var o = this['#observers'][i];
+      for (var i = this.observers.length; i >= 0; --i) {
+        var o = this.observers[i];
         if (o === observer ||
             (o instanceof ProxyObserver &&
              (<ProxyObserver<T>>o).object === observer)) {
-          this['#observers'].splice( i, 1 );
+          this.observers.splice( i, 1 );
           removed = true;
         }
       }
@@ -140,9 +140,11 @@ module hd.reactive {
      * Send "next" event to all observers.
      */
     sendNext( value: T ): void {
-      this['#observers'].slice( 0 ).forEach( function( observer: Observer<T> ) {
-        observer.onNext( value );
-        //u.schedule( ObservablePriority, observer.onNext, observer, value );
+      this.observers.slice( 0 ).forEach( function( observer: Observer<T> ) {
+        if (observer.onNext) {
+          observer.onNext( value );
+          //u.schedule( ObservablePriority, observer.onNext, observer, value );
+        }
       } );
     }
 
@@ -150,9 +152,11 @@ module hd.reactive {
      * Send "error" event to all observers.
      */
     sendError( error: any ): void {
-      this['#observers'].slice( 0 ).forEach( function( observer: Observer<T> ) {
-        observer.onError( error );
-        //u.schedule( ObservablePriority, observer.onError, observer, error );
+      this.observers.slice( 0 ).forEach( function( observer: Observer<T> ) {
+        if (observer.onError) {
+          observer.onError( error );
+          //u.schedule( ObservablePriority, observer.onError, observer, error );
+        }
       } );
     }
 
@@ -160,17 +164,18 @@ module hd.reactive {
      * Send "completed" event to all observers.
      */
     sendCompleted(): void {
-      this['#observers'].slice( 0 ).forEach( function( observer: Observer<T> ) {
-        observer.onCompleted();
-        //u.schedule( ObservablePriority, observer.onCompleted, observer );
+      this.observers.slice( 0 ).forEach( function( observer: Observer<T> ) {
+        if (observer.onCompleted) {
+          observer.onCompleted();
+          //u.schedule( ObservablePriority, observer.onCompleted, observer );
+        }
       } );
-      delete this['#observers'];
     }
 
   }
 
   // Inherited empty observer list
-  BasicObservable.prototype['#observers'] = [];
+  BasicObservable.prototype.observers = [];
 
 
   /*==================================================================

@@ -16,13 +16,10 @@ module hd.bindings {
    * Observer/Observable for binding
    */
   export
-  class Edit {
+  class Edit extends r.BasicObservable<string> {
 
     // element bound to
     el: HTMLInputElement;
-
-    // stabilizer
-    stable: r.Stabilizer<any>;
 
     // value to change from on blur
     blurFrom: string = null;
@@ -37,23 +34,11 @@ module hd.bindings {
      * Initialize and subscribe to HTML editing events.
      */
     constructor( el: HTMLElement, scope: Scope, time_ms?: number ) {
+      super();
       this.el = checkHtml( el, HTMLInputElement );
-      this.stable = new r.Stabilizer( time_ms, flush );
 
       el.addEventListener( 'input', this.update.bind( this ) );
       el.addEventListener( 'change', this.onBlur.bind( this ) );
-    }
-
-    /*----------------------------------------------------------------
-     */
-    addObserver( o: r.Observer<any> ) {
-      this.stable.addObserver.apply( this.stable, arguments );
-    }
-
-    /*----------------------------------------------------------------
-     */
-    removeObserver( o: r.Observer<any> ) {
-      this.stable.removeObserver.apply( this.stable, arguments );
     }
 
     /*----------------------------------------------------------------
@@ -61,7 +46,7 @@ module hd.bindings {
      */
     update() {
       this.initialized = true;
-      this.stable.onNext( this.el.value );
+      this.sendNext( this.el.value );
     }
 
     /*----------------------------------------------------------------
@@ -102,7 +87,7 @@ module hd.bindings {
       }
       this.blurTo = null;
       this.initialized = false;
-      this.stable.onNext( <any>flush );
+      this.sendCompleted();
     }
 
     /*----------------------------------------------------------------

@@ -8,22 +8,21 @@ module hd.qunit {
 
   function id<T>( x: T ): T { return x };
 
-  function checkSequence( vals: any[], poss: m.Position[] ) {
+  function checkSequence( paths: m.Path[], poss: m.Position[] ) {
     var i = 0;
-    return function( val: any, pos: m.Position ) {
-      if (i >= vals.length || i >= poss.length) {
-        ok( false, "Sequence too long" );
-      }
-      else {
-        equal( val, vals[i], "Sequence value" );
-        equal( pos, poss[i], "Sequence position" );
-        ++i;
-      }
+    var itr = new m.PathSetIterator( paths );
+    while (itr.pos != null) {
+      deepEqual( itr.pos, poss[i], "Path list has expected position" );
+      i++;
+      itr.next();
+    }
+    if (i < poss.length) {
+      ok( false, "Expected more positions for path list" );
     }
   }
 
   test( "paths", function() {
-    expect( 21 );
+    expect( 20 );
 
     var spec = new m.ContextBuilder().references( "x, y, z" ).spec();
 
@@ -33,19 +32,19 @@ module hd.qunit {
 
     ctx.i = 8;
     var p1 = new m.Path( ctx, "i" );
-    equal( p1.get( null ), ctx.i, "one field path" );
+    equal( p1.get(), ctx.i, "one field path" );
 
     ctx.a.j = 9;
     var p2 = new m.Path( ctx, "a.j" );
-    equal( p2.get( null ), ctx.a.j, "two field path" );
+    equal( p2.get(), ctx.a.j, "two field path" );
 
     ctx.a.b.k = 10;
     var p3 = new m.Path( ctx, "a.b.k" );
-    equal( p3.get( null ), ctx.a.b.k, "three field path" );
+    equal( p3.get(), ctx.a.b.k, "three field path" );
 
-    ok( p1.constant && p2.constant && p3.constant, "constant paths" );
+    ok( p1.isConstant() && p2.isConstant() && p3.isConstant(), "constant paths" );
 
-    var nr = new Result( E.next, null );
+    var nr = new Result( E.next, {} );
     var mr = new Result( E.next, "oops" );
 
     var vers = <any> [];
@@ -54,59 +53,61 @@ module hd.qunit {
     var p4 = new m.Path( ctx, "x.j" );
     p4.addObserver( new ObservableTest( [nr, // rem
                                         ] ) );
-    equal( p4.get( null ), ctx.a.j, "one reference path" );
+    equal( p4.get(), ctx.a.j, "one reference path" );
 
-    var o1 = (<any>p4).observers0[0];
-    ok( 'destruct' in o1, "field observer" );
+    var o1 = <m.PropertyObserver>(<any>p4).rootObserver;
+    ok( o1 instanceof m.PropertyObserver, "field observer" );
 
     var p5 = new m.Path( ctx, "x.y.k" );
     p5.addObserver( new ObservableTest( [nr, // set
                                          nr, // rem
                                         ] ) );
 
-    var o2 = (<any>p5).observers0[0];
-    ok( 'destruct' in o2, "field observer" );
-    var o3 = (<any>p5).observers0[1];
-    ok( 'destruct' in o3, "field observer" );
+    var o2 = <m.PropertyObserver>(<any>p5).rootObserver;
+    ok( o2 instanceof m.PropertyObserver, "field observer" );
+    var o3 = <m.PropertyObserver>o2.child;
+    ok( o2 instanceof m.PropertyObserver, "field observer" );
 
     ctx.a.y = ctx.a.b;
-    equal( p5.get( null ), ctx.a.b.k, "two reference path" );
+    equal( p5.get(), ctx.a.b.k, "two reference path" );
 
     var p6 = new m.Path( ctx, "x.k" );
-    strictEqual( p6.get( null ), undefined, "dangling path" );
+    strictEqual( p6.get(), undefined, "dangling path" );
 
     ctx.x = ctx.a.b;
-    equal( p6.get( null ), ctx.a.b.k, "shortcut path" );
-    strictEqual( p5.get( null ), undefined, "dangling path" );
-    strictEqual( p4.get( null ), undefined, "dangling path" );
-    ok( o1.property['#observers'][0] === o1, "still watching" );
-    ok( o2.property['#observers'][1] === o2, "still watching" );
-    ok( o3.property['#observers'].length == 0, "done watching" );
+    equal( p6.get(), ctx.a.b.k, "shortcut path" );
+    strictEqual( p5.get(), undefined, "dangling path" );
+    strictEqual( p4.get(), undefined, "dangling path" );
+    ok( (<any>o1.property).observers[0] === o1, "still watching" );
+    ok( (<any>o2.property).observers[1] === o2, "still watching" );
+    ok( (<any>o3.property).observers.length == 0, "done watching" );
 
-    p6.forEach( checkSequence( [ctx.a.b.k], [null] ) );
-    p5.forEach( checkSequence( [], [] ) );
+    checkSequence( [p6], [{}] );
+    checkSequence( [p4], [] );
   } );
 
   test( "array paths", function() {
-    expect( 27 );
+    expect( 17 );
 
     var spec = new m.ContextBuilder().references( "x, y, z" ).spec();
 
-    var ctx1: any = m.Context.construct( new m.Context(), spec );
+    var ctx1: any = new m.Context( spec );
     ctx1.x = new m.ArrayContext();
     ctx1.x.length = 10;
 
     var p1 = new m.Path( ctx1, "x[i]" );
-    var o1 = (<any>p1).observers0[1];
-    ok( o1.ctx === ctx1.x, "watching array" );
-    ok( ctx1.x.changes['#observers'][0] === o1, "array being watched" );
-    var t1 = new ObservableTest( [new Result( E.next, 2 ),
-                                  new Result( E.next, 8 ),
-                                  new Result( E.next, 5 ),
-                                  new Result( E.next, 2 ),
-                                  new Result( E.next, 2 ),
-                                  new Result( E.next, 5 ),
-                                  new Result( E.next, 4 )
+    var o1 = <m.PropertyObserver>(<any>p1).rootObserver;
+    ok( o1 instanceof m.PropertyObserver, "property observer" );
+    var o2 = <m.ArrayObserver>o1.child;
+    ok( o2 instanceof m.ArrayObserver, "array observer" );
+    ok( o2.ctx === ctx1.x, "watching array" );
+    ok( ctx1.x.changes.observers[0] === o2, "array being watched" );
+    var t1 = new ObservableTest( [new Result( E.next, {i: 2} ),
+                                  new Result( E.next, {i: 8} ),
+                                  new Result( E.next, {i: 5} ),
+                                  new Result( E.next, {i: 2} ),
+                                  new Result( E.next, {i: 5} ),
+                                  new Result( E.next, {i: 4} )
                                  ] );
     p1.addObserver( t1 );
     ctx1.x[2] = 1;
@@ -117,7 +118,7 @@ module hd.qunit {
     ctx1.x[4] = 9;
     p1.removeObserver( t1 );
 
-    p1.forEach( checkSequence( [6, 9, 2], [2, 4, 8] ) );
+    checkSequence( [p1], [{i: 2}, {i: 4}, {i: 8}] );
 
     ctx1.b = new m.ArrayContext();
     ctx1.b.length = [10];
@@ -125,17 +126,11 @@ module hd.qunit {
     ctx1.b[5] = 9;
     ctx1.b[9] = 8;
 
-    var t2 = new ObservableTest( [new Result( E.next, 2 ),
-                                  new Result( E.next, 4 ),
-                                  new Result( E.next, 8 ),
-                                  new Result( E.next, 4 ),
-                                  new Result( E.next, 5 ),
-                                  new Result( E.next, 9 )
-                                 ] );
+    var t2 = new ObservableTest( [new Result( E.next, {} )] );
     p1.addObserver( t2 );
 
     ctx1.x = ctx1.b;
-    p1.forEach( checkSequence( [10, 9, 8], [4, 5, 9] ) );
+    checkSequence( [p1], [{i: 4}, {i: 5}, {i: 9}] );
 
   } );
 
@@ -386,7 +381,7 @@ module hd.qunit {
     ctx = new m.ContextBuilder()
           .variables( "x, y, z", {x: 3, y: 4, z: 5} )
           .references( "a, b, c" )
-          .constraint(  "a, b => b, c" )
+          .constraint(  "b => b, c" )
             .method( "b -> c", id )
           .context();
     x = m.Context.update( ctx );
@@ -401,7 +396,7 @@ module hd.qunit {
     ctx.c = ctx.z;
     var x = m.Context.update( ctx );
     ok( x.removes.length == 0 && x.adds.length == 1,
-        "One updates" );
+        "One update" );
 
     ok( x.adds[0] instanceof m.Constraint, "Update is constraint" );
 
@@ -462,4 +457,55 @@ module hd.qunit {
     equal( a.length, 8, "Set length 2" );
 
   } );
+
+  test( "slice paths", function() {
+    var Spec = new m.ContextBuilder().r( 'x' ).spec();
+    var Spec2 = new m.ContextBuilder().n( 'b', hd.arrayOf( Spec ) ).spec();
+    var ctx: any = new m.ContextBuilder().n( 'a', hd.arrayOf( hd.arrayOf( Spec2 ) ) ).context();
+
+    var p1 = new m.Path( ctx, 'a[i][*].b[k].x' );
+
+    ctx.a.expand( 3 );
+    for (var i = 0; i < 3; ++i) {
+      ctx.a[i].expand( 3 );
+      for (var j = 0; j < 3; ++j) {
+        ctx.a[i][j].b.expand( 3 );
+      }
+    }
+
+    ctx.a[0][0].b[0].x = 1;
+    ctx.a[0][1].b[0].x = 2;
+    ctx.a[0][2].b[0].x = 3;
+
+    ctx.a[2][0].b[1].x = 4;
+    ctx.a[2][1].b[1].x = 5;
+    ctx.a[2][2].b[1].x = 7;
+
+    ctx.a[0][0].b[2].x = 8;
+    ctx.a[0][1].b[2].x = 6;
+    ctx.a[0][2].b[2].x = 4;
+
+    ctx.a[1][0].b[1].x = 2;
+    ctx.a[1][1].b[1].x = 3;
+    ctx.a[1][2].b[1].x = 4;
+
+    ctx.a[1][0].b[2].x = 3;
+    ctx.a[1][1].b[2].x = 4;
+    ctx.a[1][2].b.length = 2;
+
+    ctx.a[0][0].b[1].x = 10;
+    ctx.a[1][0].b[0].x = 8;
+    ctx.a[1][1].b[0].x = 12;
+
+    deepEqual( p1.get( {i: 0, k: 0} ), [1, 2, 3], "Retrieved slice" );
+    deepEqual( p1.get( {i: 2, k: 1} ), [4, 5, 7], "Retrieved slice" );
+    deepEqual( p1.get( {i: 0, k: 2} ), [8, 6, 4], "Retrieved slice" );
+    deepEqual( p1.get( {i: 1, k: 1} ), [2, 3, 4], "Retrieved slice" );
+    strictEqual( p1.get( {i: 1, k: 2} ), undefined, "Undefined for staggered lengths" );
+    strictEqual( p1.get( {i: 0, k: 1} ), undefined, "Undefined for missing elements" );
+    strictEqual( p1.get( {i: 1, k: 0} ), undefined, "Undefined for missing elements" );
+
+    checkSequence( [p1], [{i: 0, k: 0}, {i: 0, k: 2}, {i: 1, k: 1}, {i: 2, k: 1}] );
+  } );
+
 }

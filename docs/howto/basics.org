@@ -37,8 +37,8 @@ string.  The value of /result/ is the comma-delimited list of just those
 addresses in /emails/ which contain /filter/ as a substring.
 
 You can use the "Set" buttons to set the values of the /emails/ and /filter/
-variables.  Then click the "Get Result" button to see the value of the
-/result/ variable.
+variables.  Then click the "Get" button to see the value of the /result/
+variable.
 
 #+HTML: <div class="results">
 #+INCLUDE: tangle/barebone.html html
@@ -77,22 +77,27 @@ example a little awkward, but also makes clear how the property model works.
     <th>Filter:</th>
     <td><input type="button" value="Set" onclick="setFilter()"/></td>
   </tr>
+  <tr>
+    <th>Result:</th>
+    <td><input type="button" value="Get" onclick="getResult()"/></td>
+  </tr>
 </table>
-<br/>
-<input type="button" value="Get Result" onclick="getResult()"/>
 #+END_SRC
 
 #+CAPTION: /View-Model/ (show/hide)
 #+BEGIN_SRC js -n :exports code :tangle tangle/barebone.js :padline no :noweb yes
 // Define the context
 var context = new hd.ContextBuilder()
+    // Define variables
 <<emailvar>>
     .variable( 'filter', 'foo.com' )
     .variable( 'result' )
 
+    // Define a constraint
 <<emailcon>>
 <<emailmth>>
 
+    // Get resulting context
     .context();
 
 // Create the property model
@@ -233,9 +238,9 @@ context that has been added to the constraint system), then changes to the
 variable's value will be noticed by the property model.
 
 In the example above, the following function is called every time the user
-clicks the "Get Results" button.  The function calls ~context.result.get~ to
-retrieve the current value of the ~result~ variable; it then displays this
-value using the standard ~alert~ function.
+clicks the "Get" button.  The function calls ~context.result.get~ to retrieve
+the current value of the ~result~ variable; it then displays this value using
+the standard ~alert~ function.
 
 
 #+NAME: getresult
@@ -391,33 +396,22 @@ pm.addComponent( context );
 // To be done when the document has loaded...
 window.addEventListener( 'load', function() {
 
-  // Obtain DOM node for editing emails
+  // When emails edit-box changed, update variable
   var emailsEdit = document.getElementById( 'emailsEdit' );
-
-  // Initialize using variable
   emailsEdit.value = context.emails.get();
-
 <<emailsEdit>>
 
-  // Obtain DOM node for editing filter
+  // When filter edit-box changed, update variable
   var filterEdit = document.getElementById( 'filterEdit' );
-
-  // Initialize using variable
   filterEdit.value = context.filter.get();
-
-  // Add event handler to edit box which updates variable
   filterEdit.addEventListener( 'input', function() {
     context.filter.set( filterEdit.value );
     pm.update()
   } );
 
-
-  // Obtain DOM node for displaying result
+  // When result variable changed, update span
   var resultSpan = document.getElementById( 'resultSpan' );
-
-  // Initialize using variable
   resultSpan.appendChild( document.createTextNode( context.result.get() ) );
-
 <<resultSpan>>
 
 } )
@@ -433,7 +427,6 @@ registering a callback function for an HTML DOM node.
 
 #+NAME: emailsEdit
 #+BEGIN_SRC js
-  // Add event handler to edit box which updates variable
   emailsEdit.addEventListener( 'input', function() {
     context.emails.set( emailsEdit.value );
     pm.update()
@@ -455,7 +448,6 @@ different, the semantics is the same.
 
 #+NAME: resultSpan
 #+BEGIN_SRC js
-  // Add event handler to variable which updates span
   context.result.addObserver( { onNext: function() {
     resultSpan.removeChild( resultSpan.lastChild );
     resultSpan.appendChild( document.createTextNode( context.result.get() ) );

@@ -1,4 +1,4 @@
-module hd.bindings {
+module hd.binding {
 
   import console         = hd.utility.console;
   import BasicObservable = hd.reactive.BasicObservable;

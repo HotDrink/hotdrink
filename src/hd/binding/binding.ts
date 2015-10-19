@@ -1,4 +1,4 @@
-module hd.bindings {
+module hd.binding {
 
   import u = hd.utility;
   import r = hd.reactive;
@@ -237,11 +237,11 @@ module hd.bindings {
    * Entry point
    */
   export
-  function performDeclaredBindings(scope: Scope, el?: HTMLElement ): Binding[];
+  function createDeclaredBindings(scope: Scope, el?: HTMLElement ): Binding[];
   export
-  function performDeclaredBindings(scope: Scope, el: string ): Binding[];
+  function createDeclaredBindings(scope: Scope, el: string ): Binding[];
   export
-  function performDeclaredBindings(scope: Scope, el: any ): Binding[] {
+  function createDeclaredBindings(scope: Scope, el: any ): Binding[] {
     if (el) {
       if (typeof el === 'string') {
         el = document.getElementById( el );

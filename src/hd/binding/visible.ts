@@ -1,23 +1,23 @@
-module hd.bindings {
+module hd.binding {
 
   import u = hd.utility;
   import r = hd.reactive;
 
   export
-  class Enabled {
+  class Visible {
 
-    el: HTMLInputElement;
+    el: HTMLElement;
 
     constructor( el: HTMLElement ) {
-      this.el = <HTMLInputElement>checkHtml( el, HTMLElement );
+      this.el = checkHtml( el, HTMLElement );
     }
 
     onNext( value: u.Fuzzy ) {
       if (value) {
-        this.el.disabled = false;
+        this.el.style.visibility = 'visible';
       }
       else {
-        this.el.disabled = true;
+        this.el.style.visibility = 'hidden';
       }
     }
 

@@ -1,4 +1,4 @@
-module hd.bindings {
+module hd.binding {
   import u = hd.utility;
   import r = hd.reactive;
 
@@ -45,7 +45,7 @@ module hd.bindings {
             local[this.idxName] = i;
             idx.value = i;
           }
-          performDeclaredBindings( local, <HTMLElement>n );
+          createDeclaredBindings( local, <HTMLElement>n );
         }
       }
     }

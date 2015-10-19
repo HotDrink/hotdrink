@@ -25,7 +25,7 @@ module hd.binding {
     /*----------------------------------------------------------------
      * Initialize
      */
-    constructor( trueClass: string, falseClass: string, el: HTMLElement ) {
+    constructor( el: HTMLElement, trueClass: string, falseClass: string ) {
       this.el = el;
       this.trueClass = trueClass;
       this.falseClass = falseClass;

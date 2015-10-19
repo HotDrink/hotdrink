@@ -33,7 +33,7 @@ module hd.binding {
     /*----------------------------------------------------------------
      * Initialize and subscribe to HTML editing events.
      */
-    constructor( el: HTMLElement, scope: Scope, time_ms?: number ) {
+    constructor( el: HTMLElement ) {
       super();
       this.el = checkHtml( el, HTMLInputElement );
 

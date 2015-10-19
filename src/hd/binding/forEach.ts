@@ -14,7 +14,7 @@ module hd.binding {
     name: string;
     idxName: string;
 
-    constructor( name: string, idxName: string, el: HTMLElement, scope: Scope ) {
+    constructor( el: HTMLElement, scope: Scope, name: string, idxName: string ) {
       this.name = name;
       this.idxName = idxName;
       this.root = checkHtml( el, HTMLElement );

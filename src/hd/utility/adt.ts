@@ -63,6 +63,25 @@ module hd.utility {
     /*------------------------------------------------------------------
      */
     export
+    function forEach<T>(
+      ts:      MultiArray<T>,
+      fn:      (t: T, i: number, ts: MultiArray<T>) => void,
+      thisArg: Object = null
+    ) {
+
+      for (var i = 0, l = ts.length; i < l; ++i) {
+        if (Array.isArray( ts[i] )) {
+          forEach( <MultiArray<T>>ts[i], fn, thisArg );
+        }
+        else {
+          fn.call( thisArg, <T>ts[i], i, ts );
+        }
+      }
+    }
+
+    /*------------------------------------------------------------------
+     */
+    export
     function map<T, U>(
       ts:      MultiArray<T>,
       fn:      (t: T, i: number, ts: MultiArray<T>) => U,

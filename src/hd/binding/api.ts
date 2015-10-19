@@ -31,27 +31,6 @@ module hd {
 
   export var OnlyKey = b.OnlyKey;
 
-  // Factories
-  export var checked = b.checked;
-  export var click = b.click;
-  export var cssClass = b.cssClass;
-  export var dblclick = b.dblclick;
-  export var edit = b.edit;
-  export var editVar = b.editVar;
-  export var date = b.date;
-  export var dateVar = b.dateVar;
-  export var enabled = b.enabled;
-  export var forEach = b.forEach;
-  export var mousedown = b.mousedown;
-  export var mouseup = b.mouseup;
-  export var mousePosition = b.getMousePosition;
-  export var num = b.num;
-  export var numVar = b.numVar;
-  export var position = b.position;
-  export var text = b.text;
-  export var value = b.value;
-  export var when = b.when;
-
   // Extensions
   export var chain = b.chain;
   export var cn = b.cn;

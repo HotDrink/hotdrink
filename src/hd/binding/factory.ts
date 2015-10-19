@@ -30,236 +30,409 @@ module hd.binding {
   }
 
   export
-  function edit<T>( target: Target,
-                    toView?: r.Extension<T,string>,
-                    toModel?: r.Extension<string,T> ): Binding {
-    return {mkview: Edit,
-            model: target,
-            dir: Direction.bi,
-            toView: toView,
-            toModel: concat( toModel, new r.Stabilizer() )
-           };
-  }
+  class BindEnvironment {
 
-  export
-  function editVar<T>( v: Target,
-                       toView?: r.Extension<T,string>,
-                       toModel?: r.Extension<string,T> ): (Binding|Binding[])[] {
-    return [edit( v, toView, toModel ),
-            cssClass( v ),
-            enabled( (<m.Variable>v).relevant )
-           ];
-  }
+    public el:    HTMLElement;
+    public scope: Scope;
 
-  export
-  function num( target: Target,
-                places: number,
-                toView?: r.Extension<any,number>,
-                toModel?: r.Extension<number,any> ): Binding {
-    if (places === undefined || places === null) {
-      return {mkview: Edit,
-              model: target,
-              dir: Direction.bi,
-              toView: toView,
-              toModel: concat( concat( new r.ToNumber(), toModel ),
-                               new r.Stabilizer() )
-             };
+    constructor( el: HTMLElement, scope: Scope ) {
+      el = el;
+      scope = scope;
     }
-    else {
-      return {mkview: Edit,
-              model: target,
-              dir: Direction.bi,
-              toView: concat( toView, places >= 0 ? new r.NumberToFixed( places )
-                                                  : new r.Round( places )
-                            ),
-              toModel: concat( concat( [new r.ToNumber(), new r.Round( places )], toModel ),
-                               new r.Stabilizer() )
-             };
+
+    /*--------------------------------------------------------------*/
+
+    edit(
+      target:   Target,
+      toView?:  r.Extension<any, string>
+    ):          Binding;
+    edit<T>(
+      target:   Target,
+      toView:   r.Extension<T, string>,
+      toModel:  r.Extension<string, T>
+    ):          Binding;
+    edit(
+      target:   Target,
+      toView?:  r.Extension<any, string>,
+      toModel?: r.Extension<string, any>
+    ):          Binding {
+
+      return {
+        view:    new Edit( this.el ),
+        model:   target,
+        dir:     Direction.bi,
+        toView:  toView,
+        toModel: concat( toModel, new r.Stabilizer() )
+      };
     }
-  }
 
-  export
-  function numVar( v: Target,
-                   places: number,
-                   toView?: r.Extension<any,number>,
-                   toModel?: r.Extension<number,any> ): (Binding|Binding[])[] {
-    return [num( v, places, toView, toModel ),
-            cssClass( v ),
-            enabled( (<m.Variable>v).relevant )
-           ];
-  }
+    /*--------------------------------------------------------------*/
 
-  export
-  function date( target: Target,
-                 toView?: r.Extension<any,Date>,
-                 toModel?: r.Extension<Date,any> ): Binding {
-    return {mkview: Edit,
-            model: target,
-            dir: Direction.bi,
-            toView: concat( toView, new r.DateToDateString() ),
-            toModel: concat( concat( new r.ToDate(), toModel ),
-                             new r.Stabilizer() )
-           };
-  }
+    editVar(
+      vv:       m.Variable,
+      toView?:  r.Extension<any, string>
+    ):          u.MultiArray<Binding>;
+    editVar<T>(
+      vv:       m.Variable,
+      toView:   r.Extension<T, string>,
+      toModel:  r.Extension<string, T>
+    ):          u.MultiArray<Binding>;
+    editVar(
+      vv:       m.Variable,
+      toView?:  r.Extension<any, string>,
+      toModel?: r.Extension<string, any>
+    ):          u.MultiArray<Binding> {
 
-  export
-  function dateVar( v: Target,
-                    toView?: r.Extension<any,Date>,
-                    toModel?: r.Extension<Date,any> ): (Binding|Binding[])[] {
-    return [date( v, toView, toModel ),
-            cssClass( v ),
-            enabled( (<m.Variable>v).relevant )
-           ];
-  }
-
-  export
-  function text( target: Target, toView?: r.Extension<any,string> ): Binding {
-    return {mkview: Text,
-            model: target,
-            toView: toView,
-            dir: Direction.m2v
-           };
-  }
-
-  export
-  function cssClass( o: Object,
-                     ontrue?: string,
-                     onfalse?: string,
-                     toView?: r.Extension<any,boolean> ): Binding[] {
-    if (ontrue || onfalse || !(o instanceof m.Variable)) {
-      return [{mkview: CssClass.bind( null, ontrue, onfalse ),
-               model: <Target>o,
-               dir: Direction.m2v,
-               toView: toView
-              }
-             ];
-    }
-    else {
-      var vv = <m.Variable>o;
-      return [{mkview: CssClass.bind( null, 'source', 'derived' ),
-               model: vv.source,
-               dir: Direction.m2v
-              },
-              {mkview: CssClass.bind( null, 'stale', 'current' ),
-               model: vv.stale,
-               dir: Direction.m2v
-              },
-              {mkview: CssClass.bind( null, 'pending', 'complete' ),
-               model: vv.pending,
-               dir: Direction.m2v
-              },
-              {mkview: CssClass.bind( null, 'contributing', 'noncontributing' ),
-               model: vv.contributing,
-               dir: Direction.m2v
-              },
-              {mkview: CssClass.bind( null, 'error', null ),
-               model: vv.error,
-               dir: Direction.m2v
-              }
+      return [
+        this.edit( vv, toView, toModel ),
+        this.cssClass( vv ),
+        this.enabled( vv.relevant )
       ];
     }
-  }
 
-  export
-  function enabled( target: Target,
-                    toView?: r.Extension<any,boolean> ): Binding {
-    return {mkview: Enabled,
-            model: target,
-            dir: Direction.m2v,
-            toView: toView
-           };
-  }
+    /*--------------------------------------------------------------*/
 
-  export
-  function value( target: Target,
-                  toView?: r.Extension<any,string>,
-                  toModel?: r.Extension<string,any> ): Binding {
-    return {mkview: Value,
-            model: target,
-            dir: Direction.bi,
-            toView: toView,
-            toModel: toModel
-           };
-  }
+    num(
+      target:   Target,
+      places?:  number
+    ):          Binding;
+    num<T>(
+      target:   Target,
+      places:   number,
+      toView:   r.Extension<T, number>,
+      toModel:  r.Extension<number, T>
+    ):          Binding;
+    num(
+      target:   Target,
+      places?:  number,
+      toView?:  r.Extension<any,number>,
+      toModel?: r.Extension<number,any>
+    ):          Binding {
 
-  export
-  function checked( target: Target,
-                    toView?: r.Extension<any,boolean>,
-                    toModel?: r.Extension<boolean, any> ): Binding {
-    return {mkview: Checked,
-            model: target,
-            dir: Direction.bi,
-            toView: toView,
-            toModel: toModel
-           };
-                    }
+      if (places === undefined || places === null) {
+        return {
+          view:    new Edit( this.el ),
+          model:   target,
+          dir:     Direction.bi,
+          toView:  toView,
+          toModel: concat(
+            concat( new r.ToNumber(), toModel ),
+            new r.Stabilizer()
+          )
+        };
+      }
+      else {
+        return {
+          view:    new Edit( this.el ),
+          model:   target,
+          dir:     Direction.bi,
+          toView:  concat(
+            toView,
+            places >= 0 ? new r.NumberToFixed( places ) : new r.Round( places )
+          ),
+          toModel: concat(
+            concat( [new r.ToNumber(), new r.Round( places )], toModel ),
+            new r.Stabilizer()
+          )
+        };
+      }
+    }
 
-  export
-  function mousedown( target: Target,
-                      toModel?: r.Extension<any, any> ) {
-    return {mkview: MouseDown,
-            model: target,
-            dir: Direction.v2m,
-            toModel: toModel
-           };
-  }
+    /*--------------------------------------------------------------*/
 
-  export
-  function mouseup( target: Target,
-                      toModel?: r.Extension<any, any> ) {
-    return {mkview: MouseUp,
-            model: target,
-            dir: Direction.v2m,
-            toModel: toModel
-           };
-  }
+    numVar(
+      vv:       m.Variable,
+      places?:  number
+    ):          u.MultiArray<Binding>;
+    numVar<T>(
+      vv:       m.Variable,
+      places:   number,
+      toView:   r.Extension<T, number>,
+      toModel:  r.Extension<number,T >
+    ):          u.MultiArray<Binding>;
+    numVar<T>(
+      vv:       m.Variable,
+      places?:  number,
+      toView?:  r.Extension<T, number>,
+      toModel?: r.Extension<number, T>
+    ):          u.MultiArray<Binding> {
 
-  export
-  function click( target: Target,
-                  toModel?: r.Extension<any, any> ) {
-    return {mkview: Click,
-            model: target,
-            dir: Direction.v2m,
-            toModel: toModel
-           };
-  }
+      return [
+        this.num( vv, places, toView, toModel ),
+        this.cssClass( vv ),
+        this.enabled( vv.relevant )
+      ];
+    }
 
-  export
-  function dblclick( target: Target,
-                     toModel?: r.Extension<any, any> ) {
-    return {mkview: DblClick,
-            model: target,
-            dir: Direction.v2m,
-            toModel: toModel
-           };
-  }
+    /*--------------------------------------------------------------*/
 
-  export
-  function position( target: Target,
-                     toView?: r.Extension<any,u.Point> ): Binding {
-    return {mkview: Position,
-            model: target,
-            dir: Direction.m2v,
-            toView: toView
-           };
-  }
+    date(
+      target:   Target
+    ):          Binding;
+    date<T>(
+      target:   Target,
+      toView:   r.Extension<T,Date>,
+      toModel:  r.Extension<Date,T>
+    ):          Binding;
+    date(
+      target:   Target,
+      toView?:  r.Extension<any,Date>,
+      toModel?: r.Extension<Date,any>
+    ):          Binding {
 
-  export
-  function forEach( name: string, target: Target, idx: string ): Binding {
-    return {mkview: ForEach.bind( null, name, idx ),
-            model: target,
-            dir: Direction.m2v,
-            halt: true
-           };
-  }
+      return {
+        view:    new Edit( this.el ),
+        model:   target,
+        dir:     Direction.bi,
+        toView:  concat( toView, new r.DateToDateString() ),
+        toModel: concat(
+          concat( new r.ToDate(), toModel ), new r.Stabilizer()
+        )
+      };
+    }
 
-  export
-  function when( target: Target,
-                 toView?: r.Extension<any,boolean> ) {
-    return {mkview: When,
-            model: target,
-            dir: Direction.m2v,
-            toView: toView
-           };
+    /*--------------------------------------------------------------*/
+
+    dateVar(
+      vv:       m.Variable
+    ):          u.MultiArray<Binding>;
+    dateVar<T>(
+      vv:       m.Variable,
+      toView:   r.Extension<T, Date>,
+      toModel:  r.Extension<Date, T>
+    ):          u.MultiArray<Binding>;
+    dateVar(
+      vv:       m.Variable,
+      toView?:  r.Extension<any, Date>,
+      toModel?: r.Extension<Date, any>
+    ):          u.MultiArray<Binding> {
+
+      return [
+        this.date( vv, toView, toModel ),
+        this.cssClass( vv ),
+        this.enabled( vv.relevant )
+      ];
+    }
+
+    /*--------------------------------------------------------------*/
+
+    text(
+      target: Target,
+      toView?: r.Extension<any,string>
+    ): Binding {
+
+      return {
+        view:   new Text( this.el ),
+        model:  target,
+        toView: toView,
+        dir:    Direction.m2v
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    cssClass(
+      target:   Target,
+      ontrue?:  string,
+      onfalse?: string,
+      toView?:  r.Extension<any, boolean>
+    ):          Binding|Binding[] {
+
+      if (ontrue || onfalse || !(target instanceof m.Variable)) {
+        return {
+          view:   new CssClass( this.el, ontrue, onfalse ),
+          model:  target,
+          dir:    Direction.m2v,
+          toView: toView
+        };
+      }
+      else {
+        var vv = <m.Variable>target;
+        return [
+          {view:  new CssClass( this.el, 'source', 'derived' ),
+           model: vv.source,
+           dir:   Direction.m2v},
+
+          {view:  new CssClass( this.el, 'stale', 'current' ),
+           model: vv.stale,
+           dir:   Direction.m2v},
+
+          {view:  new CssClass( this.el, 'pending', 'complete' ),
+           model: vv.pending,
+           dir:   Direction.m2v},
+
+          {view:   new CssClass( this.el, 'contributing', 'noncontributing' ),
+           model:  vv.contributing,
+           dir:    Direction.m2v},
+
+          {view:   new CssClass( this.el, 'error', null ),
+           model:  vv.error,
+           dir:    Direction.m2v}
+        ];
+      }
+    }
+
+    /*--------------------------------------------------------------*/
+
+    enabled(
+      target:  Target,
+      toView?: r.Extension<any, boolean>
+    ):         Binding {
+
+      return {
+        view:   new Enabled( this.el ),
+        model:  target,
+        dir:    Direction.m2v,
+        toView: toView
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    value(
+      target:   Target,
+      toView?:  r.Extension<any, string>,
+      toModel?: r.Extension<string, any>
+    ):          Binding {
+
+      return {
+        view:    new Value( this.el ),
+        model:   target,
+        dir:     Direction.bi,
+        toView:  toView,
+        toModel: toModel
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    checked(
+      target:   Target
+    ):          Binding;
+    checked<T>(
+      target:   Target,
+      toView:   r.Extension<T, boolean>,
+      toModel:  r.Extension<boolean, T>
+    ):          Binding;
+    checked(
+      target:   Target,
+      toView?:  r.Extension<any, boolean>,
+      toModel?: r.Extension<boolean, any>
+    ):          Binding {
+
+      return {
+        view:    new Checked( this.el ),
+        model:   target,
+        dir:     Direction.bi,
+        toView:  toView,
+        toModel: toModel
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    mousedown(
+      target:   Target,
+      toModel?: r.Extension<MouseEvent, any>
+    ):          Binding {
+
+      return {
+        view:    new MouseDown( this.el ),
+        model:   target,
+        dir:     Direction.v2m,
+        toModel: toModel
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    mouseup(
+      target:   Target,
+      toModel?: r.Extension<MouseEvent, any>
+    ):          Binding {
+
+      return {
+        view:    new MouseUp( this.el ),
+        model:   target,
+        dir:     Direction.v2m,
+        toModel: toModel
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    click(
+      target: Target,
+      toModel?: r.Extension<MouseEvent, any>
+    ) {
+
+      return {
+        view:    new Click( this.el ),
+        model:   target,
+        dir:     Direction.v2m,
+        toModel: toModel
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    dblclick(
+      target:   Target,
+      toModel?: r.Extension<MouseEvent, any>
+    ):          Binding {
+
+      return {
+        view:    new DblClick( this.el ),
+        model:   target,
+        dir:     Direction.v2m,
+        toModel: toModel
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    position(
+      target:  Target,
+      toView?: r.Extension<any, u.Point>
+    ):         Binding {
+
+      return {
+        view:   new Position( this.el ),
+        model:  target,
+        dir:    Direction.m2v,
+        toView: toView
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    forEach(
+      name:   string,
+      target: Target,
+      idx:    string
+    ):        Binding {
+
+      return {
+        view:  new ForEach( this.el, this.scope, name, idx ),
+        model: target,
+        dir:   Direction.m2v,
+        halt:  true
+      };
+    }
+
+    /*--------------------------------------------------------------*/
+
+    when(
+      target:  Target,
+      toView?: r.Extension<any, boolean>
+    ):         Binding {
+
+      return {
+        view:   new When( this.el ),
+        model:  target,
+        dir:    Direction.m2v,
+        toView: toView
+      };
+    }
   }
 }

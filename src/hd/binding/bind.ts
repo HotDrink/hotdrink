@@ -179,9 +179,9 @@ module hd.binding {
    */
 
   export
-  function bind( b: Binding|u.MultiArray<Binding> ) {
+  function createBindings( b: Binding|u.MultiArray<Binding> ) {
     if (Array.isArray( b )) {
-      (<u.MultiArray<Binding>>b).forEach( bind )
+      (<u.MultiArray<Binding>>b).forEach( createBindings )
     }
     else {
       bindSingle( <Binding>b );
@@ -213,9 +213,9 @@ module hd.binding {
   /*----------------------------------------------------------------*/
 
   export
-  function unbind( b: Binding|u.MultiArray<Binding> ) {
+  function destroyBindings( b: Binding|u.MultiArray<Binding> ) {
     if (Array.isArray( b )) {
-      (<u.MultiArray<Binding>>b).forEach( unbind )
+      (<u.MultiArray<Binding>>b).forEach( destroyBindings )
     }
     else {
       unbindSingle( <Binding>b );
@@ -275,12 +275,12 @@ module hd.binding {
 
     // Look for declarative binding specification
     var spec = el.getAttribute( config.bindAttr );
-    var descend = true;
+    var halt = false;
     if (spec) {
-      descend = bindElement( spec, el, scope, bindings );
+      halt = bindElement( spec, el, scope, bindings );
     }
 
-    if (descend) {
+    if (! halt) {
       for (var i = 0, l = el.childNodes.length; i < l; ++i) {
         if (el.childNodes[i].nodeType === Node.ELEMENT_NODE) {
           searchForBindings( <HTMLElement>el.childNodes[i], scope, bindings );
@@ -304,7 +304,7 @@ module hd.binding {
       var functionBody = compile( spec );
       var elBindingsFn = new Function( config.bindEnv, functionBody );
       var env = new BindEnvironment( el, scope );
-      var elNestedBindings: u.MultiArray<Binding> = elBindingsFn.call( env );
+      var elNestedBindings: u.MultiArray<Binding> = elBindingsFn.call( null, env );
     }
     catch (e) {
       console.error( "Invalid binding declaration: " + spec, e );
@@ -317,7 +317,7 @@ module hd.binding {
     u.multiArray.forEach( elNestedBindings, function( b: Binding ) {
       halt = halt || b.halt;
       try {
-        bind( b );
+        bindSingle( b );
         bindings.push( b );
       }
       catch (e) {
@@ -337,7 +337,7 @@ module hd.binding {
    * of the constructs John implemented.
    */
   function compile( spec: string ): string {
-    return "with (" + config.bindEnv + ".model) {" +
+    return "with (" + config.bindEnv + ".scope) {" +
            "  return [" + spec + "]" +
            "}";
   }

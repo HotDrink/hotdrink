@@ -117,7 +117,7 @@
 
       // Binding
       window.addEventListener( "load", function() {
-        hd.performDeclaredBindings( schedule );
+        hd.createDeclaredBindings( schedule );
       } )
 
       /*--------------------------------------------------------------
@@ -133,17 +133,17 @@
         tr.style.position = 'absolute';
         tr.classList.add( 'selected' );
         mouseBinding = {
-          view: hd.bindings.getMousePosition(),
-          model: new hd.bindings.Position( tr ),
+          view: hd.binding.getMousePosition(),
+          model: new hd.binding.Position( tr ),
         }
         draggingTr= tr;
-        hd.bind( mouseBinding );
+        hd.createBindings( mouseBinding );
       }
 
       function stopDragging() {
         if (mouseBinding) {
           document.getElementById( 'schedule' ).classList.remove( 'dragging' );
-          hd.unbind( mouseBinding );
+          hd.destroyBindings( mouseBinding );
           draggingTr.style.removeProperty( 'position' );
           draggingTr.classList.remove( 'selected' );
           mouseBinding = undefined;
@@ -193,32 +193,32 @@
         </tr>
       </thead>
 
-      <tbody data-bind="hd.forEach( 'e', events, 'idx' )">
+      <tbody data-bind="bd.forEach( events, 'e', 'idx' )">
         <tr onmouseup="insertDraggingBefore( this )">
           <td onmousedown="startDragging(this.parentElement); return false">
-            <span data-bind="hd.text( $idx, hd.fn( plus1 ) )"></span>
+            <span data-bind="bd.text( $idx, bd.fn( plus1 ) )"></span>
           </td>
           <td>
             <input type="text" class="title" placeholder="Enter event title"
-                   data-bind="hd.edit( e.title )"/>
+                   data-bind="bd.edit( e.title )"/>
           </td>
           <td>
             <input type="text" class="num"
-                   data-bind="hd.edit( e.begin, hd.fn( toTime ), hd.fn( fromTime ) ),
-                              hd.cssClass( hd.or( e.begin.error, e.tooEarly ), 'error' )"/>
+                   data-bind="bd.edit( e.begin, bd.fn( toTime ), bd.fn( fromTime ) ),
+                              bd.cssClass( bd.or( e.begin.error, e.tooEarly ), 'error' )"/>
           </td>
           <td>
             <input type="text" class="num"
-                   data-bind="hd.edit( e.end, hd.fn( toTime ), hd.fn( fromTime ) ),
-                              hd.cssClass( hd.or( e.end.error, e.tooLate ), 'error' )"/>
+                   data-bind="bd.edit( e.end, bd.fn( toTime ), bd.fn( fromTime ) ),
+                              bd.cssClass( bd.or( e.end.error, e.tooLate ), 'error' )"/>
           </td>
           <td>
-            <input type="text" class="num" data-bind="hd.numVar( e.length, 0 )"/><small style="margin-left: 0.2ex">min</small>
+            <input type="text" class="num" data-bind="bd.numVar( e.length, 0 )"/><small style="margin-left: 0.2ex">min</small>
           </td>
           <td>
-            <span data-bind="hd.when( events.$length, hd.fn( gt1 ) )">
+            <span data-bind="bd.when( events.$length, bd.fn( gt1 ) )">
             [<a class="control" href="#" onclick="return false;"
-                data-bind="hd.click( hd.fn( removeEvent, idx ) )">X</a>]</span>
+                data-bind="bd.click( bd.fn( removeEvent, idx ) )">X</a>]</span>
           </td>
         </tr>
       </tbody>

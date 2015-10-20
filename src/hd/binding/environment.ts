@@ -36,11 +36,13 @@ module hd.binding {
     public scope: Scope;
 
     constructor( el: HTMLElement, scope: Scope ) {
-      el = el;
-      scope = scope;
+      this.el = el;
+      this.scope = scope;
     }
 
-    /*--------------------------------------------------------------*/
+    /*================================================================
+     * View adapters
+     */
 
     edit(
       target:   Target,
@@ -331,6 +333,21 @@ module hd.binding {
 
     /*--------------------------------------------------------------*/
 
+    mouseposition(
+      target:   Target,
+      toModel?: r.Extension<u.Point, any>
+    ):        Binding {
+
+      return {
+        view:    getMousePosition(),
+        model:   target,
+        dir:     Direction.v2m,
+        toModel: toModel
+      }
+    }
+
+    /*--------------------------------------------------------------*/
+
     mousedown(
       target:   Target,
       toModel?: r.Extension<MouseEvent, any>
@@ -407,9 +424,9 @@ module hd.binding {
     /*--------------------------------------------------------------*/
 
     forEach(
-      name:   string,
       target: Target,
-      idx:    string
+      name:   string,
+      idx?:   string
     ):        Binding {
 
       return {
@@ -433,6 +450,220 @@ module hd.binding {
         dir:    Direction.m2v,
         toView: toView
       };
+    }
+
+    /*================================================================
+     * Translators
+     */
+
+    chain( ...e: r.Extension<any,any>[] ): r.Extension<any,any>;
+    chain() {
+      if (arguments.length == 0) {
+        return;
+      }
+      else if (arguments.length == 1) {
+        var e: any = arguments[0];
+        if (Array.isArray( e )) {
+          if (! e.every( isExtension )) {
+            throw "Invalid extension passed to chain";
+          }
+          return new r.Chain<any,any>( e );
+        }
+        else {
+          return e;
+        }
+      }
+      else {
+        var es : r.Extension<any,any>[] = [];
+        for (var i = 0, l = arguments.length; i < l; ++i) {
+          var e: any = arguments[i];
+          if (Array.isArray( e )) {
+            if (! e.every( isExtension )) {
+              throw "Invalid extension passed to chain";
+            }
+            Array.prototype.push.apply( es, e );
+          }
+          else if (e) {
+            if (! isExtension( e )) {
+              throw "Invalid extension passed to chain";
+            }
+            es.push( e );
+          }
+        }
+        if (es.length > 0) {
+          return new r.Chain<any,any>( es );
+        }
+        else {
+          return;
+        }
+      }
+    }
+
+    /*--------------------------------------------------------------*/
+
+    path( model: m.Context, name: string ) {
+      return new r.HotSwap<any>( new m.PathValue( new m.Path( model, name ) ) );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    rw<T, U>( read: r.Observable<U>, write: r.Observer<T> ) {
+      return new r.ReadWrite( read, write );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    fn( thisArg: Object, f: Function, ...args: any[] ): r.FunctionExtension;
+    fn( f: Function, ...args: any[] ): r.FunctionExtension;
+    fn() {
+      if (typeof arguments[0] === 'function') {
+        return new r.FunctionExtension( arguments[0],
+                                        null,
+                                        Array.prototype.slice.call( arguments, 1 ) );
+      }
+      else {
+        return new r.FunctionExtension( arguments[1],
+                                        arguments[0],
+                                        Array.prototype.slice.call( arguments, 2 ) );
+      }
+    }
+
+    /*--------------------------------------------------------------*/
+
+    cn( value: any ) {
+      return new r.Constant( value );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    delay( time_ms: number ) {
+      return new r.Delay( time_ms );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    stabilize( time_ms: number ) {
+      return new r.Stabilizer( time_ms );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    msg( message: string ) {
+      return new r.ReplaceError( message );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    req() {
+      return new r.Required();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    def( value: any ) {
+      return new r.Default( value );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    round( places: number ) {
+      return new r.Round( places );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    fix( places: number ) {
+      return new r.NumberToFixed( places );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    prec( sigfigs: number ) {
+      return new r.NumberToPrecision( sigfigs );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    exp( places: number ) {
+      return new r.NumberToExponential( places );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    scale( factor: number ) {
+      return new r.ScaleNumber( factor );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    toStr() {
+      return new r.ToString();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    toJson() {
+      return new r.ToJson();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    toDate() {
+      return new r.ToDate();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    dateToString() {
+      return new r.DateToString();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    dateToDateString() {
+      return new r.DateToDateString();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    dateToTimeString() {
+      return new r.DateToTimeString();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    dateToMilliseconds() {
+      return new r.DateToMilliseconds();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    millisecondsToDate() {
+      return new r.MillisecondsToDate();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    toNum() {
+      return new r.ToNumber();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    offset( dx: number, dy: number ) {
+      return new r.Offset( dx, dy );
+    }
+
+    /*--------------------------------------------------------------*/
+
+    pointToString() {
+      return new r.PointToString();
+    }
+
+    /*--------------------------------------------------------------*/
+
+    or( ...observables: r.Observable<any>[] ) {
+      return new r.Or( observables );
     }
   }
 }

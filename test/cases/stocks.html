@@ -63,7 +63,7 @@
       pm.addComponent( context );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( context );
+        hd.createDeclaredBindings( context );
       } );
     </script>
   </head>
@@ -78,7 +78,7 @@
         <tr>
           <td><label class="al">Favorites:</label></td>
           <td>
-            <select data-bind="hd.value( favorite ), hd.cssClass( favorite.contributing, '', 'nc' )">
+            <select data-bind="bd.value( favorite ), bd.cssClass( favorite.contributing, '', 'nc' )">
               <option value="FB">Facebook</option>
               <option value="ADBE">Adobe</option>
               <option value="MS">Microsoft</option>
@@ -89,25 +89,25 @@
         <tr>
           <td><label for="symbol" class="al">Symbol:</label></td>
           <td>
-            <input type="text" data-bind="hd.edit( symbol ), hd.cssClass( symbol.contributing, '', 'nc' )"/>
+            <input type="text" data-bind="bd.edit( symbol ), bd.cssClass( symbol.contributing, '', 'nc' )"/>
           </td>
         </tr>
         <tr>
           <td><label for="value" class="al">Value:</label></td>
           <td>
-            <input type="text" data-bind="hd.num( value, 2 ), hd.cssClass( value )"></input><br/>
+            <input type="text" data-bind="bd.num( value, 2 ), bd.cssClass( value )"></input><br/>
           </td>
         </tr>
         <tr>
           <td><label for="number" class="al">Number:</label></td>
           <td>
-            <input type="text" data-bind="hd.num( number, 2 ), hd.cssClass( number )"></input>
+            <input type="text" data-bind="bd.num( number, 2 ), bd.cssClass( number )"></input>
           </td>
         </tr>
         <tr>
           <td><label for="total">Total:</label></td>
           <td>
-            <input type="text" data-bind="hd.num( total, 2 ), hd.cssClass( total )"></input>
+            <input type="text" data-bind="bd.num( total, 2 ), bd.cssClass( total )"></input>
           </td>
         </tr>
       </table>

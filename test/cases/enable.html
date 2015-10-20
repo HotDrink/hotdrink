@@ -66,7 +66,7 @@
       pm.addComponent( context );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( context );
+        hd.createDeclaredBindings( context );
       } );
     }
     </script>
@@ -78,38 +78,38 @@
           <td rowspan="3" class="space"></td>
           <td>&nbsp;</td>
           <td>&nbsp;</td>
-          <td>C: <input type="text" data-bind="hd.numVar( c )"/></td>
+          <td>C: <input type="text" data-bind="bd.numVar( c )"/></td>
           <td rowspan="3" class="space">&nbsp;</td>
           <td>&nbsp;</td>
           <td rowspan="3" class="space">&nbsp;</td>
-          <td>E: <input type="text" data-bind="hd.numVar( e )"/></td>
+          <td>E: <input type="text" data-bind="bd.numVar( e )"/></td>
           <td>&nbsp;</td>
-          <td>F: <input type="text" data-bind="hd.numVar( f )"/></td>
+          <td>F: <input type="text" data-bind="bd.numVar( f )"/></td>
           <td rowspan="3" class="space">&nbsp;</td>
         </tr>
         <tr>
           <td>&nbsp;</td>
-          <td>B: <input type="text" data-bind="hd.numVar( b )"/></td>
+          <td>B: <input type="text" data-bind="bd.numVar( b )"/></td>
           <td>&nbsp;</td>
-          <td>2*C: <input type="text" data-bind="hd.numVar( i )"/></td>
-          <td>D: <input type="text" data-bind="hd.numVar( d )"/></td>
+          <td>2*C: <input type="text" data-bind="bd.numVar( i )"/></td>
+          <td>D: <input type="text" data-bind="bd.numVar( d )"/></td>
           <td>&nbsp;</td>
-          <td>E+F: <input type="text" data-bind="hd.numVar( j )"/></td>
+          <td>E+F: <input type="text" data-bind="bd.numVar( j )"/></td>
         </tr>
         <tr>
-          <td>A: <input type="text" data-bind="hd.numVar( a )"></td>
+          <td>A: <input type="text" data-bind="bd.numVar( a )"></td>
           <td>&nbsp;</td>
-          <td>B+2*C: <input type="text" data-bind="hd.numVar( k )"/></td>
+          <td>B+2*C: <input type="text" data-bind="bd.numVar( k )"/></td>
           <td>&nbsp;</td>
-          <td>D+1: <input type="text" data-bind="hd.numVar( l )"/></td>
-          <td>G: <input type="text" data-bind="hd.numVar( g )"/></td>
+          <td>D+1: <input type="text" data-bind="bd.numVar( l )"/></td>
+          <td>G: <input type="text" data-bind="bd.numVar( g )"/></td>
           <td>&nbsp;</td>
-          <td>G*(E+F): <input type="text"/ data-bind="hd.numVar( m )"></td>
-          <td>H: <input type="text" data-bind="hd.numVar( h )"/></td>
+          <td>G*(E+F): <input type="text"/ data-bind="bd.numVar( m )"></td>
+          <td>H: <input type="text" data-bind="bd.numVar( h )"/></td>
         </tr>
       </table>
       <p style="margin-top:4em">
-        Output: <span data-bind="hd.text( z )"></span>
+        Output: <span data-bind="bd.text( z )"></span>
       </p>
       <p>
         (Output is first non-negative number, reading the bottom row left-to-right.)

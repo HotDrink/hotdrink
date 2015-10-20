@@ -61,7 +61,7 @@
       pm.addComponent( context );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( context );
+        hd.createDeclaredBindings( context );
       } );
     }
     </script>
@@ -69,76 +69,76 @@
   <body>
     <fieldset>
       <legend>
-        <input id="usetravel" type="checkbox" data-bind="hd.checked( usetravel )"/>
+        <input id="usetravel" type="checkbox" data-bind="bd.checked( usetravel )"/>
         <label for="usetravel">Travel</label>
       </legend>
       <table>
         <tr>
           <td>Gallons:</td>
-          <td><input type="text" data-bind="hd.numVar( gallons, 2 )"/></td>
+          <td><input type="text" data-bind="bd.numVar( gallons, 2 )"/></td>
           <td>Miles:</td>
-          <td><input type="text" data-bind="hd.numVar( miles, 2 )"/></td>
+          <td><input type="text" data-bind="bd.numVar( miles, 2 )"/></td>
           <td>MPG:</td>
-          <td><input type="text" data-bind="hd.numVar( mpg, 2 )"/></td>
+          <td><input type="text" data-bind="bd.numVar( mpg, 2 )"/></td>
         </tr>
         <tr>
           <td>Gas Price:</td>
-          <td><input type="text" data-bind="hd.numVar( gas, 2 )"/></td>
+          <td><input type="text" data-bind="bd.numVar( gas, 2 )"/></td>
         </tr>
         <tr>
           <td>Total Cost:</td>
-          <td><input type="text" data-bind="hd.numVar( travelCost, 2 )"/></td>
+          <td><input type="text" data-bind="bd.numVar( travelCost, 2 )"/></td>
         </tr>
       </table>
     </fieldset>
     <fieldset>
       <legend>
-        <input id="usehotel" type="checkbox" data-bind="hd.checked( usehotel )"/>
+        <input id="usehotel" type="checkbox" data-bind="bd.checked( usehotel )"/>
         <label for="usehotel">Hotel</label>
       </legend>
       <table>
         <tr>
           <td>Nights stayed:</td>
-          <td><input type="text" data-bind="hd.numVar( nights, 0 )"/></td>
+          <td><input type="text" data-bind="bd.numVar( nights, 0 )"/></td>
           <td>Check-in:</td>
-          <td><input type="text" data-bind="hd.dateVar( checkin,
-          hd.millisecondsToDate(), hd.dateToMilliseconds() )"/></td>
+          <td><input type="text" data-bind="bd.dateVar( checkin,
+          bd.millisecondsToDate(), bd.dateToMilliseconds() )"/></td>
           <td>Check-out:</td>
-          <td><input type="text" data-bind="hd.dateVar( checkout,
-          hd.millisecondsToDate(), hd.dateToMilliseconds() )"/></td>
+          <td><input type="text" data-bind="bd.dateVar( checkout,
+          bd.millisecondsToDate(), bd.dateToMilliseconds() )"/></td>
         </tr>
         <tr>
           <td>Room Price:</td>
-          <td><input type="text" data-bind="hd.numVar( rate, 2 )"/></td>
+          <td><input type="text" data-bind="bd.numVar( rate, 2 )"/></td>
         </tr>
         <tr>
           <td>Total Cost:</td>
-          <td><input type="text" data-bind="hd.numVar( hotelCost, 2 )"/></td>
+          <td><input type="text" data-bind="bd.numVar( hotelCost, 2 )"/></td>
         </tr>
       </table>
     </fieldset>
     <fieldset>
       <legend>
-        <input id="usemeals" type="checkbox" data-bind="hd.checked( usemeals )"/>
+        <input id="usemeals" type="checkbox" data-bind="bd.checked( usemeals )"/>
         <label for="usemeals">Meals</label>
       </legend>
       <table>
         <tr>
           <td>Meal Price:</td>
-          <td><input type="text" data-bind="hd.numVar( food, 2 )"></td>
+          <td><input type="text" data-bind="bd.numVar( food, 2 )"></td>
         </tr>
         <tr>
           <td>Tip:</td>
-          <td><input type="text" data-bind="hd.editVar( tip, [hd.scale(100), hd.fix(0)], [hd.toNum(), hd.round(0), hd.scale(0.01)] )"></td>
+          <td><input type="text" data-bind="bd.editVar( tip, [bd.scale(100), bd.fix(0)], [bd.toNum(), bd.round(0), bd.scale(0.01)] )"></td>
         </tr>
         <tr>
           <td>Total Cost:</td>
-          <td><input type="text" data-bind="hd.numVar( mealsCost, 2 )"></td>
+          <td><input type="text" data-bind="bd.numVar( mealsCost, 2 )"></td>
         </tr>
       </table>
     </fieldset>
     <div>
-      <strong>Total Expenses:</strong> $<span data-bind="hd.text( total, hd.fix(2) )"></span>
+      <strong>Total Expenses:</strong> $<span data-bind="bd.text( total, bd.fix(2) )"></span>
     </div>
   </body>
 </html>

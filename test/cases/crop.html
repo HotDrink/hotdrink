@@ -70,7 +70,7 @@
         pm.addComponent( context );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( context );
+          hd.createDeclaredBindings( context );
         } );
       }
     </script>
@@ -82,21 +82,21 @@
     <table>
       <tr>
         <td>Left:</td>
-        <td><input type="text" data-bind="hd.num( left ), hd.cssClass( left )"/></td>
+        <td><input type="text" data-bind="bd.num( left ), bd.cssClass( left )"/></td>
         <td>Right:</td>
-        <td><input type="text" data-bind="hd.num( right ), hd.cssClass( right )"/></td>
+        <td><input type="text" data-bind="bd.num( right ), bd.cssClass( right )"/></td>
         <td>Width:</td>
-        <td><input type="text" data-bind="hd.num( width ), hd.cssClass( width )"/></td>
+        <td><input type="text" data-bind="bd.num( width ), bd.cssClass( width )"/></td>
         <td rowspan="2">Aspect:</td>
-        <td rowspan="2"><input type="text" data-bind="hd.num( aspect ), hd.cssClass( aspect )"/></td>
+        <td rowspan="2"><input type="text" data-bind="bd.num( aspect ), bd.cssClass( aspect )"/></td>
       </tr>
       <tr>
         <td>Top:</td>
-        <td><input type="text" data-bind="hd.num( top ), hd.cssClass( top )"/></td>
+        <td><input type="text" data-bind="bd.num( top ), bd.cssClass( top )"/></td>
         <td>Bottom:</td>
-        <td><input type="text" data-bind="hd.num( bottom ), hd.cssClass( bottom )"/></td>
+        <td><input type="text" data-bind="bd.num( bottom ), bd.cssClass( bottom )"/></td>
         <td>Height:</td>
-        <td><input type="text" data-bind="hd.num( height ), hd.cssClass( height )"/></td>
+        <td><input type="text" data-bind="bd.num( height ), bd.cssClass( height )"/></td>
       </tr>
     </table>
   </body>

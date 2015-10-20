@@ -45,7 +45,7 @@
       pm.addComponent( context );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( context );
+        hd.createDeclaredBindings( context );
       } );
     </script>
   </head>
@@ -59,22 +59,22 @@
       </tr>
       <tr>
         <td>Price:</td>
-        <td><input type="text" data-bind="hd.numVar( pprice, 2 )"/></td>
+        <td><input type="text" data-bind="bd.numVar( pprice, 2 )"/></td>
         <td>Tax Rate:</td>
-        <td><input type="text" data-bind="hd.numVar( prate, 0, hd.scale(100), hd.scale(0.01) )"/></td>
+        <td><input type="text" data-bind="bd.numVar( prate, 0, bd.scale(100), bd.scale(0.01) )"/></td>
         <td>Tax Paid:</td>
-        <td><input type="text" data-bind="hd.numVar( ptax, 2 )"/></td>
+        <td><input type="text" data-bind="bd.numVar( ptax, 2 )"/></td>
       </tr>
       <tr>
         <td colspan="6"><b>Sell</b></td>
       </tr>
       <tr>
         <td>Price:</td>
-        <td><input type="text" data-bind="hd.numVar( sprice, 2 )"/></td>
+        <td><input type="text" data-bind="bd.numVar( sprice, 2 )"/></td>
         <td>Tax Rate:</td>
-        <td><input type="text" data-bind="hd.numVar( srate, 0, hd.scale(100), hd.scale(0.01) )"/></td>
+        <td><input type="text" data-bind="bd.numVar( srate, 0, bd.scale(100), bd.scale(0.01) )"/></td>
         <td>Tax Owed:</td>
-        <td><input type="text" data-bind="hd.numVar( stax, 2 )"/></td>
+        <td><input type="text" data-bind="bd.numVar( stax, 2 )"/></td>
       </tr>
       <tr>
         <td colspan="6">&nbsp;</td>
@@ -82,7 +82,7 @@
       <tr>
         <td colspan="4">&nbsp;</td>
         <td>VAT Owed:</td>
-        <td><input type="text" data-bind="hd.numVar( diff, 2 )"/></td>
+        <td><input type="text" data-bind="bd.numVar( diff, 2 )"/></td>
       </tr>
     </table>
   </body>

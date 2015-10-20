@@ -38,8 +38,9 @@
 
         pm = new hd.PropertyModel();
         pm.addComponent( context );
-        hd.performDeclaredBindings( context );
-        hd.bind( {view: hd.mousePosition(), model: hd.path( context, 'drag.pos' )} );
+        hd.createDeclaredBindings( context );
+        var bd = hd.bindEnv();
+        hd.createBindings( bd.mouseposition( bd.path( context, 'drag.pos' ) ) );
 
         function pull( pa, pb ) {
           var dx = pb.x - pa.x;
@@ -87,11 +88,11 @@
     }
     </script>
   </head>
-  <body onload="init()" data-bind="hd.forEach( 'p', balls, 'idx' )">
+  <body onload="init()" data-bind="bd.forEach( balls, 'p', 'idx' )">
     <div class="puck"
-         data-bind="hd.text( p.txt ), hd.position( p.pos, hd.offset( -30, -30 ) ),
-                    hd.mousedown( hd.fn( startDragging, p ) ),
-                    hd.mouseup( hd.fn( stopDragging ) ),
-                    hd.dblclick( hd.fn( addPoint, idx ) )"><div>
+         data-bind="bd.text( p.txt ), bd.position( p.pos, bd.offset( -30, -30 ) ),
+                    bd.mousedown( bd.fn( startDragging, p ) ),
+                    bd.mouseup( bd.fn( stopDragging ) ),
+                    bd.dblclick( bd.fn( addPoint, idx ) )"><div>
   </body>
 </html>

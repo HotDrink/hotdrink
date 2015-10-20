@@ -30,8 +30,9 @@
 
         var pm = new hd.PropertyModel();
         pm.addComponent( ctx );
-        hd.performDeclaredBindings( ctx );
-        hd.bind( {view: hd.mousePosition(), model: hd.path( ctx, 'drag' )} );
+        hd.createDeclaredBindings( ctx );
+        var bd = hd.bindEnv();
+        hd.createBindings( bd.mouseposition( bd.path( ctx, 'drag' ) ) );
 
         function bump2delay( pa, pb, pc ) {
           var out = bump2( pa, pb, pc );
@@ -117,11 +118,11 @@
     </script>
   </head>
   <body onload="init()">
-    <div id="p1" class="puck" data-bind="hd.position( p1, hd.offset( -30, -30 ) ),
-                                         hd.cssClass( p1.pending, 'pending' )">1</div>
-    <div id="p2" class="puck" data-bind="hd.position( p2, hd.offset( -30, -30 ) ),
-                                         hd.cssClass( p2.pending, 'pending' )">2</div>
-    <div id="p3" class="puck" data-bind="hd.position( p3, hd.offset( -30, -30 ) ),
-                                         hd.cssClass( p3.pending, 'pending' )">3</div>
+    <div id="p1" class="puck" data-bind="bd.position( p1, bd.offset( -30, -30 ) ),
+                                         bd.cssClass( p1.pending, 'pending' )">1</div>
+    <div id="p2" class="puck" data-bind="bd.position( p2, bd.offset( -30, -30 ) ),
+                                         bd.cssClass( p2.pending, 'pending' )">2</div>
+    <div id="p3" class="puck" data-bind="bd.position( p3, bd.offset( -30, -30 ) ),
+                                         bd.cssClass( p3.pending, 'pending' )">3</div>
   </body>
 </html>

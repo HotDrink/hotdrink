@@ -183,7 +183,7 @@
       pm.addComponent( context );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( context );
+        hd.createDeclaredBindings( context );
       } );
 
     }
@@ -192,7 +192,7 @@
   <body>
     <fieldset>
       <legend><b>Class:</b>
-        <select data-bind="hd.value( c ), hd.cssClass( c )">
+        <select data-bind="bd.value( c ), bd.cssClass( c )">
           <option value="A">&nbsp; &nbsp; A</option>
           <option value="B">&nbsp; &nbsp; B</option>
           <option value="C">&nbsp; &nbsp; C</option>
@@ -205,21 +205,21 @@
           <td>Volume:</td>
           <td class="padr" style="text-align:right">
             <input type="text"
-                   data-bind="hd.numVar( v )"/><small>m<sup>3</sup></small>
+                   data-bind="bd.numVar( v )"/><small>m<sup>3</sup></small>
           </td>
           <td>Weight:</td>
           <td style="text-align:right">
             <input type="text"
-                   data-bind="hd.numVar( w )"/><small>kg</small>
+                   data-bind="bd.numVar( w )"/><small>kg</small>
           </td>
         </tr>
         <tr>
           <td style="text-align:center" class="dim" colspan="4">
             Dimensions:
-            <input type="text" data-bind="hd.numVar( x )"/>
+            <input type="text" data-bind="bd.numVar( x )"/>
             <small>cm</small> &times;
-            <input type="text" data-bind="hd.numVar( y )"/><small>cm</small> &times;
-            <input type="text" data-bind="hd.numVar( z )"/><small>cm</small>
+            <input type="text" data-bind="bd.numVar( y )"/><small>cm</small> &times;
+            <input type="text" data-bind="bd.numVar( z )"/><small>cm</small>
           </td>
         </tr>
       </table>
@@ -228,13 +228,13 @@
       <tr>
         <td><b>Distance:</b></td>
         <td></td>
-        <td><input type="text" data-bind="hd.numVar( d, 0 )"/><small>km</small></td>
+        <td><input type="text" data-bind="bd.numVar( d, 0 )"/><small>km</small></td>
       </tr>
       <tr>
         <td><b>Price:</b></td>
         <td>$</td>
-        <td><input type="text" data-bind="hd.num( hd.rw( p, m ), 2 ),
-                                          hd.cssClass( p )"/><small style="font-variant: small-caps;">usd</small></td>
+        <td><input type="text" data-bind="bd.num( bd.rw( p, m ), 2 ),
+                                          bd.cssClass( p )"/><small style="font-variant: small-caps;">usd</small></td>
       </tr>
     </table>
     <br/><br/><br/><br/>

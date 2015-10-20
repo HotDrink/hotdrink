@@ -50,7 +50,7 @@ system_UNITS    := pm activate topo api
 system_DEPS     := utility reactive graph model plan enable
 
 binding_LOC     := hd/
-binding_UNITS   := bind text edit css select checked enable mouse position clicked key time forEach when rx environment api
+binding_UNITS   := bind text edit css select checked enable mouse position clicked key time forEach when environment api
 binding_DEPS    := utility reactive model
 
 async_LOC       := hd/

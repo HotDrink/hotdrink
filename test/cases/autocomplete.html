@@ -43,14 +43,14 @@
           background-color: #026;
           color: #fff;
       }
-      .menu.disabled td {
-          background-color: #ddd;
-          cursor: default;
-      }
-      .menu.disabled td.on {
-          background-color: #999;
-          color: #ddd;
-      }
+      /* .menu.disabled td { */
+      /*     background-color: #ddd; */
+      /*     cursor: default; */
+      /* } */
+      /* .menu.disabled td.on { */
+      /*     background-color: #999; */
+      /*     color: #ddd; */
+      /* } */
     </style>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script src="../../scripts/hotdrink.js"></script>
@@ -70,7 +70,7 @@
         pm = new hd.PropertyModel();
         pm.addComponent( context );
 
-        hd.performDeclaredBindings( context );
+        hd.createDeclaredBindings( context );
       } );
     </script>
   </head>
@@ -80,7 +80,7 @@
 	<td>Manual:</td>
         <td><input type="text" id="nohd" class="ac"/></td>
 	<td>HotDrink:</td>
-        <td><input type="text" id="hd" class="ac" data-bind="hdAutoComplete( this, ac )"/></td>
+        <td><input type="text" id="hd" class="ac" data-bind="bd.autocomplete( ac )"/></td>
       </tr>
       <tr>
         <td></td>
@@ -102,7 +102,7 @@
         <td></td>
         <td id="nohd-result"></td>
         <td></td>
-        <td id="hd-result" data-bind="hd.text( ac.value )"></td>
+        <td id="hd-result" data-bind="bd.text( ac.value )"></td>
       </tr>
     </table>
   </body>

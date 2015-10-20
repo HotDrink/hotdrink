@@ -217,44 +217,45 @@ function AutoCompleteMenu( input ) {
  * observers
  */
 
-function hdAutoComplete( input, ac ) {
-  var menu = new AutoCompleteMenu( input );
+hd.binding.BindEnvironment.prototype.autocomplete =
+  function autocomplete( ac ) {
+    var menu = new AutoCompleteMenu( this.el );
 
-  return [
-    // The input element: read value, write query
-    {view:    new hd.Edit( input ),
-     //toModel: hd.stabilize(),
-     model:   hd.rw( ac.value, ac.query ),
-     dir:     hd.Direction.bi},
+    return [
+      // The input element: read value, write query
+      {view:    new hd.Edit( this.el ),
+       //toModel: this.stabilize(),
+       model:   this.rw( ac.value, ac.query ),
+       dir:     hd.Direction.bi},
 
-    // Menu items
-    {view:  menu.items,
-     model: ac.menu,
-     dir:   hd.Direction.m2v},
+      // Menu items
+      {view:  menu.items,
+       model: ac.menu,
+       dir:   hd.Direction.m2v},
 
-    // Menu disabled while pending
-    {view:  menu.disabled,
-     model: ac.menu.pending,
-     dir:   hd.Direction.m2v},
+      // Menu disabled while pending
+      {view:  menu.disabled,
+       model: ac.menu.pending,
+       dir:   hd.Direction.m2v},
 
-    // Index to highlight
-    {view:  menu.highlight,
-     model: ac.index,
-     dir:   hd.Direction.m2v},
+      // Index to highlight
+      {view:  menu.highlight,
+       model: ac.index,
+       dir:   hd.Direction.m2v},
 
-    // Index being hovered
-    {view:  menu.hover,
-     model: ac.index,
-     dir:   hd.Direction.v2m},
+      // Index being hovered
+      {view:  menu.hover,
+       model: ac.index,
+       dir:   hd.Direction.v2m},
 
-    // Decrement command
-    {view:  menu.dec,
-     model: ac.dec,
-     dir:   hd.Direction.v2m},
+      // Decrement command
+      {view:  menu.dec,
+       model: ac.dec,
+       dir:   hd.Direction.v2m},
 
-    // Increment command
-    {view:  menu.inc,
-     model: ac.inc,
-     dir:   hd.Direction.v2m},
-  ];
-}
+      // Increment command
+      {view:  menu.inc,
+       model: ac.inc,
+       dir:   hd.Direction.v2m},
+    ];
+  }

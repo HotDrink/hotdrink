@@ -2,7 +2,7 @@
  * Binding which simply inserts value as text in an element.
  */
 
-module hd.binding {
+module hd.bind {
 
   import u = hd.utility;
   import m = hd.model;

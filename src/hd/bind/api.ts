@@ -1,6 +1,6 @@
 module hd {
 
-  import b = hd.binding;
+  import b = hd.bind;
 
 
   // Export

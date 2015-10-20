@@ -2,7 +2,7 @@
  * Binding for a text input box.
  */
 
-module hd.binding {
+module hd.bind {
 
   import u = hd.utility;
   import r = hd.reactive;

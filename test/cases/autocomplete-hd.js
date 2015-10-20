@@ -217,7 +217,7 @@ function AutoCompleteMenu( input ) {
  * observers
  */
 
-hd.binding.BindEnvironment.prototype.autocomplete =
+hd.bind.BindEnvironment.prototype.autocomplete =
   function autocomplete( ac ) {
     var menu = new AutoCompleteMenu( this.el );
 

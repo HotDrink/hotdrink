@@ -1,4 +1,4 @@
-module hd.binding {
+module hd.bind {
 
   import u = hd.utility;
 

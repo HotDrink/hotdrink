@@ -4,7 +4,7 @@
  * when it's false.  If a class name evaluates to false, then no
  * class is used for that value.
  */
-module hd.binding {
+module hd.bind {
 
   import u = hd.utility;
   import r = hd.reactive;

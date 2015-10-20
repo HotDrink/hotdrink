@@ -133,8 +133,8 @@
         tr.style.position = 'absolute';
         tr.classList.add( 'selected' );
         mouseBinding = {
-          view: hd.binding.getMousePosition(),
-          model: new hd.binding.Position( tr ),
+          view: hd.bind.getMousePosition(),
+          model: new hd.bind.Position( tr ),
         }
         draggingTr= tr;
         hd.createBindings( mouseBinding );

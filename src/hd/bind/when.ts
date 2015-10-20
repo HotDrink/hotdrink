@@ -1,4 +1,4 @@
-module hd.binding {
+module hd.bind {
 
   export
   class When {

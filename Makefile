@@ -15,7 +15,7 @@ TANGLE_DIR      := tangle
 ######################################################################
 # Module definitions
 
-MODULES         := utility reactive graph model dfa plan enable system binding \
+MODULES         := utility reactive graph model dfa plan enable system bind \
                    async hd qunit compile-dfa fn-worker
 
 utility_LOC     := hd/
@@ -49,23 +49,23 @@ system_LOC      := hd/
 system_UNITS    := pm activate topo api
 system_DEPS     := utility reactive graph model plan enable
 
-binding_LOC     := hd/
-binding_UNITS   := bind text edit css select checked enable mouse position clicked key time forEach when environment api
-binding_DEPS    := utility reactive model
+bind_LOC        := hd/
+bind_UNITS      := bind text edit css select checked enable mouse position clicked key time forEach when environment api
+bind_DEPS       := utility reactive model
 
 async_LOC       := hd/
 async_UNITS     := worker ajax
 async_DEPS      := utility reactive
 
 hd_UNITS        := api
-hd_DEPS         := utility reactive model graph plan enable binding system
+hd_DEPS         := utility reactive model graph plan enable bind system
 
 qunit_UNITS     := qunit.d utility reactive ladder graph model system
 qunit_DEPS      := hd $(hd_DEPS)
 
 compile-dfa_LOC   := apps/
 compile-dfa_UNITS := ../node.d output main
-compile-dfa_DEPS  := utility reactive model graph plan enable system binding hd dfa
+compile-dfa_DEPS  := utility reactive model graph plan enable system bind hd dfa
 
 fn-worker_LOC     := workers/
 fn-worker_UNITS   := worker
@@ -85,7 +85,7 @@ howto_RES    := style.css spinner.gif
 
 TARGETS          := hotdrink hotpdf qunit compile-dfa fn-worker
 
-hotdrink_MODS    := utility reactive graph model dfa plan enable system binding async hd
+hotdrink_MODS    := utility reactive graph model dfa plan enable system bind async hd
 
 hotpdf_MODS      := utility reactive graph model dfa plan enable system hd
 

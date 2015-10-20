@@ -3,7 +3,7 @@ module hd.config {
   export var bindEnv  = 'bd';
 }
 
-module hd.binding {
+module hd.bind {
 
   import u = hd.utility;
   import r = hd.reactive;

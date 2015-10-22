@@ -3,10 +3,10 @@
     <title>HotDrink Test Case</title>
     <style type="text/css">
       body {
-          padding: 2em 0 0 2em;
+          padding: 2em 0 0 1em;
       }
       td:nth-child(odd) {
-          width: 100px;
+          width: 80px;
       }
       td:nth-child(even) {
           width: 300px;
@@ -43,18 +43,19 @@
           background-color: #026;
           color: #fff;
       }
-      .menu.disabled td {
-          background-color: #ddd;
-          cursor: default;
-      }
-      .menu.disabled td.on {
-          background-color: #999;
-          color: #ddd;
-      }
+      /* .menu.disabled td { */
+      /*     background-color: #ddd; */
+      /*     cursor: default; */
+      /* } */
+      /* .menu.disabled td.on { */
+      /*     background-color: #999; */
+      /*     color: #ddd; */
+      /* } */
     </style>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript" src="autocomplete.js"></script>
+    <script type="text/javascript" src="autocomplete-hd.js"></script>
     <script type="text/javascript">
       /*====================================================================
        * On document ready
@@ -62,14 +63,14 @@
       $(function() {
         autocomplete( document.getElementById( 'nohd' ) );
 
-        context = new hd.ContextBuilder()
+        model = new hd.ComponentBuilder()
             .nested( 'ac', HdAutoComplete )
-            .context();
+            .component();
 
         pm = new hd.PropertyModel();
-        pm.addComponent( context );
+        pm.addComponent( model );
 
-        hd.performDeclaredBindings( context );
+        hd.createDeclaredBindings( model );
       } );
     </script>
   </head>
@@ -79,7 +80,7 @@
 	<td>Manual:</td>
         <td><input type="text" id="nohd" class="ac"/></td>
 	<td>HotDrink:</td>
-        <td><input type="text" id="hd" class="ac" data-bind="hdAutoComplete( this, ac )"/></td>
+        <td><input type="text" id="hd" class="ac" data-bind="bd.autocomplete( ac )"/></td>
       </tr>
       <tr>
         <td></td>
@@ -101,7 +102,7 @@
         <td></td>
         <td id="nohd-result"></td>
         <td></td>
-        <td id="hd-result" data-bind="hd.text( ac.value )"></td>
+        <td id="hd-result" data-bind="bd.text( ac.value )"></td>
       </tr>
     </table>
   </body>

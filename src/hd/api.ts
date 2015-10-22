@@ -1,13 +1,6 @@
 
 module hd {
 
-  import u = hd.utility;
-  import r = hd.reactive;
-  import p = hd.plan;
-  import m = hd.model;
-  import s = hd.system;
-  import b = hd.bindings;
-
   export
   function id<T>( x: T ): T {
     return x;

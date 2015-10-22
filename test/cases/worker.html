@@ -4,7 +4,7 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var context = new hd.ContextBuilder()
+        var model = new hd.ComponentBuilder()
           .v( 'start', 3 ).v( 'finish', 17 ).v( 'length' )
 
           .c( 'start, finish, length' )
@@ -12,13 +12,13 @@
           .m( 'finish, start -> length', hd.worker( 'worker.js', 'diff' ) )
           .m( 'finish, length -> start', hd.worker( 'worker.js', 'diff' ) )
 
-          .context();
+          .component();
 
         var pm = new hd.PropertyModel();
-        pm.addComponent( context );
+        pm.addComponent( model );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( context );
+          hd.createDeclaredBindings( model );
         } );
       }
     </script>
@@ -37,18 +37,18 @@
     <table style="text-align:right">
       <tr>
         <td>Start:</td>
-        <td><input type="text" data-bind="hd.numVar( start )"/></td>
-        <td class="error" data-bind="hd.text( start.error )"></td>
+        <td><input type="text" data-bind="bd.numVar( start )"/></td>
+        <td class="error" data-bind="bd.text( start.error )"></td>
       </tr>
       <tr>
         <td>Finish:</td>
-        <td><input type="text" data-bind="hd.numVar( finish )"/></td>
-        <td class="error" data-bind="hd.text( finish.error )"></td>
+        <td><input type="text" data-bind="bd.numVar( finish )"/></td>
+        <td class="error" data-bind="bd.text( finish.error )"></td>
       </tr>
       <tr>
         <td>Length:</td>
-        <td><input type="text" data-bind="hd.numVar( length )"/></td>
-        <td class="error" data-bind="hd.text( length.error )"></td>
+        <td><input type="text" data-bind="bd.numVar( length )"/></td>
+        <td class="error" data-bind="bd.text( length.error )"></td>
       </tr>
     </table>
   </body>

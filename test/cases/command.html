@@ -4,7 +4,7 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var context = new hd.ContextBuilder()
+        var model = new hd.ComponentBuilder()
             .vs( 'begin, end, length', {begin: 30, end: 50} )
 
             .c( 'begin, end, length' )
@@ -54,13 +54,13 @@
               return y + 1;
             } )
 
-            .context();
+            .component();
 
         var pm = new hd.PropertyModel;
-        pm.addComponent( context );
+        pm.addComponent( model );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( context );
+          hd.createDeclaredBindings( model );
         } );
       }
     </script>
@@ -70,16 +70,16 @@
   </head>
   <body>
     <div style="display:inline-block;text-align:right">
-      Begin: <input type="text" data-bind="hd.numVar( begin )"/><br/>
-      End: <input type="text" data-bind="hd.numVar( end )"/><br/>
-      Length: <input type="text" data-bind="hd.numVar( length )"/>
+      Begin: <input type="text" data-bind="bd.numVar( begin )"/><br/>
+      End: <input type="text" data-bind="bd.numVar( end )"/><br/>
+      Length: <input type="text" data-bind="bd.numVar( length )"/>
     </div>
-    <p><button data-bind="hd.click( go ), hd.enabled( go.ready )">Go</button></p>
+    <p><button data-bind="bd.click( go ), bd.enabled( go.ready )">Go</button></p>
     <div>
-      <input type="button" data-bind="hd.click( incx )" value="++"/>
-      <input type="text" data-bind="hd.numVar( x )"/> + 10 =
-      <input type="text" data-bind="hd.numVar( y )"/>
-      <input type="button" data-bind="hd.click( incy )" value="++"/>
+      <input type="button" data-bind="bd.click( incx )" value="++"/>
+      <input type="text" data-bind="bd.numVar( x )"/> + 10 =
+      <input type="text" data-bind="bd.numVar( y )"/>
+      <input type="button" data-bind="bd.click( incy )" value="++"/>
     </div>
   </body>
 </html>

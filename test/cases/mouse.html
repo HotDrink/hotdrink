@@ -4,28 +4,28 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var context = new hd.ContextBuilder()
+        var model = new hd.ComponentBuilder()
             .v( 'x', {x: 0, y: 0} )
-            .context();
+            .component();
 
         var pm = new hd.PropertyModel();
-        pm.addComponent( context );
+        pm.addComponent( model );
 
         window.addEventListener( 'load', function() {
-          hd.performDeclaredBindings( context );
-          hd.bind( {view: hd.mousePosition(),
-                    model: context.x
-                   }
-                 );
+          hd.createDeclaredBindings( model );
+          hd.createBindings( {view: hd.getMousePosition(),
+                              model: model.x
+                             }
+                           );
         } );
       }
     </script>
     <style type="text/css">
-      span.silly { background: #def; border: 1px solid #080; padding: 2px }
+      span.silly { background: #def; border: 1px solid #080; padding: 2px; position: absolute }
     </style>
   </head>
   <body>
-    <span class="silly" data-bind="{mkview: hd.Position, model: x, toView: [hd.offset( 20, 18 ), hd.delay( 300 )]}">Me too!</span>
-    <span class="silly" data-bind="{mkview: hd.Position, model: x, toView: hd.offset( 20, -6 )}">Look at me!</span>
+    <span class="silly" data-bind="bd.position( x, [bd.offset( 20, 18 ), bd.delay( 300 )] )">Me too!</span>
+    <span class="silly" data-bind="bd.position( x, bd.offset( 20, -6 ) )">Look at me!</span>
   </body>
 </html>

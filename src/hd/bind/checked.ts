@@ -1,4 +1,4 @@
-module hd.bindings {
+module hd.bind {
 
   import r = hd.reactive;
   import m = hd.model;

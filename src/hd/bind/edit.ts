@@ -2,7 +2,7 @@
  * Binding for a text input box.
  */
 
-module hd.bindings {
+module hd.bind {
 
   import u = hd.utility;
   import r = hd.reactive;
@@ -33,7 +33,7 @@ module hd.bindings {
     /*----------------------------------------------------------------
      * Initialize and subscribe to HTML editing events.
      */
-    constructor( el: HTMLElement, scope: Scope, time_ms?: number ) {
+    constructor( el: HTMLElement ) {
       super();
       this.el = checkHtml( el, HTMLInputElement );
 

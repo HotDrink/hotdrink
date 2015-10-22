@@ -66,7 +66,7 @@ module hd.system {
     private pendingCount = 0;
 
     // Changes requiring an update
-    private needUpdating: m.Context[] = [];
+    private needUpdating: m.Component[] = [];
     private needEnforcing: u.StringSet = {};
     private needEvaluating: u.StringSet = {};
 
@@ -115,11 +115,11 @@ module hd.system {
     /*----------------------------------------------------------------
      * Add and remove elements to and from the property model
      */
-    add( el: m.ContextElement ) {
+    add( el: m.ComponentElement ) {
       if (el instanceof m.Variable) {
         this.addVariable( el );
       }
-      else if (el instanceof m.Context) {
+      else if (el instanceof m.Component) {
         this.addComponent( el );
       }
       else if (el instanceof m.Constraint) {
@@ -138,11 +138,11 @@ module hd.system {
 
     /*----------------------------------------------------------------
      */
-    remove( el: m.ContextElement ) {
+    remove( el: m.ComponentElement ) {
       if (el instanceof m.Variable) {
         this.removeVariable( el );
       }
-      else if (el instanceof m.Context) {
+      else if (el instanceof m.Component) {
         this.removeComponent( el );
       }
       else if (el instanceof m.Constraint) {
@@ -160,21 +160,21 @@ module hd.system {
     }
 
     //--------------------------------------------
-    // Add context
-    addComponent( context: m.Context ) {
-      m.Context.update( context );
-      m.Context.elements( context ).forEach( this.add, this );
-      m.Context.changes( context ).addObserver(
-        this, this.recordContextChange, null, null
+    // Add component
+    addComponent( component: m.Component ) {
+      m.Component.update( component );
+      m.Component.elements( component ).forEach( this.add, this );
+      m.Component.changes( component ).addObserver(
+        this, this.recordComponentChange, null, null
       );
     }
 
     //--------------------------------------------
-    // Remove context
-    removeComponent( context: m.Context ) {
-      m.Context.elements( context ).forEach( this.remove, this );
-      m.Context.changes( context ).removeObserver( this );
-      this.removeContextRecords( context );
+    // Remove component
+    removeComponent( component: m.Component ) {
+      m.Component.elements( component ).forEach( this.remove, this );
+      m.Component.changes( component ).removeObserver( this );
+      this.removeComponentRecords( component );
     }
 
     //--------------------------------------------
@@ -542,10 +542,10 @@ module hd.system {
      */
 
     //--------------------------------------------
-    // Context reference has changed; need to query for adds/drops
+    // Component reference has changed; need to query for adds/drops
     private
-    recordContextChange( ctx: m.Context ) {
-      this.needUpdating.push( ctx );
+    recordComponentChange( cmp: m.Component ) {
+      this.needUpdating.push( cmp );
       this.recordChange();
     }
 
@@ -586,10 +586,10 @@ module hd.system {
     }
 
     //--------------------------------------------
-    // Remove any record of context
+    // Remove any record of component
     private
-    removeContextRecords( ctx: m.Context ) {
-      u.arraySet.remove( this.needUpdating, ctx );
+    removeComponentRecords( cmp: m.Component ) {
+      u.arraySet.remove( this.needUpdating, cmp );
     }
 
     /*----------------------------------------------------------------
@@ -626,8 +626,8 @@ module hd.system {
      */
     commitModifications() {
       while (this.needUpdating.length > 0) {
-        var ctx = this.needUpdating.shift();
-        var changes = m.Context.update( ctx );
+        var cmp = this.needUpdating.shift();
+        var changes = m.Component.update( cmp );
         for (var i = 0, l = changes.removes.length; i < l; ++i) {
           this.remove( changes.removes[i] );
         }

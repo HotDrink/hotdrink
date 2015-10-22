@@ -1,5 +1,5 @@
 /*####################################################################
- * Classes/interfaces related to contexts.
+ * Classes/interfaces related to components.
  */
 module hd.model {
 
@@ -114,12 +114,12 @@ module hd.model {
   }
 
   /*******************************************************************
-    Context elements
+    Component elements
    ******************************************************************/
 
   // Union type for all possible elements
   export
-  type ContextElement = Variable | Context | Constraint | Command | TouchDep | Output;
+  type ComponentElement = Variable | Component | Constraint | Command | TouchDep | Output;
 
   // Wrapper class to represent touch dependency
   export
@@ -134,15 +134,15 @@ module hd.model {
   }
 
   export
-  interface ContextClass {
-    new (): Context;
+  interface ComponentClass {
+    new (): Component;
   }
 
-  // Changes made by a context in response to an update
+  // Changes made by a component in response to an update
   export
-  interface ContextChanges {
-    removes: ContextElement[];
-    adds: ContextElement[]
+  interface ComponentChanges {
+    removes: ComponentElement[];
+    adds: ComponentElement[]
   }
 
   /*******************************************************************
@@ -166,7 +166,7 @@ module hd.model {
   export
   interface NestedSpec {
     loc: string;
-    ctxType?: ContextClass|ContextSpec;
+    cmpType?: ComponentClass|ComponentSpec;
   }
 
   export
@@ -214,7 +214,7 @@ module hd.model {
   }
 
   export
-  interface ContextSpec {
+  interface ComponentSpec {
     constants: ConstantSpec[];
     variables: VariableSpec[];
     nesteds: NestedSpec[];
@@ -331,7 +331,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Recalculate all instances and report any changes.
      */
-    update( changes: ContextChanges ) {
+    update( changes: ComponentChanges ) {
       var newInstances = <TemplateInstance[]> [];
 
       if (this.paths.length > 0) {
@@ -383,7 +383,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * All current elements created by this template
      */
-    getElements(): ContextElement[] {
+    getElements(): ComponentElement[] {
       return this.instances.map( getElement );
     }
 
@@ -873,31 +873,31 @@ module hd.model {
 
 
   /*******************************************************************
-    The Context type
+    The Component type
    ******************************************************************/
 
   /*==================================================================
-   * The actual data members of a context are held in a separate
+   * The actual data members of a component are held in a separate
    * class.  If a dynamic element does not use any references then
    * it is simply instantiated and stored; if it does, then we store
    * a template for the element.
    */
-  class ContextData extends r.BasicObservable<Context> {
+  class ComponentData extends r.BasicObservable<Component> {
 
-    // The context object this belongs to
-    context: Context;
+    // The component object this belongs to
+    component: Component;
 
     // The static elements
-    elements: u.ArraySet<ContextElement> = [];
+    elements: u.ArraySet<ComponentElement> = [];
 
     // Templates for dynamic elements
     templates: Template[] = [];
 
     // Any static elements added since the last update
-    added: ContextElement[] = [];
+    added: ComponentElement[] = [];
 
     // Any static elements removed since the last update
-    removed: ContextElement[] = [];
+    removed: ComponentElement[] = [];
 
     // Templates whose paths have changed since last update
     outdated: Template[] = [];
@@ -905,13 +905,13 @@ module hd.model {
     // Have any changes been made since last update?
     changed = false;
 
-    // All paths used by this context (to promote sharing among templates)
+    // All paths used by this component (to promote sharing among templates)
     paths: u.Dictionary<any> = {};
 
     // Init
-    constructor( ctx: Context ) {
+    constructor( cmp: Component ) {
       super();
-      this.context = ctx;
+      this.component = cmp;
     }
 
     /*----------------------------------------------------------------
@@ -921,15 +921,15 @@ module hd.model {
     reportChanged() {
       if (! this.changed) {
         this.changed = true;
-        this.sendNext( this.context );
+        this.sendNext( this.component );
       }
     }
 
     /*----------------------------------------------------------------
-     * Return all elements currently in the context.
+     * Return all elements currently in the component.
      */
     getElements() {
-      return (<ContextElement[]>this.elements).concat(
+      return (<ComponentElement[]>this.elements).concat(
         u.concatmap( this.templates, function( tmpl: Template ) {
           return tmpl.getElements()
         } )
@@ -937,9 +937,9 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Adds a static element to the context
+     * Adds a static element to the component
      */
-    addStatic( element: ContextElement ): boolean {
+    addStatic( element: ComponentElement ): boolean {
       var added = false;
       if (u.arraySet.remove( this.removed, element )) {
         added = true;
@@ -955,9 +955,9 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Removes a static element to the context
+     * Removes a static element to the component
      */
-    removeStatic( element: ContextElement ): boolean {
+    removeStatic( element: ComponentElement ): boolean {
       var removed = false;
       if (u.arraySet.remove( this.added, element )) {
         removed = true;
@@ -973,11 +973,11 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Adds a template to the context
+     * Adds a template to the component
      */
     addTemplate( tmpl: Template ) {
       if (tmpl.isConstant()) {
-        var changes: ContextChanges = {removes: [], adds: []};
+        var changes: ComponentChanges = {removes: [], adds: []};
         tmpl.update( changes );
         if (changes.adds.length > 0) {
           changes.adds.forEach( this.addStatic, this );
@@ -995,7 +995,7 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    update(): ContextChanges {
+    update(): ComponentChanges {
       var removed = this.removed;
       this.removed = [];
       if (removed.length > 0) {
@@ -1036,82 +1036,82 @@ module hd.model {
     get( name: string ) {
       var path = this.paths[name];
       if (! path) {
-        path = this.paths[name] = new Path( this.context, name );
+        path = this.paths[name] = new Path( this.component, name );
       }
       return path;
     }
 
     /*----------------------------------------------------------------
-     * Overload addObserver so that subscribing to a context needing
+     * Overload addObserver so that subscribing to a component needing
      * updates results in automatic notification.
      */
-    addObserver( observer: r.Observer<Context> ): r.Observer<Context>;
+    addObserver( observer: r.Observer<Component> ): r.Observer<Component>;
     addObserver( object: Object,
-                 onNext: (value: Context) => void,
+                 onNext: (value: Component) => void,
                  onError: (error: any) => void,
-                 onCompleted: () => void        ): r.Observer<Context>;
+                 onCompleted: () => void        ): r.Observer<Component>;
     addObserver<U>( object: Object,
-                    onNext: (value: Context, id?: U) => void,
+                    onNext: (value: Component, id?: U) => void,
                     onError: (error: any, id?: U) => void,
                     onCompleted: (id?: U) => void,
-                    id: U                                  ): r.Observer<Context>;
+                    id: U                                  ): r.Observer<Component>;
     addObserver( object: Object,
-                 onNext?: (value: Context, id?: any) => void,
+                 onNext?: (value: Component, id?: any) => void,
                  onError?: (error: any, id?: any) => void,
                  onCompleted?: (id?: any) => void,
-                 id?: any                                  ): r.Observer<Context> {
-      var added: r.Observer<Context>;
+                 id?: any                                  ): r.Observer<Component> {
+      var added: r.Observer<Component>;
       if (arguments.length == 1) {
-        added = super.addObserver( <r.Observer<Context>>object );
+        added = super.addObserver( <r.Observer<Component>>object );
       }
       else {
         added = super.addObserver( object, onNext, onError, onCompleted, id );
       }
       if (added && this.changed) {
-        added.onNext( this.context );
+        added.onNext( this.component );
       }
       return added;
     }
   }
 
   /*==================================================================
-   * The context class itself has a hidden ContextData field; all
-   *   other fields are user-defined context properties.
-   * (Member functions of the context class are all static.)
+   * The component class itself has a hidden ComponentData field; all
+   *   other fields are user-defined component properties.
+   * (Member functions of the component class are all static.)
    */
   export
-  class Context {
+  class Component {
 
     private
-    '#hd_data': ContextData;
+    '#hd_data': ComponentData;
 
     [key: string]: any;
 
     /*----------------------------------------------------------------
      * Copies any fields found in init
      */
-    constructor( spec?: ContextSpec, init?: u.Dictionary<any> ) {
+    constructor( spec?: ComponentSpec, init?: u.Dictionary<any> ) {
       if (spec) {
-        Context.construct( this, spec, init );
+        Component.construct( this, spec, init );
       }
     }
 
     /*----------------------------------------------------------------
-     * A "constructor" - add everything from context spec to the
-     * given context.
+     * A "constructor" - add everything from component spec to the
+     * given component.
      */
     static
     construct(
-      ctx: Context,
-      spec: ContextSpec,
+      cmp: Component,
+      spec: ComponentSpec,
       init?: u.Dictionary<any>
-    ): Context {
-      if (! (ctx instanceof Context)) {
-        throw "Attempting to construct context using specification failed:  object not a context!";
+    ): Component {
+      if (! (cmp instanceof Component)) {
+        throw "Attempting to construct component using specification failed:  object not a component!";
       }
       if (init) {
         if (typeof init !== 'object') {
-          throw "Invalid initialization object passed to Context.construct: " + init;
+          throw "Invalid initialization object passed to Component.construct: " + init;
         }
       }
       else {
@@ -1120,13 +1120,13 @@ module hd.model {
 
       for (var i = 0, l = spec.constants.length; i < l; ++i) {
         var tspec = spec.constants[i];
-        if (! (tspec.loc in ctx)) {
-          Context.addConstant( ctx, spec.constants[i] );
+        if (! (tspec.loc in cmp)) {
+          Component.addConstant( cmp, spec.constants[i] );
         }
       }
 
       var variables = spec.variables.filter( function( vspec: VariableSpec ) {
-        return ! (vspec.loc in ctx);
+        return ! (vspec.loc in cmp);
       } );
 
       // Initialized/min
@@ -1137,7 +1137,7 @@ module hd.model {
             (vspec.optional === Optional.Default &&
              init[vspec.loc] === undefined &&
              vspec.init !== undefined)) {
-          Context.addVariable( ctx, vspec, init[vspec.loc] );
+          Component.addVariable( cmp, vspec, init[vspec.loc] );
         }
       }
 
@@ -1147,7 +1147,7 @@ module hd.model {
         if ((vspec.optional === Optional.Default || vspec.optional === Optional.Min) &&
             vspec.init === undefined &&
             init[vspec.loc] === undefined) {
-          Context.addVariable( ctx, vspec, init[vspec.loc] );
+          Component.addVariable( cmp, vspec, init[vspec.loc] );
         }
       }
 
@@ -1157,7 +1157,7 @@ module hd.model {
         if (vspec.optional === Optional.Max &&
             vspec.init === undefined &&
             init[vspec.loc] === undefined) {
-          Context.addVariable( ctx, vspec, init[vspec.loc] );
+          Component.addVariable( cmp, vspec, init[vspec.loc] );
         }
       }
 
@@ -1168,56 +1168,56 @@ module hd.model {
              (vspec.init !== undefined || init[vspec.loc] !== undefined)) ||
             (vspec.optional === Optional.Default &&
              init[vspec.loc] !== undefined)) {
-          Context.addVariable( ctx, vspec, init[vspec.loc] );
+          Component.addVariable( cmp, vspec, init[vspec.loc] );
         }
       }
 
       for (var i = 0, l = spec.nesteds.length; i < l; ++i) {
         var nspec = spec.nesteds[i];
-        if (! (nspec.loc in ctx)) {
-          Context.addNestedContext( ctx, nspec, init[nspec.loc] );
+        if (! (nspec.loc in cmp)) {
+          Component.addNestedComponent( cmp, nspec, init[nspec.loc] );
         }
       }
 
       for (var i = 0, l = spec.references.length; i < l; ++i) {
         var rspec = spec.references[i];
-        if (! (rspec.loc in ctx)) {
-          Context.addReference( ctx, rspec, init[rspec.loc] );
+        if (! (rspec.loc in cmp)) {
+          Component.addReference( cmp, rspec, init[rspec.loc] );
         }
       }
 
       for (var i = 0, l = spec.constraints.length; i < l; ++i) {
-        Context.addConstraint( ctx, spec.constraints[i] );
+        Component.addConstraint( cmp, spec.constraints[i] );
       }
 
       for (var i = 0, l = spec.commands.length; i < l; ++i) {
-        Context.addCommand( ctx, spec.commands[i] );
+        Component.addCommand( cmp, spec.commands[i] );
       }
 
       for (var i = 0, l = spec.touchDeps.length; i < l; ++i) {
-        Context.addTouchDep( ctx, spec.touchDeps[i] );
+        Component.addTouchDep( cmp, spec.touchDeps[i] );
       }
 
       for (var i = 0, l = spec.outputs.length; i < l; ++i) {
-        Context.addOutput( ctx, spec.outputs[i] );
+        Component.addOutput( cmp, spec.outputs[i] );
       }
 
-      return ctx;
+      return cmp;
     }
 
     /*----------------------------------------------------------------
      */
     static
-    addConstant( ctx: Context, spec: ConstantSpec ) {
-      ctx[spec.loc] = spec.value;
+    addConstant( cmp: Component, spec: ConstantSpec ) {
+      cmp[spec.loc] = spec.value;
     }
 
     /*----------------------------------------------------------------
      * Add variable
      */
     static
-    addVariable( ctx: Context, spec: VariableSpec, init: any ) {
-      var hd_data = ctx['#hd_data'];
+    addVariable( cmp: Component, spec: VariableSpec, init: any ) {
+      var hd_data = cmp['#hd_data'];
       var vv = new Variable( spec.loc, init === undefined ? spec.init : init, spec.eq );
       if (spec.optional !== Optional.Default) {
         vv.optional = spec.optional;
@@ -1226,46 +1226,46 @@ module hd.model {
         vv.optional = (init === undefined ? Optional.Min : Optional.Max);
       }
       hd_data.addStatic( vv );
-      ctx[spec.loc] = vv;
+      cmp[spec.loc] = vv;
     }
 
     /*----------------------------------------------------------------
-     * Add nested context
+     * Add nested component
      */
     static
-    addNestedContext( ctx: Context, spec: NestedSpec, init: u.Dictionary<any> ) {
-      var hd_data = ctx['#hd_data'];
-      var nested: Context;
-      if (typeof spec.ctxType === 'function') {
-        nested = new (<ContextClass>spec.ctxType)();
+    addNestedComponent( cmp: Component, spec: NestedSpec, init: u.Dictionary<any> ) {
+      var hd_data = cmp['#hd_data'];
+      var nested: Component;
+      if (typeof spec.cmpType === 'function') {
+        nested = new (<ComponentClass>spec.cmpType)();
       }
       else {
-        nested = new Context();
-        if (spec.ctxType) {
-          Context.construct( nested, <ContextSpec>spec.ctxType );
+        nested = new Component();
+        if (spec.cmpType) {
+          Component.construct( nested, <ComponentSpec>spec.cmpType );
         }
       }
       hd_data.addStatic( nested );
-      ctx[spec.loc] = nested;
+      cmp[spec.loc] = nested;
     }
 
     /*----------------------------------------------------------------
      * Add dynamic reference
      */
     static
-    addReference( ctx: Context, spec: ReferenceSpec, init: any ) {
+    addReference( cmp: Component, spec: ReferenceSpec, init: any ) {
       var prop = new r.BasicSignal<any>( init, spec.eq );
-      Context.defineReferenceAccessors( ctx, spec.loc, prop );
+      Component.defineReferenceAccessors( cmp, spec.loc, prop );
     }
 
     static
-    defineReferenceAccessors( ctx: Context, loc: string, prop: r.BasicSignal<any> ) {
-      Object.defineProperty( ctx, '$'+loc, {configurable: true,
+    defineReferenceAccessors( cmp: Component, loc: string, prop: r.BasicSignal<any> ) {
+      Object.defineProperty( cmp, '$'+loc, {configurable: true,
                                             enumerable: false,
                                             value: prop
                                            }
                            );
-      Object.defineProperty( ctx, loc, {configurable: true,
+      Object.defineProperty( cmp, loc, {configurable: true,
                                         enumerable: true,
                                         get: prop.get.bind( prop ),
                                         set: prop.set.bind( prop )
@@ -1277,14 +1277,14 @@ module hd.model {
      * Add constraint
      */
     static
-    addConstraint( ctx: Context, spec: ConstraintSpec ) {
-      var hd_data = ctx['#hd_data'];
+    addConstraint( cmp: Component, spec: ConstraintSpec ) {
+      var hd_data = cmp['#hd_data'];
 
       var tmpl = new ConstraintTemplate( spec, hd_data );
       hd_data.addTemplate( tmpl );
 
       if (spec.loc) {
-        ctx[spec.loc] = tmpl;
+        cmp[spec.loc] = tmpl;
       }
     }
 
@@ -1292,14 +1292,14 @@ module hd.model {
      * Add command
      */
     static
-    addCommand( ctx: Context, spec: CommandSpec ) {
-      var hd_data = ctx['#hd_data'];
+    addCommand( cmp: Component, spec: CommandSpec ) {
+      var hd_data = cmp['#hd_data'];
 
       var tmpl = new CommandTemplate( spec, hd_data );
       hd_data.addTemplate( tmpl );
 
       if (spec.loc && tmpl.isConstant()) {
-        ctx[spec.loc] = tmpl.instances[0].element;
+        cmp[spec.loc] = tmpl.instances[0].element;
       }
     }
 
@@ -1307,8 +1307,8 @@ module hd.model {
      * Add touch dependency
      */
     static
-    addTouchDep( ctx: Context, spec: TouchDepSpec ) {
-      var hd_data = ctx['#hd_data'];
+    addTouchDep( cmp: Component, spec: TouchDepSpec ) {
+      var hd_data = cmp['#hd_data'];
 
       hd_data.addTemplate( new TouchDepTemplate( spec, hd_data ) );
     }
@@ -1317,8 +1317,8 @@ module hd.model {
      * Add output
      */
     static
-    addOutput( ctx: Context, spec: OutputSpec ) {
-      var hd_data = ctx['#hd_data'];
+    addOutput( cmp: Component, spec: OutputSpec ) {
+      var hd_data = cmp['#hd_data'];
 
       hd_data.addTemplate( new OutputTemplate( spec, hd_data ) );
     }
@@ -1328,8 +1328,8 @@ module hd.model {
      *   which were made.
      */
     static
-    update( ctx: Context ): ContextChanges {
-      var hd_data = ctx['#hd_data'];
+    update( cmp: Component ): ComponentChanges {
+      var hd_data = cmp['#hd_data'];
 
       return hd_data.update();
     }
@@ -1338,16 +1338,16 @@ module hd.model {
      * Getter
      */
     static
-    changes( ctx: Context ): r.ProxyObservable<Context> {
-      return ctx['#hd_data'];
+    changes( cmp: Component ): r.ProxyObservable<Component> {
+      return cmp['#hd_data'];
     }
 
     /*----------------------------------------------------------------
      * Getter
      */
     static
-    elements( ctx: Context ): ContextElement[] {
-      var hd_data = ctx['#hd_data'];
+    elements( cmp: Component ): ComponentElement[] {
+      var hd_data = cmp['#hd_data'];
 
       return hd_data.getElements();
     }
@@ -1355,8 +1355,8 @@ module hd.model {
     /*----------------------------------------------------------------
      */
     static
-    claim( ctx: Context, el: Context|Variable ): boolean {
-      var hd_data = ctx['#hd_data'];
+    claim( cmp: Component, el: Component|Variable ): boolean {
+      var hd_data = cmp['#hd_data'];
 
       return hd_data.addStatic( el );
     }
@@ -1364,8 +1364,8 @@ module hd.model {
     /*----------------------------------------------------------------
      */
     static
-    release( ctx: Context, el: Context|Variable ): boolean {
-      var hd_data = ctx['#hd_data'];
+    release( cmp: Component, el: Component|Variable ): boolean {
+      var hd_data = cmp['#hd_data'];
 
       return hd_data.removeStatic( el );
     }
@@ -1373,8 +1373,8 @@ module hd.model {
     /*----------------------------------------------------------------
      */
     static
-    destruct( ctx: Context ) {
-      var hd_data = ctx['#hd_data'];
+    destruct( cmp: Component ) {
+      var hd_data = cmp['#hd_data'];
 
       for (var i = 0, l = hd_data.templates.length; i < l; ++i) {
         hd_data.templates[i].destruct();
@@ -1383,13 +1383,13 @@ module hd.model {
   }
 
   /*------------------------------------------------------------------
-   * Rather than require every context subclass to call the context
+   * Rather than require every component subclass to call the component
    * constructor, we define a getter that creates it the first time it
    * is accessed.
    */
-  Object.defineProperty( Context.prototype, '#hd_data', {
+  Object.defineProperty( Component.prototype, '#hd_data', {
     get: function makeData() {
-      var data = new ContextData( this );
+      var data = new ComponentData( this );
       Object.defineProperty( this, '#hd_data', {configurable: true,
                                                 enumerable: false,
                                                 value: data

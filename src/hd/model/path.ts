@@ -136,23 +136,23 @@ module hd.model {
 
     constructor(
       public path: Path,
-      public ctx:  ArrayContext,
+      public cmp:  ArrayComponent,
       public legi: number,
       public pos:  Position
     ) {
-      if (ctx instanceof ArrayContext) {
-        this.ctx.changes.addObserver( this );
+      if (cmp instanceof ArrayComponent) {
+        this.cmp.changes.addObserver( this );
       }
     }
 
     alsoWatchLength() {
-      this.ctx.$length.addObserver( this, this.onNextLength, null, null );
+      this.cmp.$length.addObserver( this, this.onNextLength, null, null );
     }
 
     // Observer no longer needed
     destruct() {
-      this.ctx.changes.removeObserver( this );
-      this.ctx.$length.removeObserver( this );
+      this.cmp.changes.removeObserver( this );
+      this.cmp.$length.removeObserver( this );
       if (this.hasOwnProperty( 'children' )) {
         for (var i = 0, l = this.children.length; i < l; ++i) {
           var child = this.children[i];
@@ -218,7 +218,7 @@ module hd.model {
 
   /*==================================================================
    * An observable representing a particular property path in a
-   * context.
+   * component.
    *
    * Each path can use arbitrary variables.  The path will assign
    * an order to its variables -- i.e., i_0, i_1, i_2, ...
@@ -235,8 +235,8 @@ module hd.model {
 
     slices: number;
 
-    // The context at which to begin the search
-    private start: Context;
+    // The component at which to begin the search
+    private start: Component;
 
     // The path broken down into legs
     private legs: Leg[];
@@ -250,7 +250,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Perform initial search.
      */
-    constructor( start: Context, path: string ) {
+    constructor( start: Component, path: string ) {
       super();
 
       // Break path down into property names and index patterns
@@ -348,7 +348,7 @@ module hd.model {
         var leg = this.legs[legi];
         // Field access
         if (typeof leg === 'string' && value !== null) {
-          if (value instanceof Context) {
+          if (value instanceof Component) {
             var propname = '$' + leg;
             if (propname in value) {
               var prop = value[propname];
@@ -361,11 +361,11 @@ module hd.model {
         }
         // Array access
         else if (leg instanceof IndexPattern &&
-                 (value instanceof ArrayContext || value instanceof Array)) {
+                 (value instanceof ArrayComponent || value instanceof Array)) {
           // Constant array access
           if (leg.scale == 0 || pos[leg.index] !== undefined) {
             var idx = leg.apply( pos );
-            if (value instanceof ArrayContext) {
+            if (value instanceof ArrayComponent) {
               var aobs = new ArrayObserver( this, value, legi, pos );
               aobs.children[idx] = this.createObservers( value[idx], legi + 1, pos );
               return aobs;
@@ -374,8 +374,8 @@ module hd.model {
           }
           // Variable array access
           else {
-            if (value instanceof ArrayContext) {
-              // Note: an array observer for an Array (as opposed to an ArrayContext)
+            if (value instanceof ArrayComponent) {
+              // Note: an array observer for an Array (as opposed to an ArrayComponent)
               //       will not actually observe, but it will manage its children
               var aobs = new ArrayObserver( this, value, legi, pos );
               for (var j = 0, m = value.length; j < m; ++j) {
@@ -423,7 +423,7 @@ module hd.model {
         return this.beginRec( value[leg], legi + 1, lock );
       }
       else if (leg instanceof IndexPattern &&
-               (value instanceof ArrayContext || value instanceof Array)) {
+               (value instanceof ArrayComponent || value instanceof Array)) {
         if (leg.slice) {
           // We need to find the first that works for every element of value
           return this.multiPosition( value, legi, lock );
@@ -478,7 +478,7 @@ module hd.model {
         return this.nextRec( value[leg], legi + 1, lock, pos );
       }
       else if (leg instanceof IndexPattern &&
-               (value instanceof ArrayContext || value instanceof Array)) {
+               (value instanceof ArrayComponent || value instanceof Array)) {
         if (leg.slice) {
           // We need to find the next that works for every element of value
           return this.multiPosition( value, legi, lock, pos );
@@ -524,7 +524,7 @@ module hd.model {
      */
     private
     multiPosition(
-      values: ArrayContext | Array<any>,
+      values: ArrayComponent | Array<any>,
       legi:   number,
       lock:   Position,
       from?:  Position

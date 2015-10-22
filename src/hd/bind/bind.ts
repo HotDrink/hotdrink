@@ -1,4 +1,9 @@
-module hd.bindings {
+module hd.config {
+  export var bindAttr = 'data-bind';
+  export var bindEnv  = 'bd';
+}
+
+module hd.bind {
 
   import u = hd.utility;
   import r = hd.reactive;
@@ -23,13 +28,6 @@ module hd.bindings {
   interface Scope { [name: string]: any }
 
   export
-  function mkScope( ctx: m.Context ): Scope {
-    var scope = Object.create( ctx );
-    scope.$this = ctx;
-    return scope;
-  }
-
-  export
   function localScope( scope: Scope ): Scope {
     var local = Object.create( scope );
     return local;
@@ -42,13 +40,11 @@ module hd.bindings {
 
   export
   interface Binding {
-    view?: Target;
-    mkview?: {new (el: HTMLElement, scope?: Scope): Target};
+    view: Target;
     model: Target;
     dir: Direction;
     toView?: (r.Extension<any,any>|r.Extension<any,any>[]);
     toModel?: (r.Extension<any,any>|r.Extension<any,any>[]);
-    localize?: Function;
     halt?: boolean;
   }
 
@@ -69,7 +65,6 @@ module hd.bindings {
    * reported will be that we tried to call an undefined funciton in
    * our code.)
    */
-
 
   // Make sure element is required HTML
   export
@@ -184,7 +179,16 @@ module hd.bindings {
    */
 
   export
-  function bind( b: Binding ) {
+  function createBindings( b: Binding|u.MultiArray<Binding> ) {
+    if (Array.isArray( b )) {
+      (<u.MultiArray<Binding>>b).forEach( createBindings )
+    }
+    else {
+      bindSingle( <Binding>b );
+    }
+  }
+
+  function bindSingle( b: Binding ) {
     var vb = verifyBinding( b );
     if (vb.dir != Direction.v2m) {
       if (vb.toView) {
@@ -206,8 +210,19 @@ module hd.bindings {
     }
   }
 
+  /*----------------------------------------------------------------*/
+
   export
-  function unbind( b: Binding ) {
+  function destroyBindings( b: Binding|u.MultiArray<Binding> ) {
+    if (Array.isArray( b )) {
+      (<u.MultiArray<Binding>>b).forEach( destroyBindings )
+    }
+    else {
+      unbindSingle( <Binding>b );
+    }
+  }
+
+  function unbindSingle( b: Binding ) {
     var vb = verifyBinding( b );
     if (vb.dir != Direction.v2m) {
       if (vb.toView) {
@@ -237,19 +252,11 @@ module hd.bindings {
    * Entry point
    */
   export
-  function performDeclaredBindings(scope: Scope, el?: HTMLElement ): Binding[];
-  export
-  function performDeclaredBindings(scope: Scope, el: string ): Binding[];
-  export
-  function performDeclaredBindings(scope: Scope, el: any ): Binding[] {
-    if (el) {
-      if (typeof el === 'string') {
-        el = document.getElementById( el );
-      }
-    }
-    else {
-      el = document.body;
-    }
+  function createDeclaredBindings(
+    scope: Scope,
+    el =   document.body
+  ):       Binding[] {
+
     var bindings: Binding[] = [];
     if (el.nodeType === Node.ELEMENT_NODE) {
       searchForBindings( el, scope, bindings );
@@ -261,18 +268,19 @@ module hd.bindings {
   /*------------------------------------------------------------------
    * Recursive search function.
    */
-  function searchForBindings( el: HTMLElement,
-                              scope: Scope,
-                              bindings: Binding[] ) {
+  function searchForBindings(
+    el: HTMLElement,
+    scope: Scope,
+    bindings: Binding[] ) {
 
     // Look for declarative binding specification
-    var spec = el.getAttribute( 'data-bind' );
-    var descend = true;
+    var spec = el.getAttribute( config.bindAttr );
+    var halt = false;
     if (spec) {
-      scope = bindElement( spec, el, scope, bindings );
+      halt = bindElement( spec, el, scope, bindings );
     }
 
-    if (scope) {
+    if (! halt) {
       for (var i = 0, l = el.childNodes.length; i < l; ++i) {
         if (el.childNodes[i].nodeType === Node.ELEMENT_NODE) {
           searchForBindings( <HTMLElement>el.childNodes[i], scope, bindings );
@@ -284,53 +292,41 @@ module hd.bindings {
   /*------------------------------------------------------------------
    * Attempt to bind one single element from specification.
    */
-  function bindElement( spec: string,
-                        el: HTMLElement,
-                        scope: Scope,
-                        bindings: Binding[] ): Scope {
+  function bindElement(
+    spec:     string,
+    el:       HTMLElement,
+    scope:    Scope,
+    bindings: Binding[]
+  ):          boolean {
+
     // Eval binding string as JS
-    var functionBody = compile( spec );
-    if (!functionBody) {
-      return scope;
-    }
     try {
-      var elBindingsFn = new Function( 'model', functionBody );
-      var elNestedBindings: u.MultiArray<Binding> = elBindingsFn.call( el, scope );
-      var elBindings: Binding[] = [];
-      u.multiArray.flatten( elNestedBindings, elBindings );
+      var functionBody = compile( spec );
+      var elBindingsFn = new Function( config.bindEnv, functionBody );
+      var env = new BindEnvironment( el, scope );
+      var elNestedBindings: u.MultiArray<Binding> = elBindingsFn.call( null, env );
     }
     catch (e) {
-      console.error( "Invalid binding declaration: "
-                     + JSON.stringify( spec ), e );
-      return scope;
+      console.error( "Invalid binding declaration: " + spec, e );
+      return false;
     }
 
-    var local: Scope;
+    var halt = false;
+    var i = 0;
 
-    // Invoke all specified binders
-    elBindings.forEach( function( b: Binding ) {
-      if (! b.view && typeof b.mkview === 'function') {
-        b.view = new b.mkview( el, scope );
-      }
-      if (b.halt) {
-        local = null;
-      }
-      if (b.localize && local !== null) {
-        if (! local) {
-          local = Object.create( scope );
-        }
-        b.localize( local );
-      }
+    u.multiArray.forEach( elNestedBindings, function( b: Binding ) {
+      halt = halt || b.halt;
       try {
-        bind( b );
+        bindSingle( b );
         bindings.push( b );
       }
       catch (e) {
-        console.error( 'Invalid binding "' + spec + '"', e );
+        console.error( 'Invalid binding ' + i + ': ' + spec, e );
       }
+      ++i;
     } );
 
-    return local === undefined ? scope : local;
+    return halt;
   }
 
   /*------------------------------------------------------------------
@@ -341,7 +337,7 @@ module hd.bindings {
    * of the constructs John implemented.
    */
   function compile( spec: string ): string {
-    return "with (model) {" +
+    return "with (" + config.bindEnv + ".scope) {" +
            "  return [" + spec + "]" +
            "}";
   }

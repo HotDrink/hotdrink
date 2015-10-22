@@ -4,7 +4,7 @@
  * when it's false.  If a class name evaluates to false, then no
  * class is used for that value.
  */
-module hd.bindings {
+module hd.bind {
 
   import u = hd.utility;
   import r = hd.reactive;
@@ -25,7 +25,7 @@ module hd.bindings {
     /*----------------------------------------------------------------
      * Initialize
      */
-    constructor( trueClass: string, falseClass: string, el: HTMLElement ) {
+    constructor( el: HTMLElement, trueClass: string, falseClass: string ) {
       this.el = el;
       this.trueClass = trueClass;
       this.falseClass = falseClass;

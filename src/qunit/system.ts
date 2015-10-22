@@ -20,16 +20,16 @@ module hd.qunit {
     } );
   }
 
-  function checkVariables( ctx: m.Context, values: u.Dictionary<number>, suffix: string ) {
+  function checkVariables( cmp: m.Component, values: u.Dictionary<number>, suffix: string ) {
     for (var key in values) {
-      checkVariable( ctx[key], values[key], key + "_" + suffix );
+      checkVariable( cmp[key], values[key], key + "_" + suffix );
     }
   }
 
-  function getPromises( ctx: m.Context ) {
+  function getPromises( cmp: m.Component ) {
     var promises: u.Dictionary<r.Promise<any>> = {};
-    for (var id in ctx) {
-      var vv = ctx[id];
+    for (var id in cmp) {
+      var vv = cmp[id];
       if (vv instanceof m.Variable) {
         promises[id] = vv.getCurrentPromise();
       }
@@ -106,16 +106,16 @@ module hd.qunit {
   test( "initial priorities", function() {
     expect( 12 );
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "a, b, c, d", {a: 1, b: 2} )
           .variables( "l, m, n, o", {l: 3, m: 4} )
           .optional( hd.MaxOptional )
           .variables( "w, x, y, z", {w: 5, x: 6} )
           .optional( hd.MinOptional )
-          .context( {b: 7, c: 8, m: 9, n: 10, x: 11, y: 12} );
+          .component( {b: 7, c: 8, m: 9, n: 10, x: 11, y: 12} );
 
     var pm = new hd.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
 
     // a = default/spec-init  =>  min/init  =>  II
     // b = default/both-init  =>  max/init  =>  IIII
@@ -146,18 +146,18 @@ module hd.qunit {
 
     var opt = (<any>pm).planner.getOptionals();
 
-    var pri = [g.stayConstraint( ctx.d.id ),
-               g.stayConstraint( ctx.z.id ),
-               g.stayConstraint( ctx.a.id ),
-               g.stayConstraint( ctx.w.id ),
-               g.stayConstraint( ctx.x.id ),
-               g.stayConstraint( ctx.y.id ),
-               g.stayConstraint( ctx.o.id ),
-               g.stayConstraint( ctx.b.id ),
-               g.stayConstraint( ctx.c.id ),
-               g.stayConstraint( ctx.l.id ),
-               g.stayConstraint( ctx.m.id ),
-               g.stayConstraint( ctx.n.id )];
+    var pri = [g.stayConstraint( cmp.d.id ),
+               g.stayConstraint( cmp.z.id ),
+               g.stayConstraint( cmp.a.id ),
+               g.stayConstraint( cmp.w.id ),
+               g.stayConstraint( cmp.x.id ),
+               g.stayConstraint( cmp.y.id ),
+               g.stayConstraint( cmp.o.id ),
+               g.stayConstraint( cmp.b.id ),
+               g.stayConstraint( cmp.c.id ),
+               g.stayConstraint( cmp.l.id ),
+               g.stayConstraint( cmp.m.id ),
+               g.stayConstraint( cmp.n.id )];
 
     for (var i = 0, l = pri.length; i < l; ++i) {
       equal( opt[i], pri[i], "Correct priority assignment " + i );
@@ -167,42 +167,42 @@ module hd.qunit {
   asyncTest( "simple constraint", function() {
     expect( 12 );
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "x, y, z", {x: 3, y: 4} )
           .constraint( "x, y, z" )
           .method( "x, y -> z", sum )
           .method( "z, x -> y", diff )
           .method( "z, y -> x", diff )
-          .context();
+          .component();
 
     var pm = new s.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
 
-    checkVariable( ctx.x, 3, "x_1" );
-    checkVariable( ctx.y, 4, "y_1" );
-    checkVariable( ctx.z, 7, "z_1" );
+    checkVariable( cmp.x, 3, "x_1" );
+    checkVariable( cmp.y, 4, "y_1" );
+    checkVariable( cmp.z, 7, "z_1" );
 
-    ctx.z.set( 10 );
+    cmp.z.set( 10 );
 
-    checkVariable( ctx.x, 3, "x_1 (repeat)" );
-    checkVariable( ctx.y, 4, "y_1 (repeat)" );
-    checkVariable( ctx.z, 7, "z_1 (repeat)" );
+    checkVariable( cmp.x, 3, "x_1 (repeat)" );
+    checkVariable( cmp.y, 4, "y_1 (repeat)" );
+    checkVariable( cmp.z, 7, "z_1 (repeat)" );
 
     pm.update();
 
-    checkVariable( ctx.x, 6, "x_2" );
-    checkVariable( ctx.y, 4, "y_2" );
-    checkVariable( ctx.z, 10, "z_2" );
+    checkVariable( cmp.x, 6, "x_2" );
+    checkVariable( cmp.y, 4, "y_2" );
+    checkVariable( cmp.z, 10, "z_2" );
 
-    ctx.y.set( 8 );
-    ctx.x.set( 10 );
-    ctx.z.set( 15 );
+    cmp.y.set( 8 );
+    cmp.x.set( 10 );
+    cmp.z.set( 15 );
     pm.update();
 
-    checkVariable( ctx.x, 10, "x_3" );
-    checkVariable( ctx.y, 5, "y_3" );
-    checkVariable( ctx.z, 15, "z_3" );
+    checkVariable( cmp.x, 10, "x_3" );
+    checkVariable( cmp.y, 5, "y_3" );
+    checkVariable( cmp.z, 15, "z_3" );
 
     u.schedule( 3, start );
   } );
@@ -210,47 +210,47 @@ module hd.qunit {
   asyncTest( "multiple constraints", function() {
     expect( 24 );
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "a, b, c, d, e, f, g",
                       {a: 2, b: 4, d: 6, f: 8} )
           .equation( "a + b == c" )
           .equation( "c + d == e" )
           .equation( "e + f == g" )
-          .context();
+          .component();
 
     var pm = new s.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
-    checkVariables( ctx, {a: 2, b: 4, c: 6, d: 6, e: 12, f: 8, g: 20}, "1" );
+    checkVariables( cmp, {a: 2, b: 4, c: 6, d: 6, e: 12, f: 8, g: 20}, "1" );
 
-    ctx.g.set( 50 );
+    cmp.g.set( 50 );
     pm.update();
-    checkVariables( ctx, {g: 50, f: 8, e: 42, d: 6, c: 36, b: 4, a: 32}, "2" );
+    checkVariables( cmp, {g: 50, f: 8, e: 42, d: 6, c: 36, b: 4, a: 32}, "2" );
 
-    var e = ctx.e.getCurrentPromise();
-    var f = ctx.f.getCurrentPromise();
-    var g = ctx.g.getCurrentPromise();
+    var e = cmp.e.getCurrentPromise();
+    var f = cmp.f.getCurrentPromise();
+    var g = cmp.g.getCurrentPromise();
 
-    ctx.c.set( 10 );
+    cmp.c.set( 10 );
     pm.update();
-    checkVariables( ctx, {c: 10, b: 4, a: 6, d: 32}, "3" );
+    checkVariables( cmp, {c: 10, b: 4, a: 6, d: 32}, "3" );
 
-    ok( e === ctx.e.getCurrentPromise() &&
-        f === ctx.f.getCurrentPromise() &&
-        g === ctx.g.getCurrentPromise(),
+    ok( e === cmp.e.getCurrentPromise() &&
+        f === cmp.f.getCurrentPromise() &&
+        g === cmp.g.getCurrentPromise(),
         "Did not run unnecessary methods" );
 
-    var a = ctx.a.getCurrentPromise();
-    var b = ctx.b.getCurrentPromise();
-    var c = ctx.c.getCurrentPromise();
+    var a = cmp.a.getCurrentPromise();
+    var b = cmp.b.getCurrentPromise();
+    var c = cmp.c.getCurrentPromise();
 
-    ctx.e.set( 10 );
+    cmp.e.set( 10 );
     pm.update();
-    checkVariables( ctx, {e: 10, d: 0, g: 50, f: 40}, "4" );
+    checkVariables( cmp, {e: 10, d: 0, g: 50, f: 40}, "4" );
 
-    ok( a === ctx.a.getCurrentPromise() &&
-        b === ctx.b.getCurrentPromise() &&
-        c === ctx.c.getCurrentPromise(),
+    ok( a === cmp.a.getCurrentPromise() &&
+        b === cmp.b.getCurrentPromise() &&
+        c === cmp.c.getCurrentPromise(),
         "Did not run unnecessary methods" );
 
     u.schedule( 3, start );
@@ -259,7 +259,7 @@ module hd.qunit {
   asyncTest( "asynchronous constraints", function() {
     expect( 26 );
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "a, b, c, d, e", {a: 5, b: 7} )
           .constraint( "a, b, c" )
           .method( "a, b -> c", function( a: any, b: any ) {
@@ -278,46 +278,46 @@ module hd.qunit {
           .method( "d, e -> c", function( d: any, e: any ) {
             return delay( d + e );
           } )
-          .context();
+          .component();
 
     ps = [];
 
     var pm = new s.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
-    checkVariables( ctx, {a: 5, b: 7, c: 12, d: 6, e: 6}, "1" );
-    ps.push( ctx.d.getCurrentPromise() );
+    checkVariables( cmp, {a: 5, b: 7, c: 12, d: 6, e: 6}, "1" );
+    ps.push( cmp.d.getCurrentPromise() );
 
-    ctx.d.set( 4 );
+    cmp.d.set( 4 );
     pm.update();
-    checkVariables( ctx, {a: 3, b: 7, c: 10, d: 4, e: 6}, "2" );
-    ps.push( ctx.a.getCurrentPromise() );
+    checkVariables( cmp, {a: 3, b: 7, c: 10, d: 4, e: 6}, "2" );
+    ps.push( cmp.a.getCurrentPromise() );
 
-    ctx.a.set( 4 );
+    cmp.a.set( 4 );
     pm.update();
-    ctx.b.getCurrentPromise().then( function() { ok( false, "Should not resolve" ) } );
+    cmp.b.getCurrentPromise().then( function() { ok( false, "Should not resolve" ) } );
 
-    ctx.b.set( 6 );
+    cmp.b.set( 6 );
     pm.update();
-    checkVariables( ctx, {a: 4, b: 6, c: 10, d: 5, e: 5}, "4" );
-    ps.push( ctx.d.getCurrentPromise() );
+    checkVariables( cmp, {a: 4, b: 6, c: 10, d: 5, e: 5}, "4" );
+    ps.push( cmp.d.getCurrentPromise() );
 
-    ctx.c.set( 16 );
+    cmp.c.set( 16 );
     pm.update();
-    checkVariables( ctx, {a: 10, b: 6, c: 16, d: 8, e: 8}, "5" );
-    ps.push( ctx.a.getCurrentPromise() );
+    checkVariables( cmp, {a: 10, b: 6, c: 16, d: 8, e: 8}, "5" );
+    ps.push( cmp.a.getCurrentPromise() );
 
-    ctx.e.set( 2 );
+    cmp.e.set( 2 );
     pm.update();
-    checkVariables( ctx, {a: 4, b: 6, c: 10, d: 8, e: 2}, "6" );
-    ps.push( ctx.a.getCurrentPromise() );
+    checkVariables( cmp, {a: 4, b: 6, c: 10, d: 8, e: 2}, "6" );
+    ps.push( cmp.a.getCurrentPromise() );
 
     r.Promise.all.apply( null, ps ).then( function() {
-      ok( ! ctx.a.pending.get() &&
-          ! ctx.b.pending.get() &&
-          ! ctx.c.pending.get() &&
-          ! ctx.d.pending.get() &&
-          ! ctx.e.pending.get(),
+      ok( ! cmp.a.pending.get() &&
+          ! cmp.b.pending.get() &&
+          ! cmp.c.pending.get() &&
+          ! cmp.d.pending.get() &&
+          ! cmp.e.pending.get(),
           "All variables fulfilled" );
       u.schedule( 3, start );
     } );
@@ -326,25 +326,25 @@ module hd.qunit {
   asyncTest( "dynamic constraints", function() {
     expect( 43 );
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "a, b, c, d, e, f", {a: 1, b: 2, e: 3, f: 4} )
           .references( "x, y" )
           .equation( "a + b == c" )
           .equation( "d == e + f" )
           .equation( "x + 1 == y" )
-          .context();
+          .component();
 
     var pm = new s.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
 
-    checkVariables( ctx, {a: 1, b: 2, c: 3, d: 7, e:3, f: 4}, "1" );
+    checkVariables( cmp, {a: 1, b: 2, c: 3, d: 7, e:3, f: 4}, "1" );
 
-    var last: any = getPromises( ctx );
-    ctx.x = ctx.c;
+    var last: any = getPromises( cmp );
+    cmp.x = cmp.c;
     pm.update();
 
-    var cur: any = getPromises( ctx );
+    var cur: any = getPromises( cmp );
     ok( last.a === cur.a &&
         last.b === cur.b &&
         last.c === cur.c &&
@@ -355,15 +355,15 @@ module hd.qunit {
 
     ok( cur.c === cur.x, "Reference correct" );
 
-    ctx.y = ctx.d;
+    cmp.y = cmp.d;
     pm.update();
-    checkVariables( ctx, {a: 4, b: 2, c: 6, d: 7, e: 3, f: 4}, "2" );
+    checkVariables( cmp, {a: 4, b: 2, c: 6, d: 7, e: 3, f: 4}, "2" );
 
-    last = getPromises( ctx );
-    ctx.a.set( 1 )
+    last = getPromises( cmp );
+    cmp.a.set( 1 )
     pm.update();
-    cur = getPromises( ctx );
-    checkVariables( ctx, {a: 1, b: 5, c: 6}, "3" );
+    cur = getPromises( cmp );
+    checkVariables( cmp, {a: 1, b: 5, c: 6}, "3" );
 
     ok( last.d === cur.d &&
         last.e === cur.e &&
@@ -371,38 +371,38 @@ module hd.qunit {
         "No unnecessary updates" );
 
     last = cur;
-    ctx.b.set( 2 );
+    cmp.b.set( 2 );
     pm.update();
-    cur = getPromises( ctx );
-    checkVariables( ctx, {b: 2, c: 3, d: 4, e: 0, f: 4}, "4" )
+    cur = getPromises( cmp );
+    checkVariables( cmp, {b: 2, c: 3, d: 4, e: 0, f: 4}, "4" )
     ok( last.a === cur.a, "No unnecessary updates" );
 
     last = cur;
-    ctx.x = 10;
+    cmp.x = 10;
     pm.update();
-    cur = getPromises( ctx );
-    checkVariables( ctx, {d: 11, e: 7, f: 4}, "5" );
+    cur = getPromises( cmp );
+    checkVariables( cmp, {d: 11, e: 7, f: 4}, "5" );
     ok( last.a === cur.a &&
         last.b === cur.b &&
         last.c === cur.c,
         "No unnecessary updates" );
 
-    ctx.f.set( 5 );
+    cmp.f.set( 5 );
     pm.update();
-    checkVariables( ctx, {d: 11, e: 6, f: 5}, "6" );
+    checkVariables( cmp, {d: 11, e: 6, f: 5}, "6" );
 
-    ctx.e.set( 3 );
+    cmp.e.set( 3 );
     pm.update();
-    checkVariables( ctx, {d: 11, e: 3, f: 8}, "7" );
+    checkVariables( cmp, {d: 11, e: 3, f: 8}, "7" );
 
-    ctx.x = ctx.d;
-    ctx.f.set( 6 );
+    cmp.x = cmp.d;
+    cmp.f.set( 6 );
     pm.update();
-    checkVariables( ctx, {d: 9, e: 3, f: 6}, "8" );
+    checkVariables( cmp, {d: 9, e: 3, f: 6}, "8" );
 
-    ctx.y = ctx.c;
+    cmp.y = cmp.c;
     pm.update();
-    checkVariables( ctx, {f: 6, e: 3, d: 9, c: 10, b: 2, a: 8}, "9" );
+    checkVariables( cmp, {f: 6, e: 3, d: 9, c: 10, b: 2, a: 8}, "9" );
 
     u.schedule( 3, start );
 
@@ -411,39 +411,39 @@ module hd.qunit {
   asyncTest( "optional constraints", function() {
     expect( 18 );
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "x, y, z", {x: 4} )
           .constraint( "x => x, y" )
             .method( "x -> y", id )
           .constraint( "x, y => y, z" )
             .method( "y -> z", id )
-          .context();
+          .component();
 
     var pm = new s.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
-    checkVariables( ctx, {x: 4, y: 4, z: 4}, "1" );
+    checkVariables( cmp, {x: 4, y: 4, z: 4}, "1" );
 
-    ctx.y.set( 5 );
+    cmp.y.set( 5 );
     pm.update();
-    checkVariables( ctx, {x: 4, y: 5, z: 5}, "2" );
+    checkVariables( cmp, {x: 4, y: 5, z: 5}, "2" );
 
-    ctx.z.set( 6 );
+    cmp.z.set( 6 );
     pm.update();
-    checkVariables( ctx, {x: 4, y: 5, z: 6}, "3" );
+    checkVariables( cmp, {x: 4, y: 5, z: 6}, "3" );
 
-    ctx.x.set( 7 );
+    cmp.x.set( 7 );
     pm.update();
-    checkVariables( ctx, {x: 7, y: 7, z: 7}, "4" );
+    checkVariables( cmp, {x: 7, y: 7, z: 7}, "4" );
 
-    ctx.x.set( 8 );
-    ctx.z.set( 9 );
+    cmp.x.set( 8 );
+    cmp.z.set( 9 );
     pm.update();
-    checkVariables( ctx, {x: 8, y: 8, z: 9}, "5" );
+    checkVariables( cmp, {x: 8, y: 8, z: 9}, "5" );
 
-    ctx.x.set( 1 );
+    cmp.x.set( 1 );
     pm.update();
-    checkVariables( ctx, {x: 1, y: 1, z: 1}, "6" );
+    checkVariables( cmp, {x: 1, y: 1, z: 1}, "6" );
 
     u.schedule( 3, start );
   } );
@@ -451,56 +451,56 @@ module hd.qunit {
   asyncTest( "array constraints", function() {
     expect( 63 );
 
-    var rowspec = new m.ContextBuilder()
+    var rowspec = new m.ComponentBuilder()
           .variables( "begin, end", {begin: 0, end: 10} )
           .spec();
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .nested( "a", hd.arrayOf( rowspec ) )
           .nested( "b", hd.arrayOf( <any>m.Variable ) )
           .constraint( "a[i].begin, a[i].end, b[i]" )
             .method( "a[i].end, a[i].begin -> b[i]", diff )
             .method( "a[i].end, b[i] -> a[i].begin", diff )
             .method( "a[i].begin, b[i] -> a[i].end", sum )
-          .context();
+          .component();
 
     var pm = new s.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
 
-    ctx.a.expand( 1 );
-    ctx.b.expand( 1 );
+    cmp.a.expand( 1 );
+    cmp.b.expand( 1 );
     pm.update();
 
-    checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
-    checkVariable( ctx.a[0].end, 10, "a[0].end" );
-    checkVariable( ctx.b[0], 10, "b[0]" );
+    checkVariable( cmp.a[0].begin, 0, "a[0].begin" );
+    checkVariable( cmp.a[0].end, 10, "a[0].end" );
+    checkVariable( cmp.b[0], 10, "b[0]" );
 
-    ctx.a.expand( 1 );
-    ctx.a[1].begin.set( 5 );
-    ctx.a[1].end.set( 20 );
-    ctx.b.expand( 1 );
+    cmp.a.expand( 1 );
+    cmp.a[1].begin.set( 5 );
+    cmp.a[1].end.set( 20 );
+    cmp.b.expand( 1 );
     pm.update();
 
-    checkVariable( ctx.a[0].begin, 0, "a[0].begin" );
-    checkVariable( ctx.a[0].end, 10, "a[0].end" );
-    checkVariable( ctx.b[0], 10, "b[0]" );
-    checkVariable( ctx.a[1].begin, 5, "a[1].begin" );
-    checkVariable( ctx.a[1].end, 20, "a[1].end" );
-    checkVariable( ctx.b[1], 15, "b[1]" );
+    checkVariable( cmp.a[0].begin, 0, "a[0].begin" );
+    checkVariable( cmp.a[0].end, 10, "a[0].end" );
+    checkVariable( cmp.b[0], 10, "b[0]" );
+    checkVariable( cmp.a[1].begin, 5, "a[1].begin" );
+    checkVariable( cmp.a[1].end, 20, "a[1].end" );
+    checkVariable( cmp.b[1], 15, "b[1]" );
 
 
-    var EventSpec = new hd.ContextBuilder()
+    var EventSpec = new hd.ComponentBuilder()
           .variables( "begin, end, length" )
           .equation( "begin + length == end" )
           .spec();
 
-    var schedule: any = new hd.ContextBuilder()
+    var schedule: any = new hd.ComponentBuilder()
           .nested( "events", hd.arrayOf( EventSpec ) )
           .constraint( "events[i].end, events[i+1].begin" )
           .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
           .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
-          .context();
+          .component();
 
     var pm = new hd.PropertyModel();
     pm.addComponent( schedule );
@@ -606,7 +606,7 @@ module hd.qunit {
   asyncTest( "topological sorting", function() {
     expect( 42 );
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "a, b, c, x, y, z", {a: 3, b: 4, z: 6} )
           .constraint( "a => a, x" )
             .method( "a -> x", id )
@@ -622,36 +622,36 @@ module hd.qunit {
             .method( "c -> x, y, z",
                      function( c: number ) { return [c/3, c/3, c/3]; }
                    )
-          .context();
+          .component();
 
     var pm = new s.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
-    checkVariables( ctx, {a: 3, b: 4, c: 14, x: 3, y: 5, z: 6}, "1" );
+    checkVariables( cmp, {a: 3, b: 4, c: 14, x: 3, y: 5, z: 6}, "1" );
 
-    ctx.c.set( 21 );
+    cmp.c.set( 21 );
     pm.update();
-    checkVariables( ctx, {a: 3, b: 8, c: 21, x: 7, y: 7, z: 7}, "2" );
+    checkVariables( cmp, {a: 3, b: 8, c: 21, x: 7, y: 7, z: 7}, "2" );
 
-    ctx.z.set( 2 );
+    cmp.z.set( 2 );
     pm.update();
-    checkVariables( ctx, {a: 3, b: 8, c: 16, x: 7, y: 7, z: 2}, "3" );
+    checkVariables( cmp, {a: 3, b: 8, c: 16, x: 7, y: 7, z: 2}, "3" );
 
-    ctx.a.set( 4 );
+    cmp.a.set( 4 );
     pm.update();
-    checkVariables( ctx, {a: 4, b: 8, c: 13, x: 4, y: 7, z: 2}, "4" );
+    checkVariables( cmp, {a: 4, b: 8, c: 13, x: 4, y: 7, z: 2}, "4" );
 
-    ctx.b.set( 5 );
+    cmp.b.set( 5 );
     pm.update();
-    checkVariables( ctx, {a: 4, b: 5, c: 12, x: 4, y: 6, z: 2}, "5" );
+    checkVariables( cmp, {a: 4, b: 5, c: 12, x: 4, y: 6, z: 2}, "5" );
 
-    ctx.c.set( 3 );
+    cmp.c.set( 3 );
     pm.update();
-    checkVariables( ctx, {a: 4, b: 2, c: 3, x: 1, y: 1, z: 1}, "6" );
+    checkVariables( cmp, {a: 4, b: 2, c: 3, x: 1, y: 1, z: 1}, "6" );
 
-    ctx.z.set( 8 );
+    cmp.z.set( 8 );
     pm.update();
-    checkVariables( ctx, {a: 4, b: 2, c: 10, x: 1, y: 1, z: 8}, "7" );
+    checkVariables( cmp, {a: 4, b: 2, c: 10, x: 1, y: 1, z: 8}, "7" );
 
     u.schedule( 3, start );
   } );
@@ -659,25 +659,25 @@ module hd.qunit {
   asyncTest( "set commands", function() {
     expect( 9 );
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "x, y, z", {x: 3, y: 5} )
           .constraint( "x, y, z" )
           .method( "x, y -> z", sum )
           .method( "z, x -> y", diff )
           .method( "z, y -> x", diff )
-          .context();
+          .component();
 
     var pm = new s.PropertyModel
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
-    checkVariables( ctx, {x: 3, y: 5, z: 8}, "1" );
+    checkVariables( cmp, {x: 3, y: 5, z: 8}, "1" );
 
-    ctx.x.commandSet( 4 );
-    checkVariables( ctx, {x: 4, y: 5, z: 9}, "2" );
+    cmp.x.commandSet( 4 );
+    checkVariables( cmp, {x: 4, y: 5, z: 9}, "2" );
 
-    ctx.y.commandSet( 3 );
-    ctx.z.commandSet( 10 );
-    checkVariables( ctx, {x: 7, y: 3, z: 10}, "4" );
+    cmp.y.commandSet( 3 );
+    cmp.z.commandSet( 10 );
+    checkVariables( cmp, {x: 7, y: 3, z: 10}, "4" );
 
     u.schedule( 3, start );
   } );
@@ -685,7 +685,7 @@ module hd.qunit {
   asyncTest( "command queue", function() {
     expect( 24 );
 
-    var spec = new m.ContextBuilder()
+    var spec = new m.ComponentBuilder()
           .variables( "a, x, y, z", {a: 12, x: 3, y: 5} )
           .constraint( "x, y, z" )
           .method( "x, y -> z", sum )
@@ -695,42 +695,42 @@ module hd.qunit {
 
     var pm = new s.PropertyModel
 
-    var ctx1: any = new m.Context();
-    m.Context.construct( ctx1, spec );
-    pm.addComponent( ctx1 );
+    var cmp1: any = new m.Component();
+    m.Component.construct( cmp1, spec );
+    pm.addComponent( cmp1 );
 
-    var ctx2: any = new m.Context();
-    m.Context.construct( ctx2, spec );
-    pm.addComponent( ctx2 );
+    var cmp2: any = new m.Component();
+    m.Component.construct( cmp2, spec );
+    pm.addComponent( cmp2 );
 
-    var ctx3: any = new m.Context();
-    m.Context.construct( ctx3, spec );
-    pm.addComponent( ctx3 );
+    var cmp3: any = new m.Component();
+    m.Component.construct( cmp3, spec );
+    pm.addComponent( cmp3 );
 
     pm.update();
-    checkVariables( ctx1, {a: 12, x: 3, y: 5, z: 8}, "1.1" );
-    checkVariables( ctx2, {a: 12, x: 3, y: 5, z: 8}, "1.2" );
-    checkVariables( ctx3, {a: 12, x: 3, y: 5, z: 8}, "1.3" );
+    checkVariables( cmp1, {a: 12, x: 3, y: 5, z: 8}, "1.1" );
+    checkVariables( cmp2, {a: 12, x: 3, y: 5, z: 8}, "1.2" );
+    checkVariables( cmp3, {a: 12, x: 3, y: 5, z: 8}, "1.3" );
 
-    ctx1.z.commandSet( 12 );
-    ctx2.z.commandSet( 12 );
-    ctx3.z.commandSet( 12 );
+    cmp1.z.commandSet( 12 );
+    cmp2.z.commandSet( 12 );
+    cmp3.z.commandSet( 12 );
 
-    ctx2.a.commandSet( 9 );
-    ctx3.a.commandSet( 9 );
+    cmp2.a.commandSet( 9 );
+    cmp3.a.commandSet( 9 );
 
-    ctx3.cmd.activate();
+    cmp3.cmd.activate();
 
     u.schedule( 3, function() {
-      checkVariables( ctx1, {a: 12, x: 6, y: 6, z: 12}, "2.1" );
+      checkVariables( cmp1, {a: 12, x: 6, y: 6, z: 12}, "2.1" );
     } );
 
     u.schedule( 3, function() {
-      checkVariables( ctx2, {a: 9, x: 6, y: 6, z: 12}, "3.2" );
+      checkVariables( cmp2, {a: 9, x: 6, y: 6, z: 12}, "3.2" );
     } );
 
     u.schedule( 3, function() {
-      checkVariables( ctx3, {a: 9, x: 10, y: 6, z: 16}, "3.2" );
+      checkVariables( cmp3, {a: 9, x: 10, y: 6, z: 16}, "3.2" );
     } );
 
     u.schedule( 3, start );
@@ -739,54 +739,54 @@ module hd.qunit {
   asyncTest( "array moving", function() {
     expect( 36 );
 
-    var rowspec = new ContextBuilder()
+    var rowspec = new ComponentBuilder()
           .variables( "begin, end, length", {length: 20} )
           .constraint( "begin, length, end" )
           .method( "begin, length -> end", hd.sum )
           .method( "end, length -> begin", hd.diff )
           .spec();
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .nested( "a", hd.arrayOf( rowspec ) )
           .constraint( "a[i].end, a[i+1].begin" )
             .method( "a[i].end, !a[i+1].begin -> a[i+1].begin", hd.max )
             .method( "!a[i].end, a[i+1].begin -> a[i].end", hd.min )
-          .context();
+          .component();
 
     var pm = new hd.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
 
-    ctx.a.expand( 4 );
+    cmp.a.expand( 4 );
     pm.commitModifications();
-    ctx.a[0].begin.set( 100 );
+    cmp.a[0].begin.set( 100 );
     pm.update();
 
-    checkVariables( ctx.a[0], {begin: 100, end: 120, length: 20}, "0.0" );
-    checkVariables( ctx.a[1], {begin: 120, end: 140, length: 20}, "0.1" );
-    checkVariables( ctx.a[2], {begin: 140, end: 160, length: 20}, "0.2" );
-    checkVariables( ctx.a[3], {begin: 160, end: 180, length: 20}, "0.3" );
+    checkVariables( cmp.a[0], {begin: 100, end: 120, length: 20}, "0.0" );
+    checkVariables( cmp.a[1], {begin: 120, end: 140, length: 20}, "0.1" );
+    checkVariables( cmp.a[2], {begin: 140, end: 160, length: 20}, "0.2" );
+    checkVariables( cmp.a[3], {begin: 160, end: 180, length: 20}, "0.3" );
 
-    ctx.a.move( 0, 2 );
+    cmp.a.move( 0, 2 );
     pm.update();
 
-    checkVariables( ctx.a[0], {begin:  80, end: 100, length: 20}, "1.0" );
-    checkVariables( ctx.a[1], {begin: 100, end: 120, length: 20}, "1.1" );
-    checkVariables( ctx.a[2], {begin: 120, end: 140, length: 20}, "1.2" );
-    checkVariables( ctx.a[3], {begin: 160, end: 180, length: 20}, "1.3" );
+    checkVariables( cmp.a[0], {begin:  80, end: 100, length: 20}, "1.0" );
+    checkVariables( cmp.a[1], {begin: 100, end: 120, length: 20}, "1.1" );
+    checkVariables( cmp.a[2], {begin: 120, end: 140, length: 20}, "1.2" );
+    checkVariables( cmp.a[3], {begin: 160, end: 180, length: 20}, "1.3" );
 
-    ctx.a.move( 2, 1, 2 );
+    cmp.a.move( 2, 1, 2 );
     pm.update();
 
-    checkVariables( ctx.a[0], {begin:  60, end:  80, length: 20}, "2.0" );
-    checkVariables( ctx.a[1], {begin:  80, end: 100, length: 20}, "2.1" );
-    checkVariables( ctx.a[2], {begin: 100, end: 120, length: 20}, "2.2" );
-    checkVariables( ctx.a[3], {begin: 120, end: 140, length: 20}, "2.3" );
+    checkVariables( cmp.a[0], {begin:  60, end:  80, length: 20}, "2.0" );
+    checkVariables( cmp.a[1], {begin:  80, end: 100, length: 20}, "2.1" );
+    checkVariables( cmp.a[2], {begin: 100, end: 120, length: 20}, "2.2" );
+    checkVariables( cmp.a[3], {begin: 120, end: 140, length: 20}, "2.3" );
 
     u.schedule( 3, start );
   } );
 
   asyncTest( "slice constraints", function() {
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .nested( "a", hd.arrayOf( hd.Variable ) )
           .v( "sum" )
           .c( "a[*], sum" )
@@ -797,38 +797,38 @@ module hd.qunit {
             }
             return sum;
           } )
-          .context();
+          .component();
 
-    ctx.a.expand( [2, 4, 6, 8, 10] );
+    cmp.a.expand( [2, 4, 6, 8, 10] );
 
     var pm = new hd.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
-    checkVariables( ctx, {sum: 30}, "0" );
+    checkVariables( cmp, {sum: 30}, "0" );
 
-    ctx.a[3].set( 12 );
+    cmp.a[3].set( 12 );
     pm.update();
-    checkVariables( ctx, {sum: 34}, "1" );
+    checkVariables( cmp, {sum: 34}, "1" );
 
-    ctx.a.expand( [14] );
+    cmp.a.expand( [14] );
     pm.update();
-    checkVariables( ctx, {sum: 48}, "2" );
+    checkVariables( cmp, {sum: 48}, "2" );
 
-    ctx.a.collapse( 2 );
+    cmp.a.collapse( 2 );
     pm.update();
-    checkVariables( ctx, {sum: 24}, "3" );
+    checkVariables( cmp, {sum: 24}, "3" );
 
-    ctx.a.length = 5;
-    ctx.a[0].set( 5 );
+    cmp.a.length = 5;
+    cmp.a[0].set( 5 );
     pm.update();
-    // Because ctx.a contains an undefined, constraint should be uninstantiated
+    // Because cmp.a contains an undefined, constraint should be uninstantiated
     // Therefore, sum should remain unchanged
-    checkVariables( ctx, {sum: 24}, "3" );
+    checkVariables( cmp, {sum: 24}, "3" );
 
-    ctx.a.length = 4;
+    cmp.a.length = 4;
     pm.update()
     // Now they are all defined again
-    checkVariables( ctx, {sum: 27}, "4" );
+    checkVariables( cmp, {sum: 27}, "4" );
 
     u.schedule( 3, start );
   } );
@@ -846,70 +846,70 @@ module hd.qunit {
       return dot;
     }
 
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .n( "a", Matrix )
           .n( "b", Matrix )
           .n( "c", Matrix )
           .c( "a[i][*], b[*][j], c[i][j]" )
           .m( "a[i][*], b[*][j] -> c[i][j]", dotProduct )
-          .context();
+          .component();
 
-    ctx.a.expand( [[1, 2, 3],
+    cmp.a.expand( [[1, 2, 3],
                    [4, 5, 6] ] );
-    ctx.b.expand( [[2, 4],
+    cmp.b.expand( [[2, 4],
                    [6, 8],
                    [10, 12]] );
-    ctx.c.expand( [[0, 0],
+    cmp.c.expand( [[0, 0],
                    [0, 0]] );
 
     var pm = new hd.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
-    checkVariables( ctx.c[0], <any>[/* 1*2 + 2*6 + 3*10 == */44,
+    checkVariables( cmp.c[0], <any>[/* 1*2 + 2*6 + 3*10 == */44,
                                     /* 1*4 + 2*8 + 3*12 == */56], "0.0" );
-    checkVariables( ctx.c[1], <any>[/* 4*2 + 5*6 + 6*10 == */98,
+    checkVariables( cmp.c[1], <any>[/* 4*2 + 5*6 + 6*10 == */98,
                                     /* 4*4 + 5*8 + 6*12 == */128], "1.0" );
 
-    ctx.a[0][1].set( -2 );
+    cmp.a[0][1].set( -2 );
     pm.update();
-    checkVariables( ctx.c[0], <any>[/* 1*2 - 2*6 + 3*10 == */20,
+    checkVariables( cmp.c[0], <any>[/* 1*2 - 2*6 + 3*10 == */20,
                                     /* 1*4 - 2*8 + 3*12 == */24], "0.1" );
-    checkVariables( ctx.c[1], <any>[/* 4*2 + 5*6 + 6*10 == */98,
+    checkVariables( cmp.c[1], <any>[/* 4*2 + 5*6 + 6*10 == */98,
                                     /* 4*4 + 5*8 + 6*12 == */128], "1.1" );
 
-    ctx.a[1][2].set( 2 );
-    ctx.b[0][0].set( 1 );
+    cmp.a[1][2].set( 2 );
+    cmp.b[0][0].set( 1 );
     pm.update();
-    checkVariables( ctx.c[0], <any>[/* 1*1 - 2*6 + 3*10 == */19,
+    checkVariables( cmp.c[0], <any>[/* 1*1 - 2*6 + 3*10 == */19,
                                     /* 1*4 - 2*8 + 3*12 == */24], "0.2" );
-    checkVariables( ctx.c[1], <any>[/* 4*1 + 5*6 + 2*10 == */54,
+    checkVariables( cmp.c[1], <any>[/* 4*1 + 5*6 + 2*10 == */54,
                                     /* 4*4 + 5*8 + 2*12 == */80], "1.2" );
 
-    ctx.a[0].expand( [4] );
-    ctx.a[1].expand( [5] );
-    ctx.b.expand( [[14, 16]] );
+    cmp.a[0].expand( [4] );
+    cmp.a[1].expand( [5] );
+    cmp.b.expand( [[14, 16]] );
     pm.update();
-    checkVariables( ctx.c[0], <any>[/* 1*1 - 2*6 + 3*10 + 4*14 == */75,
+    checkVariables( cmp.c[0], <any>[/* 1*1 - 2*6 + 3*10 + 4*14 == */75,
                                     /* 1*4 - 2*8 + 3*12 + 4*16 == */88], "0.3" );
-    checkVariables( ctx.c[1], <any>[/* 4*1 + 5*6 + 2*10 + 5*14 == */124,
+    checkVariables( cmp.c[1], <any>[/* 4*1 + 5*6 + 2*10 + 5*14 == */124,
                                     /* 4*4 + 5*8 + 2*12 + 5*16 == */160], "1.3" );
 
-    ctx.a.expand( [[1, 2, 1, 2]] );
-    ctx.b[0].expand( [1] );
-    ctx.b[1].expand( [-1] );
-    ctx.b[2].expand( [1] );
-    ctx.b[3].expand( [-1] );
-    ctx.c[0].expand( [0] );
-    ctx.c[1].expand( [0] );
-    ctx.c.expand( [[0, 0, 0]] );
+    cmp.a.expand( [[1, 2, 1, 2]] );
+    cmp.b[0].expand( [1] );
+    cmp.b[1].expand( [-1] );
+    cmp.b[2].expand( [1] );
+    cmp.b[3].expand( [-1] );
+    cmp.c[0].expand( [0] );
+    cmp.c[1].expand( [0] );
+    cmp.c.expand( [[0, 0, 0]] );
     pm.update();
-    checkVariables( ctx.c[0], <any>[/* 1*1 - 2*6 + 3*10 + 4*14 == */75,
+    checkVariables( cmp.c[0], <any>[/* 1*1 - 2*6 + 3*10 + 4*14 == */75,
                                     /* 1*4 - 2*8 + 3*12 + 4*16 == */88,
                                     /* 1*1 + 2*1 + 3*1  - 4*1  == */2], "0.4" );
-    checkVariables( ctx.c[1], <any>[/* 4*1 + 5*6 + 2*10 + 5*14 == */124,
+    checkVariables( cmp.c[1], <any>[/* 4*1 + 5*6 + 2*10 + 5*14 == */124,
                                     /* 4*4 + 5*8 + 2*12 + 5*16 == */160,
                                     /* 4*1 - 5*1 + 2*1  - 5*1  == */-4], "1.4" );
-    checkVariables( ctx.c[2], <any>[/* 1*1 + 2*6 + 1*10 + 2*14 == */51,
+    checkVariables( cmp.c[2], <any>[/* 1*1 + 2*6 + 1*10 + 2*14 == */51,
                                     /* 1*4 + 2*8 + 1*12 + 2*16 == */64,
                                     /* 1*1 - 2*1 + 1*1  - 2*1  == */-2], "2.4" );
 
@@ -918,7 +918,7 @@ module hd.qunit {
 
   asyncTest( "array params", function() {
 
-    var ctx: any = new hd.ContextBuilder()
+    var cmp: any = new hd.ComponentBuilder()
           .vs( 'a, b, c, d, e', {a: 8, d: 4} )
 
           .c( 'a, b, c' )
@@ -929,13 +929,13 @@ module hd.qunit {
             return [a/2, a/2];
           } )
 
-          .context();
+          .component();
 
     var pm = new hd.PropertyModel();
-    pm.addComponent( ctx );
+    pm.addComponent( cmp );
     pm.update();
 
-    checkVariables( ctx, {a: 8, b: 4, c: 4}, "_1" );
+    checkVariables( cmp, {a: 8, b: 4, c: 4}, "_1" );
 
     u.schedule( 4, start );
   } );

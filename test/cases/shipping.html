@@ -18,7 +18,9 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
     {
-      var q = [];
+      /*--------------------------------------------------------------
+       * Create promise buttons for methods
+       */
 
       function delay( v, n ) {
         var p;
@@ -46,126 +48,142 @@
         return p;
       }
 
-      function next() {
-        if (q.length) {
-          var f = q.shift();
-          f();
+      /*==============================================================
+       * Method functions
+       */
+
+      function A( v, y, z ) { return 1000000 * v / y / z; }
+
+      function B( v, x, z ) { return 1000000 * v / x / z; }
+
+      function C( v, x, y ) { return 1000000 * v / x / y; }
+
+      function D( x, y, z ) { return x * y * z / 1000000; }
+
+      function E( c ) {
+        var w;
+        switch (c) {
+        case 'A': w = 1;   break;
+        case 'B': w = 10;  break;
+        case 'C': w = 25;  break;
+        case 'D': w = 50;  break;
+        default:  w = 100; break;
         }
+        return delay( [w * 0.025, w], 'c &rarr; v, w' );
       }
 
-      var context = new hd.ContextBuilder()
+      function F( v, w ) {
+        var vw = v / 0.025;
+        if (w < vw) w = vw;
 
-          .vs( 'distance, klass, target, price, volume, weight, width, height, depth',
-               {distance: 1500, width: 25, height: 50, depth: 40, weight: 10}
+        var c;
+        if (w <= 1)         c = 'A';
+        else if (w <= 10)   c = 'B';
+        else if (w <= 25)   c = 'C';
+        else if (w <= 50)   c = 'D';
+        else                c = 'E';
+        return delay( c, 'v, w &rarr; c' );
+      }
+
+      function G( m, d ) {
+        var perkm = m / d;
+        var c;
+        if (perkm >= 0.1) {
+          perkm = 0.1;
+          c = 'E';
+        }
+        else if (perkm >= 0.06) {
+          perkm = 0.06;
+          c = 'D';
+        }
+        else if (perkm >= 0.035) {
+          perkm = 0.035;
+          c = 'C';
+        }
+        else if (perkm >= 0.02) {
+          perkm = 0.02;
+          c = 'B';
+        }
+        else {
+          perkm = 0.01;
+          c = 'A';
+        }
+        return delay( [c, d*perkm], 'm, d &rarr; c, p' );
+      }
+
+      function H( m, c ) {
+        var perkm;
+        switch (c) {
+        case 'A': perkm = 0.01;
+          break;
+        case 'B': perkm = 0.02;
+          break;
+            case 'C': perkm = 0.035;
+          break;
+        case 'D': perkm = 0.06;
+          break;
+        default:  perkm = 0.1;
+          break;
+        }
+        var d = Math.floor( m/perkm );
+        return delay( [d, d*perkm], 'm, c &rarr; d, p' );
+      }
+
+      function I( d, c ) {
+        var perkm;
+        switch (c) {
+        case 'A': perkm = 0.01;
+          break;
+        case 'B': perkm = 0.02;
+          break;
+        case 'C': perkm = 0.035;
+          break;
+        case 'D': perkm = 0.06;
+          break;
+        default:  perkm = 0.1;
+          break;
+        }
+        return delay( [d*perkm, d*perkm], 'd, c &rarr; m, p' );
+      }
+
+      function J( x, y, z, v ) {
+        var r = Math.cbrt( v / (x*y*z) ) * 100;
+        return [r*x, r*y, r*z];
+      }
+
+      /*==============================================================
+       * Property model
+       */
+
+      var component = new hd.ComponentBuilder()
+
+          .vs( 'd, c, m, p, v, w, x, y, z',
+               {m: 30, d: 1500, x: 25, z: 200}
              )
 
-          .c( 'distance, klass, target, price' )
-          .m( 'distance, klass -> target, price', function( distance, klass ) {
-            var perkm;
-            switch (klass) {
-            case 'A': perkm = 0.01;
-                      break;
-            case 'B': perkm = 0.02;
-                      break;
-            case 'C': perkm = 0.035;
-                      break;
-            case 'D': perkm = 0.06;
-                      break;
-            default:  perkm = 0.1;
-                      break;
-            }
-            return delay( [distance*perkm, distance*perkm], 'distance, class &rarr; target, price' );
-          } )
-          .m( 'target, klass -> distance, price', function( target, klass ) {
-            var perkm;
-            switch (klass) {
-            case 'A': perkm = 0.01;
-                      break;
-            case 'B': perkm = 0.02;
-                      break;
-            case 'C': perkm = 0.035;
-                      break;
-            case 'D': perkm = 0.06;
-                      break;
-            default:  perkm = 0.1;
-                      break;
-            }
-            var distance = Math.floor( target/perkm );
-            return delay( [distance, distance*perkm], 'target, class &rarr; distance, price' );
-          } )
-          .m( 'target, distance -> klass, price', function( target, distance ) {
-            var perkm = target / distance;
-            var klass;
-            if (perkm >= 0.1) {
-              perkm = 0.1;
-              klass = 'E';
-            }
-            else if (perkm >= 0.06) {
-              perkm = 0.06;
-              klass = 'D';
-            }
-            else if (perkm >= 0.035) {
-              perkm = 0.035;
-              klass = 'C';
-            }
-            else if (perkm >= 0.02) {
-              perkm = 0.02;
-              klass = 'B';
-            }
-            else {
-              perkm = 0.01;
-              klass = 'A';
-            }
+          .c( 'v, x, y, z' )
+          .m( 'v, y, z -> x', A )
+          .m( 'v, x, z -> y', B )
+          .m( 'v, x, y -> z', C )
+          .m( 'x, y, z -> v', D )
 
-            return delay( [klass, distance*perkm], 'target, distance &rarr; class, price' );
-          } )
 
-          .c( 'volume, weight, klass' )
-          .m( 'volume, weight -> klass', function( volume, weight ) {
-            var vw = volume / 0.025;
-            if (weight < vw) weight = vw;
+          .c( 'v, w, c' )
+          .m( 'c -> v, w', E )
+          .m( 'v, w -> c', F )
 
-            var klass;
-            if (weight <= 1)         klass = 'A';
-            else if (weight <= 10)   klass = 'B';
-            else if (weight <= 25)   klass = 'C';
-            else if (weight <= 50)   klass = 'D';
-            else                     klass = 'E';
-            return delay( klass, 'volume, weight &rarr; class' );
-          } )
-          .m( 'klass -> volume, weight', function( klass ) {
-            var weight;
-            switch (klass) {
-            case 'A': weight = 1;   break;
-            case 'B': weight = 10;  break;
-            case 'C': weight = 25;  break;
-            case 'D': weight = 50;  break;
-            default:  weight = 100; break;
-            }
-            return delay( [weight * 0.025, weight], 'class &rarr; volume, weight' );
-          } )
+          .c( 'd, c, m, p' )
+          .m( 'm, d -> c, p', G )
+          .m( 'm, c -> d, p', H )
+          .m( 'd, c -> m, p', I )
 
-      .eq( 'width*height*depth == volume*1000000' )
-          // .c( 'width, height, depth, volume' )
-          // .m( 'width, height, depth -> volume',
-          //     function( width, height, depth ) {
-          //       return width * height * depth / 1000000;
-          //     }
-          //   )
-          // .m( '!width, !height, !depth, volume -> width, height, depth',
-          //     function( width, height, depth, volume ) {
-          //       var r = Math.cbrt( volume / (width*height*depth) ) * 100;
-          //       return [r*width, r*height, r*depth];
-          //     }
-          //   )
-
-          .context();
+          .component();
 
       var pm = new hd.PropertyModel();
-      pm.addComponent( context );
+      pm.addComponent( component );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( context );
+        hd.createDeclaredBindings( component );
       } );
 
     }
@@ -174,7 +192,7 @@
   <body>
     <fieldset>
       <legend><b>Class:</b>
-        <select data-bind="hd.value( klass ),hd.cssClass( klass )">
+        <select data-bind="bd.value( c ), bd.cssClass( c )">
           <option value="A">&nbsp; &nbsp; A</option>
           <option value="B">&nbsp; &nbsp; B</option>
           <option value="C">&nbsp; &nbsp; C</option>
@@ -187,21 +205,21 @@
           <td>Volume:</td>
           <td class="padr" style="text-align:right">
             <input type="text"
-                   data-bind="hd.numVar(volume)"/><small>m<sup>3</sup></small>
+                   data-bind="bd.numVar( v )"/><small>m<sup>3</sup></small>
           </td>
           <td>Weight:</td>
           <td style="text-align:right">
             <input type="text"
-                   data-bind="hd.numVar(weight)"/><small>kg</small>
+                   data-bind="bd.numVar( w )"/><small>kg</small>
           </td>
         </tr>
         <tr>
           <td style="text-align:center" class="dim" colspan="4">
             Dimensions:
-            <input type="text" data-bind="hd.numVar(width)"/>
+            <input type="text" data-bind="bd.numVar( x )"/>
             <small>cm</small> &times;
-            <input type="text" data-bind="hd.numVar(height)"/><small>cm</small> &times;
-            <input type="text" data-bind="hd.numVar(depth)"/><small>cm</small>
+            <input type="text" data-bind="bd.numVar( y )"/><small>cm</small> &times;
+            <input type="text" data-bind="bd.numVar( z )"/><small>cm</small>
           </td>
         </tr>
       </table>
@@ -210,13 +228,13 @@
       <tr>
         <td><b>Distance:</b></td>
         <td></td>
-        <td><input type="text" data-bind="hd.numVar( distance, 0 )"/><small>km</small></td>
+        <td><input type="text" data-bind="bd.numVar( d, 0 )"/><small>km</small></td>
       </tr>
       <tr>
         <td><b>Price:</b></td>
         <td>$</td>
-        <td><input type="text" data-bind="hd.num( hd.rw( price, target ), 2 ),
-                                          hd.cssClass( price )"/><small style="font-variant: small-caps;">usd</small></td>
+        <td><input type="text" data-bind="bd.num( bd.rw( p, m ), 2 ),
+                                          bd.cssClass( p )"/><small style="font-variant: small-caps;">usd</small></td>
       </tr>
     </table>
     <br/><br/><br/><br/>

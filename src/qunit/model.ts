@@ -24,23 +24,23 @@ module hd.qunit {
   test( "paths", function() {
     expect( 20 );
 
-    var spec = new m.ContextBuilder().references( "x, y, z" ).spec();
+    var spec = new m.ComponentBuilder().references( "x, y, z" ).spec();
 
-    var ctx: any = m.Context.construct( new m.Context(), spec );
-    ctx.a = m.Context.construct( new m.Context(), spec );
-    ctx.a.b = m.Context.construct( new m.Context(), spec );
+    var cmp: any = m.Component.construct( new m.Component(), spec );
+    cmp.a = m.Component.construct( new m.Component(), spec );
+    cmp.a.b = m.Component.construct( new m.Component(), spec );
 
-    ctx.i = 8;
-    var p1 = new m.Path( ctx, "i" );
-    equal( p1.get(), ctx.i, "one field path" );
+    cmp.i = 8;
+    var p1 = new m.Path( cmp, "i" );
+    equal( p1.get(), cmp.i, "one field path" );
 
-    ctx.a.j = 9;
-    var p2 = new m.Path( ctx, "a.j" );
-    equal( p2.get(), ctx.a.j, "two field path" );
+    cmp.a.j = 9;
+    var p2 = new m.Path( cmp, "a.j" );
+    equal( p2.get(), cmp.a.j, "two field path" );
 
-    ctx.a.b.k = 10;
-    var p3 = new m.Path( ctx, "a.b.k" );
-    equal( p3.get(), ctx.a.b.k, "three field path" );
+    cmp.a.b.k = 10;
+    var p3 = new m.Path( cmp, "a.b.k" );
+    equal( p3.get(), cmp.a.b.k, "three field path" );
 
     ok( p1.isConstant() && p2.isConstant() && p3.isConstant(), "constant paths" );
 
@@ -49,16 +49,16 @@ module hd.qunit {
 
     var vers = <any> [];
 
-    ctx.x = ctx.a;
-    var p4 = new m.Path( ctx, "x.j" );
+    cmp.x = cmp.a;
+    var p4 = new m.Path( cmp, "x.j" );
     p4.addObserver( new ObservableTest( [nr, // rem
                                         ] ) );
-    equal( p4.get(), ctx.a.j, "one reference path" );
+    equal( p4.get(), cmp.a.j, "one reference path" );
 
     var o1 = <m.PropertyObserver>(<any>p4).rootObserver;
     ok( o1 instanceof m.PropertyObserver, "field observer" );
 
-    var p5 = new m.Path( ctx, "x.y.k" );
+    var p5 = new m.Path( cmp, "x.y.k" );
     p5.addObserver( new ObservableTest( [nr, // set
                                          nr, // rem
                                         ] ) );
@@ -68,14 +68,14 @@ module hd.qunit {
     var o3 = <m.PropertyObserver>o2.child;
     ok( o2 instanceof m.PropertyObserver, "field observer" );
 
-    ctx.a.y = ctx.a.b;
-    equal( p5.get(), ctx.a.b.k, "two reference path" );
+    cmp.a.y = cmp.a.b;
+    equal( p5.get(), cmp.a.b.k, "two reference path" );
 
-    var p6 = new m.Path( ctx, "x.k" );
+    var p6 = new m.Path( cmp, "x.k" );
     strictEqual( p6.get(), undefined, "dangling path" );
 
-    ctx.x = ctx.a.b;
-    equal( p6.get(), ctx.a.b.k, "shortcut path" );
+    cmp.x = cmp.a.b;
+    equal( p6.get(), cmp.a.b.k, "shortcut path" );
     strictEqual( p5.get(), undefined, "dangling path" );
     strictEqual( p4.get(), undefined, "dangling path" );
     ok( (<any>o1.property).observers[0] === o1, "still watching" );
@@ -89,19 +89,19 @@ module hd.qunit {
   test( "array paths", function() {
     expect( 17 );
 
-    var spec = new m.ContextBuilder().references( "x, y, z" ).spec();
+    var spec = new m.ComponentBuilder().references( "x, y, z" ).spec();
 
-    var ctx1: any = new m.Context( spec );
-    ctx1.x = new m.ArrayContext();
-    ctx1.x.length = 10;
+    var cmp1: any = new m.Component( spec );
+    cmp1.x = new m.ArrayComponent();
+    cmp1.x.length = 10;
 
-    var p1 = new m.Path( ctx1, "x[i]" );
+    var p1 = new m.Path( cmp1, "x[i]" );
     var o1 = <m.PropertyObserver>(<any>p1).rootObserver;
     ok( o1 instanceof m.PropertyObserver, "property observer" );
     var o2 = <m.ArrayObserver>o1.child;
     ok( o2 instanceof m.ArrayObserver, "array observer" );
-    ok( o2.ctx === ctx1.x, "watching array" );
-    ok( ctx1.x.changes.observers[0] === o2, "array being watched" );
+    ok( o2.cmp === cmp1.x, "watching array" );
+    ok( cmp1.x.changes.observers[0] === o2, "array being watched" );
     var t1 = new ObservableTest( [new Result( E.next, {i: 2} ),
                                   new Result( E.next, {i: 8} ),
                                   new Result( E.next, {i: 5} ),
@@ -110,93 +110,93 @@ module hd.qunit {
                                   new Result( E.next, {i: 4} )
                                  ] );
     p1.addObserver( t1 );
-    ctx1.x[2] = 1;
-    ctx1.x[8] = 2;
-    ctx1.x[5] = 3;
-    ctx1.x[2] = 6;
-    ctx1.x[5] = undefined;
-    ctx1.x[4] = 9;
+    cmp1.x[2] = 1;
+    cmp1.x[8] = 2;
+    cmp1.x[5] = 3;
+    cmp1.x[2] = 6;
+    cmp1.x[5] = undefined;
+    cmp1.x[4] = 9;
     p1.removeObserver( t1 );
 
     checkSequence( [p1], [{i: 2}, {i: 4}, {i: 8}] );
 
-    ctx1.b = new m.ArrayContext();
-    ctx1.b.length = [10];
-    ctx1.b[4] = 10;
-    ctx1.b[5] = 9;
-    ctx1.b[9] = 8;
+    cmp1.b = new m.ArrayComponent();
+    cmp1.b.length = [10];
+    cmp1.b[4] = 10;
+    cmp1.b[5] = 9;
+    cmp1.b[9] = 8;
 
     var t2 = new ObservableTest( [new Result( E.next, {} )] );
     p1.addObserver( t2 );
 
-    ctx1.x = ctx1.b;
+    cmp1.x = cmp1.b;
     checkSequence( [p1], [{i: 4}, {i: 5}, {i: 9}] );
 
   } );
 
-  test( "context builder", function() {
+  test( "component builder", function() {
     expect( 12 );
 
-    var context: any = new m.ContextBuilder()
+    var component: any = new m.ComponentBuilder()
           .variables( "x, y, z", {x: 3} )
           .constraint( "c", "x, y" )
             .method( "x -> y", id )
             .method( "y -> x", id )
           .output( "x" )
           .touchDep( "z", "x" )
-          .context( {z: 5} );
-    var x = m.Context.update( context );
+          .component( {z: 5} );
+    var x = m.Component.update( component );
 
-    ok( context instanceof m.Context, "ContextBuilder creates a context" );
+    ok( component instanceof m.Component, "ComponentBuilder creates a component" );
 
-    var hd_data = context['#hd_data'];
-    ok( hd_data, "Context has hd_data" );
+    var hd_data = component['#hd_data'];
+    ok( hd_data, "Component has hd_data" );
 
     equal( x.adds.filter( u.isType( m.Variable ) ).length, 3,
-           "ContextBuilder creates variables" );
+           "ComponentBuilder creates variables" );
 
-    ok( context.x instanceof m.Variable &&
-        context.y instanceof m.Variable &&
-        context.z instanceof m.Variable,
-        "ContextBuilder exposes variables" );
+    ok( component.x instanceof m.Variable &&
+        component.y instanceof m.Variable &&
+        component.z instanceof m.Variable,
+        "ComponentBuilder exposes variables" );
 
-    strictEqual( context.x.optional, m.Optional.Min, "Variable is min-optional" );
+    strictEqual( component.x.optional, m.Optional.Min, "Variable is min-optional" );
 
-    strictEqual( context.y.optional, m.Optional.Min, "Variable is min-optional" );
+    strictEqual( component.y.optional, m.Optional.Min, "Variable is min-optional" );
 
-    strictEqual( context.z.optional, m.Optional.Max, "Variable is max-optional" );
+    strictEqual( component.z.optional, m.Optional.Max, "Variable is max-optional" );
 
     var ccs = <m.Constraint[]>x.adds.filter( u.isType( m.Constraint ) );
     ok( ccs.length == 1 &&
         ccs[0] instanceof m.Constraint,
-        "ContextBuilder creates constraint" );
+        "ComponentBuilder creates constraint" );
 
     var c = ccs[0];
     ok( c.methods.length == 2 &&
         c.methods[0] instanceof m.Method &&
         c.methods[1] instanceof m.Method,
-        "ContextBuilder creates methods" );
+        "ComponentBuilder creates methods" );
 
-    ok( context.c,
-        "ContextBuilder exposes constraint template" );
+    ok( component.c,
+        "ComponentBuilder exposes constraint template" );
 
     var outs = <m.Output[]>x.adds.filter( u.isType( m.Output ) );
     ok( outs.length == 1 &&
         outs[0] instanceof m.Output &&
-        outs[0].variable == context.x,
-        "ContextBuilder creates output" );
+        outs[0].variable == component.x,
+        "ComponentBuilder creates output" );
 
     var tds = <m.TouchDep[]>x.adds.filter( u.isType( m.TouchDep ) );
     ok( tds.length == 1 &&
         tds[0] instanceof m.TouchDep &&
-        tds[0].from == context.z &&
-        tds[0].to == context.x,
-        "ContextBuilder creates touch dependency" );
+        tds[0].from == component.z &&
+        tds[0].to == component.x,
+        "ComponentBuilder creates touch dependency" );
 
   } );
 
   test( "references", function() {
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "x, y" )
           .references( "r, s, t" )
           .constraint( "c", "s, x" )
@@ -204,27 +204,27 @@ module hd.qunit {
             .method( "x -> s", id )
           .output( "t" )
           .touchDep( "y", "t" )
-          .context();
-    m.Context.update( ctx );
+          .component();
+    m.Component.update( cmp );
 
-    ok( ctx.$r instanceof r.BasicSignal, "ContextBuilder creates reference" );
+    ok( cmp.$r instanceof r.BasicSignal, "ComponentBuilder creates reference" );
 
-    ctx.$r.addObserver( new ObservableTest(
+    cmp.$r.addObserver( new ObservableTest(
       [new Result( E.next, 3 ),
        new Result( E.next, 7 )]
     ) );
-    ctx.r = 3;
-    ctx.r = 7;
+    cmp.r = 3;
+    cmp.r = 7;
 
-    ok( ctx.c,
+    ok( cmp.c,
         "Constraint has a template" );
 
-    equal( ctx.c.getElements().length, 0,
+    equal( cmp.c.getElements().length, 0,
            "Constraint with null references not instantiated" );
 
-    ctx.s = ctx.y;
+    cmp.s = cmp.y;
 
-    var x = m.Context.update( ctx );
+    var x = m.Component.update( cmp );
 
     ok( x.removes.length == 0 && x.adds.length == 1,
         "One update" );
@@ -237,8 +237,8 @@ module hd.qunit {
     equal( c.variables.length, 2,
            "Constraint has correct number of variables" );
 
-    ok( c.variables[0] === ctx.y &&
-        c.variables[1] === ctx.x,
+    ok( c.variables[0] === cmp.y &&
+        c.variables[1] === cmp.x,
         "Constraint uses correct variables" );
 
     ok( c.methods.length == 2 &&
@@ -247,20 +247,20 @@ module hd.qunit {
         "Constraint has correct number of methods" );
 
     ok( c.methods[0].inputs.length == 1 &&
-        c.methods[0].inputs[0] === ctx.y &&
+        c.methods[0].inputs[0] === cmp.y &&
         c.methods[0].outputs.length == 1 &&
-        c.methods[0].outputs[0] === ctx.x,
+        c.methods[0].outputs[0] === cmp.x,
         "Method 1 looks good" );
 
     ok( c.methods[1].inputs.length == 1 &&
-        c.methods[1].inputs[0] === ctx.x &&
+        c.methods[1].inputs[0] === cmp.x &&
         c.methods[1].outputs.length == 1 &&
-        c.methods[1].outputs[0] === ctx.y,
+        c.methods[1].outputs[0] === cmp.y,
         "Method 2 looks good" );
 
-    ctx.s = 7;
+    cmp.s = 7;
 
-    x = m.Context.update( ctx );
+    x = m.Component.update( cmp );
 
     ok( x.removes.length == 1 && x.adds.length == 1,
         "Two updates" );
@@ -273,7 +273,7 @@ module hd.qunit {
 
     equal( c.variables.length, 1, "Constraint has correct number of variables" );
 
-    ok( c.variables[0] === ctx.x, "Constraint uses correct variable" );
+    ok( c.variables[0] === cmp.x, "Constraint uses correct variable" );
 
     ok( c.methods.length == 1 && c.methods[0] instanceof m.Method,
         "Constraint has correct number of methods" );
@@ -281,38 +281,38 @@ module hd.qunit {
     ok( c.methods[0].inputs.length == 1 &&
         c.methods[0].inputs[0] === 7 &&
         c.methods[0].outputs.length == 1 &&
-        c.methods[0].outputs[0] === ctx.x,
+        c.methods[0].outputs[0] === cmp.x,
         "Method 1 looks good" );
 
-    ctx.s = undefined;
+    cmp.s = undefined;
 
-    x = m.Context.update( ctx );
+    x = m.Component.update( cmp );
 
     ok( x.removes.length == 1 && x.adds.length == 0, "One update" );
 
     ok( x.removes[0] === c, "Remove old constraint" );
 
-    ctx.t = ctx.x;
+    cmp.t = cmp.x;
 
-    x = m.Context.update( ctx );
+    x = m.Component.update( cmp );
 
     ok( x.removes.length == 0 && x.adds.length == 2, "Two updates" );
 
     ok( x.adds[0] instanceof m.TouchDep &&
-        (<m.TouchDep>x.adds[0]).from === ctx.y &&
-        (<m.TouchDep>x.adds[0]).to === ctx.x,
+        (<m.TouchDep>x.adds[0]).from === cmp.y &&
+        (<m.TouchDep>x.adds[0]).to === cmp.x,
         "Correct touch dependency" );
 
     ok( x.adds[1] instanceof m.Output &&
-        (<m.Output>x.adds[1]).variable === ctx.x,
+        (<m.Output>x.adds[1]).variable === cmp.x,
         "Correct output" );
 
     var o = x.adds[0];
     var t = x.adds[1];
 
-    ctx.t = ctx.y;
+    cmp.t = cmp.y;
 
-    x = m.Context.update( ctx );
+    x = m.Component.update( cmp );
 
     ok( x.removes.length == 2 && x.adds.length == 1, "Three updates" );
 
@@ -320,14 +320,14 @@ module hd.qunit {
         "Remove old elements" );
 
     ok( x.adds[0] instanceof m.Output &&
-        (<m.Output>x.adds[0]).variable === ctx.y,
+        (<m.Output>x.adds[0]).variable === cmp.y,
         "Correct output" );
 
     o = x.adds[0];
 
-    ctx.t = undefined;
+    cmp.t = undefined;
 
-    x = m.Context.update( ctx );
+    x = m.Component.update( cmp );
 
     ok( x.removes.length == 1 && x.adds.length == 0, "One update" );
 
@@ -337,15 +337,15 @@ module hd.qunit {
 
 
   test( "optional syntax", function() {
-    var ctx: any = new m.ContextBuilder()
+    var cmp: any = new m.ComponentBuilder()
           .variables( "x, y, z", {x: 4} )
           .constraint( "x => x, y" )
             .method( "x -> y", id )
           .constraint( "x, y => y, z" )
             .method( "y -> z", id )
-          .context();
+          .component();
 
-    var x = m.Context.update( ctx );
+    var x = m.Component.update( cmp );
 
     var ccs = <m.Constraint[]>x.adds.filter( u.isType( m.Constraint ) );
 
@@ -355,8 +355,8 @@ module hd.qunit {
     var c = ccs[0];
     ok( c instanceof m.Constraint &&
         c.variables.length == 2 &&
-        c.variables[0] === ctx.x &&
-        c.variables[1] === ctx.y,
+        c.variables[0] === cmp.x &&
+        c.variables[1] === cmp.y,
         "Constraint looks ok" );
 
     equal( c.optional, m.Optional.Max,
@@ -368,8 +368,8 @@ module hd.qunit {
     c = ccs[1];
     ok( c instanceof m.Constraint &&
         c.variables.length == 2 &&
-        c.variables[0] === ctx.y &&
-        c.variables[1] === ctx.z,
+        c.variables[0] === cmp.y &&
+        c.variables[1] === cmp.z,
         "Constraint looks ok" );
 
     equal( c.optional, m.Optional.Max,
@@ -378,23 +378,23 @@ module hd.qunit {
     equal( c.touchVariables.length, 2,
            "Constraint has touch variables" );
 
-    ctx = new m.ContextBuilder()
+    cmp = new m.ComponentBuilder()
           .variables( "x, y, z", {x: 3, y: 4, z: 5} )
           .references( "a, b, c" )
           .constraint(  "b => b, c" )
             .method( "b -> c", id )
-          .context();
-    x = m.Context.update( ctx );
+          .component();
+    x = m.Component.update( cmp );
 
     equal( x.adds.filter( u.isType( m.Constraint ) ).length, 0, "No constraints" );
 
-    ctx.b = ctx.y;
-    var x = m.Context.update( ctx );
+    cmp.b = cmp.y;
+    var x = m.Component.update( cmp );
     ok( x.removes.length == 0 && x.adds.length == 0,
         "No updates with half-defined constraint" )
 
-    ctx.c = ctx.z;
-    var x = m.Context.update( ctx );
+    cmp.c = cmp.z;
+    var x = m.Component.update( cmp );
     ok( x.removes.length == 0 && x.adds.length == 1,
         "One update" );
 
@@ -402,8 +402,8 @@ module hd.qunit {
 
     var c = <m.Constraint>x.adds[0];
     ok( c.variables.length == 2 &&
-        c.variables[0] === ctx.y &&
-        c.variables[1] === ctx.z,
+        c.variables[0] === cmp.y &&
+        c.variables[1] === cmp.z,
         "Constraint uses correct variables" );
 
     equal( c.optional, m.Optional.Max,
@@ -412,20 +412,20 @@ module hd.qunit {
     equal( c.touchVariables.length, 1,
            "Constraint touch variable" );
 
-    ok( c.touchVariables[0] == ctx.y,
+    ok( c.touchVariables[0] == cmp.y,
         "Correct touch variable" );
 
-    ctx.c = undefined;
-    x = m.Context.update( ctx );
+    cmp.c = undefined;
+    x = m.Component.update( cmp );
     ok( x.removes.length == 1 && x.adds.length == 0, "One update" );
     ok( x.removes[0] === c,  "Remove constraint" );
 
   } );
 
-  test( "array contexts", function() {
+  test( "array components", function() {
     expect( 12 );
 
-    var a = new m.ArrayContext();
+    var a = new m.ArrayComponent();
     a.length = 10;
     a.changes.addObserver( new ObservableTest(
       [new Result( E.next, 3 ),
@@ -459,43 +459,43 @@ module hd.qunit {
   } );
 
   test( "slice paths", function() {
-    var Spec = new m.ContextBuilder().r( 'x' ).spec();
-    var Spec2 = new m.ContextBuilder().n( 'b', hd.arrayOf( Spec ) ).spec();
-    var ctx: any = new m.ContextBuilder().n( 'a', hd.arrayOf( hd.arrayOf( Spec2 ) ) ).context();
+    var Spec = new m.ComponentBuilder().r( 'x' ).spec();
+    var Spec2 = new m.ComponentBuilder().n( 'b', hd.arrayOf( Spec ) ).spec();
+    var cmp: any = new m.ComponentBuilder().n( 'a', hd.arrayOf( hd.arrayOf( Spec2 ) ) ).component();
 
-    var p1 = new m.Path( ctx, 'a[i][*].b[k].x' );
+    var p1 = new m.Path( cmp, 'a[i][*].b[k].x' );
 
-    ctx.a.expand( 3 );
+    cmp.a.expand( 3 );
     for (var i = 0; i < 3; ++i) {
-      ctx.a[i].expand( 3 );
+      cmp.a[i].expand( 3 );
       for (var j = 0; j < 3; ++j) {
-        ctx.a[i][j].b.expand( 3 );
+        cmp.a[i][j].b.expand( 3 );
       }
     }
 
-    ctx.a[0][0].b[0].x = 1;
-    ctx.a[0][1].b[0].x = 2;
-    ctx.a[0][2].b[0].x = 3;
+    cmp.a[0][0].b[0].x = 1;
+    cmp.a[0][1].b[0].x = 2;
+    cmp.a[0][2].b[0].x = 3;
 
-    ctx.a[2][0].b[1].x = 4;
-    ctx.a[2][1].b[1].x = 5;
-    ctx.a[2][2].b[1].x = 7;
+    cmp.a[2][0].b[1].x = 4;
+    cmp.a[2][1].b[1].x = 5;
+    cmp.a[2][2].b[1].x = 7;
 
-    ctx.a[0][0].b[2].x = 8;
-    ctx.a[0][1].b[2].x = 6;
-    ctx.a[0][2].b[2].x = 4;
+    cmp.a[0][0].b[2].x = 8;
+    cmp.a[0][1].b[2].x = 6;
+    cmp.a[0][2].b[2].x = 4;
 
-    ctx.a[1][0].b[1].x = 2;
-    ctx.a[1][1].b[1].x = 3;
-    ctx.a[1][2].b[1].x = 4;
+    cmp.a[1][0].b[1].x = 2;
+    cmp.a[1][1].b[1].x = 3;
+    cmp.a[1][2].b[1].x = 4;
 
-    ctx.a[1][0].b[2].x = 3;
-    ctx.a[1][1].b[2].x = 4;
-    ctx.a[1][2].b.length = 2;
+    cmp.a[1][0].b[2].x = 3;
+    cmp.a[1][1].b[2].x = 4;
+    cmp.a[1][2].b.length = 2;
 
-    ctx.a[0][0].b[1].x = 10;
-    ctx.a[1][0].b[0].x = 8;
-    ctx.a[1][1].b[0].x = 12;
+    cmp.a[0][0].b[1].x = 10;
+    cmp.a[1][0].b[0].x = 8;
+    cmp.a[1][1].b[0].x = 12;
 
     deepEqual( p1.get( {i: 0, k: 0} ), [1, 2, 3], "Retrieved slice" );
     deepEqual( p1.get( {i: 2, k: 1} ), [4, 5, 7], "Retrieved slice" );

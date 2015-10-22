@@ -25,7 +25,7 @@
         return d;
       }
 
-      var context = new hd.ContextBuilder()
+      var model = new hd.ComponentBuilder()
           .vs( "a, b, c, z", {a: 3, b: 4, c: 5} )
 
           .c( "a, b, c, z" )
@@ -37,37 +37,34 @@
           .v( 's', 'hello' )
           .v( 't', 'goodbye' )
 
-          .c( "copy", "s, t" )
-          .optional()
+          .c( "s => s, t" )
           .m( "s -> t", function( x ) { return x; } )
 
-          .context();
+          .component();
 
       var pm = new hd.PropertyModel();
-      pm.addComponent( context );
-      pm.addTouchSet( [context.a, context.b, context.c] );
-
-      pm.addTouchDependency( context.s, context.copy );
+      pm.addComponent( model );
+      pm.addTouchSet( [model.a, model.b, model.c] );
 
       window.addEventListener( 'load', function() {
-        hd.performDeclaredBindings( context );
+        hd.createDeclaredBindings( model );
       } );
     }
     </script>
   </head>
   <body>
     <div style="width:200px">
-      <input type="text" data-bind="hd.num( a )"/><br/>
-      <input type="text" data-bind="hd.num( b )"/><br/>
-      <input type="text" data-bind="hd.num( c )"/><br/>
+      <input type="text" data-bind="bd.num( a )"/><br/>
+      <input type="text" data-bind="bd.num( b )"/><br/>
+      <input type="text" data-bind="bd.num( c )"/><br/>
       <hr/>
-      <input type="text" data-bind="hd.num( z )"/>
+      <input type="text" data-bind="bd.num( z )"/>
     </div>
     <p>&nbsp;</p>
     <div style="width:200px">
-      <input type="text" data-bind="hd.edit( s )"/><br/>
+      <input type="text" data-bind="bd.edit( s )"/><br/>
       <hr/>
-      <input type="text" data-bind="hd.edit( t )"/><br/>
+      <input type="text" data-bind="bd.edit( t )"/><br/>
     </div>
   </body>
 </html>

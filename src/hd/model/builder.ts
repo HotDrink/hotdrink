@@ -1,5 +1,5 @@
 /*####################################################################
- * The ContextBuilder class.
+ * The ComponentBuilder class.
  */
 module hd.model {
 
@@ -7,8 +7,8 @@ module hd.model {
   import r = hd.reactive;
 
   /*================================================================
-   * The ContextBuilder class represents our embedded-DSL for
-   * creating contexts.
+   * The ComponentBuilder class represents our embedded-DSL for
+   * creating components.
    *
    * The various factory methods spend a lot of time validating
    * parameters and massaging them to fit the parameters of the actual
@@ -17,11 +17,11 @@ module hd.model {
    * format.)
    */
   export
-  class ContextBuilder {
+  class ComponentBuilder {
 
     // The spec we are building
     private
-    target: ContextSpec = {
+    target: ComponentSpec = {
       constants:   [],
       variables:   [],
       nesteds:     [],
@@ -52,17 +52,17 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Get a context made according to the spec
+     * Get a component made according to the spec
      */
-    context( init?: u.Dictionary<any> ) {
+    component( init?: u.Dictionary<any> ) {
       this.endAll();
-      return new Context( this.target, init );
+      return new Component( this.target, init );
     }
 
     /*----------------------------------------------------------------
      * Add a constant.
      */
-    constant( loc: string, value: any ): ContextBuilder {
+    constant( loc: string, value: any ): ComponentBuilder {
       this.target.constants.push( {loc: loc, value: value} );
       return this;
     }
@@ -70,10 +70,10 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a variable.
      */
-    v: <T>(loc: string, init?: T, eq?: u.EqualityPredicate<T> ) => ContextBuilder;
+    v: <T>(loc: string, init?: T, eq?: u.EqualityPredicate<T> ) => ComponentBuilder;
     variable<T>( loc: string,
                  init?: T,
-                 eq?: u.EqualityPredicate<T> ): ContextBuilder {
+                 eq?: u.EqualityPredicate<T> ): ComponentBuilder {
       this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
@@ -95,9 +95,9 @@ module hd.model {
      * This convenience method allows the creation of a bunch of
      * variables at once.
      */
-    vs: ( a: string|u.Dictionary<any>, b?: u.Dictionary<any> ) => ContextBuilder;
-    variables( varorder: string, vardefs?: u.Dictionary<any> ): ContextBuilder;
-    variables( vardefs: u.Dictionary<any> ): ContextBuilder;
+    vs: ( a: string|u.Dictionary<any>, b?: u.Dictionary<any> ) => ComponentBuilder;
+    variables( varorder: string, vardefs?: u.Dictionary<any> ): ComponentBuilder;
+    variables( vardefs: u.Dictionary<any> ): ComponentBuilder;
     variables() {
       this.endAll();
 
@@ -127,15 +127,15 @@ module hd.model {
     }
 
     /*----------------------------------------------------------------
-     * Add a nested context.
+     * Add a nested component.
      */
-    n: (loc: string, klass: {new (): Context}, spec?: ContextSpec) => ContextBuilder;
-    nested( loc: string, ctxType?: ContextSpec ): ContextBuilder {
+    n: (loc: string, klass: {new (): Component}, spec?: ComponentSpec) => ComponentBuilder;
+    nested( loc: string, cmpType?: ComponentSpec ): ComponentBuilder {
       this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
 
-      this.target.nesteds.push( {loc: loc, ctxType: ctxType} );
+      this.target.nesteds.push( {loc: loc, cmpType: cmpType} );
       this.usedLocs[loc] = true;
 
       return this;
@@ -144,8 +144,8 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a reference.
      */
-    r: (loc: string, eq?: u.EqualityPredicate<any> ) => ContextBuilder;
-    reference( loc: string, eq?: u.EqualityPredicate<any> ): ContextBuilder {
+    r: (loc: string, eq?: u.EqualityPredicate<any> ) => ComponentBuilder;
+    reference( loc: string, eq?: u.EqualityPredicate<any> ): ComponentBuilder {
       this.endAll();
 
       if (this.invalidLoc( loc )) { return this; }
@@ -159,7 +159,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Convenience method for many references at once
      */
-    references( locs: string ): ContextBuilder {
+    references( locs: string ): ComponentBuilder {
       locs.trim().split( /\s*,\s*/ ).forEach( function( loc: string ) {
         this.reference( loc )
       }, this );
@@ -169,10 +169,10 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a constraint to the property modelcule.
      */
-    c: ((signature: string) => ContextBuilder);
-    constraint( loc: string, signature: string ): ContextBuilder;
-    constraint( signature: string ): ContextBuilder;
-    constraint(): ContextBuilder {
+    c: ((signature: string) => ComponentBuilder);
+    constraint( loc: string, signature: string ): ComponentBuilder;
+    constraint( signature: string ): ComponentBuilder;
+    constraint(): ComponentBuilder {
       this.endAll();
 
       var loc: string, signature: string;
@@ -209,7 +209,7 @@ module hd.model {
     }
 
     // Complete the current constraint; no effect if no current constraint
-    endConstraint(): ContextBuilder {
+    endConstraint(): ComponentBuilder {
       if (this.lastConstraint) {
         this.target.constraints.push( this.lastConstraint );
         this.lastConstraint = null;
@@ -217,12 +217,12 @@ module hd.model {
       return this;
     }
 
-    endVariables(): ContextBuilder {
+    endVariables(): ComponentBuilder {
       this.lastVariables = null;
       return this;
     }
 
-    endAll(): ContextBuilder {
+    endAll(): ComponentBuilder {
       this.endConstraint();
       this.endVariables();
       return this;
@@ -231,8 +231,8 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a method
      */
-    m: (signature: string, fn: Function, lift?: boolean ) => ContextBuilder;
-    method( signature: string, fn: Function, lift = true ): ContextBuilder {
+    m: (signature: string, fn: Function, lift?: boolean ) => ComponentBuilder;
+    method( signature: string, fn: Function, lift = true ): ComponentBuilder {
       if (! this.lastConstraint) {
         console.error( 'Builder function "method" called with no constraint' );
         return this;
@@ -301,7 +301,7 @@ module hd.model {
       fn: Function,
       lift = true,
       sync = false
-    ): ContextBuilder {
+    ): ComponentBuilder {
 
       this.endAll();
 
@@ -328,14 +328,14 @@ module hd.model {
     }
 
     //--------------------------------------------
-    syncommand( loc: string, signature: string, fn: Function, lift = true ): ContextBuilder {
+    syncommand( loc: string, signature: string, fn: Function, lift = true ): ComponentBuilder {
       return this.command( loc, signature, fn, lift, true );
     }
 
     /*----------------------------------------------------------------
      * Add output designation
      */
-    output( variable: string ): ContextBuilder {
+    output( variable: string ): ComponentBuilder {
       this.endAll();
       if (invalidPath( variable )) {
         return this;
@@ -347,7 +347,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Convenience method for many outputs at once
      */
-    outputs( variables: string ): ContextBuilder {
+    outputs( variables: string ): ComponentBuilder {
       variables.trim().split( /\s*,\s*/ ).forEach( this.output, this );
       return this;
     }
@@ -355,8 +355,8 @@ module hd.model {
     /*----------------------------------------------------------------
      * Add a touch dependency
      */
-    touchDep( signature: string ): ContextBuilder;
-    touchDep( from: string, to: string ): ContextBuilder;
+    touchDep( signature: string ): ComponentBuilder;
+    touchDep( from: string, to: string ): ComponentBuilder;
     touchDep() {
       this.endAll();
       var from: string, to: string;
@@ -385,7 +385,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Build constraint represented by simple equation.
      */
-    equation( eqString: string ): ContextBuilder {
+    equation( eqString: string ): ComponentBuilder {
       this.endAll();
 
       // Parse the equation
@@ -458,29 +458,29 @@ module hd.model {
     private
     invalidLoc( loc: string ): boolean {
       if (! loc.match( /^[a-zA-Z][\w$]*$/ )) {
-        console.error( 'Invalid context property name: "' + loc + '"' );
+        console.error( 'Invalid component property name: "' + loc + '"' );
         return true;
       }
       if (this.usedLocs[loc]) {
-        console.error( 'Cannot redefine context property: "' + loc + '"' );
+        console.error( 'Cannot redefine component property: "' + loc + '"' );
         return true;
       }
       return false;
     }
   }
 
-  (<any>ContextBuilder).prototype['v']   = ContextBuilder.prototype.variable;
-  (<any>ContextBuilder).prototype['vs']  = ContextBuilder.prototype.variables;
-  (<any>ContextBuilder).prototype['n']   = ContextBuilder.prototype.nested;
-  (<any>ContextBuilder).prototype['r']   = ContextBuilder.prototype.reference;
-  (<any>ContextBuilder).prototype['rs']  = ContextBuilder.prototype.references;
-  (<any>ContextBuilder).prototype['c']   = ContextBuilder.prototype.constraint;
-  (<any>ContextBuilder).prototype['m']   = ContextBuilder.prototype.method;
-  (<any>ContextBuilder).prototype['cmd'] = ContextBuilder.prototype.command;
-  (<any>ContextBuilder).prototype['o']   = ContextBuilder.prototype.output;
-  (<any>ContextBuilder).prototype['os']  = ContextBuilder.prototype.outputs;
-  (<any>ContextBuilder).prototype['td']  = ContextBuilder.prototype.touchDep;
-  (<any>ContextBuilder).prototype['eq']  = ContextBuilder.prototype.equation;
+  (<any>ComponentBuilder).prototype['v']   = ComponentBuilder.prototype.variable;
+  (<any>ComponentBuilder).prototype['vs']  = ComponentBuilder.prototype.variables;
+  (<any>ComponentBuilder).prototype['n']   = ComponentBuilder.prototype.nested;
+  (<any>ComponentBuilder).prototype['r']   = ComponentBuilder.prototype.reference;
+  (<any>ComponentBuilder).prototype['rs']  = ComponentBuilder.prototype.references;
+  (<any>ComponentBuilder).prototype['c']   = ComponentBuilder.prototype.constraint;
+  (<any>ComponentBuilder).prototype['m']   = ComponentBuilder.prototype.method;
+  (<any>ComponentBuilder).prototype['cmd'] = ComponentBuilder.prototype.command;
+  (<any>ComponentBuilder).prototype['o']   = ComponentBuilder.prototype.output;
+  (<any>ComponentBuilder).prototype['os']  = ComponentBuilder.prototype.outputs;
+  (<any>ComponentBuilder).prototype['td']  = ComponentBuilder.prototype.touchDep;
+  (<any>ComponentBuilder).prototype['eq']  = ComponentBuilder.prototype.equation;
 
   /*==================================================================
    * Test for invalid variable path

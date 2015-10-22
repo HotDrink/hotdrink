@@ -1,4 +1,4 @@
-module hd.bindings {
+module hd.bind {
 
   import u = hd.utility;
   import r = hd.reactive;

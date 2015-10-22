@@ -55,7 +55,7 @@
       hd.config.forwardPriorGens = true;
 
       // Spec for each row
-      var EventSpec = new hd.ContextBuilder()
+      var EventSpec = new hd.ComponentBuilder()
           .variables( "title, begin, begin2, end, end2, length", {length: 10} )
           .touchDep( "begin => begin2" )
           .touchDep( "end => end2" )
@@ -89,14 +89,14 @@
           .spec();
 
       // Root component
-      var ScheduleSpec = new hd.ContextBuilder()
+      var ScheduleSpec = new hd.ComponentBuilder()
           .nested( "events", hd.arrayOf( EventSpec ) )
           .constraint( "events[i].end, events[i+1].begin" )
             .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
             .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
           .spec();
 
-      var schedule = new hd.Context( ScheduleSpec );
+      var schedule = new hd.Component( ScheduleSpec );
       schedule.events.expand( [{title: "Registration", begin: 0, length: 30},
                                {title: "Keynote", length: 60},
                                {title: "Break", length: 15},
@@ -123,7 +123,7 @@
 
       // Binding
       window.addEventListener( "load", function() {
-        hd.performDeclaredBindings( schedule );
+        hd.createDeclaredBindings( schedule );
       } )
 
       /*--------------------------------------------------------------
@@ -138,16 +138,16 @@
         tr.classList.add( 'selected' );
         tr.style.position = 'absolute';
         mouseBinding = {
-          view: hd.bindings.getMousePosition(),
-          model: new hd.bindings.Position( tr ),
+          view: hd.bind.getMousePosition(),
+          model: new hd.bind.Position( tr ),
         }
         draggingTr= tr;
-        hd.bind( mouseBinding );
+        hd.createBindings( mouseBinding );
       }
 
       function stopDragging() {
         if (mouseBinding) {
-          hd.unbind( mouseBinding );
+          hd.destroyBindings( mouseBinding );
           draggingTr.classList.remove( 'selected' );
           draggingTr.style.removeProperty( 'position' );
           mouseBinding = undefined;
@@ -197,30 +197,30 @@
         </tr>
       </thead>
 
-      <tbody data-bind="hd.forEach( 'e', events, 'idx' )">
+      <tbody data-bind="bd.forEach( events, 'e', 'idx' )">
         <tr onmouseup="insertDraggingBefore( this )">
           <td onmousedown="startDragging(this.parentElement); return false">
-            <span data-bind="hd.text( $idx, hd.fn( plus1 ) )"></span>
+            <span data-bind="bd.text( $idx, bd.fn( plus1 ) )"></span>
           </td>
           <td>
             <input type="text" class="title" placeholder="Enter event title"
-                   data-bind="hd.edit( e.title )"/>
+                   data-bind="bd.edit( e.title )"/>
           </td>
           <td>
             <input type="text" class="num"
-                   data-bind="hd.editVar( e.begin, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+                   data-bind="bd.editVar( e.begin, bd.fn( toTime ), bd.fn( fromTime ) )"/>
           </td>
           <td>
             <input type="text" class="num"
-                   data-bind="hd.editVar( e.end, hd.fn( toTime ), hd.fn( fromTime ) )"/>
+                   data-bind="bd.editVar( e.end, bd.fn( toTime ), bd.fn( fromTime ) )"/>
           </td>
           <td>
-            <input type="text" class="num" data-bind="hd.numVar( e.length, 0 )"/><small style="margin-left: 0.2ex">min</small>
+            <input type="text" class="num" data-bind="bd.numVar( e.length, 0 )"/><small style="margin-left: 0.2ex">min</small>
           </td>
           <td>
-            <span data-bind="hd.when( events.$length, hd.fn( gt1 ) )"</span>
+            <span data-bind="bd.when( events.$length, bd.fn( gt1 ) )"</span>
             [<a class="control" href="#" onclick="return false;"
-                data-bind="hd.click( hd.fn( this, removeEvent, idx ) )">X</a>]
+                data-bind="bd.click( bd.fn( this, removeEvent, idx ) )">X</a>]
           </td>
         </tr>
       </tbody>
@@ -230,7 +230,7 @@
           <td></td>
           <td colspan="4">
             <input type="button" value="Add Event"
-                   data-bind="hd.click( hd.fn( addEvent ) )"/>
+                   data-bind="bd.click( bd.fn( addEvent ) )"/>
           </td>
           <td></td>
         </tr>

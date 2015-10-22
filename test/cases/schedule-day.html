@@ -53,14 +53,14 @@
        */
 
       // Spec for each row
-      var EventSpec = new hd.ContextBuilder()
+      var EventSpec = new hd.ComponentBuilder()
           .variables( "title, begin, end, length", {length: 10} )
           .constraint( "begin, end, length" )
             .method( "begin, length -> end", hd.sum )
           .spec();
 
       // Root component
-      var ScheduleSpec = new hd.ContextBuilder()
+      var ScheduleSpec = new hd.ComponentBuilder()
           .variable( "start", 0 )
           .nested( "events", hd.arrayOf( EventSpec ) )
           .constraint( "start, events[0].begin" )
@@ -69,7 +69,7 @@
               .method( "events[i].end -> events[i+1].begin", hd.id )
           .spec();
 
-      var schedule = new hd.Context( ScheduleSpec );
+      var schedule = new hd.Component( ScheduleSpec );
       schedule.events.expand( [{title: "Registration", length: 30},
                                {title: "Keynote", length: 60},
                                {title: "Break", length: 15},

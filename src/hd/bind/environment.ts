@@ -501,7 +501,7 @@ module hd.bind {
 
     /*--------------------------------------------------------------*/
 
-    path( model: m.Context, name: string ) {
+    path( model: m.Component, name: string ) {
       return new r.HotSwap<any>( new m.PathValue( new m.Path( model, name ) ) );
     }
 

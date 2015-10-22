@@ -63,14 +63,14 @@
       $(function() {
         autocomplete( document.getElementById( 'nohd' ) );
 
-        context = new hd.ContextBuilder()
+        model = new hd.ComponentBuilder()
             .nested( 'ac', HdAutoComplete )
-            .context();
+            .component();
 
         pm = new hd.PropertyModel();
-        pm.addComponent( context );
+        pm.addComponent( model );
 
-        hd.createDeclaredBindings( context );
+        hd.createDeclaredBindings( model );
       } );
     </script>
   </head>

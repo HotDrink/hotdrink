@@ -1,15 +1,15 @@
 /*####################################################################
- * The ArrayContext class.
+ * The ArrayComponent class.
  */
 module hd.model {
   import u = hd.utility;
   import r = hd.reactive;
 
   /*==================================================================
-   * The ArrayContext class.
+   * The ArrayComponent class.
    */
   export
-  class ArrayContext extends Context {
+  class ArrayComponent extends Component {
 
     // The actual array for storing contents
     private elements: any[] = [];
@@ -24,13 +24,13 @@ module hd.model {
     // Observable for changes to the array
     changes = new r.BasicObservable<number>();
 
-    observers: r.Observer<ArrayContext>[];
+    observers: r.Observer<ArrayComponent>[];
 
     scheduled = false;
 
     /*----------------------------------------------------------------
      */
-    constructor( private elementType?: u.Constructor|ContextSpec    ) {
+    constructor( private elementType?: u.Constructor|ComponentSpec    ) {
       super();
     }
 
@@ -57,8 +57,8 @@ module hd.model {
       // If we're increasing length, define properties for new indices
       else {
         for (var i = curlen; i < n; ++i) {
-          if (! ArrayContext.prototype.hasOwnProperty( i.toString() )) {
-            Object.defineProperty( ArrayContext.prototype, i.toString(), {
+          if (! ArrayComponent.prototype.hasOwnProperty( i.toString() )) {
+            Object.defineProperty( ArrayComponent.prototype, i.toString(), {
               configurable: false,
               enumerable: true,
               get: getter( i ),
@@ -134,33 +134,33 @@ module hd.model {
 
         // Initialize new spaces
         if (this.elementType) {
-          var klass: ContextClass;
-          var spec: ContextSpec;
+          var klass: ComponentClass;
+          var spec: ComponentSpec;
           if ((typeof this.elementType) == 'function') {
-            klass = <ContextClass>this.elementType;
+            klass = <ComponentClass>this.elementType;
           }
           else {
-            klass = Context;
-            spec = <ContextSpec>this.elementType;
+            klass = Component;
+            spec = <ComponentSpec>this.elementType;
           }
           for (var i = 0, l = count; i < l; ++i) {
-            var ctx: any;
+            var cmp: any;
             if (klass === <any>Variable) {
-              ctx = new Variable( "el" + i, inits[i] );
+              cmp = new Variable( "el" + i, inits[i] );
             }
             else {
-              ctx = new klass();
-              if (ctx instanceof ArrayContext) {
+              cmp = new klass();
+              if (cmp instanceof ArrayComponent) {
                 if (inits[i] !== undefined) {
-                  ctx.expand( inits[i] );
+                  cmp.expand( inits[i] );
                 }
               }
               else if (spec) {
-                Context.construct( ctx, spec, inits[i] );
+                Component.construct( cmp, spec, inits[i] );
               }
             }
-            this.set( start + i, ctx );
-            Context.claim( this, ctx );
+            this.set( start + i, cmp );
+            Component.claim( this, cmp );
           }
         }
         else {
@@ -180,11 +180,11 @@ module hd.model {
 
         // Destruct existing spaces
         for (var i = start, l = start + count; i < l; ++i) {
-          var ctx = this.elements[i];
-          if (ctx !== undefined &&
-              Context.release( this, ctx ) &&
-              ctx instanceof Context         ) {
-            Context.destruct( ctx );
+          var cmp = this.elements[i];
+          if (cmp !== undefined &&
+              Component.release( this, cmp ) &&
+              cmp instanceof Component         ) {
+            Component.destruct( cmp );
           }
         }
 
@@ -245,7 +245,7 @@ module hd.model {
 
     /*----------------------------------------------------------------
      */
-    addObserver( observer: r.Observer<ArrayContext> ) {
+    addObserver( observer: r.Observer<ArrayComponent> ) {
       if (this.observers) {
         this.observers.push( observer );
       }
@@ -255,9 +255,9 @@ module hd.model {
       observer.onNext( this );
     }
 
-    removeObserver( observer: r.Observer<ArrayContext> ) {
+    removeObserver( observer: r.Observer<ArrayComponent> ) {
       if (this.observers) {
-        this.observers = this.observers.filter( function( ver: r.Observer<ArrayContext> ) {
+        this.observers = this.observers.filter( function( ver: r.Observer<ArrayComponent> ) {
           return observer !== ver;
         } );
         if (this.observers.length == 0) {
@@ -288,11 +288,11 @@ module hd.model {
 
   }
 
-  Object.defineProperty( ArrayContext.prototype, "length",
+  Object.defineProperty( ArrayComponent.prototype, "length",
                          {configurable: false,
                           enumerable: false,
-                          get: ArrayContext.prototype.getLength,
-                          set: ArrayContext.prototype.setLength} );
+                          get: ArrayComponent.prototype.getLength,
+                          set: ArrayComponent.prototype.setLength} );
 
   // helper - Create getter for specified index
   function getter( i: number ) {

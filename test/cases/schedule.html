@@ -55,7 +55,7 @@
       hd.config.forwardPriorGens = true;
 
       // Spec for each row
-      var EventSpec = new hd.ContextBuilder()
+      var EventSpec = new hd.ComponentBuilder()
           .variables( "title, begin, begin2, end, end2, length", {length: 10} )
           .touchDep( "begin => begin2" )
           .touchDep( "end => end2" )
@@ -89,14 +89,14 @@
           .spec();
 
       // Root component
-      var ScheduleSpec = new hd.ContextBuilder()
+      var ScheduleSpec = new hd.ComponentBuilder()
           .nested( "events", hd.arrayOf( EventSpec ) )
           .constraint( "events[i].end, events[i+1].begin" )
             .method( "events[i].end, !events[i+1].begin -> events[i+1].begin", hd.max )
             .method( "!events[i].end, events[i+1].begin -> events[i].end", hd.min )
           .spec();
 
-      var schedule = new hd.Context( ScheduleSpec );
+      var schedule = new hd.Component( ScheduleSpec );
       schedule.events.expand( [{title: "Registration", begin: 0, length: 30},
                                {title: "Keynote", length: 60},
                                {title: "Break", length: 15},

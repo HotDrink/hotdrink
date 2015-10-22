@@ -15,7 +15,7 @@
     <script type="text/javascript">
       function init() {
 
-        var ctx = new hd.ContextBuilder()
+        var model = new hd.ComponentBuilder()
           .v( 'p1', {x: 200, y: 50} )
           .v( 'p2', {x: 150, y: 150} )
           .v( 'p3', {x: 50, y: 200} )
@@ -26,13 +26,13 @@
           .m( 'p2, !p1, !p3 -> p1, p3', bump2delay )
           .m( 'p3, !p1, !p2 -> p1, p2', bump2delay )
 
-          .context();
+          .component();
 
         var pm = new hd.PropertyModel();
-        pm.addComponent( ctx );
-        hd.createDeclaredBindings( ctx );
+        pm.addComponent( model );
+        hd.createDeclaredBindings( model );
         var bd = hd.bindEnv();
-        hd.createBindings( bd.mouseposition( bd.path( ctx, 'drag' ) ) );
+        hd.createBindings( bd.mouseposition( bd.path( model, 'drag' ) ) );
 
         function bump2delay( pa, pb, pc ) {
           var out = bump2( pa, pb, pc );
@@ -107,11 +107,11 @@
         } );
 
         function mousedown( e ) {
-          ctx.drag = ctx[e.currentTarget.id];
+          model.drag = model[e.currentTarget.id];
         }
 
         function mouseup( e ) {
-          ctx.drag = null;
+          model.drag = null;
         }
 
       }

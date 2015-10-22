@@ -29,7 +29,7 @@
         } );
       }
 
-      var context = new hd.ContextBuilder()
+      var model = new hd.ComponentBuilder()
         .variables( {number: 10,
                      symbol: undefined,
                      favorite: "ADBE",
@@ -57,13 +57,13 @@
                    function( total, number ) { return total / number; }
                  )
 
-        .context();
+        .component();
 
       var pm = new hd.PropertyModel();
-      pm.addComponent( context );
+      pm.addComponent( model );
 
       window.addEventListener( 'load', function() {
-        hd.createDeclaredBindings( context );
+        hd.createDeclaredBindings( model );
       } );
     </script>
   </head>

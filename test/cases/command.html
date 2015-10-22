@@ -4,7 +4,7 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var context = new hd.ContextBuilder()
+        var model = new hd.ComponentBuilder()
             .vs( 'begin, end, length', {begin: 30, end: 50} )
 
             .c( 'begin, end, length' )
@@ -54,13 +54,13 @@
               return y + 1;
             } )
 
-            .context();
+            .component();
 
         var pm = new hd.PropertyModel;
-        pm.addComponent( context );
+        pm.addComponent( model );
 
         window.addEventListener( 'load', function() {
-          hd.createDeclaredBindings( context );
+          hd.createDeclaredBindings( model );
         } );
       }
     </script>

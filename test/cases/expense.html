@@ -16,7 +16,7 @@
         return total;
       }
 
-      var context = new hd.ContextBuilder()
+      var model = new hd.ComponentBuilder()
           .variables( {miles: 50, mpg: 30, gallons: undefined, gas: 3.5, travelCost: undefined} )
           .equation( 'miles / gallons == mpg' )
           .equation( 'gallons * gas == travelCost' )
@@ -55,13 +55,13 @@
           .constraint( 'travel, hotel, meals, total' )
           .method( 'travel, hotel, meals -> total', hd.sum )
 
-          .context();
+          .component();
 
       var pm = new hd.PropertyModel();
-      pm.addComponent( context );
+      pm.addComponent( model );
 
       window.addEventListener( 'load', function() {
-        hd.createDeclaredBindings( context );
+        hd.createDeclaredBindings( model );
       } );
     }
     </script>

@@ -155,7 +155,7 @@
        * Property model
        */
 
-      var context = new hd.ContextBuilder()
+      var component = new hd.ComponentBuilder()
 
           .vs( 'd, c, m, p, v, w, x, y, z',
                {m: 30, d: 1500, x: 25, z: 200}
@@ -177,13 +177,13 @@
           .m( 'm, c -> d, p', H )
           .m( 'd, c -> m, p', I )
 
-          .context();
+          .component();
 
       var pm = new hd.PropertyModel();
-      pm.addComponent( context );
+      pm.addComponent( component );
 
       window.addEventListener( 'load', function() {
-        hd.createDeclaredBindings( context );
+        hd.createDeclaredBindings( component );
       } );
 
     }

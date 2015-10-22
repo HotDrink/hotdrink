@@ -14,15 +14,15 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
     {
-      var pm, context;
+      var pm, model;
 
       function init() {
 
-        var BallSpec = new hd.ContextBuilder()
+        var BallSpec = new hd.ComponentBuilder()
             .vs( "txt, pos" )
             .spec();
 
-        context = new hd.ContextBuilder()
+        model = new hd.ComponentBuilder()
             .n( 'balls', hd.arrayOf( BallSpec ) )
             .r( 'drag' )
 
@@ -30,17 +30,17 @@
             .m( 'balls[i].pos, !balls[i+1].pos -> balls[i+1].pos', pull )
             .m( 'balls[i+1].pos, !balls[i].pos -> balls[i].pos', pull )
 
-            .context();
+            .component();
 
-        context.balls.expand( [{txt: 1, pos: {x: 60, y: 60}},
+        model.balls.expand( [{txt: 1, pos: {x: 60, y: 60}},
                                {txt: 2, pos: {x: 60, y: 60}},
                                {txt: 3, pos: {x: 60, y: 60}}] )
 
         pm = new hd.PropertyModel();
-        pm.addComponent( context );
-        hd.createDeclaredBindings( context );
+        pm.addComponent( model );
+        hd.createDeclaredBindings( model );
         var bd = hd.bindEnv();
-        hd.createBindings( bd.mouseposition( bd.path( context, 'drag.pos' ) ) );
+        hd.createBindings( bd.mouseposition( bd.path( model, 'drag.pos' ) ) );
 
         function resolve( p, v ) {
           var x = Math.random() * 6;
@@ -89,18 +89,18 @@
       }
 
       function addPoint( i ) {
-        p = context.balls[i].pos.get();
-        context.balls.expand( [{txt: context.balls.length + 1,
-                                pos: context.balls[i].pos.get()}], i + 1 );
+        p = model.balls[i].pos.get();
+        model.balls.expand( [{txt: model.balls.length + 1,
+                              pos: model.balls[i].pos.get()}], i + 1 );
       }
 
       function startDragging( p ) {
-        context.drag = p;
+        model.drag = p;
       }
 
       function stopDragging() {
-        if (context.drag) {
-          context.drag = null;
+        if (model.drag) {
+          model.drag = null;
         }
       }
     }

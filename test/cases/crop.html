@@ -9,7 +9,7 @@
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
       {
-        var context = new hd.ContextBuilder()
+        var model = new hd.ComponentBuilder()
             .variables( {left: 0, top: 0, right: undefined, bottom: undefined,
                          width: 200, height: 200, aspect: undefined} )
 
@@ -64,13 +64,13 @@
                      }
                    )
 
-            .context();
+            .component();
 
         var pm = new hd.PropertyModel();
-        pm.addComponent( context );
+        pm.addComponent( model );
 
         window.addEventListener( 'load', function() {
-          hd.createDeclaredBindings( context );
+          hd.createDeclaredBindings( model );
         } );
       }
     </script>

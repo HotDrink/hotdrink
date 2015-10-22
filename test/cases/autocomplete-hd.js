@@ -36,7 +36,7 @@ var HdAutoComplete;
 
 $(function() {
 
-  var autoCompleteSpec = new hd.ContextBuilder()
+  var autoCompleteSpec = new hd.ComponentBuilder()
       // Variables
       .vs( 'query, menu, index, value' )
 
@@ -96,10 +96,10 @@ $(function() {
   // Make a JavaScript type for this spec.
 
   HdAutoComplete = function HdAutoComplete() {
-    hd.Context.call( this, autoCompleteSpec );
+    hd.Component.call( this, autoCompleteSpec );
   };
 
-  HdAutoComplete.prototype = Object.create( hd.Context.prototype );
+  HdAutoComplete.prototype = Object.create( hd.Component.prototype );
 });
 
 /*====================================================================

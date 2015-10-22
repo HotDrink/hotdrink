@@ -11,7 +11,7 @@
     <script type="text/javascript">
     {
       console.time( 'model' );
-      var context = new hd.ContextBuilder()
+      var model = new hd.ComponentBuilder()
         .variables( {a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7,
                      h: 8, i: undefined, j: undefined,
                      k: undefined, l: undefined, m: undefined, z: undefined } )
@@ -59,14 +59,14 @@
                  }
                )
 
-        .context();
+        .component();
       console.timeEnd( 'model' );
 
       var pm = new hd.PropertyModel();
-      pm.addComponent( context );
+      pm.addComponent( model );
 
       window.addEventListener( 'load', function() {
-        hd.createDeclaredBindings( context );
+        hd.createDeclaredBindings( model );
       } );
     }
     </script>

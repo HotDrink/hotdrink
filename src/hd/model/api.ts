@@ -4,20 +4,20 @@ module hd {
   import m = hd.model;
 
   // shortcuts for arrays
-  export function arrayOf( elementType: u.Constructor|m.ContextSpec ) {
-    return m.ArrayContext.bind( null, elementType );
+  export function arrayOf( elementType: u.Constructor|m.ComponentSpec ) {
+    return m.ArrayComponent.bind( null, elementType );
   }
 
-  export var array = m.ArrayContext;
+  export var array = m.ArrayComponent;
 
   // Exports
   export var Variable = m.Variable;
   export var Constraint = m.Constraint;
   export var Method = m.Method;
-  export var Context = m.Context;
-  export var ArrayContext = m.ArrayContext;
+  export var Component = m.Component;
+  export var ArrayComponent = m.ArrayComponent;
   export var MaxOptional = m.Optional.Max;
   export var MinOptional = m.Optional.Min;
-  export var ContextBuilder = m.ContextBuilder;
+  export var ComponentBuilder = m.ComponentBuilder;
 
 }

@@ -25,7 +25,7 @@
         return d;
       }
 
-      var context = new hd.ContextBuilder()
+      var model = new hd.ComponentBuilder()
           .vs( "a, b, c, z", {a: 3, b: 4, c: 5} )
 
           .c( "a, b, c, z" )
@@ -40,14 +40,14 @@
           .c( "s => s, t" )
           .m( "s -> t", function( x ) { return x; } )
 
-          .context();
+          .component();
 
       var pm = new hd.PropertyModel();
-      pm.addComponent( context );
-      pm.addTouchSet( [context.a, context.b, context.c] );
+      pm.addComponent( model );
+      pm.addTouchSet( [model.a, model.b, model.c] );
 
       window.addEventListener( 'load', function() {
-        hd.createDeclaredBindings( context );
+        hd.createDeclaredBindings( model );
       } );
     }
     </script>

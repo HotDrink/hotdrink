@@ -36,58 +36,63 @@ var HdAutoComplete;
 
 $(function() {
 
+  function performRemoteQuery( query ) {
+    var p = new hd.Promise();
+
+    // Initiate Ajax
+    if (query) {
+      getMenu( query, function( menu ) { p.resolve( menu ); } );
+    }
+    else {
+      p.resolve( [] );
+    }
+
+    return p;
+  }
+
+  function lookupValue( query, menu, index) {
+    if (index >= 0 && index < menu.length) {
+      return menu[index];
+    }
+    else {
+      return query
+    }
+  }
+
+  function indexIn( value, menu ) {
+    var i = menu.indexOf( value );
+    return i < 0 ? 0 : i;
+  }
+
+  function incrementIndex( i, m ) {
+    return i < m.length ? i + 1 : m.length;
+  }
+
+  function decrementIndex( i ) {
+    return i >= 0 ? i - 1 : -1;
+  }
+
   var autoCompleteSpec = new hd.ComponentBuilder()
       // Variables
       .vs( 'query, menu, index, value' )
 
       // Calculate menu
       .c( 'query, menu' )
-      .m( 'query -> menu',
-          function( query ) {
-            var p = new hd.Promise();
-
-            // Initiate Ajax
-            if (query) {
-              getMenu( query, function( menu ) { p.resolve( menu ); } );
-            }
-            else {
-              p.resolve( [] );
-            }
-
-            return p;
-          } )
+      .m( 'query -> menu', performRemoteQuery )
 
       // Calculate value
       .c( 'query, menu, index, value' )
-      .m( 'query, menu, index -> value',
-          function( query, menu, index) {
-            if (index >= 0 && index < menu.length) {
-              return menu[index];
-            }
-            else {
-              return query
-            }
-          } )
+      .m( 'query, menu, index -> value', lookupValue )
 
       // After writing to query, calculate index
       .c( 'query => menu, index' )
-      .m( '!value, menu -> index',
-          function( value, menu ) {
-            var i = menu.indexOf( value );
-            return i < 0 ? 0 : i;
-          } )
+      .m( '!value, menu -> index', indexIn )
 
       // Increment index
-      .cmd( 'inc', '!index, !menu -> index',
-            function( i, m ) {
-              return i < m.length ? i + 1 : m.length;
-            } )
+      .cmd( 'inc', '!index, !menu -> index', incrementIndex )
 
       // Decrement index
-      .cmd( 'dec', '!index -> index',
-            function( i ) {
-              return i >= 0 ? i - 1 : -1;
-            } )
+      .cmd( 'dec', '!index -> index', decrementIndex )
 
       .spec();
 

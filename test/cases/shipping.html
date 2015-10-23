@@ -3,7 +3,7 @@
     <title>HotDrink Test</title>
     <style type="text/css">
       .pending { background: left center no-repeat #eee url(spinner.gif); }
-      .stale { background: #fee; }
+      .stale { background: #fcc; }
       .error   { color: #905; }
       input[type="text"] { width: 6em; text-align: right; margin-right: 1px; }
       td { padding: 0 }
@@ -14,6 +14,7 @@
       td.padr { padding-right: 2em; }
       small { font-size: 70% }
       button { display: block; margin: 1em 0; }
+      #buttons { margin-top: 2em; }
     </style>
     <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
     <script type="text/javascript">
@@ -69,7 +70,8 @@
         case 'D': w = 50;  break;
         default:  w = 100; break;
         }
-        return delay( [w * 0.025, w], 'c &rarr; v, w' );
+        return [delay( w * 0.025, "v" ),
+                delay( w, "w" )];
       }
 
       function F( v, w ) {
@@ -82,7 +84,7 @@
         else if (w <= 25)   c = 'C';
         else if (w <= 50)   c = 'D';
         else                c = 'E';
-        return delay( c, 'v, w &rarr; c' );
+        return delay( c, "c" );
       }
 
       function G( m, d ) {
@@ -108,7 +110,8 @@
           perkm = 0.01;
           c = 'A';
         }
-        return delay( [c, d*perkm], 'm, d &rarr; c, p' );
+        return [delay( c, "c" ),
+                delay( d*perkm, "p" )];
       }
 
       function H( m, c ) {
@@ -126,7 +129,8 @@
           break;
         }
         var d = Math.floor( m/perkm );
-        return delay( [d, d*perkm], 'm, c &rarr; d, p' );
+        return [delay( d, "d" ),
+                delay( d*perkm, "p" )];
       }
 
       function I( d, c ) {
@@ -143,7 +147,8 @@
         default:  perkm = 0.1;
           break;
         }
-        return delay( [d*perkm, d*perkm], 'd, c &rarr; m, p' );
+        return [delay( d*perkm, "m" ),
+                delay( d*perkm, "p" )];
       }
 
       function J( x, y, z, v ) {
@@ -166,7 +171,6 @@
           .m( 'v, x, z -> y', B )
           .m( 'v, x, y -> z', C )
           .m( 'x, y, z -> v', D )
-
 
           .c( 'v, w, c' )
           .m( 'c -> v, w', E )
@@ -234,39 +238,10 @@
         <td><b>Price:</b></td>
         <td>$</td>
         <td><input type="text" data-bind="bd.num( bd.rw( p, m ), 2 ),
-                                          bd.cssClass( p )"/><small style="font-variant: small-caps;">usd</small></td>
+                                          bd.cssClass( p.pending, 'pending' ),
+                                          bd.cssClass( p.stale, 'stale' )"/><small style="font-variant: small-caps;">usd</small></td>
       </tr>
     </table>
-    <br/><br/><br/><br/>
-    <!-- <fieldset> -->
-    <!--   <legend>Distance Calculator</legend> -->
-    <!--   <table> -->
-    <!--     <tr> -->
-    <!--       <td>Leaving from:</td> -->
-    <!--       <td> -->
-    <!--         <select style="width:32ex"> -->
-    <!--           <option>Houston, TX</option> -->
-    <!--         </select> -->
-    <!--       </td> -->
-    <!--     </tr><tr> -->
-    <!--       <td style="text-align:right">Arriving in:</td> -->
-    <!--       <td> -->
-    <!--         <select style="width:32ex"> -->
-    <!--           <option>Seattle, WA</option> -->
-    <!--         </select> -->
-    <!--       </td> -->
-    <!--     </tr> -->
-    <!--     <tr> -->
-    <!--       <td colspan="2" style="height: 0.6em"></td> -->
-    <!--     </tr> -->
-    <!--     <tr> -->
-    <!--       <td colspan="2" align="right"> -->
-    <!--         <input type="button" value="Calculate"/> -->
-    <!--       </td> -->
-    <!--     </tr> -->
-    <!--   </table> -->
-    <!-- </fieldset> -->
-    <!-- <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/> -->
     <div id="buttons"></div>
   </body>
 </html>

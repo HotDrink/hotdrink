@@ -1,41 +1,77 @@
 #+TITLE: Introduction to HotDrink
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
-#+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="../../../scripts/hotdrink.js"></script>
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="collapse.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
 * Overview of basic concepts
 
-HotDrink is a GUI framework library which implements many useful interface
-behaviors, thereby making it easier to write robust, helpful user interfaces.
+HotDrink is a JavaScript library that assists with GUI implementation.
+HotDrink allows you to program GUIs /declaratively/---instead of writing event
+handlers that control what should happen in a GUI and when, the programmer
+specifies the relationships between various pieces of data, i.e., how changes
+to one piece of data affect other pieces of data.  From this description,
+HotDrink decides how and when to enforce relationships, and also implements
+several GUI behaviors that can be reused with little effort.
 
-To make use of these behaviors, all that is required of the programmer is to
-define the relationships between the various pieces of data in the interface:
-how does one piece of data affect others?  Thus, HotDrink supports a
-declarative programming style: instead of spelling out everything the
-interface should do and when it should do be done, the programmer simply
-describes the interface and lets HotDrink figure out the rest.
+Changes to GUI state are managed through /commands/ written by the programmer.
+HotDrink ensures that (1) commands are initiated only when all relationships
+defined by the programmer have been enforced, and (2) commands will not
+interfere with one another, at least with respect to the GUI state.  This
+means that your program will behave correctly even if a new command is issued
+before the previous command has finished.
 
 ** Constraint systems
 
-The heart of the HotDrink library is a /constraint system/.  A constraint
-system manages relations among variables in the user interface.  A /relation/
-is anything you want to be true about the values of your variables.  For
-example, given three variables, $x$, $y$, and $z$, you may want to enforce
-that $x = y + z$, or that $x \le y \le z$.
+The heart of the HotDrink library is a /constraint system/.  A
+constraint system manages variables and /constraints/ among the variables.  Each
+constraint represents something that should be true concerning some of the
+variables (i.e., a /relation/ over those variables).
+For example, given three variables, $x$, $y$, and $z$, you
+could create a constraint that $x = y + z$, or that $x \le y \le z$, or even that $z$
+is the result of a database query using $x$ and $y$.  When the
+constraint is true, we say it is /satisfied/.  HotDrink /enforces/ a
+constraint by modifying some of its variables so that the constraint is
+satisfied.
 
-The constraint system in HotDrink is a /dataflow/ constraint system.  The
-purpose of a dataflow constraint system is to decide which variables should be
-used to update other variables --- that is, it decides in which direction the
-data flows.  Then the system updates variables using functions that you, the
-programmer, have provided.
+In HotDrink's constraint system, constraints between variables are expressed
+as sets of functions.  These functions are called /methods/ (short for
+/constraint satisfaction methods/) and are written by the programmer.  Each
+method is responsible for calculating new values for some of the constraint's
+variables so that the constraint will be satisfied.  To enforce all
+constraints, HotDrink executes one method from each constraint.  Together, the
+methods executed define a /dataflow/---a branching path showing which
+variables are used to update which other variables.  HotDrink has a
+/multi-way dataflow constraint system/, meaning there are many possible
+dataflows depending on which methods are executed.  In general, HotDrink
+selects a dataflow that preserves variables the user has edited more recently.
 
-The constraint system in HotDrink is also a /multi-way/ constraint system.
-This means data can flow in more than one direction.  A multi-way constraint
-system allows for more flexible interfaces because, potentially, all values
-can be edited.  HotDrink uses the current dataflow, not only to update
-variables, but also to understand how data is being used so that it can react
-appropriately.
+In a HotDrink \ldquo{}powered\rdquo user interface, GUI events are translated to changes
+to constraint system variables.  These changes result
+in constraints which are no longer satisfied.  HotDrink
+responds by /solving/ the constraint system---that is, selecting which methods
+to execute, and then executing them so that all constraints are again
+satisfied.  Solving can change the values of the system's variables; the
+changed values are then somehow
+displayed or visualized to the user, as specified by the programmer.
+
+** Commands
+
+Whereas the constraint system runs in the background to automatically enforce
+constraints, a /command/ is code that is run only when triggered by an event.
+A command may be as simple as assigning a new value to a variable, or as
+complex as making a server call using the value of some variables and updating
+the GUI with the result.  After executing a command, HotDrink always solves
+the constraint system to ensure that all relations between variables are
+enforced.
+
+HotDrink views the life of a GUI, not as a series of events, but as a sequence
+of commands.  HotDrink manages these commands and coordinates their execution.
+Commands may execute /asynchronously/, meaning that a command does not have to
+wait for all previous commands to finish before it can begin.  HotDrink
+manages the effects of all commands on GUI state so that the end result will
+be the same as if those commands had executed synchronously.
 
 ** MVVM
 
@@ -43,126 +79,427 @@ Applications written with HotDrink follow the Model-View-ViewModel
 (a.k.a. MVVM) design pattern.  This pattern divides the application as
 follows:
 
-- The /view/ is responsible for presentation and capturing interactions with
-  the user.  It arranges everything on the screen and provides events which
-  can be used to know when the user does something.  For our purposes, the
-  view is your HTML, along with any toolkits you may use to generate HTML.
-  We'll show you some bits and snippets of HTML in this tutorial to help you
-  understand the examples, but we're not really going to explain it --- we're
-  going to assume that you already know HTML, and that you know how to
-  construct your web page.
+- The /View/ is responsible for presentation and capturing
+  interactions with the user.  It arranges everything on the screen
+  and provides events that indicate user actions.  For our purposes,
+  the view is specified in HTML, along with JavaScript that
+  generates and modifies the HTML.  This tutorial shows bits and snippets of HTML, with
+  some commentary to help understand the examples, but in general we assume familiarity
+  with HTML, JavaScript, and constructing web pages.
 
-- The /view-model/ is responsible for managing your interface.  That means
-  supplying any data which is to be presented by the view, as well as
-  responding to things the user does.  The whole purpose of HotDrink is to be
-  a view-model: updating the dataflow in response to what the user does, and
-  updating variables in response to the dataflow.  The only thing that you,
-  the programmer, need to do for the view-model is write JavaScript code to
-  describe the constraint system for your interface.  We'll show you how to do
-  that below.
+- The /View-Model/ is responsible for managing the data presented in
+  the view. This means supplying the data to be displayed by the view,
+  as well as responding to user actions.  The purpose of
+  HotDrink is to help in implementing the view-model.
 
-- Another important part of an MVVM application is /binding/.  Binding is the
-  process of connecting elements of the view with data in the view-model.
-  Binding is sometimes treated as part of the view --- that's why there's no
-  "B" in "MVVM" --- but we treat it as its own part of the application.  With
-  HotDrink, you can bind manually using JavaScript, or you can bind
-  automatically by making annotations in your HTML.  We'll show you both
-  techniques below.
+- Another important part of an MVVM application are the /bindings/.  A
+  binding connects elements in the view with variables in the
+  view-model.  The bindings are sometimes treated as part of the
+  view---that is why there is no \ldquo{}B\rdquo in \ldquo{}MVVM\rdquo---but we treat them as
+  a distinct component of the pattern.  In HotDrink, bindings can be
+  specified in JavaScript, or as annotations in HTML as part of the
+  view specification.
 
-- The /model/ is basically responsible for everything else: whatever it is
-  your application is actually supposed to /do/.  Your model does not need to
-  know anything about the user interface, it just needs to know how to go
-  about the business of whatever your application is for in the first place.
-  Generally your model will be code that runs on the server in response to
-  requests made by the user.  How you write that code is up to you; we're
-  going to ignore the model and focus here on the interface.
+- The /Model/ is responsible for everything else---whatever the
+  application is actually supposed to /do/.  The model does not need to
+  be aware of the user interface; therefore we will not discuss it further in
+  this documentation.
 
 * Including HotDrink in your web page
 
-To use HotDrink, all you need is the file [[file:hotdrink.min.js][=hotdrink.min.js=]] that came with
-this tutorial.  Alternatively, if you downloaded the source tree, follow the
-build instructions to compile your own =hotdrink.min.js=.
-
-To add the HotDrink library to your web page, add the following ~<script>~
-tag to the ~<head>~ section of your HTML.
+To use HotDrink, your web page should include the file [[file:hotdrink.min.js][=hotdrink.min.js=]] that
+came with this tutorial.  (Alternatively, if you downloaded the source tree,
+follow the build instructions to compile your own =hotdrink.min.js=.)
+More specifically, add the following ~<script>~ tag to the ~<head>~ section of
+your HTML, with the appropriate path in the ~src~ attribute.  In order for the
+examples in this tutorial to work, the file =hotdrink.min.js= must be located
+in the same directory as this HTML file.
 
 #+BEGIN_SRC html
 <script type="text/javascript" src="hotdrink.min.js"></script>
 #+END_SRC
 
-Make sure the ~src~ attribute contains the correct path to your
-=hotdrink.min.js= file.  Note that, in order for the examples in this
-tutorial to work, the file =hotdrink.min.js= must be located in the same
-directory as this HTML file.
-
-HotDrink itself does not rely on any other JavaScript frameworks.  However, it
-should be compatible with any other frameworks you wish to use (JQuery, Dojo,
-MooTools, etc.).  The only global symbol it exports is ~hd~, and all of its
-interactions with the DOM are via cooperative API functions,
-e.g. [[https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.addEventListener][~addEventListener~]], etc.
+HotDrink does not rely on any other JavaScript frameworks, but neither should it
+conflict with other frameworks (JQuery, Dojo, MooTools, etc.).
+The only global symbol it exports is ~hd~, and all of its interactions
+with the DOM are via cooperative API functions, e.g.,
+[[https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.addEventListener][~addEventListener~]], etc.
 
 * Important HotDrink objects
 
 There are three important objects which you will need to interact with when
 using HotDrink.
 
-** The model
+*** The property model
 
-The model is HotDrink's representation of the data in your interface.  It
-consists of variables, which hold data, and constraints, which define how
-those variables are related.  The model also serves as a naming mechanism,
-allowing you to easily access variables you have created.  When you create
-a variable, you give it a name; that variable is then stored as a property of
-the model under that name.  So, for example, if create a variable named ~x~,
-that variable can be accessed as ~model.x~.
+A /property model/ is the View-Model of a HotDrink \ldquo{}powered\rdquo application.
+application.  It contains variables for holding the data used by your GUI, and
+a constraint system for enforcing any constraints you define for those
+variables (as described in Section [[Constraint systems]].)  In general, your
+application will always have a single property model, customized to contain
+the variables and constraints needed for your GUI.  Variables and constraints
+are created separately, then added to the property model.
 
-** The model builder
+*** The context
 
-Building a model is a very detail-oriented task.  To make it more accessible,
-HotDrink contains a special object called the /model builder/, or sometimes
-simply /builder/, whose only purpose is to help you create a model.
+A /context/ is an object which serves two purposes.  First, it is a container
+for elements of the property model, such as variables and constraints.
+Second, it provides a naming mechanism for those elements: if you want a
+variable named $x$, create a new variable object and assign it to the the ~x~
+field of your context.  We say the variable is named ~x~ in the context to
+which you assigned it; the same variable may have a different name in some
+other context.
 
-To use a model builder, simply create a new instance, then use its various
-member functions to add elements to the model.  (These member functions are
-described in detail in [[file:basics.org][Basic HotDrink Usage]].)  Use the ~result~ member
-function to retrieve the constructed model.
+For a context, containing an object and naming an object are two unrelated
+tasks.  The context may contain certain objects which it does not name, and it
+may name objects which it does not contain.  Containing denotes ownership: a
+context owns the variables and constraints it contains.  Thus, while multiple
+contexts may give a name to a variable, only one context may contain a
+variable.
+
+*** The context builder
+
+The task of building a context is rather complex.  To help, HotDrink provides
+an object called the /context builder/.  This factory object essentially
+defines its own language (i.e., an /embedded domain-specific language/) for
+constructing contexts.  To use this language, create a new context builder
+instance, then call its member functions to add elements to the context.
+
+* An introductory example
+
+We present here a simple example of using HotDrink.  Note that we will not
+explain all the details of this example, only the most important points.  The
+goal of this example is to define some basic concepts that you will need to
+understand the other HotDrink tutorials; the other tutorials will provide a
+more in-depth explanation of how HotDrink works.
+
+** The example
+
+Below is an form from a hypothetical hotel reservation web page.  The user may
+edit the check-in date, the check-out date, the number of nights to stay, and
+the number of beds desired.  Notice that, as one text box is edited, other
+elements of the web page are updated to be consistent with the changes.
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/intro.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/intro.js html
+#+HTML: })();
+#+HTML: </script>
+
+*Source Code*
+
+The source code for this form is shown in its entirety below.  (Click the
+"show" links to view the code.)  To clarify, we have broken the code into
+three sections:  the HTML that defines the View, the JavaScript that defines
+the View-Model, and the JavaScript that performs binding.  In the remainder of
+this section we will reproduce and examine snippets of this code.
+
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/intro.html :padline no :noweb yes
+<table>
+  <style type="text/css" scoped>
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+  </style>
+  <tr>
+    <th>Check-In:</th>
+    <td><<checkin>></td>
+  </tr>
+  <tr>
+    <th>Check-Out:</th>
+    <td><input type="text" data-bind="hd.date( checkout )"/></td>
+  </tr>
+  <tr>
+    <th>Nights:</th>
+    <td><<nights>></td>
+  </tr>
+  <tr>
+    <th>Room Type:</th>
+    <td>
+      <<rate>>
+        <option value="1D">1 Double Bed</option>
+        <option value="1Q">1 Queen Bed</option>
+        <option value="1K">1 King Bed</option>
+        <option value="2Q">2 Queen Beds</option>
+      </select>
+    </td>
+  </tr>
+  <tr>
+    <th>Price:</th>
+    <td>$<<price>></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="right">
+      <input type="button" value="Submit" data-bind="hd.click( reportPrice )"/>
+    </td>
+  </tr>
+</table>
+#+END_SRC
+
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/intro.js :padline no :noweb yes
+// Some constants to help us
+var oneDayMs = 24*60*60*1000;
+var today = new Date();
+today.setHours( 0, 0, 0, 0 );
+
+// Define variables and constraints in a context
+var context = new hd.ContextBuilder()
+
+    // Variables
+    .variable( "checkin", today)
+    .variable( "checkout" )
+    .variable( "nights", 2 )
+    .variable( "type", "1Q" )
+    .variable( "price" )
+
+    // First constraint
+    .constraint( 'checkin, checkout, nights' )
+    .method( 'checkin, checkout -> nights', function( checkin, checkout ) {
+      return (checkout.getTime() - checkin.getTime()) / oneDayMs;
+    } )
+    .method( 'nights, checkin -> checkout', function( nights, checkin ) {
+      return new Date( checkin.getTime() + nights*oneDayMs );
+    } )
+    .method( 'nights, checkout -> checkin', function( nights, checkout ) {
+      return new Date( checkout.getTime() - nights*oneDayMs );
+    } )
+
+    // Second constraint
+    .constraint( 'nights, type, price' )
+    .method( 'nights, type -> price', function( nights, type ) {
+      var rate;
+      switch(type) {
+      case '1D':  rate = 80;  break;
+      case '1Q':  rate = 95;  break;
+      case '1K':  rate = 115; break;
+      case '2!':  rate = 140; break;
+      default:   throw "Invalid room type";
+      }
+      return nights * rate
+    } )
+
+<<command>>
+
+    .context();
+
+// Define the property model
+<<propmod>>
+#+END_SRC
+
+#+CAPTION: /Binding/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/intro.js :padline no :noweb yes
+window.addEventListener( 'load', function() {
+<<binding>>
+} );
+#+END_SRC
+
+** The View
+
+As mentioned above, the View is defined by the HTML used to construct the web
+page (and any JavaScript used to dynamically generate web page content).  In
+this example, our View is an HTML table containing input elements and their
+labels.  Each input element is bound to a variable in the view-model; the
+value of that variable is displayed by the element, and any changes made to
+the element are propagated to the value of the variable.
+
+In this example we use HotDrink's declarative bindings, in which each tag is
+annotated with JavaScript code indicating how it is to be bound.  We call this
+annotation a /binding specification/.  Binding specifications are found in the
+~data-bind~ attribute of an HTML tag.  For example, the following text input
+tag contains a binding specification indicating that it is to be bound to the
+~checkin~ variable of the view-model, and that it is to be converted to a
+JavaScript ~Date~ object in the view-model.  Thus, after each edit of the text
+input, the string will be converted to a ~Date~ object, and---if
+successfully converted---will be stored in the ~checkin~ variable.
+
+#+NAME: checkin
+#+BEGIN_SRC html
+<input type="text" data-bind="hd.date( checkin )"/>
+#+END_SRC
+
+Similarly, this text input tag contains a binding specification indicating
+that it is to be bound to the ~nights~ variable of the view-model, and that it
+is to be converted to a number in the view-model.  The second parameter to the
+~hd.num~ function indicates that the number is to have zero digits after the
+decimal point---i.e., it is to be an integer.
+
+#+NAME: nights
+#+BEGIN_SRC html
+<input type="text" data-bind="hd.num( nights, 0 )"/>
+#+END_SRC
+
+The ~<select>~ tag for the drop-down list element indicates that it is to use
+the ~type~ variable as the selected value.
+
+#+NAME: rate
+#+BEGIN_SRC html
+<select data-bind="hd.value( type )">
+#+END_SRC
+
+The view contains one other element bound to a variable, though it is not an
+input element.  The following ~<span>~ tag contains a binding specification
+indicating the ~price~ variable is to be the contents of the tag, and that it
+is to be interpreted simply as text---i.e., no HTML tags, etc.  The call to
+~hd.fix( 2 )~ indicates that the variable is to be converted from a number to
+a string containing two digits after the decimal point.
+
+#+NAME: price
+#+BEGIN_SRC html
+<span data-bind="hd.text( price, hd.fix( 2 ) )"></span>
+#+END_SRC
+
+These binding specifications have no effect until you tell HotDrink to
+automatically perform all bindings according to their specifications.  We do
+that in the Binding section.
+
+As a side-node, you may find this view to be very plain.  Let us emphasize
+that the purpose of HotDrink is /not/ to create a fancy View; it is to create
+a fancy View-Model.  HotDrink focuses on the data underlying your web page,
+enforcing constraints and orchestrating commands.  There are many existing
+JavaScript toolkits which, for example, will help you create calendar widgets
+to help the user select a date.  HotDrink aims to cooperate with those
+toolkits, not replace them.
+
+** The View-Model
+
+As mentioned above, a property model represents the view-model of our
+application.  Your job as the programmer, then, is to construct a property
+model that correctly models your GUI.
+
+The first thing we must do is create the variables and constraints that will
+define our property model.  We create these as members of a context using a
+context builder.  The general strategy for constructing a context is: (1.)
+create a new builder object, (2.) use the builder member functions to create
+variables, constraints, etc., and (3.) call the ~context~ builder member
+function to retrieve the completed context.  The mock code below illustrates
+how this might be done.
 
 #+BEGIN_SRC js
+// Create new builder object
 var builder = new hd.ModelBuilder();
 
-// ...invoke various builder member functions to build the model ...
+// Use methods to construct the model
+builder.variable( ... );
+builder.constraint( ... );
+builder.method( ... );
+// ...and so on...
 
-var model = builder.end();
+// Retrieve the completed model
+var context = builder.context();
 #+END_SRC
 
-
-** The constraint system
-
-As we said in section [[Constraint systems]], the heart of HotDrink is a
-constraint system.  The job of the constraint system is to enforce the
-constraints you defined when building the model.  However, note that a
-constraint system is separate from the model.  You can have a model without a
-constraint system; that simply means that no one is enforcing your constraints
-for you.  Or you may have multiple constraint systems and choose which one you
-want to add your model to.
-
-To use a constraint system, simply create a new instance, then register your
-model.
+However, most builder member functions return the same builder object with
+which they were invoked.  This allows a succinct programming style known as
+\ldquo{}chaining\rdquo in which the return value of one member function is used to
+immediately invoke the next member function.  You can see this style in the
+mock code below.
 
 #+BEGIN_SRC js
-var system = new hd.ConstraintSystem();
-
-system.addComponent( model );
+// Create, use, and discard builder object
+var context = new hd.ContextBuilder()
+    .variable( ... )
+    .constraint( ... )
+    .method( ... )
+    .context();
 #+END_SRC
 
-If you later decide to remove the model from the constraint system, you may do
-so as follows.
+First we create a new ~ContextBuilder~ object.  Rather than storing this
+builder in a variable, we simply begin invoking member functions on it.  Each
+member function invoked returns the same anonymous builder.  This return value
+is used to invoke the next member function, and so on.  This continues until
+the end, where the ~context~ member function is invoked on the still-anonymous
+builder to return the context that was constructed.  It is this context that
+is assigned to the ~context~ variable.  This is the style we use in our
+view-model code.
+
+Once you have a context, you can create a property model and add the variables
+and constraints of the context to the property model, like so:
+
+#+NAME: propmod
+#+BEGIN_SRC js
+var pm = new hd.PropertyModel();
+pm.addComponent( context );
+#+END_SRC
+
+When you add a context to a property model, it automatically adds to the
+property model all the variables and constraints which it contains.  Later,
+you may remove those elements from the property model, like so:
 
 #+BEGIN_SRC js
-system.removeComponent( model );
+pm.removeComponent( context );
 #+END_SRC
 
-As those function names suggest, the full model for your application can
-actually consist of several different components, and new components can be
-added or removed at run-time.  For right now, however, we will assume there is
-only a single model component and treat it as the entire model.
+As those function names suggest, the full property model for your application
+can actually consist of several different contexts, and new contexts can be
+added or removed at run-time.  For now we assume a single context defines the
+entire property model.
+
+** The Binding
+
+As mentioned above, the /bindings/ are the connections between variables of
+the view-model and elements of the View.  We can generate bindings
+programmatically with JavaScript code.  However, in the example we have
+annotated elements of the View with binding specification, indicating how they
+are to be bound.  We can perform all of these bindings in one fell swoop with
+the following line of code.
+
+#+NAME: binding
+#+BEGIN_SRC js
+  hd.performDeclaredBindings( context, document.body );
+#+END_SRC
+
+The ~performDeclaredBindings~ function causes HotDrink to search a part of the
+Document Object Model (DOM) for HTML elements which have a binding
+specification.  It then performs those bindings according to their
+specification.  The first parameter is a context used to look up any variable
+names encountered in the binding specifications.  The second parameter is a
+DOM node indicating which part of the DOM should be searched for binding
+specifications.  HotDrink will only search the specified node and any of its
+children when looking for binding specifications.  In this case, however,
+we've passed ~document.body~, indicating the entire body of the DOM is to be
+searched.
+
+There is a catch to performing binding---one web developers should be very
+familiar with.  Elements of the DOM are not available until the entire HTML
+document has been parsed; thus, attempting to call ~performDeclaredBindings~
+in the header of the document will fail because the DOM is not yet ready.
+In this example, we handle this by registering a callback function to be
+executed when the entire document has finished loading; it is here that we
+call ~performDeclaredBindings~.  Many JavaScript toolkits and frameworks
+provide alternative means of running code after the DOM is ready; any such
+means would be suitable for this purpose.
+
+** Commands
+
+In many ways, a command is similar to an event handler.  However, whereas an
+event handler represents something that happened in the View, a command
+represents something that happened in the View-Model.  For example, a
+key-press event is generated when the user presses a key.  That event is
+translated by a binding into a variable-set command.
+
+Most commands in this example are, in fact, variable-set commands issued by
+bindings.  These commands are created automatically; no extra work is
+required.  If you want to create your own custom commands, however, you may do
+so using the context builder.
+
+#+NAME:command
+#+BEGIN_SRC js
+    // Create a custom command named 'reportPrice'
+    .command( 'reportPrice', 'price ->', function( price ) {
+      alert( "The price of your room is $" + price.toFixed( 2 ) );
+    } )
+#+END_SRC
+
+This command can be bound to events, like button presses.  Commands can also
+be used to modify variables of the property model, or event modify the
+property model itself, adding or removing variables, constraints, etc.
+
+#  LocalWords:  HotDrink javascript src js stylesheet css href INFOJS sdepth
+#  LocalWords:  le HotDrink's multi ldquo rdquo MVVM ViewModel html JQuery hd
+#  LocalWords:  Dojo MooTools DOM API addEventListener padline noweb th td
+#  LocalWords:  checkin oneDayMs setHours ContextBuilder propmod num getTime
+#  LocalWords:  ModelBuilder PropertyModel addComponent removeComponent
+#  LocalWords:  performDeclaredBindings

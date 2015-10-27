@@ -27,7 +27,10 @@
  '(org-src-preserve-indentation t)
  '(org-babel-use-quick-and-dirty-noweb-expansion t)
  '(org-src-fontify-natively t)
- '(org-html-validation-link nil))
+ '(org-html-validation-link nil)
+ '(org-entities-user
+   '("ldquo" "``" nil "&ldquo;" "\"" "\"" "“")
+   '("rdquo" "''" nil "&rdquo;" "\"" "\"" "”")))
 
 (defun publish-org-doc ()
   (let ((fname (car (split-string

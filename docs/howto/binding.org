@@ -2,117 +2,664 @@
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="collapse.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
-* Translators
+* Binding to variables
+
+The previous example interacted with the property model using only the ~get~
+and ~set~ functions for variables.  In actuality, this is not the best way to
+interact with variables of the property model because the property model
+updates /asynchronously/.  This means that calling ~pm.update()~ does not
+actually force the property model to update, but rather requests that it
+update itself at the next available time.  Thus, you cannot be sure when a
+variable's value will be updated.
+
+A better way to interact with variables of the property model is by letting
+them tell /you/ when they have updated.  A variable has an event that is
+triggered every time its value changes.  We can register a callback function
+for this event so that we update the web page every time the variable changes.
+Similarly, most HTML input elements have an event that is triggered every time
+their value changes.  We can register a callback function for this event so
+that every time its.  Together, these callback functions represent a
+/binding/---a connection between an element of the View and an element of the
+View-Model.
 
 ** The example
 
-/View/
+This example is very similar to the previous:  a list of email addresses which
+is filtered by a string.  The difference is in the way we interact with the
+property model.  In this example, the ~emails~ and ~filter~ variables are
+represented by text boxes: editing the text boxes changes the variables.
+Also, the value of the ~result~ variable is shown in the web page and updated
+automatically.
 
-#+BEGIN_SRC html -n -r :exports code :tangle tangle/allrx.html :padline no
-<div>
-  <input type="text" id="a_edit"/> &rArr; <span id="a_view"></span><br/>
-  <input type="text" id="b_edit"/> &rArr; <span id="b_view"></span><br/>
-  <input type="text" id="c_edit"/> &rArr; <span id="c_view"></span><br/>
-  <input type="text" id="d_edit"/> &rArr; <span id="d_view"></span><br/>
-  <input type="text" id="e_edit"/> &rArr; <span id="e_view"></span><br/>
-  <input type="text" id="f_edit"/> &rArr; <span id="f_view"></span><br/>
-  <input type="text" id="g_edit"/> &nbsp; <span id="g_err" style="color:red"></span><br/>
-</div>
+#+HTML: <div class="results">
+#+INCLUDE: tangle/observe.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/observe.js html
+#+HTML: })();
+#+HTML: </script>
+
+*Source Code*
+
+In this example we use HotDrink's binding interfaces, but write our own
+binding objects.  In fact, HotDrink comes with several built-in binding
+objects; however, writing our own makes it clear what is happening.
+
+Note that the View-Model of this example is identical to the previous example;
+only the View and Binding have changed.
+
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n :exports code :tangle tangle/observe.html :padline no
+<table>
+  <style type="text/css" scoped>
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+    input.long { width: 100ex; }
+  </style>
+  <tr>
+    <th>Emails:</th>
+    <td><input type="text" id="emailsEdit" class="long"/></td>
+  </tr>
+  <tr>
+    <th>Filter:</th>
+    <td><input type="text" id="filterEdit" class="long"/></td>
+  </tr>
+  <tr>
+    <th>Result:</th>
+    <td><span id="resultSpan"></span></td>
+  </tr>
+</table>
 #+END_SRC
 
-/View-Model/
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/observe.js :padline no
+// Define the context
+var context = new hd.ContextBuilder()
+    .v( 'emails', 'joe@foo.com, sue@fum.edu, eve@foo.com, bob@baz.org' )
+    .v( 'filter', 'foo.com' )
+    .v( 'result' )
 
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/allrx.js :padline no
-var model = new hd.ModelBuilder()
-    .v( 'a', 3.14159 )
-    .v( 'b', 0.15 )
-    .v( 'c', new Date() )
-    .v( 'd', new Date().getTime() )
-    .v( 'e', 'John Doe' )
-    .v( 'f', 7 )
-    .v( 'g', 'hello' )
-    .end();
+    .c( 'emails, filter, result' )
+    .m( 'emails, filter -> result', function( emails, filter ) {
+      var words = emails.trim().split( /\s*,\s*/ );
+      var filteredWords = words.filter( function( word ) {
+        return word.indexOf( filter ) > -1;
+      } );
+      return filteredWords.join( ', ' );
+    } )
+
+    .context();
+
+// Create the property model
+var pm = new hd.PropertyModel();
+pm.addComponent( context );
 #+END_SRC
 
-/Binding/
-
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/allrx.js :padline no :noweb yes
+#+CAPTION: /Binding/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/observe.js :padline no :noweb yes
+// To be done when the document has loaded...
 window.addEventListener( 'load', function() {
-  hd.bind( {view: new hd.Edit( document.getElementById( 'a_edit' ) ),
-            model: model.a,
-            toModel: hd.toNum(),
-            toView: hd.fix( 2 )
+<<emailobservable>>
+
+  // Initialize filter text box with variable value
+  var filterEdit = document.getElementById( 'filterEdit' );
+  filterEdit.value = context.filter.get();
+
+  // Make an observable for every time the text box is edited
+  var filterObservable = new hd.BasicObservable();
+  filterEdit.addEventListener( 'input', function() {
+    filterObservable.sendNext( filterEdit.value );
+  } );
+
+  // Subscribe the variable to the observable
+  filterObservable.addObserver( context.filter );
+
+<<resultobserver>>
+
+<<addobserver>>
+#+END_SRC
+
+** The Observer pattern
+
+You may have noticed that, in the previous example, we waited for the user to
+click the \ldquo{}Get Result\rdquo button before reading the value of the /result/
+variable.  That was done intentionally.  The reason is that property models
+execute /asynchronously/.  This means that, when you update the property model
+by calling ~update~, it does not immediately do all the work of solving the
+constraint system.  Instead, it does some of the work right away, and then
+/schedules/ the rest to be completed later.  The ability of a property model
+to run asynchronously means it cooperates well with other asynchronous
+programming techniques, such as Ajax calls and web workers.  However, it also
+means that, had we tried to read the value of ~result~ immediately after
+calling ~update~, we would have read the old value of ~result~.
+
+Rather than asking the ~result~ variable for its value, the correct approach
+is to ask it to tell us whenever a new value becomes available.  Typically we
+might do this by registering a callback function to be executed as soon as the
+value was ready.  This technique is sometimes known as the /observer pattern/
+--- the observer provides a function, and the object being observed calls the
+function whenever an event occurs.  In HotDrink, we use a variation of the
+observer pattern inspired by Microsoft's [[https://rx.codeplex.com/][reactive extensions]].  In this
+pattern, an observer has three associated callbacks: one to be called for
+normal event values, one for erroneous event values, and one without a value
+indicating that no more events will occur.  Thus, in HotDrink, an /observer/
+is any object which has the following three properties:
+
+- ~onNext( value )~ :: function called on normal event; takes value associated
+     with the event
+
+- ~onError( error )~ :: function called when error occurs; takes value
+     associated with the error
+
+- ~onCompleted()~ :: function called when no more events can occur
+
+It does not matter what type of object it is, nor what other properties it
+has; only that it has these three properties.  Here's an example of an
+observer for the result variable.  Whenever the variable takes a new value, it
+will call ~onNext~, which will update the web page with the new value.
+
+#+NAME: resultobserver
+#+BEGIN_SRC js
+  // An observer for the result variable
+  var resultObserver = {
+    onNext: function( v ) { setSpan( 'resultSpan', v ) },
+    onError: function( e ) { },
+    onCompleted: function() { }
+  };
+#+END_SRC
+
+** The Observable pattern
+
+The counterpart to an observer is an /observable/.  An observable is an object
+which publishes values an observer would want to know about.  An observer may
+/subscribe/ to an observable, in which case the observable will notify it of
+each new value by calling the observer's ~onNext~ callback.  In HotDrink, an
+observable is any object which has the following two properties:
+
+- ~addObserver( observer )~ :: Subscribe the observer to the observable so
+     that it will receive notifications
+
+- ~removeObserver( observer )~ :: Unsubsribe the observer so that it will no
+     longer receive notifiactions.
+
+As you have probably guessed, variables of the property model are observable.
+Thus, we may subscribe our observer to the result variable like so:
+
+#+NAME: addobserver
+#+BEGIN_SRC js
+  // Subscribe the observer to the variable
+  context.result.addObserver( resultObserver );
+#+END_SRC
+
+Now, as soon as the property model updates the result variable, our callback
+will be executed and the web page will be updated.
+
+** The ~BasicObservable~ type
+
+Variables of the property model are not only observable, they are observers as
+well.  When a variable observes some other observable, every value produced by
+that observable is treated as a ~set~ of the variable.  (In fact, a variable's
+~onNext~ and ~set~ functions do the exact same thing.)  Thus, if we want
+changes to a text box to be reflected in a variable of the property model, we
+can create an observable that represents the value of the text box.
+
+Creating an observable object is not hard, but it does tend to involve a lot
+of boiler-plate code.  For this reason, HotDrink provides a simple
+implementation of an observable object called ~BasicObservable~.  You may
+create instances of this type, or use it as a prototype for your own
+JavaScript types.  A ~BasicObservable~ keeps a list of observers in a property
+named ~observers~.  It also provides three functions, ~sendNext~, ~sendError~,
+and ~sendCompleted~, for invoking callbacks of all subscribed observers.
+
+The code below creates a ~BasicObservable~ to represent the text box for the
+~email~ variable.  An event listener is created for the text box so that every
+time it is edited, the observable will notify any subscribers of the new
+value.  Then we subscribe the ~emails~ variable to this new observable.  In
+this way, any changes to the text box will be relayed to the variable.
+
+#+NAME: emailobservable
+#+BEGIN_SRC js
+  // Initialize email text box with variable value
+  var emailsEdit = document.getElementById( 'emailsEdit' );
+  emailsEdit.value = context.emails.get();
+
+  // Make an observable for every time the text box is edited
+  var emailsObservable = new hd.BasicObservable();
+  emailsEdit.addEventListener( 'input', function() {
+    emailsObservable.sendNext( emailsEdit.value );
+  } );
+
+  // Subscribe the variable to the observable
+  emailsObservable.addObserver( context.emails );
+#+END_SRC
+
+* Adapters and translators
+
+If we were to combine the observable and observer objects of the previous
+example, we would get a single object, both observable and an observer, which
+representing a text edit box of the View: when the object observes a value, it
+updates the text box to contain that value, and when the user edits the text
+box, it notifies any observers with the new value.  This object is called a
+/view adapter/ because it converts the interface of the View---i.e., an HTML
+DOM node---into the observable/observer interface used by HotDrink.
+
+Often when a variable is bound to the view, the value contained in the View
+will be slightly different than the value contained in the property model.  A
+good example of this is a variable whose value is a number bound to a text box
+whose value is a string.  While it is possible for an adapter to make such
+data conversions, creating a separate object specifically to do this
+conversion, called a /translator/, allows more flexibility by making it easy
+to combine different adapters with different translators.
+
+** The example
+
+This example also contains a single constraint.  This time, the constraint
+represents the mathematical equation, $income - expenses = profit$.  As with
+the previous example, updating the text boxes will cause the result to update
+automatically.
+
+This example utilizes some new binding techniques, including the ability to
+convert between string values in the View and numeric values in the View-Model.
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/translator.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/translator.js html
+#+HTML: })();
+#+HTML: </script>
+
+*Source Code*
+
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n :exports code :tangle tangle/translator.html :padline no
+<table>
+  <style type="text/css" scoped>
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+  </style>
+  <tr>
+    <th>Income:</th>
+    <td><input type="text" id="incomeEdit"/></td>
+  </tr>
+  <tr>
+    <th>Expenses:</th>
+    <td><input type="text" id="expensesEdit"/></td>
+  </tr>
+  <tr>
+    <th>Profit:</th>
+    <td><span id="profitSpan"></span></td>
+  </tr>
+</table>
+#+END_SRC
+
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/translator.js :padline no
+// Define the context
+var context = new hd.ContextBuilder()
+    .v( 'income', 2000 )
+    .v( 'expenses', 480 )
+    .v( 'profit' )
+
+    .c( 'income, expenses, profit' )
+    .m( 'income, expenses -> profit', function( income, expenses ) {
+      return income - expenses;
+    } )
+
+    .context();
+
+// Create the constraint system
+var pm = new hd.PropertyModel();
+pm.addComponent( context );
+#+END_SRC
+
+#+CAPTION: /Binding/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/translator.js :padline no :noweb yes
+// To be done when the document has loaded...
+window.addEventListener( 'load', function() {
+
+<<edit-adapter>>
+<<number-translator>>
+<<connections>>
+
+  // An adapter for the <input> element for expenses
+  var expensesAdapter = new hd.Edit( document.getElementById( 'expensesEdit' ) );
+  // A translator from string to number
+  var expensesTranslator = new hd.Translator();
+  expensesTranslator.onNext = stringToNumber;
+  // Connect observables to observers
+  expensesTranslator.addObserver( context.expenses )
+  expensesAdapter.addObserver( expensesTranslator );
+  context.expenses.addObserver( expensesAdapter );
+
+<<text-adapter>>
+<<fixed-translator>>
+  // Connect observables to observers
+  context.profit.addObserver( profitTranslator );
+  profitTranslator.addObserver( profitAdapter );
+} )
+
+<<string-to-number>>
+
+<<fix2>>
+#+END_SRC
+
+
+** View adapters
+
+A /view adapter/ is an object which represents some element of the view which
+can be bound to a property model.  It is called an /adapter/ because it adapts
+the view element's interface to the observable/observer interface expected by
+HotDrink.  A view adapter may be read-only (i.e., observable-only), read-write
+(i.e., observable-observer), or write-only (i.e., observer-only).  For
+example, an adapter for the mouse cursor position would be read-only; an
+adapter for a text box would be read-write; and an adapter for a <span> tag
+would be write-only.
+
+HotDrink provides several types of view adapters for common input elements.
+We describe them in detail in the [[file:binding.org][Advanced Binding Concepts]] how-to.  For now,
+however, we introduce two adapters for use in the remainder of this how-to.
+
+The first adapter type is the ~Edit~ adapter: a read-write adapter that
+represents the value of a text box.  As an observable, the ~Edit~ adapter
+reports every time the value of the text box changes.  As an observer, the
+~Edit~ adapter updates the value of the text box every time the value of the
+variable being observed changes.  To create an ~Edit~ adapter, simply create a
+new ~hd.Edit~ object passing the DOM node for the text box to the constructor.
+
+#+NAME: edit-adapter
+#+BEGIN_SRC js
+  // An adapter for the <input> element for income
+  var incomeAdapter = new hd.Edit( document.getElementById( 'incomeEdit' ) );
+#+END_SRC
+
+Adapters can be creative in the way they choose to read or write values.  For
+example, the ~Edit~ adapter does not report a new value with every keystroke;
+it waits for either a half-second pause in the typing, or for an event that
+indicates that the edit is complete, such as the user pressing the Enter key
+or the text box losing focus.  Furthermore, if the adapter receives a new
+value while the user is editing, the adapter waits until the text box loses
+focus before updating its value.
+
+The second adapter type is the ~Text~ adapter: a read-only adapter that
+represents the text contents of a tag.  As an observer, the ~Text~ adapter
+update the contents of its tag every time the value of the variable being
+observed changes.  To create a ~Text~ adapter, simply create a new ~hd.Text~
+object passing the DOM node for the tag to the constructor.
+
+#+NAME: text-adapter
+#+BEGIN_SRC js
+  // An adapter for the <span> element for profit
+  var profitAdapter = new hd.Text( document.getElementById( 'profitSpan' ) );
+#+END_SRC
+
+** Translators
+
+The purpose of a translator is to convert a value between the format expected
+by the View to the format expected by the View-Model.  A translator is both an
+observable and an observer:  it observes the value of the View (or View-Model)
+and produces a value for the View-Model (or the View).
+
+Creating a translator is not hard, but it does tend to involve a lot of
+boiler-plate code.  For this reason, HotDrink provides a simple implementation
+of a translator called ~Translator~.  You may create instances of this type,
+or use it as a prototype for your own JavaScript types.  As it is written,
+this translator performs no translation; it simply takes the value it was
+given and passes it on.  However, by assigning the translator a new ~onNext~
+method, we can cause it to modify the values it is given.
+
+#+NAME: number-translator
+#+BEGIN_SRC js
+  // A translator from string to number
+  var incomeTranslator = new hd.Translator();
+  incomeTranslator.onNext = stringToNumber;
+#+END_SRC
+
+The prototype for the ~Translator~ type is a ~BasicObservable~.  Thus, after
+you have translated your value, you can use ~sendNext~ to pass on the
+translated value.  Alternatively, you can use ~sendError~ to signal an error.
+
+#+NAME: string-to-number
+#+BEGIN_SRC js
+// Helper function for translator:  convert string to number
+function stringToNumber( s ) {
+  var n = Number( s );
+  if (s == '' || isNaN( n )) {
+    this.sendError( "Invalid number" );
+  }
+  else {
+    this.sendNext( n );
+  }
+}
+#+END_SRC
+
+Note that, while we could create an adapter to convert the number of the
+View-Model to a string for the View, it is not strictly necessary.  JavaScript
+will automatically convert our number to a string using ~toString~ when it is
+assigned as the value of a text box.  This is sufficient for our text boxes.
+However, in the case of our ~<span>~ tag, we would prefer to use
+~toFixedString~ instead.  Thus, we define a translator for this tag.
+
+#+NAME: fixed-translator
+#+BEGIN_SRC js
+  // A translator from number to string
+  var profitTranslator = new hd.Translator();
+  profitTranslator.onNext = fix2;
+#+END_SRC
+#+NAME: fix2
+#+BEGIN_SRC js
+// Helper function for translator:  convert number to string
+function fix2( n ) {
+  this.sendNext( n.toFixed( 2 ) );
+}
+#+END_SRC
+
+** Connections
+
+Once we have created an adapter and translator, all that is left is to connect
+them by subscribing observers to observables.  To support values going from
+the View to the View-Model, the translator subscribes to the adapter, and the
+variable subscribes to the translator.  To support values going from the
+View-Model to the View, the adapter subscribes directly to the variable.
+
+#+NAME: connections
+#+BEGIN_SRC js
+  // Connect observables to observers
+  incomeAdapter.addObserver( incomeTranslator );
+  incomeTranslator.addObserver( context.income );
+  context.income.addObserver( incomeAdapter );
+#+END_SRC
+
+At this point, the variable is bound to the View.  Any changes to the variable
+will go directly to the View.  Any changes to the View will first go through
+the translator, then to the variable.
+
+Note that it is /not/ possible to reuse translators.  If you were to try, you
+would have to subscribe the same translator to two view adapters, and two
+variables to the same translator.  This would mean that every time either view
+adapter sent a value, /both/ variables would receive the value.  Thus, e.g.,
+we must create a second string-to-number translator for the =expenses=
+variable; we cannot reuse the one for =income=.
+
+* The ~bind~ function and binding descriptions
+
+The code required to connect adapters, translators, and variables tends to be
+somewhat repetitive.  To help avoid boilerplate code, HotDrink provides the
+~bind~ function which can make these connections for you.
+
+** The example
+
+This example also contains a single constraint.  This time the constraint
+represents the mathematical equation $subtotal*(1+tax/100)=total$.  As with
+previous examples, updating the text box will cause the result to update
+automatically.
+
+This example performs all binding using the ~bind~ function with built-in
+adapters and translators.
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/description.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/description.js html
+#+HTML: })();
+#+HTML: </script>
+
+*Source Code*
+
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n :exports code :tangle tangle/description.html :padline no
+<table>
+  <style type="text/css" scoped>
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+  </style>
+  <tr>
+    <th>Subtotal:</th>
+    <td><input type="text" id="subtotalEdit"/></td>
+  </tr>
+  <tr>
+    <th>Tax:</th>
+    <td><input type="text" id="taxEdit"/>%</td>
+  </tr>
+  <tr>
+    <th>Total:</th>
+    <td>$<span id="totalSpan"></span></td>
+  </tr>
+</table>
+#+END_SRC
+
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/description.js :padline no
+// Define the context
+var context = new hd.ContextBuilder()
+    .v( 'subtotal', 39.99 )
+    .v( 'tax', 8 )
+    .v( 'total' )
+
+    .c( 'subtotal, tax, total' )
+    .m( 'subtotal, tax -> total', function( subtotal, tax ) {
+      return Math.round( subtotal * (100+tax) ) / 100;
+    } )
+
+    .context();
+
+// Create the constraint system
+var pm = new hd.PropertyModel();
+pm.addComponent( context );
+#+END_SRC
+
+#+CAPTION: /Binding/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/description.js :padline no :noweb yes
+window.addEventListener( 'load', function() {
+<<binding-description>>
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'taxEdit' ) ),
+            model:   context.tax,
+            toModel: [hd.toNum(), hd.round( 0 )],
+            toView:  hd.fix( 0 )
            }
          );
-
-  hd.bind( {view: new hd.Text( document.getElementById( 'a_view' ) ),
-            model: model.a
-           }
-         );
-
-<<chain>>
-
-  hd.bind( {view: new hd.Text( document.getElementById( 'b_view' ) ),
-            model: model.b
-           } );
-
-  hd.bind( {view: new hd.Edit( document.getElementById( 'c_edit' ) ),
-            model: model.c,
-            toModel: hd.toDate(),
-            toView: hd.dateToString()
-           }
-         );
-
-  hd.bind( {view: new hd.Text( document.getElementById( 'c_view' ) ),
-            model: model.c
-           }
-         );
-
-<<array>>
-
-  hd.bind( {view: new hd.Text( document.getElementById( 'd_view' ) ),
-            model: model.d
-           }
-         );
-
-  hd.bind( {view: new hd.Edit( document.getElementById( 'e_edit' ) ),
-            model: model.e,
-            toModel: hd.def( 'Unknown' )
-           }
-         );
-
-  hd.bind( {view: new hd.Text( document.getElementById( 'e_view' ) ),
-            model: model.e
-           }
-         );
-
-  hd.bind( {view: new hd.Edit( document.getElementById( 'f_edit' ) ),
-            model: model.f,
-            toModel: [hd.toNum(), hd.def( 1 )]
-           }
-         );
-
-  hd.bind( {view: new hd.Text( document.getElementById( 'f_view' ) ),
-            model: model.f
-           }
-         );
-
-  hd.bind( {view: new hd.Edit( document.getElementById( 'g_edit' ) ),
-            model: model.g,
-            toModel: [hd.req(), hd.msg( "Don't forget me!" )]
-           }
-         );
-
-  hd.bind( {view: new hd.Text( document.getElementById( 'g_err' ) ),
-            model: model.g.error
+  hd.bind( {view:    new hd.Text( document.getElementById( 'totalSpan' ) ),
+            model:   context.total,
+            toModel: hd.fix( 2 )
            }
          );
 } );
 #+END_SRC
 
-/Results/
+** Translator factories
+
+Just as HotDrink provides several common adapter types, so too it provides
+several common translator types.  While it is possible to create instances of
+these types yourself using the =new= operator, HotDrink provides factory
+functions for creating new instances of these translator types.  We describe
+these functions in detail in the [[file:binding.org][Advanced Binding Concepts]] how-to.  For now,
+however, we introduce three translators for use in the remainder of this
+how-to.
+
+The ~hd.toNum~ factory function creates a translator that converts a string to
+a number, just like the translators created in the previous example.
+
+#+BEGIN_SRC js
+  // Using built-in translator
+  var toNumTranslator = hd.toNum();
+#+END_SRC
+
+The ~hd.fix~ factory function creates a translator that converts a number to a
+string.  This factory function takes a parameter indicating how many digits
+should be present after the decimal point.
+
+#+BEGIN_SRC js
+  // Using built-in translator
+  var fix2Translator = hd.fix( 2 );
+#+END_SRC
+
+Note that using a ~hd.fix~ translator only modifies how the value is /seen/ by
+the View; it does not change the value in the View-Model.  For example, if a
+variable was connected to an ~Edit~ adapter using the above translator, the
+user could enter as many digits of precision as he desired; the extra digits
+would be stored in the View-Model, but would not be displayed by the View.
+
+We can improve this scheme by changing the value which is given to the
+View-Model using the ~hd.round~ translator.  This translator takes a number
+and rounds it to a certain number of digits of precision.
+
+#+BEGIN_SRC js
+  // A rounding translator
+  var roundTranslator = hd.round( 2 );
+#+END_SRC
+
+Note that this translator does /not/ change the data-type of a value; instead
+it modifies the value.  If a change in data-type is required, this translator
+can be used in conjunction with another, such as ~hd.toNum~.  We demonstrate
+this below.
+
+
+** Binding descriptions
+
+The function ~hd.bind~ takes a single parameter: an object referred to as the
+/binding description/.  A binding description is any object which has the
+following four properties:
+
+- ~view~ :: observable/observer representing a value of the View
+- ~model~ :: observable/observer representing a value of the View-Model
+- ~toView~ :: translator(s) for going from View-Model to View
+- ~toModel~ :: translator(s) for going from View to View-Model
+
+The ~toView~ and ~toModel~ properties are optional; the only required
+properties are ~view~ and ~model~.  If present, the ~toView~ and ~toModel~
+properties should hold either a single translator, or an array of
+translators.  Consider, for example, the binding description in the following
+call to ~hd.bind~.
+
+#+NAME: binding-description
+#+BEGIN_SRC js
+  hd.bind( {view:    new hd.Edit( document.getElementById( 'subtotalEdit' ) ),
+            model:   context.subtotal,
+            toModel: [hd.toNum(), hd.round( 2 )],
+            toView:  hd.fix( 2 )
+           }
+         );
+#+END_SRC
+
+Here, the /view/ object is an ~Edit~ view adapter, and the /model/ object is
+the =subtotal= variable.  When going from the View to the View-Model, we first
+translate the string to a number, then round the number to two digits.  Going
+the other way, we convert the number to a fixed-point string with two digits
+of precision.
+
+
+* Translators
+
+** The example
+
+This example uses several different translators to convert between the values
+edited by the user in the text box and the values stored in the view-model.
+The text next to the edit boxes is meant to give a better view of what is
+actually stored in the model.
 
 #+HTML: <div class="results">
 #+INCLUDE: tangle/allrx.html html
@@ -123,30 +670,122 @@ window.addEventListener( 'load', function() {
 #+HTML: })();
 #+HTML: </script>
 
-/Notes/
+*Source Code*
 
-#+HTML: <div class="notes">
-This example uses several different translators to convert between the values
-edited by the user in the text box and the values stored in the view-model.
-The text next to the edit boxes is meant to give a better view of what is
-actually stored in the model.
-#+HTML: </div>
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/allrx.html :padline no
+<div>
+  <input type="text" id="a_edit"/> &rArr; <span id="a_view"></span><br/>
+  <input type="text" id="b_edit"/> &rArr; <span id="b_view"></span><br/>
+  <input type="text" id="c_edit"/> &rArr; <span id="c_view"></span><br/>
+  <input type="text" id="d_edit"/> &rArr; <span id="d_view"></span><br/>
+  <input type="text" id="e_edit"/> &rArr; <span id="e_view"></span><br/>
+  <input type="text" id="f_edit"/> &rArr; <span id="f_view"></span><br/>
+  <input type="text" id="g_edit"/> &rArr; <span id="g_err" style="color:red"></span><br/>
+</div>
+#+END_SRC
+
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/allrx.js :padline no
+var context = new hd.ContextBuilder()
+    .v( 'a', 3.14159 )
+    .v( 'b', 0.15 )
+    .v( 'c', new Date() )
+    .v( 'd', new Date().getTime() )
+    .v( 'e', 'John Doe' )
+    .v( 'f', 7 )
+    .v( 'g', 'delete me' )
+    .context();
+
+var pm = new hd.PropertyModel();
+pm.addComponent( context );
+pm.update();
+#+END_SRC
+
+#+CAPTION: /Model/ (show/hide)
+#+BEGIN_SRC js -n -r :exports code :tangle tangle/allrx.js :padline no :noweb yes
+window.addEventListener( 'load', function() {
+  hd.bind( {view: new hd.Edit( document.getElementById( 'a_edit' ) ),
+            model: context.a,
+            toModel: hd.toNum(),
+            toView: hd.fix( 2 )
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'a_view' ) ),
+            model: context.a
+           }
+         );
+
+<<chain>>
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'b_view' ) ),
+            model: context.b
+           } );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'c_edit' ) ),
+            model: context.c,
+            toModel: hd.toDate(),
+            toView: hd.dateToString()
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'c_view' ) ),
+            model: context.c
+           }
+         );
+
+<<array>>
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'd_view' ) ),
+            model: context.d
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'e_edit' ) ),
+            model: context.e,
+            toModel: hd.def( 'Unknown' )
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'e_view' ) ),
+            model: context.e
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'f_edit' ) ),
+            model: context.f,
+            toModel: [hd.toNum(), hd.def( 1 )]
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'f_view' ) ),
+            model: context.f
+           }
+         );
+
+  hd.bind( {view: new hd.Edit( document.getElementById( 'g_edit' ) ),
+            model: context.g,
+            toModel: [hd.req(), hd.msg( "Don't forget me!" )]
+           }
+         );
+
+  hd.bind( {view: new hd.Text( document.getElementById( 'g_err' ) ),
+            model: context.g.error
+           }
+         );
+} );
+#+END_SRC
 
 ** What translators do
 
-A binding results in values being copied back and forth between the view and
-the view-model.  However, sometimes a little bit of work needs to be done in
-addition to the copying.  For example, one common task is converting the
-string value contained by the view to a different data type for use in the
-model, or vice-versa.
-
-To perform these sorts of tasks we use /translators/.  Inspired by Microsoft's
-[[https://rx.codeplex.com/][reactive extensions]], these are objects that can
-be inserted in between the view and the view-model and can operate on values
-as they are passed from one to the other.  Think of a chain of people passing packages
-from one destination to another.  Each person receives packages from the
-person behind him, has an opportunity to modify it, and then passes
-it to the next person in line.
+As described in [[file:basics.org][Basic HotDrink Usage]], translators are objects which are both
+/observable/ and /observers/.  Translators are used when one wishes to bind a
+value in the View to a value in the View-Model, but each represents the value
+differently.  A common example would be a text box in the View whose value is
+a string bound to a variable in the View-Model whose value is a number.  A
+translator sits between the View and the View-Model (or vice-versa) and
+translates the values being sent from one to the other.
 
 Every binding can potentially have two translators.  The translator labeled
 ~toView~ in the binding specification is responsible for translating from the
@@ -154,22 +793,23 @@ value used by the model to the value used by the view; the translator labeled
 ~toModel~ in the binding specification is responsible for translating from the
 value used by the view to the value used by the model.
 
-** Chaining translators
+** Combining translators
 
-The HotDrink binders assume there will at most one translator from the view to
-the view-model, and at most one translator from the view-model to the view.
-However, you can easily sneak in multiple translators by wrapping them in a
-chain translator.  A chain encapsulates a sequence of translators, making them
-look like a single translator.  When it receives a value, it translates it by
-running it through all the translators it contains.  Whatever is produced by
-the final translator becomes the value produced by the chain.
+In general, HotDrink assumes there will at most one translator from the view
+to the view-model, and at most one translator from the view-model to the view.
+However, you can easily combine multiple translators into one by wrapping them
+in a /chain/ translator.  A chain encapsulates a sequence of translators,
+making them look like a single translator.  When it receives a value, it
+translates it by running it through all the translators it contains.  The
+value produced by the final translator becomes the value produced by the chain
+itself.
 
 You can see chains used in the following binding.
 
 #+NAME: chain
 #+BEGIN_SRC js
   hd.bind( {view: new hd.Edit( document.getElementById( 'b_edit' ) ),
-            model: model.b, (ref:chain)
+            model: context.b,
             toModel: hd.chain( hd.toNum(),
                                hd.round( 0 ),
                                hd.scale( 0.01 ) ),
@@ -188,7 +828,7 @@ following binding.
 #+NAME: array
 #+BEGIN_SRC js
   hd.bind( {view: new hd.Edit( document.getElementById( 'd_edit' ) ),
-            model: model.d,
+            model: context.d,
             toModel: [hd.toDate(), hd.dateToMilliseconds()],
             toView: [hd.toDate(), hd.dateToDateString()]
            }
@@ -197,13 +837,13 @@ following binding.
 
 ** When translators fail
 
-As mentioned previously, translators pass a value from one to the next until it
-reaches the variable.  It is possible, however, for some translators to fail.
-For example, the translator which translates a string to a number will fail if
-the string does not parse as a valid number.  If an translator fails, then it
-produces an error value which will be passed along in place of the value for
-the variable.  For example, all translators provided by HotDrink produce a
-string containing an error message.
+Translators convert a value from one representation to another.  It is
+possible, however, for that conversion to fail.  For example, a translator
+which translates a string to a number will fail if the string does not parse
+as a valid number.  If an translator fails, then it produces an error value
+which will be passed along in place of the value for the variable.  For
+example, all translators provided by HotDrink produce a string containing an
+error message.
 
 Most translators simply pass along error values without modifying them.  It is
 possible, however, for an translator to modify the error value, or even convert
@@ -363,14 +1003,14 @@ window.addEventListener( 'load', function() {
 
 /Results/
 
-#+HTML: <div class="results">
-#+INCLUDE: tangle/fnext.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-#+INCLUDE: tangle/fnext.js html
-#+HTML: })();
-#+HTML: </script>
+##+HTML: <div class="results">
+##+INCLUDE: tangle/fnext.html html
+##+HTML: </div>
+##+HTML: <script type="text/javascript">
+##+HTML: (function() {
+##+INCLUDE: tangle/fnext.js html
+##+HTML: })();
+##+HTML: </script>
 
 /Notes/
 
@@ -613,14 +1253,14 @@ window.addEventListener( 'load', function() {
 
 /Result/
 
-#+HTML: <div class="results">
-#+INCLUDE: tangle/allbind.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-#+INCLUDE: tangle/allbind.js html
-#+HTML: })();
-#+HTML: </script>
+##+HTML: <div class="results">
+##+INCLUDE: tangle/allbind.html html
+##+HTML: </div>
+##+HTML: <script type="text/javascript">
+##+HTML: (function() {
+##+INCLUDE: tangle/allbind.js html
+##+HTML: })();
+##+HTML: </script>
 
 /Notes/
 
@@ -1066,12 +1706,12 @@ window.addEventListener( 'load', function() {
 
 /Result/
 
-#+HTML: <div class="results">
-#+INCLUDE: tangle/prop.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+INCLUDE: tangle/prop.js html
-#+HTML: </script>
+##+HTML: <div class="results">
+###+INCLUDE: tangle/prop.html html
+##+HTML: </div>
+##+HTML: <script type="text/javascript">
+##+INCLUDE: tangle/prop.js html
+##+HTML: </script>
 
 /Notes/
 

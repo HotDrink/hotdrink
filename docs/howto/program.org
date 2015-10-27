@@ -7,6 +7,12 @@
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css"/>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
+#+BEGIN_HTML
+<div style="border: 1px solid #600; background: #fee; color: #600; padding: 1em">
+!!! This tutorial is still being updated for version 2.1.  Please check back later.
+</div>
+#+END_HTML
+
 * Utility: an HTML JavaScript Console
 
 We wish to start by illustrating a few simple classes and interfaces used in

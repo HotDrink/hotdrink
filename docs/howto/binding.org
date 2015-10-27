@@ -5,6 +5,12 @@
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="collapse.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
+#+BEGIN_HTML
+<div style="border: 1px solid #600; background: #fee; color: #600; padding: 1em">
+!!! This tutorial is still being updated for version 2.1.  Please check back later.
+</div>
+#+END_HTML
+
 * Binding to variables
 
 The previous example interacted with the property model using only the ~get~

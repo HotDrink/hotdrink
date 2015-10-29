@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Introduction to HotDrink</title>
-<!-- 2015-03-18 Wed 14:20 -->
+<!-- 2015-10-27 Tue 08:33 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <style type="text/css">
@@ -87,7 +87,8 @@
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   /*]]>*/-->
 </style>
-<script type="text/javascript" src="hotdrink.min.js"></script>
+<script type="text/javascript" src="../../../scripts/hotdrink.js"></script>
+<script type="text/javascript" src="collapse.js"></script>
 <link rel="stylesheet" type="text/css" href="style.css"/>
 <script type="text/javascript">
 /*
@@ -188,15 +189,19 @@ for the JavaScript code in this tag.
 <li><a href="#sec-1">1. Overview of basic concepts</a>
 <ul>
 <li><a href="#sec-1-1">1.1. Constraint systems</a></li>
-<li><a href="#sec-1-2">1.2. MVVM</a></li>
+<li><a href="#sec-1-2">1.2. Commands</a></li>
+<li><a href="#sec-1-3">1.3. MVVM</a></li>
 </ul>
 </li>
 <li><a href="#sec-2">2. Including HotDrink in your web page</a></li>
-<li><a href="#sec-3">3. Important HotDrink objects</a>
+<li><a href="#sec-3">3. Important HotDrink objects</a></li>
+<li><a href="#sec-4">4. An introductory example</a>
 <ul>
-<li><a href="#sec-3-1">3.1. The model</a></li>
-<li><a href="#sec-3-2">3.2. The model builder</a></li>
-<li><a href="#sec-3-3">3.3. The constraint system</a></li>
+<li><a href="#sec-4-1">4.1. The example</a></li>
+<li><a href="#sec-4-2">4.2. The View</a></li>
+<li><a href="#sec-4-3">4.3. The View-Model</a></li>
+<li><a href="#sec-4-4">4.4. The Binding</a></li>
+<li><a href="#sec-4-5">4.5. Commands</a></li>
 </ul>
 </li>
 </ul>
@@ -208,13 +213,21 @@ for the JavaScript code in this tag.
 <div class="outline-text-2" id="text-1">
 <p>
 HotDrink is a JavaScript library that assists with GUI implementation.
-HotDrink allows you to program GUIs <i>declaratively</i>&#x2014;instead of
-writing event handlers that control what should happen in a GUI and when,
-the programmer specifies the relationships between various pieces of
-data in the GUI and ways in which those relationships may be enforced.
-From this description, HotDrink decides how and when to enforce relationships,
-and also implements several GUI behaviors
-that can be reused with little effort.
+HotDrink allows you to program GUIs <i>declaratively</i>&#x2014;instead of writing event
+handlers that control what should happen in a GUI and when, the programmer
+specifies the relationships between various pieces of data, i.e., how changes
+to one piece of data affect other pieces of data.  From this description,
+HotDrink decides how and when to enforce relationships, and also implements
+several GUI behaviors that can be reused with little effort.
+</p>
+
+<p>
+Changes to GUI state are managed through <i>commands</i> written by the programmer.
+HotDrink ensures that (1) commands are initiated only when all relationships
+defined by the programmer have been enforced, and (2) commands will not
+interfere with one another, at least with respect to the GUI state.  This
+means that your program will behave correctly even if a new command is issued
+before the previous command has finished.
 </p>
 </div>
 
@@ -230,7 +243,7 @@ For example, given three variables, \(x\), \(y\), and \(z\), you
 could create a constraint that \(x = y + z\), or that \(x \le y \le z\), or even that \(z\)
 is the result of a database query using \(x\) and \(y\).  When the
 constraint is true, we say it is <i>satisfied</i>.  HotDrink <i>enforces</i> a
-constraint by modifying some of the variables involved so that the constraint is
+constraint by modifying some of its variables so that the constraint is
 satisfied.
 </p>
 
@@ -241,7 +254,7 @@ as sets of functions.  These functions are called <i>methods</i> (short for
 method is responsible for calculating new values for some of the constraint's
 variables so that the constraint will be satisfied.  To enforce all
 constraints, HotDrink executes one method from each constraint.  Together, the
-methods executed define a <i>dataflow</i> &#x2014; a branching path showing which
+methods executed define a <i>dataflow</i>&#x2014;a branching path showing which
 variables are used to update which other variables.  HotDrink has a
 <i>multi-way dataflow constraint system</i>, meaning there are many possible
 dataflows depending on which methods are executed.  In general, HotDrink
@@ -252,7 +265,7 @@ selects a dataflow that preserves variables the user has edited more recently.
 In a HotDrink &ldquo;powered&rdquo; user interface, GUI events are translated to changes
 to constraint system variables.  These changes result
 in constraints which are no longer satisfied.  HotDrink
-responds by <i>solving</i> the constraint system &#x2014; that is, selecting which methods
+responds by <i>solving</i> the constraint system&#x2014;that is, selecting which methods
 to execute, and then executing them so that all constraints are again
 satisfied.  Solving can change the values of the system's variables; the
 changed values are then somehow
@@ -262,8 +275,32 @@ displayed or visualized to the user, as specified by the programmer.
 </div>
 
 <div id="outline-container-sec-1-2" class="outline-3">
-<h3 id="sec-1-2"><span class="section-number-3">1.2</span> MVVM</h3>
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> Commands</h3>
 <div class="outline-text-3" id="text-1-2">
+<p>
+Whereas the constraint system runs in the background to automatically enforce
+constraints, a <i>command</i> is code that is run only when triggered by an event.
+A command may be as simple as assigning a new value to a variable, or as
+complex as making a server call using the value of some variables and updating
+the GUI with the result.  After executing a command, HotDrink always solves
+the constraint system to ensure that all relations between variables are
+enforced.
+</p>
+
+<p>
+HotDrink views the life of a GUI, not as a series of events, but as a sequence
+of commands.  HotDrink manages these commands and coordinates their execution.
+Commands may execute <i>asynchronously</i>, meaning that a command does not have to
+wait for all previous commands to finish before it can begin.  HotDrink
+manages the effects of all commands on GUI state so that the end result will
+be the same as if those commands had executed synchronously.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3"><span class="section-number-3">1.3</span> MVVM</h3>
+<div class="outline-text-3" id="text-1-3">
 <p>
 Applications written with HotDrink follow the Model-View-ViewModel
 (a.k.a. MVVM) design pattern.  This pattern divides the application as
@@ -271,7 +308,7 @@ follows:
 </p>
 
 <ul class="org-ul">
-<li>The <i>view</i> is responsible for presentation and capturing
+<li>The <i>View</i> is responsible for presentation and capturing
 interactions with the user.  It arranges everything on the screen
 and provides events that indicate user actions.  For our purposes,
 the view is specified in HTML, along with JavaScript that
@@ -280,8 +317,8 @@ some commentary to help understand the examples, but in general we assume famili
 with HTML, JavaScript, and constructing web pages.
 </li>
 
-<li>The <i>view-model</i> is responsible for managing the data presented in
-the view. This means supplying the data to the view to be displayed,
+<li>The <i>View-Model</i> is responsible for managing the data presented in
+the view. This means supplying the data to be displayed by the view,
 as well as responding to user actions.  The purpose of
 HotDrink is to help in implementing the view-model.
 </li>
@@ -289,13 +326,13 @@ HotDrink is to help in implementing the view-model.
 <li>Another important part of an MVVM application are the <i>bindings</i>.  A
 binding connects elements in the view with variables in the
 view-model.  The bindings are sometimes treated as part of the
-view&#x2014;that is why there is no "B" in "MVVM"&#x2014;but we treat them as
+view&#x2014;that is why there is no &ldquo;B&rdquo; in &ldquo;MVVM&rdquo;&#x2014;but we treat them as
 a distinct component of the pattern.  In HotDrink, bindings can be
 specified in JavaScript, or as annotations in HTML as part of the
 view specification.
 </li>
 
-<li>The <i>model</i> is responsible for everything else&#x2014;whatever the
+<li>The <i>Model</i> is responsible for everything else&#x2014;whatever the
 application is actually supposed to <i>do</i>.  The model does not need to
 be aware of the user interface; therefore we will not discuss it further in
 this documentation.
@@ -309,18 +346,13 @@ this documentation.
 <h2 id="sec-2"><span class="section-number-2">2</span> Including HotDrink in your web page</h2>
 <div class="outline-text-2" id="text-2">
 <p>
-To use HotDrink, include the file <a href="hotdrink.min.js"><code>hotdrink.min.js</code></a> that came with
-this tutorial.  Alternatively, if you downloaded the source tree,
-follow the build instructions to compile your own <code>hotdrink.min.js</code>.
-</p>
-
-<p>
-More specifically, that means adding the following <code>&lt;script&gt;</code> tag to
-the <code>&lt;head&gt;</code> section
-of your HTML, with the appropriate path in the <code>src</code> attribute.  In
-order for the examples in this tutorial to work, the file
-<code>hotdrink.min.js</code> must be located in the same directory as this HTML
-file.
+To use HotDrink, your web page should include the file <a href="hotdrink.min.js"><code>hotdrink.min.js</code></a> that
+came with this tutorial.  (Alternatively, if you downloaded the source tree,
+follow the build instructions to compile your own <code>hotdrink.min.js</code>.)
+More specifically, add the following <code>&lt;script&gt;</code> tag to the <code>&lt;head&gt;</code> section of
+your HTML, with the appropriate path in the <code>src</code> attribute.  In order for the
+examples in this tutorial to work, the file <code>hotdrink.min.js</code> must be located
+in the same directory as this HTML file.
 </p>
 
 <div class="org-src-container">
@@ -348,94 +380,562 @@ using HotDrink.
 </p>
 </div>
 
-<div id="outline-container-sec-3-1" class="outline-3">
-<h3 id="sec-3-1"><span class="section-number-3">3.1</span> The model</h3>
-<div class="outline-text-3" id="text-3-1">
+<ol class="org-ol"><li><a id="sec-3-0-1"></a>The property model<br  /><div class="outline-text-4" id="text-3-0-1">
 <p>
-The model is HotDrink's representation of the data in your
-interface. Though we have named it the model, it is really the
-view-model of the MVVM pattern.  As described above, it consists of
-variables that hold data, and constraints that define how those
-variables are related.  The model also serves as a naming mechanism for
-variables: when a variable is created, it is given a name, and stored
-as a property of the model under that name.
-For example, when defining the model <code>model</code>,
-a variable created with the name <code>x</code> is accessible as <code>model.x</code>.
+A <i>property model</i> is the View-Model of a HotDrink &ldquo;powered&rdquo; application.
+application.  It contains variables for holding the data used by your GUI, and
+a constraint system for enforcing any constraints you define for those
+variables (as described in Section <a href="#sec-1-1">1.1</a>.)  In general, your
+application will always have a single property model, customized to contain
+the variables and constraints needed for your GUI.  Variables and constraints
+are created separately, then added to the property model.
 </p>
 </div>
+</li>
+
+<li><a id="sec-3-0-2"></a>The context<br  /><div class="outline-text-4" id="text-3-0-2">
+<p>
+A <i>context</i> is an object which serves two purposes.  First, it is a container
+for elements of the property model, such as variables and constraints.
+Second, it provides a naming mechanism for those elements: if you want a
+variable named \(x\), create a new variable object and assign it to the the <code>x</code>
+field of your context.  We say the variable is named <code>x</code> in the context to
+which you assigned it; the same variable may have a different name in some
+other context.
+</p>
+
+<p>
+For a context, containing an object and naming an object are two unrelated
+tasks.  The context may contain certain objects which it does not name, and it
+may name objects which it does not contain.  Containing denotes ownership: a
+context owns the variables and constraints it contains.  Thus, while multiple
+contexts may give a name to a variable, only one context may contain a
+variable.
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-0-3"></a>The context builder<br  /><div class="outline-text-4" id="text-3-0-3">
+<p>
+The task of building a context is rather complex.  To help, HotDrink provides
+an object called the <i>context builder</i>.  This factory object essentially
+defines its own language (i.e., an <i>embedded domain-specific language</i>) for
+constructing contexts.  To use this language, create a new context builder
+instance, then call its member functions to add elements to the context.
+</p>
+</div>
+</li></ol>
 </div>
 
-<div id="outline-container-sec-3-2" class="outline-3">
-<h3 id="sec-3-2"><span class="section-number-3">3.2</span> The model builder</h3>
-<div class="outline-text-3" id="text-3-2">
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> An introductory example</h2>
+<div class="outline-text-2" id="text-4">
 <p>
-The task of building a model is rather complex, involving calls to multiple
-functions with long signatures.  To help in constructing models, HotDrink
-contains an object called the <i>model builder</i>.  The model builder
-essentially defines its own language (i.e., an <i>embedded domain-specific language</i>)
-for constructing constraint systems.  To use
-the language, create a new model builder instance, then call its
-various member functions to add elements to the model. These member
-functions are described in detail in <a href="basics.html">Basic HotDrink Usage</a>. The
-<code>end</code> member function retrieves the constructed model.
+We present here a simple example of using HotDrink.  Note that we will not
+explain all the details of this example, only the most important points.  The
+goal of this example is to define some basic concepts that you will need to
+understand the other HotDrink tutorials; the other tutorials will provide a
+more in-depth explanation of how HotDrink works.
 </p>
+</div>
+
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1"><span class="section-number-3">4.1</span> The example</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+Below is an form from a hypothetical hotel reservation web page.  The user may
+edit the check-in date, the check-out date, the number of nights to stay, and
+the number of beds desired.  Notice that, as one text box is edited, other
+elements of the web page are updated to be consistent with the changes.
+</p>
+
+<div class="results">
+<table>
+  <style type="text/css" scoped>
+    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+  </style>
+  <tr>
+    <th>Check-In:</th>
+    <td><input type="text" data-bind="hd.date( checkin )"/></td>
+  </tr>
+  <tr>
+    <th>Check-Out:</th>
+    <td><input type="text" data-bind="hd.date( checkout )"/></td>
+  </tr>
+  <tr>
+    <th>Nights:</th>
+    <td><input type="text" data-bind="hd.num( nights, 0 )"/></td>
+  </tr>
+  <tr>
+    <th>Room Type:</th>
+    <td>
+      <select data-bind="hd.value( type )">
+        <option value="1D">1 Double Bed</option>
+        <option value="1Q">1 Queen Bed</option>
+        <option value="1K">1 King Bed</option>
+        <option value="2Q">2 Queen Beds</option>
+      </select>
+    </td>
+  </tr>
+  <tr>
+    <th>Price:</th>
+    <td>$<span data-bind="hd.text( price, hd.fix( 2 ) )"></span></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="right">
+      <input type="button" value="Submit" data-bind="hd.click( reportPrice )"/>
+    </td>
+  </tr>
+</table>
+</div>
+<script type="text/javascript">
+(function() {
+// Some constants to help us
+var oneDayMs = 24*60*60*1000;
+var today = new Date();
+today.setHours( 0, 0, 0, 0 );
+
+// Define variables and constraints in a context
+var context = new hd.ContextBuilder()
+
+    // Variables
+    .variable( "checkin", today)
+    .variable( "checkout" )
+    .variable( "nights", 2 )
+    .variable( "type", "1Q" )
+    .variable( "price" )
+
+    // First constraint
+    .constraint( 'checkin, checkout, nights' )
+    .method( 'checkin, checkout -> nights', function( checkin, checkout ) {
+      return (checkout.getTime() - checkin.getTime()) / oneDayMs;
+    } )
+    .method( 'nights, checkin -> checkout', function( nights, checkin ) {
+      return new Date( checkin.getTime() + nights*oneDayMs );
+    } )
+    .method( 'nights, checkout -> checkin', function( nights, checkout ) {
+      return new Date( checkout.getTime() - nights*oneDayMs );
+    } )
+
+    // Second constraint
+    .constraint( 'nights, type, price' )
+    .method( 'nights, type -> price', function( nights, type ) {
+      var rate;
+      switch(type) {
+      case '1D':  rate = 80;  break;
+      case '1Q':  rate = 95;  break;
+      case '1K':  rate = 115; break;
+      case '2!':  rate = 140; break;
+      default:   throw "Invalid room type";
+      }
+      return nights * rate
+    } )
+
+    // Create a custom command named 'reportPrice'
+    .command( 'reportPrice', 'price ->', function( price ) {
+      alert( "The price of your room is $" + price.toFixed( 2 ) );
+    } )
+
+    .context();
+
+// Define the property model
+var pm = new hd.PropertyModel();
+pm.addComponent( context );
+window.addEventListener( 'load', function() {
+  hd.performDeclaredBindings( context, document.body );
+} );
+})();
+</script>
+
+<p>
+<b>Source Code</b>
+</p>
+
+<p>
+The source code for this form is shown in its entirety below.  (Click the
+"show" links to view the code.)  To clarify, we have broken the code into
+three sections:  the HTML that defines the View, the JavaScript that defines
+the View-Model, and the JavaScript that performs binding.  In the remainder of
+this section we will reproduce and examine snippets of this code.
+</p>
+
 <div class="org-src-container">
+<label class="org-src-name"><i>View</i> (show/hide)</label>
+<pre class="src src-html"><span class="linenr"> 1: </span>&lt;<span style="color: #006699;">table</span>&gt;
+<span class="linenr"> 2: </span>  &lt;<span style="color: #006699;">style</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text/css"</span> scoped&gt;
+<span class="linenr"> 3: </span>    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+<span class="linenr"> 4: </span>  &lt;/<span style="color: #006699;">style</span>&gt;
+<span class="linenr"> 5: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 6: </span>    &lt;<span style="color: #006699;">th</span>&gt;Check-In:&lt;/<span style="color: #006699;">th</span>&gt;
+<span class="linenr"> 7: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.date( checkin )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 8: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr"> 9: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">10: </span>    &lt;<span style="color: #006699;">th</span>&gt;Check-Out:&lt;/<span style="color: #006699;">th</span>&gt;
+<span class="linenr">11: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.date( checkout )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">12: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">13: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">14: </span>    &lt;<span style="color: #006699;">th</span>&gt;Nights:&lt;/<span style="color: #006699;">th</span>&gt;
+<span class="linenr">15: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( nights, 0 )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">16: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">17: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">18: </span>    &lt;<span style="color: #006699;">th</span>&gt;Room Type:&lt;/<span style="color: #006699;">th</span>&gt;
+<span class="linenr">19: </span>    &lt;<span style="color: #006699;">td</span>&gt;
+<span class="linenr">20: </span>      &lt;<span style="color: #006699;">select</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.value( type )"</span>&gt;
+<span class="linenr">21: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"1D"</span>&gt;1 Double Bed&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">22: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"1Q"</span>&gt;1 Queen Bed&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">23: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"1K"</span>&gt;1 King Bed&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">24: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"2Q"</span>&gt;2 Queen Beds&lt;/<span style="color: #006699;">option</span>&gt;
+<span class="linenr">25: </span>      &lt;/<span style="color: #006699;">select</span>&gt;
+<span class="linenr">26: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">27: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">28: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">29: </span>    &lt;<span style="color: #006699;">th</span>&gt;Price:&lt;/<span style="color: #006699;">th</span>&gt;
+<span class="linenr">30: </span>    &lt;<span style="color: #006699;">td</span>&gt;$&lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( price, hd.fix( 2 ) )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">31: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">32: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">33: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">colspan</span>=<span style="color: #008000;">"2"</span> <span style="color: #BA36A5;">align</span>=<span style="color: #008000;">"right"</span>&gt;
+<span class="linenr">34: </span>      &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"button"</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"Submit"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.click( reportPrice )"</span>/&gt;
+<span class="linenr">35: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">36: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
+<span class="linenr">37: </span>&lt;/<span style="color: #006699;">table</span>&gt;
+</pre>
+</div>
 
-<pre class="src src-js"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">builder</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>();
+<div class="org-src-container">
+<label class="org-src-name"><i>View-Model</i> (show/hide)</label>
+<pre class="src src-js"><span class="linenr"> 1: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Some constants to help us</span>
+<span class="linenr"> 2: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">oneDayMs</span> = 24*60*60*1000;
+<span class="linenr"> 3: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">today</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">Date</span>();
+<span class="linenr"> 4: </span>today.setHours( 0, 0, 0, 0 );
+<span class="linenr"> 5: </span>
+<span class="linenr"> 6: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Define variables and constraints in a context</span>
+<span class="linenr"> 7: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">context</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ContextBuilder</span>()
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span>    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Variables</span>
+<span class="linenr">10: </span>    .variable( <span style="color: #008000;">"checkin"</span>, today)
+<span class="linenr">11: </span>    .variable( <span style="color: #008000;">"checkout"</span> )
+<span class="linenr">12: </span>    .variable( <span style="color: #008000;">"nights"</span>, 2 )
+<span class="linenr">13: </span>    .variable( <span style="color: #008000;">"type"</span>, <span style="color: #008000;">"1Q"</span> )
+<span class="linenr">14: </span>    .variable( <span style="color: #008000;">"price"</span> )
+<span class="linenr">15: </span>
+<span class="linenr">16: </span>    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">First constraint</span>
+<span class="linenr">17: </span>    .constraint( <span style="color: #008000;">'checkin, checkout, nights'</span> )
+<span class="linenr">18: </span>    .method( <span style="color: #008000;">'checkin, checkout -&gt; nights'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">checkin</span>, <span style="color: #BA36A5;">checkout</span> ) {
+<span class="linenr">19: </span>      <span style="color: #0000FF;">return</span> (checkout.getTime() - checkin.getTime()) / oneDayMs;
+<span class="linenr">20: </span>    } )
+<span class="linenr">21: </span>    .method( <span style="color: #008000;">'nights, checkin -&gt; checkout'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">nights</span>, <span style="color: #BA36A5;">checkin</span> ) {
+<span class="linenr">22: </span>      <span style="color: #0000FF;">return</span> <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">Date</span>( checkin.getTime() + nights*oneDayMs );
+<span class="linenr">23: </span>    } )
+<span class="linenr">24: </span>    .method( <span style="color: #008000;">'nights, checkout -&gt; checkin'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">nights</span>, <span style="color: #BA36A5;">checkout</span> ) {
+<span class="linenr">25: </span>      <span style="color: #0000FF;">return</span> <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">Date</span>( checkout.getTime() - nights*oneDayMs );
+<span class="linenr">26: </span>    } )
+<span class="linenr">27: </span>
+<span class="linenr">28: </span>    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Second constraint</span>
+<span class="linenr">29: </span>    .constraint( <span style="color: #008000;">'nights, type, price'</span> )
+<span class="linenr">30: </span>    .method( <span style="color: #008000;">'nights, type -&gt; price'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">nights</span>, <span style="color: #BA36A5;">type</span> ) {
+<span class="linenr">31: </span>      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">rate</span>;
+<span class="linenr">32: </span>      <span style="color: #0000FF;">switch</span>(type) {
+<span class="linenr">33: </span>      <span style="color: #0000FF;">case</span> <span style="color: #008000;">'1D'</span>:  rate = 80;  <span style="color: #0000FF;">break</span>;
+<span class="linenr">34: </span>      <span style="color: #0000FF;">case</span> <span style="color: #008000;">'1Q'</span>:  rate = 95;  <span style="color: #0000FF;">break</span>;
+<span class="linenr">35: </span>      <span style="color: #0000FF;">case</span> <span style="color: #008000;">'1K'</span>:  rate = 115; <span style="color: #0000FF;">break</span>;
+<span class="linenr">36: </span>      <span style="color: #0000FF;">case</span> <span style="color: #008000;">'2!'</span>:  rate = 140; <span style="color: #0000FF;">break</span>;
+<span class="linenr">37: </span>      <span style="color: #0000FF;">default</span>:   <span style="color: #0000FF;">throw</span> <span style="color: #008000;">"Invalid room type"</span>;
+<span class="linenr">38: </span>      }
+<span class="linenr">39: </span>      <span style="color: #0000FF;">return</span> nights * rate
+<span class="linenr">40: </span>    } )
+<span class="linenr">41: </span>
+<span class="linenr">42: </span>    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create a custom command named 'reportPrice'</span>
+<span class="linenr">43: </span>    .command( <span style="color: #008000;">'reportPrice'</span>, <span style="color: #008000;">'price -&gt;'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">price</span> ) {
+<span class="linenr">44: </span>      alert( <span style="color: #008000;">"The price of your room is $"</span> + price.toFixed( 2 ) );
+<span class="linenr">45: </span>    } )
+<span class="linenr">46: </span>
+<span class="linenr">47: </span>    .context();
+<span class="linenr">48: </span>
+<span class="linenr">49: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Define the property model</span>
+<span class="linenr">50: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">pm</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.PropertyModel</span>();
+<span class="linenr">51: </span>pm.addComponent( context );
+</pre>
+</div>
 
-<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">...invoke various builder member functions to build the model ...</span>
-
-<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = builder.end();
+<div class="org-src-container">
+<label class="org-src-name"><i>Binding</i> (show/hide)</label>
+<pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
+<span class="linenr">2: </span>  hd.performDeclaredBindings( context, document.body );
+<span class="linenr">3: </span>} );
 </pre>
 </div>
 </div>
 </div>
 
-
-<div id="outline-container-sec-3-3" class="outline-3">
-<h3 id="sec-3-3"><span class="section-number-3">3.3</span> The constraint system</h3>
-<div class="outline-text-3" id="text-3-3">
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2"><span class="section-number-3">4.2</span> The View</h3>
+<div class="outline-text-3" id="text-4-2">
 <p>
-As explained in Section <a href="#sec-1-1">1.1</a>, the heart of HotDrink is a
-constraint system.  The task of the constraint system is to enforce the
-constraints of the model.  However, the two are separate entities.
-A model can exist without a constraint system; that simply means that no one is enforcing its constraints.
+As mentioned above, the View is defined by the HTML used to construct the web
+page (and any JavaScript used to dynamically generate web page content).  In
+this example, our View is an HTML table containing input elements and their
+labels.  Each input element is bound to a variable in the view-model; the
+value of that variable is displayed by the element, and any changes made to
+the element are propagated to the value of the variable.
 </p>
 
 <p>
-To use a constraint system, create a new instance, then register a model with a constraint system.
-</p>
-
-<div class="org-src-container">
-
-<pre class="src src-js"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">system</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ConstraintSystem</span>();
-
-system.addComponent( model );
-</pre>
-</div>
-
-<p>
-A model added to a constraint system can be later removed, if needed:
+In this example we use HotDrink's declarative bindings, in which each tag is
+annotated with JavaScript code indicating how it is to be bound.  We call this
+annotation a <i>binding specification</i>.  Binding specifications are found in the
+<code>data-bind</code> attribute of an HTML tag.  For example, the following text input
+tag contains a binding specification indicating that it is to be bound to the
+<code>checkin</code> variable of the view-model, and that it is to be converted to a
+JavaScript <code>Date</code> object in the view-model.  Thus, after each edit of the text
+input, the string will be converted to a <code>Date</code> object, and&#x2014;if
+successfully converted&#x2014;will be stored in the <code>checkin</code> variable.
 </p>
 
 <div class="org-src-container">
 
-<pre class="src src-js">system.removeComponent( model );
+<pre class="src src-html" id="checkin">&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.date( checkin )"</span>/&gt;
 </pre>
 </div>
 
 <p>
-As those function names suggest, the full model for your application can
-actually consist of several different components, and new components can be
-added or removed at run-time.  For now we assume one component only and
-consider it as the entire model.
+Similarly, this text input tag contains a binding specification indicating
+that it is to be bound to the <code>nights</code> variable of the view-model, and that it
+is to be converted to a number in the view-model.  The second parameter to the
+<code>hd.num</code> function indicates that the number is to have zero digits after the
+decimal point&#x2014;i.e., it is to be an integer.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html" id="nights">&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( nights, 0 )"</span>/&gt;
+</pre>
+</div>
+
+<p>
+The <code>&lt;select&gt;</code> tag for the drop-down list element indicates that it is to use
+the <code>type</code> variable as the selected value.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html" id="rate">&lt;<span style="color: #006699;">select</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.value( type )"</span>&gt;
+</pre>
+</div>
+
+<p>
+The view contains one other element bound to a variable, though it is not an
+input element.  The following <code>&lt;span&gt;</code> tag contains a binding specification
+indicating the <code>price</code> variable is to be the contents of the tag, and that it
+is to be interpreted simply as text&#x2014;i.e., no HTML tags, etc.  The call to
+<code>hd.fix( 2 )</code> indicates that the variable is to be converted from a number to
+a string containing two digits after the decimal point.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-html" id="price">&lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( price, hd.fix( 2 ) )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;
+</pre>
+</div>
+
+<p>
+These binding specifications have no effect until you tell HotDrink to
+automatically perform all bindings according to their specifications.  We do
+that in the Binding section.
+</p>
+
+<p>
+As a side-node, you may find this view to be very plain.  Let us emphasize
+that the purpose of HotDrink is <i>not</i> to create a fancy View; it is to create
+a fancy View-Model.  HotDrink focuses on the data underlying your web page,
+enforcing constraints and orchestrating commands.  There are many existing
+JavaScript toolkits which, for example, will help you create calendar widgets
+to help the user select a date.  HotDrink aims to cooperate with those
+toolkits, not replace them.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3"><span class="section-number-3">4.3</span> The View-Model</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+As mentioned above, a property model represents the view-model of our
+application.  Your job as the programmer, then, is to construct a property
+model that correctly models your GUI.
+</p>
+
+<p>
+The first thing we must do is create the variables and constraints that will
+define our property model.  We create these as members of a context using a
+context builder.  The general strategy for constructing a context is: (1.)
+create a new builder object, (2.) use the builder member functions to create
+variables, constraints, etc., and (3.) call the <code>context</code> builder member
+function to retrieve the completed context.  The mock code below illustrates
+how this might be done.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create new builder object</span>
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">builder</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>();
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Use methods to construct the model</span>
+builder.variable( ... );
+builder.constraint( ... );
+builder.method( ... );
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">...and so on...</span>
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Retrieve the completed model</span>
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">context</span> = builder.context();
+</pre>
+</div>
+
+<p>
+However, most builder member functions return the same builder object with
+which they were invoked.  This allows a succinct programming style known as
+&ldquo;chaining&rdquo; in which the return value of one member function is used to
+immediately invoke the next member function.  You can see this style in the
+mock code below.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create, use, and discard builder object</span>
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">context</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ContextBuilder</span>()
+    .variable( ... )
+    .constraint( ... )
+    .method( ... )
+    .context();
+</pre>
+</div>
+
+<p>
+First we create a new <code>ContextBuilder</code> object.  Rather than storing this
+builder in a variable, we simply begin invoking member functions on it.  Each
+member function invoked returns the same anonymous builder.  This return value
+is used to invoke the next member function, and so on.  This continues until
+the end, where the <code>context</code> member function is invoked on the still-anonymous
+builder to return the context that was constructed.  It is this context that
+is assigned to the <code>context</code> variable.  This is the style we use in our
+view-model code.
+</p>
+
+<p>
+Once you have a context, you can create a property model and add the variables
+and constraints of the context to the property model, like so:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="propmod"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">pm</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.PropertyModel</span>();
+pm.addComponent( context );
+</pre>
+</div>
+
+<p>
+When you add a context to a property model, it automatically adds to the
+property model all the variables and constraints which it contains.  Later,
+you may remove those elements from the property model, like so:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">pm.removeComponent( context );
+</pre>
+</div>
+
+<p>
+As those function names suggest, the full property model for your application
+can actually consist of several different contexts, and new contexts can be
+added or removed at run-time.  For now we assume a single context defines the
+entire property model.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-4" class="outline-3">
+<h3 id="sec-4-4"><span class="section-number-3">4.4</span> The Binding</h3>
+<div class="outline-text-3" id="text-4-4">
+<p>
+As mentioned above, the <i>bindings</i> are the connections between variables of
+the view-model and elements of the View.  We can generate bindings
+programmatically with JavaScript code.  However, in the example we have
+annotated elements of the View with binding specification, indicating how they
+are to be bound.  We can perform all of these bindings in one fell swoop with
+the following line of code.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="binding">  hd.performDeclaredBindings( context, document.body );
+</pre>
+</div>
+
+<p>
+The <code>performDeclaredBindings</code> function causes HotDrink to search a part of the
+Document Object Model (DOM) for HTML elements which have a binding
+specification.  It then performs those bindings according to their
+specification.  The first parameter is a context used to look up any variable
+names encountered in the binding specifications.  The second parameter is a
+DOM node indicating which part of the DOM should be searched for binding
+specifications.  HotDrink will only search the specified node and any of its
+children when looking for binding specifications.  In this case, however,
+we've passed <code>document.body</code>, indicating the entire body of the DOM is to be
+searched.
+</p>
+
+<p>
+There is a catch to performing binding&#x2014;one web developers should be very
+familiar with.  Elements of the DOM are not available until the entire HTML
+document has been parsed; thus, attempting to call <code>performDeclaredBindings</code>
+in the header of the document will fail because the DOM is not yet ready.
+In this example, we handle this by registering a callback function to be
+executed when the entire document has finished loading; it is here that we
+call <code>performDeclaredBindings</code>.  Many JavaScript toolkits and frameworks
+provide alternative means of running code after the DOM is ready; any such
+means would be suitable for this purpose.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-5" class="outline-3">
+<h3 id="sec-4-5"><span class="section-number-3">4.5</span> Commands</h3>
+<div class="outline-text-3" id="text-4-5">
+<p>
+In many ways, a command is similar to an event handler.  However, whereas an
+event handler represents something that happened in the View, a command
+represents something that happened in the View-Model.  For example, a
+key-press event is generated when the user presses a key.  That event is
+translated by a binding into a variable-set command.
+</p>
+
+<p>
+Most commands in this example are, in fact, variable-set commands issued by
+bindings.  These commands are created automatically; no extra work is
+required.  If you want to create your own custom commands, however, you may do
+so using the context builder.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create a custom command named 'reportPrice'</span>
+    .command( <span style="color: #008000;">'reportPrice'</span>, <span style="color: #008000;">'price -&gt;'</span>, <span style="color: #0000FF;">function</span>( <span style="color: #BA36A5;">price</span> ) {
+      alert( <span style="color: #008000;">"The price of your room is $"</span> + price.toFixed( 2 ) );
+    } )
+</pre>
+</div>
+
+<p>
+This command can be bound to events, like button presses.  Commands can also
+be used to modify variables of the property model, or event modify the
+property model itself, adding or removing variables, constraints, etc.
 </p>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2015-03-18 Wed 14:20</p>
+<p class="date">Created: 2015-10-27 Tue 08:33</p>
 <p class="validation"></p>
 </div>
 </body>

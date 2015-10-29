@@ -22,7 +22,8 @@ var hd;
                 }
             }
             catch (e) {
-                if (typeof e === 'object' && Object.getPrototypeOf(e) !== Object.prototype) {
+                if (typeof e === 'object' &&
+                    Object.getPrototypeOf(e) !== Object.prototype) {
                     e = e.toString();
                 }
                 reject(e);

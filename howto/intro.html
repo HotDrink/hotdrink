@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Introduction to HotDrink</title>
-<!-- 2015-10-27 Tue 08:33 -->
+<!-- 2015-10-29 Thu 10:02 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <style type="text/css">
@@ -375,12 +375,12 @@ with the DOM are via cooperative API functions, e.g.,
 <h2 id="sec-3"><span class="section-number-2">3</span> Important HotDrink objects</h2>
 <div class="outline-text-2" id="text-3">
 <p>
-There are three important objects which you will need to interact with when
+There are three important object types you will need to interact with when
 using HotDrink.
 </p>
 </div>
 
-<ol class="org-ol"><li><a id="sec-3-0-1"></a>The property model<br  /><div class="outline-text-4" id="text-3-0-1">
+<ol class="org-ol"><li><a id="sec-3-0-1"></a>The <code>PropertyModel</code> type<br  /><div class="outline-text-4" id="text-3-0-1">
 <p>
 A <i>property model</i> is the View-Model of a HotDrink &ldquo;powered&rdquo; application.
 application.  It contains variables for holding the data used by your GUI, and
@@ -393,35 +393,36 @@ are created separately, then added to the property model.
 </div>
 </li>
 
-<li><a id="sec-3-0-2"></a>The context<br  /><div class="outline-text-4" id="text-3-0-2">
+<li><a id="sec-3-0-2"></a>The <code>Component</code> type<br  /><div class="outline-text-4" id="text-3-0-2">
 <p>
-A <i>context</i> is an object which serves two purposes.  First, it is a container
-for elements of the property model, such as variables and constraints.
-Second, it provides a naming mechanism for those elements: if you want a
-variable named \(x\), create a new variable object and assign it to the the <code>x</code>
-field of your context.  We say the variable is named <code>x</code> in the context to
-which you assigned it; the same variable may have a different name in some
-other context.
+A property model may be viewed as a type of container: it contains and manages
+a set of elements.  The three types of property model elements we have
+discussed so far are variables, constraints, and commands.  While it is
+possible to create these elements individually and add them directly to a
+property model, the recommended approach is to define a property model
+<i>component</i>.  A component is also a collection of property model elements;
+however, a component does not manage its elements, it merely holds them.
 </p>
 
 <p>
-For a context, containing an object and naming an object are two unrelated
-tasks.  The context may contain certain objects which it does not name, and it
-may name objects which it does not contain.  Containing denotes ownership: a
-context owns the variables and constraints it contains.  Thus, while multiple
-contexts may give a name to a variable, only one context may contain a
-variable.
+You, the programmer, are responsible for making sure all the property model
+elements you are using are added to the property model.  By placing related
+elements together in a component, it is easy to add them all to the property
+model at the same time&#x2014;and to remove them later if they are no longer
+needed.  You can also define your own component types so that you can reuse
+them.
 </p>
 </div>
 </li>
 
-<li><a id="sec-3-0-3"></a>The context builder<br  /><div class="outline-text-4" id="text-3-0-3">
+<li><a id="sec-3-0-3"></a>The <code>ComponentBuilder</code> type<br  /><div class="outline-text-4" id="text-3-0-3">
 <p>
-The task of building a context is rather complex.  To help, HotDrink provides
-an object called the <i>context builder</i>.  This factory object essentially
-defines its own language (i.e., an <i>embedded domain-specific language</i>) for
-constructing contexts.  To use this language, create a new context builder
-instance, then call its member functions to add elements to the context.
+The task of building a component is somewhat complex.  To help, HotDrink
+provides an object called the <i>component builder</i>.  This factory object
+essentially defines its own language (i.e., an <i>embedded domain-specific
+language</i>) for constructing components.  To use this language, create a new
+component builder instance, then call its member functions to add elements to
+the component.
 </p>
 </div>
 </li></ol>
@@ -456,20 +457,20 @@ elements of the web page are updated to be consistent with the changes.
   </style>
   <tr>
     <th>Check-In:</th>
-    <td><input type="text" data-bind="hd.date( checkin )"/></td>
+    <td><input type="text" data-bind="bd.date( checkin )"/></td>
   </tr>
   <tr>
     <th>Check-Out:</th>
-    <td><input type="text" data-bind="hd.date( checkout )"/></td>
+    <td><input type="text" data-bind="bd.date( checkout )"/></td>
   </tr>
   <tr>
     <th>Nights:</th>
-    <td><input type="text" data-bind="hd.num( nights, 0 )"/></td>
+    <td><input type="text" data-bind="bd.num( nights, 0 )"/></td>
   </tr>
   <tr>
     <th>Room Type:</th>
     <td>
-      <select data-bind="hd.value( type )">
+      <select data-bind="bd.value( type )">
         <option value="1D">1 Double Bed</option>
         <option value="1Q">1 Queen Bed</option>
         <option value="1K">1 King Bed</option>
@@ -479,11 +480,11 @@ elements of the web page are updated to be consistent with the changes.
   </tr>
   <tr>
     <th>Price:</th>
-    <td>$<span data-bind="hd.text( price, hd.fix( 2 ) )"></span></td>
+    <td>$<span data-bind="bd.text( price, bd.fix( 2 ) )"></span></td>
   </tr>
   <tr>
     <td colspan="2" align="right">
-      <input type="button" value="Submit" data-bind="hd.click( reportPrice )"/>
+      <input type="button" value="Submit" data-bind="bd.click( reportPrice )"/>
     </td>
   </tr>
 </table>
@@ -495,8 +496,8 @@ var oneDayMs = 24*60*60*1000;
 var today = new Date();
 today.setHours( 0, 0, 0, 0 );
 
-// Define variables and constraints in a context
-var context = new hd.ContextBuilder()
+// Define variables and constraints in a component
+var model = new hd.ComponentBuilder()
 
     // Variables
     .variable( "checkin", today)
@@ -536,13 +537,13 @@ var context = new hd.ContextBuilder()
       alert( "The price of your room is $" + price.toFixed( 2 ) );
     } )
 
-    .context();
+    .component();
 
 // Define the property model
 var pm = new hd.PropertyModel();
-pm.addComponent( context );
+pm.addComponent( model );
 window.addEventListener( 'load', function() {
-  hd.performDeclaredBindings( context, document.body );
+  hd.createDeclaredBindings( model, document.body );
 } );
 })();
 </script>
@@ -567,20 +568,20 @@ this section we will reproduce and examine snippets of this code.
 <span class="linenr"> 4: </span>  &lt;/<span style="color: #006699;">style</span>&gt;
 <span class="linenr"> 5: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
 <span class="linenr"> 6: </span>    &lt;<span style="color: #006699;">th</span>&gt;Check-In:&lt;/<span style="color: #006699;">th</span>&gt;
-<span class="linenr"> 7: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.date( checkin )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr"> 7: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.date( checkin )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
 <span class="linenr"> 8: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
 <span class="linenr"> 9: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">10: </span>    &lt;<span style="color: #006699;">th</span>&gt;Check-Out:&lt;/<span style="color: #006699;">th</span>&gt;
-<span class="linenr">11: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.date( checkout )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">11: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.date( checkout )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
 <span class="linenr">12: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">13: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">14: </span>    &lt;<span style="color: #006699;">th</span>&gt;Nights:&lt;/<span style="color: #006699;">th</span>&gt;
-<span class="linenr">15: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( nights, 0 )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">15: </span>    &lt;<span style="color: #006699;">td</span>&gt;&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.num( nights, 0 )"</span>/&gt;&lt;/<span style="color: #006699;">td</span>&gt;
 <span class="linenr">16: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">17: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">18: </span>    &lt;<span style="color: #006699;">th</span>&gt;Room Type:&lt;/<span style="color: #006699;">th</span>&gt;
 <span class="linenr">19: </span>    &lt;<span style="color: #006699;">td</span>&gt;
-<span class="linenr">20: </span>      &lt;<span style="color: #006699;">select</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.value( type )"</span>&gt;
+<span class="linenr">20: </span>      &lt;<span style="color: #006699;">select</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.value( type )"</span>&gt;
 <span class="linenr">21: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"1D"</span>&gt;1 Double Bed&lt;/<span style="color: #006699;">option</span>&gt;
 <span class="linenr">22: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"1Q"</span>&gt;1 Queen Bed&lt;/<span style="color: #006699;">option</span>&gt;
 <span class="linenr">23: </span>        &lt;<span style="color: #006699;">option</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"1K"</span>&gt;1 King Bed&lt;/<span style="color: #006699;">option</span>&gt;
@@ -590,11 +591,11 @@ this section we will reproduce and examine snippets of this code.
 <span class="linenr">27: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">28: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">29: </span>    &lt;<span style="color: #006699;">th</span>&gt;Price:&lt;/<span style="color: #006699;">th</span>&gt;
-<span class="linenr">30: </span>    &lt;<span style="color: #006699;">td</span>&gt;$&lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( price, hd.fix( 2 ) )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
+<span class="linenr">30: </span>    &lt;<span style="color: #006699;">td</span>&gt;$&lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.text( price, bd.fix( 2 ) )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;&lt;/<span style="color: #006699;">td</span>&gt;
 <span class="linenr">31: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">32: </span>  &lt;<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">33: </span>    &lt;<span style="color: #006699;">td</span> <span style="color: #BA36A5;">colspan</span>=<span style="color: #008000;">"2"</span> <span style="color: #BA36A5;">align</span>=<span style="color: #008000;">"right"</span>&gt;
-<span class="linenr">34: </span>      &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"button"</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"Submit"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.click( reportPrice )"</span>/&gt;
+<span class="linenr">34: </span>      &lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"button"</span> <span style="color: #BA36A5;">value</span>=<span style="color: #008000;">"Submit"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.click( reportPrice )"</span>/&gt;
 <span class="linenr">35: </span>    &lt;/<span style="color: #006699;">td</span>&gt;
 <span class="linenr">36: </span>  &lt;/<span style="color: #006699;">tr</span>&gt;
 <span class="linenr">37: </span>&lt;/<span style="color: #006699;">table</span>&gt;
@@ -608,8 +609,8 @@ this section we will reproduce and examine snippets of this code.
 <span class="linenr"> 3: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">today</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">Date</span>();
 <span class="linenr"> 4: </span>today.setHours( 0, 0, 0, 0 );
 <span class="linenr"> 5: </span>
-<span class="linenr"> 6: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Define variables and constraints in a context</span>
-<span class="linenr"> 7: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">context</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ContextBuilder</span>()
+<span class="linenr"> 6: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Define variables and constraints in a component</span>
+<span class="linenr"> 7: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">model</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ComponentBuilder</span>()
 <span class="linenr"> 8: </span>
 <span class="linenr"> 9: </span>    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Variables</span>
 <span class="linenr">10: </span>    .variable( <span style="color: #008000;">"checkin"</span>, today)
@@ -649,18 +650,18 @@ this section we will reproduce and examine snippets of this code.
 <span class="linenr">44: </span>      alert( <span style="color: #008000;">"The price of your room is $"</span> + price.toFixed( 2 ) );
 <span class="linenr">45: </span>    } )
 <span class="linenr">46: </span>
-<span class="linenr">47: </span>    .context();
+<span class="linenr">47: </span>    .component();
 <span class="linenr">48: </span>
 <span class="linenr">49: </span><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Define the property model</span>
 <span class="linenr">50: </span><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">pm</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.PropertyModel</span>();
-<span class="linenr">51: </span>pm.addComponent( context );
+<span class="linenr">51: </span>pm.addComponent( model );
 </pre>
 </div>
 
 <div class="org-src-container">
 <label class="org-src-name"><i>Binding</i> (show/hide)</label>
 <pre class="src src-js"><span class="linenr">1: </span>window.addEventListener( <span style="color: #008000;">'load'</span>, <span style="color: #0000FF;">function</span>() {
-<span class="linenr">2: </span>  hd.performDeclaredBindings( context, document.body );
+<span class="linenr">2: </span>  hd.createDeclaredBindings( model, document.body );
 <span class="linenr">3: </span>} );
 </pre>
 </div>
@@ -693,7 +694,7 @@ successfully converted&#x2014;will be stored in the <code>checkin</code> variabl
 
 <div class="org-src-container">
 
-<pre class="src src-html" id="checkin">&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.date( checkin )"</span>/&gt;
+<pre class="src src-html" id="checkin">&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.date( checkin )"</span>/&gt;
 </pre>
 </div>
 
@@ -701,13 +702,13 @@ successfully converted&#x2014;will be stored in the <code>checkin</code> variabl
 Similarly, this text input tag contains a binding specification indicating
 that it is to be bound to the <code>nights</code> variable of the view-model, and that it
 is to be converted to a number in the view-model.  The second parameter to the
-<code>hd.num</code> function indicates that the number is to have zero digits after the
+<code>bd.num</code> function indicates that the number is to have zero digits after the
 decimal point&#x2014;i.e., it is to be an integer.
 </p>
 
 <div class="org-src-container">
 
-<pre class="src src-html" id="nights">&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.num( nights, 0 )"</span>/&gt;
+<pre class="src src-html" id="nights">&lt;<span style="color: #006699;">input</span> <span style="color: #BA36A5;">type</span>=<span style="color: #008000;">"text"</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.num( nights, 0 )"</span>/&gt;
 </pre>
 </div>
 
@@ -718,22 +719,22 @@ the <code>type</code> variable as the selected value.
 
 <div class="org-src-container">
 
-<pre class="src src-html" id="rate">&lt;<span style="color: #006699;">select</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.value( type )"</span>&gt;
+<pre class="src src-html" id="rate">&lt;<span style="color: #006699;">select</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.value( type )"</span>&gt;
 </pre>
 </div>
 
 <p>
-The view contains one other element bound to a variable, though it is not an
-input element.  The following <code>&lt;span&gt;</code> tag contains a binding specification
-indicating the <code>price</code> variable is to be the contents of the tag, and that it
-is to be interpreted simply as text&#x2014;i.e., no HTML tags, etc.  The call to
-<code>hd.fix( 2 )</code> indicates that the variable is to be converted from a number to
-a string containing two digits after the decimal point.
+The view contains one other element bound to a variable.  The following
+<code>&lt;span&gt;</code> tag contains a binding specification indicating the <code>price</code> variable
+is to be the contents of the tag, and that it is to be interpreted simply as
+text&#x2014;i.e., no HTML tags, etc.  The call to <code>bd.fix( 2 )</code> indicates that the
+variable is to be converted from a number to a string containing two digits
+after the decimal point.
 </p>
 
 <div class="org-src-container">
 
-<pre class="src src-html" id="price">&lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"hd.text( price, hd.fix( 2 ) )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;
+<pre class="src src-html" id="price">&lt;<span style="color: #006699;">span</span> <span style="color: #BA36A5;">data-bind</span>=<span style="color: #008000;">"bd.text( price, bd.fix( 2 ) )"</span>&gt;&lt;/<span style="color: #006699;">span</span>&gt;
 </pre>
 </div>
 
@@ -766,18 +767,18 @@ model that correctly models your GUI.
 
 <p>
 The first thing we must do is create the variables and constraints that will
-define our property model.  We create these as members of a context using a
-context builder.  The general strategy for constructing a context is: (1.)
+define our property model.  We create these as members of a component using a
+component builder.  The general strategy for constructing a component is: (1.)
 create a new builder object, (2.) use the builder member functions to create
-variables, constraints, etc., and (3.) call the <code>context</code> builder member
-function to retrieve the completed context.  The mock code below illustrates
+variables, constraints, etc., and (3.) call the <code>component</code> builder member
+function to retrieve the completed component.  The mock code below illustrates
 how this might be done.
 </p>
 
 <div class="org-src-container">
 
 <pre class="src src-js"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create new builder object</span>
-<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">builder</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ModelBuilder</span>();
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">builder</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ComponentBuilder</span>();
 
 <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Use methods to construct the model</span>
 builder.variable( ... );
@@ -786,7 +787,7 @@ builder.method( ... );
 <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">...and so on...</span>
 
 <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Retrieve the completed model</span>
-<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">context</span> = builder.context();
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">component</span> = builder.component();
 </pre>
 </div>
 
@@ -801,53 +802,57 @@ mock code below.
 <div class="org-src-container">
 
 <pre class="src src-js"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Create, use, and discard builder object</span>
-<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">context</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ContextBuilder</span>()
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">component</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.ComponentBuilder</span>()
     .variable( ... )
     .constraint( ... )
     .method( ... )
-    .context();
+    .component();
 </pre>
 </div>
 
 <p>
-First we create a new <code>ContextBuilder</code> object.  Rather than storing this
+First we create a new <code>ComponentBuilder</code> object.  Rather than storing this
 builder in a variable, we simply begin invoking member functions on it.  Each
 member function invoked returns the same anonymous builder.  This return value
 is used to invoke the next member function, and so on.  This continues until
-the end, where the <code>context</code> member function is invoked on the still-anonymous
-builder to return the context that was constructed.  It is this context that
-is assigned to the <code>context</code> variable.  This is the style we use in our
+the end, where the <code>component</code> member function is invoked on the still-anonymous
+builder to return the component that was constructed.  It is this component that
+is assigned to the <code>component</code> variable.  This is the style we use in our
 view-model code.
 </p>
 
 <p>
-Once you have a context, you can create a property model and add the variables
-and constraints of the context to the property model, like so:
+In general, you may have as many components as you like.  However, for small
+interfaces, like the one in this example, we can represent the entire GUI with
+a single component.  You can name this component whatever you would like, but
+our convention is to name it <code>model</code>, as it represents the entirety of the
+property model.  Once you have a component, you can add it to a property
+model, like so:
 </p>
 
 <div class="org-src-container">
 
 <pre class="src src-js" id="propmod"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">pm</span> = <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">hd.PropertyModel</span>();
-pm.addComponent( context );
+pm.addComponent( model );
 </pre>
 </div>
 
 <p>
-When you add a context to a property model, it automatically adds to the
-property model all the variables and constraints which it contains.  Later,
-you may remove those elements from the property model, like so:
+When you add a component to a property model, it automatically adds to the
+property model all the elements contained by the component.  Later, you may
+remove those elements from the property model, like so:
 </p>
 
 <div class="org-src-container">
 
-<pre class="src src-js">pm.removeComponent( context );
+<pre class="src src-js">pm.removeComponent( model );
 </pre>
 </div>
 
 <p>
 As those function names suggest, the full property model for your application
-can actually consist of several different contexts, and new contexts can be
-added or removed at run-time.  For now we assume a single context defines the
+can actually consist of several different components, and new components can be
+added or removed at run-time.  For now we assume a single component defines the
 entire property model.
 </p>
 </div>
@@ -867,15 +872,15 @@ the following line of code.
 
 <div class="org-src-container">
 
-<pre class="src src-js" id="binding">  hd.performDeclaredBindings( context, document.body );
+<pre class="src src-js" id="binding">  hd.createDeclaredBindings( model, document.body );
 </pre>
 </div>
 
 <p>
-The <code>performDeclaredBindings</code> function causes HotDrink to search a part of the
+The <code>createDeclaredBindings</code> function causes HotDrink to search a part of the
 Document Object Model (DOM) for HTML elements which have a binding
 specification.  It then performs those bindings according to their
-specification.  The first parameter is a context used to look up any variable
+specification.  The first parameter is a component used to look up any variable
 names encountered in the binding specifications.  The second parameter is a
 DOM node indicating which part of the DOM should be searched for binding
 specifications.  HotDrink will only search the specified node and any of its
@@ -913,7 +918,7 @@ translated by a binding into a variable-set command.
 Most commands in this example are, in fact, variable-set commands issued by
 bindings.  These commands are created automatically; no extra work is
 required.  If you want to create your own custom commands, however, you may do
-so using the context builder.
+so using the component builder.
 </p>
 
 <div class="org-src-container">
@@ -935,7 +940,7 @@ property model itself, adding or removing variables, constraints, etc.
 </div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2015-10-27 Tue 08:33</p>
+<p class="date">Created: 2015-10-29 Thu 10:02</p>
 <p class="validation"></p>
 </div>
 </body>

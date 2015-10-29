@@ -127,10 +127,10 @@ with the DOM are via cooperative API functions, e.g.,
 
 * Important HotDrink objects
 
-There are three important objects which you will need to interact with when
+There are three important object types you will need to interact with when
 using HotDrink.
 
-*** The property model
+*** The ~PropertyModel~ type
 
 A /property model/ is the View-Model of a HotDrink \ldquo{}powered\rdquo application.
 application.  It contains variables for holding the data used by your GUI, and
@@ -140,30 +140,31 @@ application will always have a single property model, customized to contain
 the variables and constraints needed for your GUI.  Variables and constraints
 are created separately, then added to the property model.
 
-*** The context
+*** The ~Component~ type
 
-A /context/ is an object which serves two purposes.  First, it is a container
-for elements of the property model, such as variables and constraints.
-Second, it provides a naming mechanism for those elements: if you want a
-variable named $x$, create a new variable object and assign it to the the ~x~
-field of your context.  We say the variable is named ~x~ in the context to
-which you assigned it; the same variable may have a different name in some
-other context.
+A property model may be viewed as a type of container: it contains and manages
+a set of elements.  The three types of property model elements we have
+discussed so far are variables, constraints, and commands.  While it is
+possible to create these elements individually and add them directly to a
+property model, the recommended approach is to define a property model
+/component/.  A component is also a collection of property model elements;
+however, a component does not manage its elements, it merely holds them.
 
-For a context, containing an object and naming an object are two unrelated
-tasks.  The context may contain certain objects which it does not name, and it
-may name objects which it does not contain.  Containing denotes ownership: a
-context owns the variables and constraints it contains.  Thus, while multiple
-contexts may give a name to a variable, only one context may contain a
-variable.
+You, the programmer, are responsible for making sure all the property model
+elements you are using are added to the property model.  By placing related
+elements together in a component, it is easy to add them all to the property
+model at the same time---and to remove them later if they are no longer
+needed.  You can also define your own component types so that you can reuse
+them.
 
-*** The context builder
+*** The ~ComponentBuilder~ type
 
-The task of building a context is rather complex.  To help, HotDrink provides
-an object called the /context builder/.  This factory object essentially
-defines its own language (i.e., an /embedded domain-specific language/) for
-constructing contexts.  To use this language, create a new context builder
-instance, then call its member functions to add elements to the context.
+The task of building a component is somewhat complex.  To help, HotDrink
+provides an object called the /component builder/.  This factory object
+essentially defines its own language (i.e., an /embedded domain-specific
+language/) for constructing components.  To use this language, create a new
+component builder instance, then call its member functions to add elements to
+the component.
 
 * An introductory example
 
@@ -209,7 +210,7 @@ this section we will reproduce and examine snippets of this code.
   </tr>
   <tr>
     <th>Check-Out:</th>
-    <td><input type="text" data-bind="hd.date( checkout )"/></td>
+    <td><input type="text" data-bind="bd.date( checkout )"/></td>
   </tr>
   <tr>
     <th>Nights:</th>
@@ -232,7 +233,7 @@ this section we will reproduce and examine snippets of this code.
   </tr>
   <tr>
     <td colspan="2" align="right">
-      <input type="button" value="Submit" data-bind="hd.click( reportPrice )"/>
+      <input type="button" value="Submit" data-bind="bd.click( reportPrice )"/>
     </td>
   </tr>
 </table>
@@ -245,8 +246,8 @@ var oneDayMs = 24*60*60*1000;
 var today = new Date();
 today.setHours( 0, 0, 0, 0 );
 
-// Define variables and constraints in a context
-var context = new hd.ContextBuilder()
+// Define variables and constraints in a component
+var model = new hd.ComponentBuilder()
 
     // Variables
     .variable( "checkin", today)
@@ -283,7 +284,7 @@ var context = new hd.ContextBuilder()
 
 <<command>>
 
-    .context();
+    .component();
 
 // Define the property model
 <<propmod>>
@@ -317,18 +318,18 @@ successfully converted---will be stored in the ~checkin~ variable.
 
 #+NAME: checkin
 #+BEGIN_SRC html
-<input type="text" data-bind="hd.date( checkin )"/>
+<input type="text" data-bind="bd.date( checkin )"/>
 #+END_SRC
 
 Similarly, this text input tag contains a binding specification indicating
 that it is to be bound to the ~nights~ variable of the view-model, and that it
 is to be converted to a number in the view-model.  The second parameter to the
-~hd.num~ function indicates that the number is to have zero digits after the
+~bd.num~ function indicates that the number is to have zero digits after the
 decimal point---i.e., it is to be an integer.
 
 #+NAME: nights
 #+BEGIN_SRC html
-<input type="text" data-bind="hd.num( nights, 0 )"/>
+<input type="text" data-bind="bd.num( nights, 0 )"/>
 #+END_SRC
 
 The ~<select>~ tag for the drop-down list element indicates that it is to use
@@ -336,19 +337,19 @@ the ~type~ variable as the selected value.
 
 #+NAME: rate
 #+BEGIN_SRC html
-<select data-bind="hd.value( type )">
+<select data-bind="bd.value( type )">
 #+END_SRC
 
-The view contains one other element bound to a variable, though it is not an
-input element.  The following ~<span>~ tag contains a binding specification
-indicating the ~price~ variable is to be the contents of the tag, and that it
-is to be interpreted simply as text---i.e., no HTML tags, etc.  The call to
-~hd.fix( 2 )~ indicates that the variable is to be converted from a number to
-a string containing two digits after the decimal point.
+The view contains one other element bound to a variable.  The following
+~<span>~ tag contains a binding specification indicating the ~price~ variable
+is to be the contents of the tag, and that it is to be interpreted simply as
+text---i.e., no HTML tags, etc.  The call to ~bd.fix( 2 )~ indicates that the
+variable is to be converted from a number to a string containing two digits
+after the decimal point.
 
 #+NAME: price
 #+BEGIN_SRC html
-<span data-bind="hd.text( price, hd.fix( 2 ) )"></span>
+<span data-bind="bd.text( price, bd.fix( 2 ) )"></span>
 #+END_SRC
 
 These binding specifications have no effect until you tell HotDrink to
@@ -370,16 +371,16 @@ application.  Your job as the programmer, then, is to construct a property
 model that correctly models your GUI.
 
 The first thing we must do is create the variables and constraints that will
-define our property model.  We create these as members of a context using a
-context builder.  The general strategy for constructing a context is: (1.)
+define our property model.  We create these as members of a component using a
+component builder.  The general strategy for constructing a component is: (1.)
 create a new builder object, (2.) use the builder member functions to create
-variables, constraints, etc., and (3.) call the ~context~ builder member
-function to retrieve the completed context.  The mock code below illustrates
+variables, constraints, etc., and (3.) call the ~component~ builder member
+function to retrieve the completed component.  The mock code below illustrates
 how this might be done.
 
 #+BEGIN_SRC js
 // Create new builder object
-var builder = new hd.ModelBuilder();
+var builder = new hd.ComponentBuilder();
 
 // Use methods to construct the model
 builder.variable( ... );
@@ -388,7 +389,7 @@ builder.method( ... );
 // ...and so on...
 
 // Retrieve the completed model
-var context = builder.context();
+var component = builder.component();
 #+END_SRC
 
 However, most builder member functions return the same builder object with
@@ -399,42 +400,46 @@ mock code below.
 
 #+BEGIN_SRC js
 // Create, use, and discard builder object
-var context = new hd.ContextBuilder()
+var component = new hd.ComponentBuilder()
     .variable( ... )
     .constraint( ... )
     .method( ... )
-    .context();
+    .component();
 #+END_SRC
 
-First we create a new ~ContextBuilder~ object.  Rather than storing this
+First we create a new ~ComponentBuilder~ object.  Rather than storing this
 builder in a variable, we simply begin invoking member functions on it.  Each
 member function invoked returns the same anonymous builder.  This return value
 is used to invoke the next member function, and so on.  This continues until
-the end, where the ~context~ member function is invoked on the still-anonymous
-builder to return the context that was constructed.  It is this context that
-is assigned to the ~context~ variable.  This is the style we use in our
+the end, where the ~component~ member function is invoked on the still-anonymous
+builder to return the component that was constructed.  It is this component that
+is assigned to the ~component~ variable.  This is the style we use in our
 view-model code.
 
-Once you have a context, you can create a property model and add the variables
-and constraints of the context to the property model, like so:
+In general, you may have as many components as you like.  However, for small
+interfaces, like the one in this example, we can represent the entire GUI with
+a single component.  You can name this component whatever you would like, but
+our convention is to name it ~model~, as it represents the entirety of the
+property model.  Once you have a component, you can add it to a property
+model, like so:
 
 #+NAME: propmod
 #+BEGIN_SRC js
 var pm = new hd.PropertyModel();
-pm.addComponent( context );
+pm.addComponent( model );
 #+END_SRC
 
-When you add a context to a property model, it automatically adds to the
-property model all the variables and constraints which it contains.  Later,
-you may remove those elements from the property model, like so:
+When you add a component to a property model, it automatically adds to the
+property model all the elements contained by the component.  Later, you may
+remove those elements from the property model, like so:
 
 #+BEGIN_SRC js
-pm.removeComponent( context );
+pm.removeComponent( model );
 #+END_SRC
 
 As those function names suggest, the full property model for your application
-can actually consist of several different contexts, and new contexts can be
-added or removed at run-time.  For now we assume a single context defines the
+can actually consist of several different components, and new components can be
+added or removed at run-time.  For now we assume a single component defines the
 entire property model.
 
 ** The Binding
@@ -448,13 +453,13 @@ the following line of code.
 
 #+NAME: binding
 #+BEGIN_SRC js
-  hd.performDeclaredBindings( context, document.body );
+  hd.createDeclaredBindings( model, document.body );
 #+END_SRC
 
-The ~performDeclaredBindings~ function causes HotDrink to search a part of the
+The ~createDeclaredBindings~ function causes HotDrink to search a part of the
 Document Object Model (DOM) for HTML elements which have a binding
 specification.  It then performs those bindings according to their
-specification.  The first parameter is a context used to look up any variable
+specification.  The first parameter is a component used to look up any variable
 names encountered in the binding specifications.  The second parameter is a
 DOM node indicating which part of the DOM should be searched for binding
 specifications.  HotDrink will only search the specified node and any of its
@@ -483,7 +488,7 @@ translated by a binding into a variable-set command.
 Most commands in this example are, in fact, variable-set commands issued by
 bindings.  These commands are created automatically; no extra work is
 required.  If you want to create your own custom commands, however, you may do
-so using the context builder.
+so using the component builder.
 
 #+NAME:command
 #+BEGIN_SRC js
@@ -500,6 +505,6 @@ property model itself, adding or removing variables, constraints, etc.
 #  LocalWords:  HotDrink javascript src js stylesheet css href INFOJS sdepth
 #  LocalWords:  le HotDrink's multi ldquo rdquo MVVM ViewModel html JQuery hd
 #  LocalWords:  Dojo MooTools DOM API addEventListener padline noweb th td
-#  LocalWords:  checkin oneDayMs setHours ContextBuilder propmod num getTime
+#  LocalWords:  checkin oneDayMs setHours ComponentBuilder propmod num getTime
 #  LocalWords:  ModelBuilder PropertyModel addComponent removeComponent
 #  LocalWords:  performDeclaredBindings

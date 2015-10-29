@@ -11,6 +11,207 @@
 </div>
 #+END_HTML
 
+* Declarative binding
+
+We return to the topic of binding, this time to see how we may embed binding
+specifications into tags.  Doing so allows us to iterate over the DOM and
+automatically perform any bindings we encounter.
+
+** The example
+
+This example uses no constraints; it simply illustrates a new binding
+technique.  Editing the text boxes modifies the value displayed to the right.
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/decl-bind.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/decl-bind.js html
+#+HTML: })();
+#+HTML: </script>
+
+*Source code*
+
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n :exports code :tangle tangle/decl-bind.html :padline no :noweb yes
+<div id="ex8">
+<<data-bind>>
+           &rArr; <span data-bind="{mkview: hd.Text, model: x}"></span><br/>
+  Y: <input type="text" data-bind="{mkview: hd.Edit, model: y, toModel: hd.toNum()}"/>
+           &rArr; <span data-bind="{mkview: hd.Text, model: y}"></span>
+</div>
+#+END_SRC
+
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/decl-bind.js :padline no
+var component = new hd.ComponentBuilder()
+    .v( 'x', 'Hello, again!' ).v( 'y', 3 ).component();
+
+var pm = new hd.PropertyModel();
+pm.addComponent( component );
+#+END_SRC
+
+#+CAPTION: /Binding/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/decl-bind.js :padline no :noweb yes
+window.addEventListener( 'load', function() {
+<<bind>>
+} );
+#+END_SRC
+
+** Automatic binding function
+
+By now you've probably noticed that the binding section tends to be repetitive
+and boring.  HotDrink offers two shortcuts to help alleviate this.  The first,
+shown here, is allowing binding specifications to be embedded in the HTML.
+There are two steps required for this.
+
+*** Add binding specifications
+
+The first step is to add markup in the HTML to describe how elements should be
+bound.  To indicate that you wish to bind a variable to the node for an HTML
+tag, simply add a ~data-bind~ attribute to the tag with the code for the
+binding specification.  At run-time, HotDrink will evaluate this attribute
+string as JavaScript code to take the result as the binding specification
+object.
+
+#+NAME: data-bind
+#+BEGIN_SRC js
+  X: <input type="text" data-bind="{mkview: hd.Edit, model: x}"/>
+#+END_SRC
+
+Note, however, one slight change to this binding specification.  In previous
+examples our view object was a view adapter which encapsulated some DOM node
+in the tree.  When you embed a binding specification in the HTML, HotDrink
+assumes that a view adapter needs to be created for the DOM node.  Thus, it
+looks for an attribute named "~mkview~".  This should be a constructor or
+factory function which takes a single DOM node parameter.  HotDrink will use
+this constructor or factory to create the view object, like so.
+
+#+BEGIN_SRC js
+specification.view = new specification.mkview( domNode );
+#+END_SRC
+
+Also notice that, in the binding specification, you may refer to the variable
+by it's name in the model.  For example, above we simply wrote ~model: x~
+instead of ~model: component.x~.  When evaluating your binding specification,
+HotDrink will first try to find any names in the component you provided to the
+binding function (see below); if it cannot find it in the component, it will
+treat the name as a global identifier.
+
+*** Call the binding function
+
+The second step is to call the HotDrink function to performs the binding.  You
+can do this as follows.
+
+#+NAME: bind
+#+BEGIN_SRC js
+  hd.createDeclaredBindings( component, document.getElementById( 'ex8' ) );
+#+END_SRC
+
+This function takes two parameters: a model to use, and a DOM node at which to
+start searching.  This function will search the DOM node passed to it and any
+DOM nodes under it for elements with a ~data-bind~ attribute.  When it finds
+one, it evaluate the binding specification as described above and then pass it
+to ~hd.createDeclaredBindings~.
+
+In the example above, HotDrink would examine all tags contained by the ~<div>~
+tag which has the id ="ex8"=.  It would evaluate the binding specifications
+for each of the four tags with ~data-bind~ attributes.  Then it will attempt
+to bind according to each of those specifications.
+
+The second parameter is optional; it defaults to ~document.body~ so that the
+entire document will be searched.  Note, however, that this could cause
+problems if you are binding different models to different parts of the
+document (for example, as we are in this document).
+
+As with manual binding, you must ensure that the nodes involved have been
+added to the DOM /before/ calling ~createDeclaredBindings~; therefore, it is
+advised to use the ~window.onload~ event or some alternative method of
+executing code after the DOM is fully ready.
+
+* Shortcut: binding specification factories
+
+The binding specifications in a ~data-bind~ attribute are evaluated as JavaScript
+code.  This means it can contain any JavaScript code which produces a binding
+object.  Thus, HotDrink provides several factory functions that create common
+binding specifications.
+
+** The example
+
+This is the same as the previous example, except the binding specification
+objects are created using factory functions.
+
+#+HTML: <div class="results">
+#+INCLUDE: tangle/fact-bind.html html
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+#+INCLUDE: tangle/fact-bind.js html
+#+HTML: })()
+#+HTML: </script>
+
+#+CAPTION: /View/ (show/hide)
+#+BEGIN_SRC html -n :exports code :tangle tangle/fact-bind.html :padline no
+<div id="ex7">
+  X: <input type="text" data-bind="hd.edit( x )"/>
+           &rArr; <span data-bind="hd.text( x )"></span><br/>
+  Y: <input type="text" data-bind="hd.num( y )"/>
+           &rArr; <span data-bind="hd.text( y )"></span>
+</div>
+#+END_SRC
+
+#+CAPTION: /View-Model/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/fact-bind.js :padline no
+var component = new hd.ComponentBuilder()
+    .v( 'x', 'Hello, again!' ).v( 'y', 3 ).component();
+
+var pm = new hd.PropertyModel();
+pm.addComponent( component );
+#+END_SRC
+
+#+CAPTION: /Binding/ (show/hide)
+#+BEGIN_SRC js -n :exports code :tangle tangle/fact-bind.js :padline no
+window.addEventListener( 'load', function() {
+  hd.createDeclaredBindings( component, document.getElementById( 'ex7' ) );
+} );
+#+END_SRC
+
+
+** Factory functions
+
+Binding specification objects tend to be lengthy and follow the same basic
+patterns.  Since the ~data-bind~ attribute is simply evaluated as JavaScript
+code, we can use any JavaScript code we want to create these objects---e.g.,
+call a factory function to create the object for us.
+
+HotDrink provides several factory functions for creating these objects.  There
+is nothing special about these factory functions, and you are encouraged to
+make your own.  For example, the function ~hd.edit~ looks basically like the
+following:
+
+#+BEGIN_SRC js
+hd.edit = function( model, toView, toModel ) {
+  return {mkview:  hd.Edit,
+          model:   model,
+          toView:  toView,
+          toModel: toModel
+         };
+}
+#+END_SRC
+
+A full list of the factory functions can be found in the [[file:binding.org][Advanced Binding
+Concepts]] how-to, but for now we point out the following three:
+
+1. The ~hd.edit~ factory creates the binding specification for a text edit
+   box.
+2. The ~hd.num~ factory also creates a specification for a text edit box,
+   but the value is converted to a number before passing it to the model.
+   Note that this factory takes a second optional argument which is used to
+   specify the number of digits after the decimal point.
+3. The ~hd.text~ factory creates the binding specification for replacing the
+   contents of a tag with the value of a variable.
+
 * Binding to variables
 
 The previous example interacted with the property model using only the ~get~

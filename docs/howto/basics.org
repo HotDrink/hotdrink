@@ -1,7 +1,7 @@
 #+TITLE: Basic HotDrink Usage
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
-#+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="../../../scripts/hotdrink.js"></script>
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="collapse.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 
@@ -11,12 +11,12 @@ This document describes the basics of how to create a property model, and how
 that property model operates and interacts with the rest of your web
 application.  We feel that you should not have to use a library without
 understanding exactly how it is working and what it is doing for you.
-Therefore, in this document we set aside the shortcuts and convenience
-functions of HotDrink so that it will be clear exactly how a property model
-works.  Then we slowly lay the groundwork for the shortcuts, making it clear
-what they are doing for you.  After reading this document, you should have a
-foundation for understanding what HotDrink is doing without feeling like it is
-\ldquo{}magic\rdquo.
+Therefore, in this document we initially set aside the shortcuts and
+convenience functions of HotDrink and work with it at the lowest level so that
+it will be clear exactly how a property model works.  Then we slowly lay the
+groundwork for the shortcuts, making it clear what they are doing for you.
+After reading this document, you should have a foundation for understanding
+what HotDrink is doing without feeling like it is \ldquo{}magic\rdquo.
 
 * Creating a constraint system
 
@@ -36,8 +36,8 @@ is a comma-delimited list of email addresses.  The value of /filter/ is any
 string.  The value of /result/ is the comma-delimited list of just those
 addresses in /emails/ which contain /filter/ as a substring.
 
-You can use the "Set" buttons to set the values of the /emails/ and /filter/
-variables.  Then click the "Get" button to see the value of the /result/
+You can use the \ldquo{}Set\rdquo buttons to set the values of the /emails/ and /filter/
+variables.  Then click the \ldquo{}Get\rdquo button to see the value of the /result/
 variable.
 
 #+HTML: <div class="results">
@@ -52,7 +52,7 @@ variable.
 *Source Code*
 
 The entire source code for this example is shown in its entirety below.
-(Click the "show" links to view the code.)  To clarify, we have broken code
+(Click the \ldquo{}show\rdquo links to view the code.)  To clarify, we have broken code
 into three sections: the HTML that defines the View, the JavaScript that
 defines the View-Model, and the JavaScript that binds the View to the
 View-Model.  In the remainder of this section we will reproduce and examine
@@ -86,8 +86,8 @@ example a little awkward, but also makes clear how the property model works.
 
 #+CAPTION: /View-Model/ (show/hide)
 #+BEGIN_SRC js -n :exports code :tangle tangle/barebone.js :padline no :noweb yes
-// Define the context
-var context = new hd.ContextBuilder()
+// Define root component
+var model = new hd.ComponentBuilder()
     // Define variables
 <<emailvar>>
     .variable( 'filter', 'foo.com' )
@@ -97,12 +97,12 @@ var context = new hd.ContextBuilder()
 <<emailcon>>
 <<emailmth>>
 
-    // Get resulting context
-    .context();
+    // Get resulting component
+    .component();
 
 // Create the property model
 var pm = new hd.PropertyModel();
-pm.addComponent( context );
+pm.addComponent( model );
 <<update>>
 #+END_SRC
 
@@ -114,9 +114,9 @@ pm.addComponent( context );
 
 // Allow user to set filter variable
 setFilter = function setFilter() {
-  var filter = window.prompt( 'Filter:', context.filter.get() );
+  var filter = window.prompt( 'Filter:', model.filter.get() );
   if (filter !== null) {
-    context.filter.set( filter );
+    model.filter.set( filter );
     pm.update();
   }
 }
@@ -125,15 +125,17 @@ setFilter = function setFilter() {
 <<getResult>>
 #+END_SRC
 
-** Working with the context builder
+** Working with the component builder
 
-Recall from [[file:intro.org][the introduction]] that the context builder is a factory object for
-creating contexts.  The general strategy for constructing a context is: (1.)
-create a new builder object, (2.) use the builder member functions to
-construct the context, (3.) call the ~context~ builder member function to
-retrieve the completed context.
+Recall from [[file:intro.org][the introduction]] that the best way to create variables and
+constraints is in a component, and the best way to create a component is with
+the component builder.  The general strategy for constructing a component is:
+(1.)  create a new builder object, (2.) use the builder member functions to
+construct the component, (3.) call the ~component~ builder member function to
+retrieve the completed component.
 
-Generally, building a context involves the following steps.
+To create variables and constraints, you will use the following builder member
+functions.
 
 *** Creating variables
 
@@ -172,7 +174,7 @@ just those addresses in ~emails~ for which ~filter~ is a substring.
 To define a constraint, you must specify the variables involved.  To make this
 simple, the ~constraint~ member function of the model builder takes a string
 containing all of the variables' names in a comma delimited list.  In this
-example we define a single constraint for the variables ~emaisl~, ~filter~, and
+example we define a single constraint for the variables ~emails~, ~filter~, and
 ~result~, as shown on the line below.
 
 #+NAME: emailcon
@@ -188,15 +190,15 @@ abbreviation in the remainder of the examples.
 
 Notice that, when you create a constraint, you do /not/ tell HotDrink what
 relation the constraint represents.  Instead, you define a constraint by
-providing /constraint satisfaction methods/, or just /methods/ for short.  A
-method is a function whose parameters are /some/ variables of the constraint,
-and which returns new values for /other/ variables of the constraint.  The
-purpose of a method is to provide new values for its output variables that
-will satisfy the constraint.
+providing a set of /constraint satisfaction methods/, or just /methods/ for
+short.  A method is a function whose parameters are /some/ variables of the
+constraint, and which returns new values for /other/ variables of the
+constraint.  The purpose of a method is to provide new values for its output
+variables that will satisfy the constraint.
 
 The method creation function of the model builder, named ~method~, takes a
 signature and a function.  The signature is a string defining which variables
-are inputs and which are outputs; it has the form "/inputs/ ~->~ /outputs/",
+are inputs and which are outputs; it has the form \ldquo{}/inputs/ ~->~ /outputs/\rdquo,
 where both /inputs/ and /outputs/ are comma-delimited lists of variables.  For
 this example we provide only a single method, shown below.  This method takes
 ~emails~ and ~filter~ and uses them to calculate ~result~.  You can have more
@@ -229,39 +231,40 @@ examples.
 
 ** Interacting with variables
 
-Variables can be accessed via the context; for example, if your context is
-stored in a variable named ~context~, then the variable ~emails~ is accessed
-as ~context.emails~.  The value of variables can be retrieved using the ~get~
-member function and modified using the variable's ~set~ member function.  If a
-variable is registered with a property model (i.e., the variable is in a
-context that has been added to the constraint system), then changes to the
-variable's value will be noticed by the property model.
+Variables are stored as fields in the component to which they belong.  For
+example, in the example we store our component in a variable named ~model~;
+thus, the ~emails~ variable of that component is accessed as ~model.emails~.
+The value of variables can be retrieved using the ~get~ member function and
+modified using the ~set~ member function.  If a variable is registered with a
+property model (e.g., the variable is in a component that has been added to
+the constraint system), then changes to the variable's value will be noticed
+by the property model.
 
 In the example above, the following function is called every time the user
-clicks the "Get" button.  The function calls ~context.result.get~ to retrieve
+clicks the \ldquo{}Get\rdquo button.  The function calls ~model.result.get~ to retrieve
 the current value of the ~result~ variable; it then displays this value using
-the standard ~alert~ function.
+the standard JavaScript ~alert~ function.
 
 
 #+NAME: getresult
 #+BEGIN_SRC js
 getResult = function getResult() {
-  alert( 'Result: ' + context.result.get() );
+  alert( 'Result: ' + model.result.get() );
 }
 #+END_SRC
 
-The following function is called every time the user clicks the "Set" button
-for the email address list.  The function calls ~context.emails.get()~ to
+The following function is called every time the user clicks the \ldquo{}Set\rdquo button
+for the email address list.  The function calls ~model.emails.get()~ to
 retrieve the current value of the ~emails~ variable; this is used to
-initialize the prompt.  Once the user enters a new value, it uses
-~context.emails.set()~ to store it in the variable.
+initialize the prompt.  Once the user enters a new value, it is stored in the
+variable using ~model.emails.set()~.
 
 #+NAME: setemails
 #+BEGIN_SRC js
 setEmails = function setEmails() {
-  var emails = window.prompt( 'Emails:', context.emails.get() );
+  var emails = window.prompt( 'Emails:', model.emails.get() );
   if (emails !== null) {
-    context.emails.set( emails );
+    model.emails.set( emails );
     pm.update();
   }
 }
@@ -273,13 +276,13 @@ to set and get variable values.
 ** Updating the property model
 
 To /update/ the property model means to respond to changes that have been
-made---such as added constraints or modified variables---by enforcing any
-constraints which may no longer be satisfied.  The constraint system notices
-when changes occur, and remembers the changes.  However, the constraint system
-does not actually update until its ~update~ member function is called, as
-shown below.  This allows you to package several changes into a single update.
-In the example above, we call ~update~ after adding our context to the
-property model, as well as after setting a variable.
+made---such as new constraints or modified variables---by enforcing any
+constraints which may no longer be satisfied.  The constraint system notices,
+and remembers, when changes occur.  However, the constraint system does not
+actually update until its ~update~ member function is called, as shown below.
+This allows you to package several changes into a single update.  In the
+example above, we call ~update~ after adding our component to the property
+model, as well as after setting a variable.
 
 #+NAME: update
 #+BEGIN_SRC js
@@ -293,29 +296,10 @@ We will discuss commands a little later.
 
 The previous example illustrates the simplest possible interaction with the
 property model: getting and setting a variable's value, and updating the
-property model.  However, most commonly we do not get and set variable value's
+property model.  However, more commonly we do not get and set variable value's
 directly; instead we rely on /bindings/ to get and set them for us.  In this
 example, we'll write our own very simple bindings to illustrate how this
 process works.
-
-
-The previous example interacted with the property model using only the ~get~
-and ~set~ functions for variables.  In actuality, this is not the best way to
-interact with variables of the property model because the property model
-updates /asynchronously/.  This means that calling ~pm.update()~ does not
-actually force the property model to update, but rather requests that it
-update itself at the next available time.  Thus, you cannot be sure when a
-variable's value will be updated.
-
-A better way to interact with variables of the property model is by letting
-them tell /you/ when they have updated.  A variable has an event that is
-triggered every time its value changes.  We can register a callback function
-for this event so that we update the web page every time the variable changes.
-Similarly, most HTML input elements have an event that is triggered every time
-their value changes.  We can register a callback function for this event so
-that every time its.  Together, these callback functions represent a
-/binding/---a connection between an element of the View and an element of the
-View-Model.
 
 ** The example
 
@@ -327,11 +311,11 @@ Also, the value of the ~result~ variable is shown in the web page and updated
 automatically.
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/observe.html html
+#+INCLUDE: tangle/simplebind.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/observe.js html
+#+INCLUDE: tangle/simplebind.js html
 #+HTML: })();
 #+HTML: </script>
 
@@ -345,7 +329,7 @@ Note that the View-Model of this example is identical to the previous example;
 only the View and Binding have changed.
 
 #+CAPTION: /View/ (show/hide)
-#+BEGIN_SRC html -n :exports code :tangle tangle/observe.html :padline no
+#+BEGIN_SRC html -n :exports code :tangle tangle/simplebind.html :padline no
 <table>
   <style type="text/css" scoped>
     th { padding-right: 1ex; text-align: left; font-weight: bold; }
@@ -367,9 +351,9 @@ only the View and Binding have changed.
 #+END_SRC
 
 #+CAPTION: /View-Model/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/observe.js :padline no
-// Define the context
-var context = new hd.ContextBuilder()
+#+BEGIN_SRC js -n :exports code :tangle tangle/simplebind.js :padline no
+// Define root component
+var model = new hd.ComponentBuilder()
     .v( 'emails', 'joe@foo.com, sue@fum.edu, eve@foo.com, bob@baz.org' )
     .v( 'filter', 'foo.com' )
     .v( 'result' )
@@ -384,73 +368,62 @@ var context = new hd.ContextBuilder()
           return filteredWords.join( ', ' );
         } )
 
-    .context();
+    .component();
 
 // Create the property model
 var pm = new hd.PropertyModel();
-pm.addComponent( context );
+pm.addComponent( model );
 #+END_SRC
 
 #+CAPTION: /Binding/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/observe.js :padline no :noweb yes
+#+BEGIN_SRC js -n :exports code :tangle tangle/simplebind.js :padline no :noweb yes
 // To be done when the document has loaded...
 window.addEventListener( 'load', function() {
 
   // When emails edit-box changed, update variable
   var emailsEdit = document.getElementById( 'emailsEdit' );
-  emailsEdit.value = context.emails.get();
+  emailsEdit.value = model.emails.get();
 <<emailsEdit>>
 
   // When filter edit-box changed, update variable
   var filterEdit = document.getElementById( 'filterEdit' );
-  filterEdit.value = context.filter.get();
+  filterEdit.value = model.filter.get();
   filterEdit.addEventListener( 'input', function() {
-    context.filter.set( filterEdit.value );
+    model.filter.set( filterEdit.value );
     pm.update()
   } );
 
   // When result variable changed, update span
   var resultSpan = document.getElementById( 'resultSpan' );
-  resultSpan.appendChild( document.createTextNode( context.result.get() ) );
+  resultSpan.appendChild( document.createTextNode( model.result.get() ) );
 <<resultSpan>>
 
 } )
 #+END_SRC
 
-** A view-to-model binding
+** Introduction to binding
 
-One job of a binding is to ensure that, if the user modifies a value in the
-View, the corresponding variable is modified as well.  To accomplish this, we
-register an event handler for the ~input~ event of the text-edit input, as
-shown below.  The ~addEventListener~ function is the standard function for
-registering a callback function for an HTML DOM node.
+The purpose of binding is to keep a value used by the View and a value used by
+the View-Model \ldquo{}in sync.\rdquo Thus, every time one value is changed, the change is
+propagated by the binding to the other value.  Generally speaking, this simply
+requires registering a callback function to be called any time one changes so
+that it can update the other.  We can classify bindings based on the direction
+this update occurs.
 
-#+NAME: emailsEdit
-#+BEGIN_SRC js
-  emailsEdit.addEventListener( 'input', function() {
-    context.emails.set( emailsEdit.value );
-    pm.update()
-  } );
-#+END_SRC
+*** A model-to-view binding
 
-The callback function we register simply uses the value of the text-edit input
-to update the property model variable, then updates the property model.  Now,
-every time the user edits the text input, the variable will be set to the same
-value.
-
-** A model-to-view binding
-
-The other job of a binding is to ensure that, if the value of a variable
-changes, the corresponding element of the View is modified as well.  Just like
-DOM nodes, variables have an event that triggers every time its value is
-modified.  Although the syntax for registering a callback is slightly
-different, the semantics is the same.
+A model-to-view binding requires registering a callback function with a
+variable so that every time the variable is changed by the View-Model the View
+will be updated.  The interface for this callback is discussed in depth in the
+[[file:binding.org][Advanced Binding Concepts]] how-to; the brief version, however, is that we must
+create an object whose ~onNext~ property is a callback function, then pass
+that object to the ~addObserver~ function of the variable.
 
 #+NAME: resultSpan
 #+BEGIN_SRC js
-  context.result.addObserver( { onNext: function() {
+  model.result.addObserver( { onNext: function() {
     resultSpan.removeChild( resultSpan.lastChild );
-    resultSpan.appendChild( document.createTextNode( context.result.get() ) );
+    resultSpan.appendChild( document.createTextNode( model.result.get() ) );
   } } );
 #+END_SRC
 
@@ -459,22 +432,40 @@ The callback function we register here simply deletes the old contents of the
 Now, every time the variable is modified, the span tag will be updated to
 reflect the same value.
 
-The interfaces for registering callbacks for events and for publishing your
-own events for HotDrink to listen to is discussed in the [[file:binding.org][Advanced Binding
-Concepts]] howto.
+*** A view-to-model binding
 
-** A bi-directional binding
+A view-to-model requires registering a callback function with the View so that
+every time it changes we can update the View-Model.  The specific event for
+which the callback is registered varies depending on what type of View element
+it is; in some cases, there may be multiple events that must be subscribed to
+in order to ensure that every time the value changes the View-Model is updated
+as well.  In the example, we register for the ~input~ event of text-edit box,
+as follows.  Here, we make sure every time the value of the text-edit box is
+changed by the user, the value is used to update the corresponding View-Model.
 
-A bi-directional binding is simply a pair of bindings: one from view-to-model,
-and one from model-to-view.  Together, these bindings ensure that any changes
-in the View are propagated to the property model, and any changes in the
-property model are propagated to the view.
+#+NAME: emailsEdit
+#+BEGIN_SRC js
+  emailsEdit.addEventListener( 'input', function() {
+    model.emails.set( emailsEdit.value );
+    pm.update()
+  } );
+#+END_SRC
+
+
+*** A bi-directional binding
+
+This example does not use any bi-directional bindings, but it should be clear
+what such a binding would look like.  A bi-directional binding is simply a pair
+of bindings: one from view-to-model, and one from model-to-view.  Together,
+these bindings ensure that any changes in the View are propagated to the
+property model, and any changes in the property model are propagated to the
+view.
 
 ** The importance of binding
 
-Binding code tends to be highly reusable.  For example, we might write a
-binding for a text-edit input, or for a span tag, and then reuse them any time
-we want to bind to these elements.  This can often make binding a simple
+Binding code tends to be highly reusable.  For example, we might write code to
+bind a variable to a text-edit input or a span tag, then reuse that code any
+time we wish to bind to such elements.  This can often make binding a simple
 matter of a few lines of code.
 
 There is another important reason why we should use binding instead of simply
@@ -487,9 +478,9 @@ it /schedules/ them to be run as soon as their inputs are available.
 For example, consider the following code segment.
 
 #+BEGIN_SRC js
-context.filter.set( '.edu' );
+model.filter.set( '.edu' );
 pm.update();
-alert( context.result.get() );
+alert( model.result.get() );
 #+END_SRC
 
 In this segment we set the value of a variable, update the property model,
@@ -503,422 +494,202 @@ variable changes.  As a general rule, we cannot be sure when the new value of
 a variable will be ready.  By registering a callback, we allow the property
 model to tell us when a new value of the variable is available.
 
-* Adapters and translators
+* HotDrink binding
 
-If we were to combine the observable and observer objects of the previous
-example, we would get a single object, both observable and an observer, which
-representing a text edit box of the View: when the object observes a value, it
-updates the text box to contain that value, and when the user edits the text
-box, it notifies any observers with the new value.  This object is called a
-/view adapter/ because it converts the interface of the View---i.e., an HTML
-DOM node---into the observable/observer interface used by HotDrink.
+The previous example illustrated the basic principle of binding: register a
+callback function to be called when the View (or View-Model) changes so that
+we can update the View-Model (or View).  Now that you understand the basic
+principles, we would like to shift focus of this document away from binding.
+To that end, we introduce here a few of HotDrink's built-in bindings.
 
-Often when a variable is bound to the view, the value contained in the View
-will be slightly different than the value contained in the property model.  A
-good example of this is a variable whose value is a number bound to a text box
-whose value is a string.  While it is possible for an adapter to make such
-data conversions, creating a separate object specifically to do this
-conversion, called a /translator/, allows more flexibility by making it easy
-to combine different adapters with different translators.
+HotDrink includes bindings for a few common HTML elements, such as edit boxes
+and tags which can contain text.  These bindings are slightly more complex
+than the bindings of the previous example, but that's primarily because we
+establish some conventions to promote ease-of-use, interoperability, and
+reuse; the bindings themselves follow the same basic principle.
 
 ** The example
 
-This example also contains a single constraint.  This time, the constraint
-represents the mathematical equation, $income - expenses = profit$.  As with
-the previous example, updating the text boxes will cause the result to update
-automatically.
-
-This example utilizes some new binding techniques, including the ability to
-convert between string values in the View and numeric values in the View-Model.
+This example is similar to the previous two, but with one change: instead of
+filtering the email addresses in the list, we simply return
+one---specifically, we return the one indicated by the ~index~ variable.
+Thus, if index is 1, we return the first email address, and so on.
 
 #+HTML: <div class="results">
-#+INCLUDE: tangle/translator.html html
+#+INCLUDE: tangle/binding.html html
 #+HTML: </div>
 #+HTML: <script type="text/javascript">
 #+HTML: (function() {
-#+INCLUDE: tangle/translator.js html
+#+INCLUDE: tangle/binding.js html
 #+HTML: })();
 #+HTML: </script>
 
 *Source Code*
 
 #+CAPTION: /View/ (show/hide)
-#+BEGIN_SRC html -n :exports code :tangle tangle/translator.html :padline no
-<table>
+#+BEGIN_SRC html -n :exports code :tangle tangle/binding.html :padline no :noweb yes
+<table id="ex4">
   <style type="text/css" scoped>
     th { padding-right: 1ex; text-align: left; font-weight: bold; }
+    input.long { width: 100ex; }
   </style>
   <tr>
-    <th>Income:</th>
-    <td><input type="text" id="incomeEdit"/></td>
+    <th>Emails:</th>
+    <td><<editbind>></td>
   </tr>
   <tr>
-    <th>Expenses:</th>
-    <td><input type="text" id="expensesEdit"/></td>
+    <th>Index:</th>
+    <td><<numbind>></td>
   </tr>
   <tr>
-    <th>Profit:</th>
-    <td><span id="profitSpan"></span></td>
+    <th>Result:</th>
+    <td><<textbind>></td>
   </tr>
 </table>
 #+END_SRC
 
 #+CAPTION: /View-Model/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/translator.js :padline no
-// Define the context
-var context = new hd.ContextBuilder()
-    .v( 'income', 2000 )
-    .v( 'expenses', 480 )
-    .v( 'profit' )
+#+BEGIN_SRC js -n :exports code :tangle tangle/binding.js :padline no
+// Define root component
+var model = new hd.ComponentBuilder()
+    .v( 'emails', 'joe@foo.com, sue@fum.edu, eve@foo.com, bob@baz.org' )
+    .v( 'index', 2 )
+    .v( 'result' )
 
-    .c( 'income, expenses, profit' )
-    .m( 'income, expenses -> profit',
-        function( income, expenses ) {
-          return income - expenses;
+    .c( 'emails, index, result' )
+    .m( 'emails, index -> result',
+        function( emails, index ) {
+          var words = emails.trim().split( /\s*,\s*/ );
+          return words[index - 1];
         } )
 
-    .context();
+    .component();
 
-// Create the constraint system
+// Create the property model
 var pm = new hd.PropertyModel();
-pm.addComponent( context );
+pm.addComponent( model );
 #+END_SRC
 
 #+CAPTION: /Binding/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/translator.js :padline no :noweb yes
-// To be done when the document has loaded...
+#+BEGIN_SRC js -n :exports code :tangle tangle/binding.js :padline no :noweb yes
 window.addEventListener( 'load', function() {
-
-<<edit-adapter>>
-<<number-translator>>
-<<connections>>
-
-  // An adapter for the <input> element for expenses
-  var expensesAdapter = new hd.Edit( document.getElementById( 'expensesEdit' ) );
-  // A translator from string to number
-  var expensesTranslator = new hd.Translator();
-  expensesTranslator.onNext = stringToNumber;
-  // Connect observables to observers
-  expensesTranslator.addObserver( context.expenses )
-  expensesAdapter.addObserver( expensesTranslator );
-  context.expenses.addObserver( expensesAdapter );
-
-<<text-adapter>>
-<<fixed-translator>>
-  // Connect observables to observers
-  context.profit.addObserver( profitTranslator );
-  profitTranslator.addObserver( profitAdapter );
-} )
-
-<<string-to-number>>
-
-<<fix2>>
-#+END_SRC
-
-
-** View adapters
-
-A /view adapter/ is an object which represents some element of the view which
-can be bound to a property model.  It is called an /adapter/ because it adapts
-the view element's interface to the observable/observer interface expected by
-HotDrink.  A view adapter may be read-only (i.e., observable-only), read-write
-(i.e., observable-observer), or write-only (i.e., observer-only).  For
-example, an adapter for the mouse cursor position would be read-only; an
-adapter for a text box would be read-write; and an adapter for a <span> tag
-would be write-only.
-
-HotDrink provides several types of view adapters for common input elements.
-We describe them in detail in the [[file:binding.org][Advanced Binding Concepts]] how-to.  For now,
-however, we introduce two adapters for use in the remainder of this how-to.
-
-The first adapter type is the ~Edit~ adapter: a read-write adapter that
-represents the value of a text box.  As an observable, the ~Edit~ adapter
-reports every time the value of the text box changes.  As an observer, the
-~Edit~ adapter updates the value of the text box every time the value of the
-variable being observed changes.  To create an ~Edit~ adapter, simply create a
-new ~hd.Edit~ object passing the DOM node for the text box to the constructor.
-
-#+NAME: edit-adapter
-#+BEGIN_SRC js
-  // An adapter for the <input> element for income
-  var incomeAdapter = new hd.Edit( document.getElementById( 'incomeEdit' ) );
-#+END_SRC
-
-Adapters can be creative in the way they choose to read or write values.  For
-example, the ~Edit~ adapter does not report a new value with every keystroke;
-it waits for either a half-second pause in the typing, or for an event that
-indicates that the edit is complete, such as the user pressing the Enter key
-or the text box losing focus.  Furthermore, if the adapter receives a new
-value while the user is editing, the adapter waits until the text box loses
-focus before updating its value.
-
-The second adapter type is the ~Text~ adapter: a read-only adapter that
-represents the text contents of a tag.  As an observer, the ~Text~ adapter
-update the contents of its tag every time the value of the variable being
-observed changes.  To create a ~Text~ adapter, simply create a new ~hd.Text~
-object passing the DOM node for the tag to the constructor.
-
-#+NAME: text-adapter
-#+BEGIN_SRC js
-  // An adapter for the <span> element for profit
-  var profitAdapter = new hd.Text( document.getElementById( 'profitSpan' ) );
-#+END_SRC
-
-** Translators
-
-The purpose of a translator is to convert a value between the format expected
-by the View to the format expected by the View-Model.  A translator is both an
-observable and an observer:  it observes the value of the View (or View-Model)
-and produces a value for the View-Model (or the View).
-
-Creating a translator is not hard, but it does tend to involve a lot of
-boiler-plate code.  For this reason, HotDrink provides a simple implementation
-of a translator called ~Translator~.  You may create instances of this type,
-or use it as a prototype for your own JavaScript types.  As it is written,
-this translator performs no translation; it simply takes the value it was
-given and passes it on.  However, by assigning the translator a new ~onNext~
-method, we can cause it to modify the values it is given.
-
-#+NAME: number-translator
-#+BEGIN_SRC js
-  // A translator from string to number
-  var incomeTranslator = new hd.Translator();
-  incomeTranslator.onNext = stringToNumber;
-#+END_SRC
-
-The prototype for the ~Translator~ type is a ~BasicObservable~.  Thus, after
-you have translated your value, you can use ~sendNext~ to pass on the
-translated value.  Alternatively, you can use ~sendError~ to signal an error.
-
-#+NAME: string-to-number
-#+BEGIN_SRC js
-// Helper function for translator:  convert string to number
-function stringToNumber( s ) {
-  var n = Number( s );
-  if (s == '' || isNaN( n )) {
-    this.sendError( "Invalid number" );
-  }
-  else {
-    this.sendNext( n );
-  }
-}
-#+END_SRC
-
-Note that, while we could create an adapter to convert the number of the
-View-Model to a string for the View, it is not strictly necessary.  JavaScript
-will automatically convert our number to a string using ~toString~ when it is
-assigned as the value of a text box.  This is sufficient for our text boxes.
-However, in the case of our ~<span>~ tag, we would prefer to use
-~toFixedString~ instead.  Thus, we define a translator for this tag.
-
-#+NAME: fixed-translator
-#+BEGIN_SRC js
-  // A translator from number to string
-  var profitTranslator = new hd.Translator();
-  profitTranslator.onNext = fix2;
-#+END_SRC
-#+NAME: fix2
-#+BEGIN_SRC js
-// Helper function for translator:  convert number to string
-function fix2( n ) {
-  this.sendNext( n.toFixed( 2 ) );
-}
-#+END_SRC
-
-** Connections
-
-Once we have created an adapter and translator, all that is left is to connect
-them by subscribing observers to observables.  To support values going from
-the View to the View-Model, the translator subscribes to the adapter, and the
-variable subscribes to the translator.  To support values going from the
-View-Model to the View, the adapter subscribes directly to the variable.
-
-#+NAME: connections
-#+BEGIN_SRC js
-  // Connect observables to observers
-  incomeAdapter.addObserver( incomeTranslator );
-  incomeTranslator.addObserver( context.income );
-  context.income.addObserver( incomeAdapter );
-#+END_SRC
-
-At this point, the variable is bound to the View.  Any changes to the variable
-will go directly to the View.  Any changes to the View will first go through
-the translator, then to the variable.
-
-Note that it is /not/ possible to reuse translators.  If you were to try, you
-would have to subscribe the same translator to two view adapters, and two
-variables to the same translator.  This would mean that every time either view
-adapter sent a value, /both/ variables would receive the value.  Thus, e.g.,
-we must create a second string-to-number translator for the =expenses=
-variable; we cannot reuse the one for =income=.
-
-* The ~bind~ function and binding descriptions
-
-The code required to connect adapters, translators, and variables tends to be
-somewhat repetitive.  To help avoid boilerplate code, HotDrink provides the
-~bind~ function which can make these connections for you.
-
-** The example
-
-This example also contains a single constraint.  This time the constraint
-represents the mathematical equation $subtotal*(1+tax/100)=total$.  As with
-previous examples, updating the text box will cause the result to update
-automatically.
-
-This example performs all binding using the ~bind~ function with built-in
-adapters and translators.
-
-#+HTML: <div class="results">
-#+INCLUDE: tangle/description.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-#+INCLUDE: tangle/description.js html
-#+HTML: })();
-#+HTML: </script>
-
-*Source Code*
-
-#+CAPTION: /View/ (show/hide)
-#+BEGIN_SRC html -n :exports code :tangle tangle/description.html :padline no
-<table>
-  <style type="text/css" scoped>
-    th { padding-right: 1ex; text-align: left; font-weight: bold; }
-  </style>
-  <tr>
-    <th>Subtotal:</th>
-    <td><input type="text" id="subtotalEdit"/></td>
-  </tr>
-  <tr>
-    <th>Tax:</th>
-    <td><input type="text" id="taxEdit"/>%</td>
-  </tr>
-  <tr>
-    <th>Total:</th>
-    <td>$<span id="totalSpan"></span></td>
-  </tr>
-</table>
-#+END_SRC
-
-#+CAPTION: /View-Model/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/description.js :padline no
-// Define the context
-var context = new hd.ContextBuilder()
-    .v( 'subtotal', 39.99 )
-    .v( 'tax', 8 )
-    .v( 'total' )
-
-    .c( 'subtotal, tax, total' )
-    .m( 'subtotal, tax -> total',
-        function( subtotal, tax ) {
-          return Math.round( subtotal * (100+tax) ) / 100;
-        } )
-
-    .context();
-
-// Create the constraint system
-var pm = new hd.PropertyModel();
-pm.addComponent( context );
-#+END_SRC
-
-#+CAPTION: /Binding/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/description.js :padline no :noweb yes
-window.addEventListener( 'load', function() {
-<<binding-description>>
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'taxEdit' ) ),
-            model:   context.tax,
-            toModel: [hd.toNum(), hd.round( 0 )],
-            toView:  hd.fix( 0 )
-           }
-         );
-  hd.bind( {view:    new hd.Text( document.getElementById( 'totalSpan' ) ),
-            model:   context.total,
-            toModel: hd.fix( 2 )
-           }
-         );
+  <<createBindings>>
 } );
 #+END_SRC
 
-** Translator factories
+** Embedding binding instructions within the View
 
-Just as HotDrink provides several common adapter types, so too it provides
-several common translator types.  While it is possible to create instances of
-these types yourself using the =new= operator, HotDrink provides factory
-functions for creating new instances of these translator types.  We describe
-these functions in detail in the [[file:binding.org][Advanced Binding Concepts]] how-to.  For now,
-however, we introduce three translators for use in the remainder of this
-how-to.
+HotDrink bindings can be created using only JavaScript code, much as we did in
+the previous example.  However, HotDrink also allows you to embed JavaScript
+code in the ~data-bind~ attribute of an HTML tag; it uses this JavaScript code
+to create a binding.  This has the advantage of placing binding code as close
+as possible to the View element which is being bound.
 
-The ~hd.toNum~ factory function creates a translator that converts a string to
-a number, just like the translators created in the previous example.
+To create the bindings you have specified in your HTML, call the
+~hd.createDeclaredBindings~ function.  This function takes two parameters.
+The first is a property model component; the second is a DOM node.  We say this
+function binds the component to the DOM sub-tree rooted at the DOM node.  In
+the binding section of this example, we do this as follows.  Note that this
+function is called when the document loads so that we may be sure the entire
+DOM is available.
 
+#+NAME: createBindings
 #+BEGIN_SRC js
-  // Using built-in translator
-  var toNumTranslator = hd.toNum();
+hd.createDeclaredBindings( model, document.getElementById( 'ex4' ) );
 #+END_SRC
 
-The ~hd.fix~ factory function creates a translator that converts a number to a
-string.  This factory function takes a parameter indicating how many digits
-should be present after the decimal point.
+This function performs a recursive search of the DOM tree beginning at the
+specified DOM node---i.e., the node itself and everything contained by it.  It
+attempts to create a binding for any tags it finds with a ~data-bind~
+attribute.
 
-#+BEGIN_SRC js
-  // Using built-in translator
-  var fix2Translator = hd.fix( 2 );
+When calling this function, the second parameter is optional; it defaults to
+~document.body~, meaning the entire document body is searched.
+
+** Binding specifications
+
+The exact process through which the binding is created is described in detail
+in the [[file:binding.org][Advanced Binding Concepts]] document.  However, you should already have
+an idea of what that code does:  create event handlers for either the View or
+View-Model (or both) that update one every time the other is changed.
+
+To create a binding, we generally require the following information.
+
+1. What element of the view are we binding to?
+2. What kind of element is it?  Or, more importantly, what is the interface
+   for interacting with it?  For example, you set the contents of a text-edit
+   box by assigning to its ~value~ field; you set the contents of a container
+   tag by using its ~appendChild~ function.
+3. What element of the property model are we binding to?
+4. Do we need to do any conversion between the View and the property model?
+
+Taken together, we call this information a /binding specification/.  HotDrink
+allows you to place binding specifications inside the ~data-bind~ attribute of
+HTML tags.  This implies item #1 in the list above; it is the tag in which the
+specification is found.  Generally, #2 is represented by a function written to
+create a certain kind of binding, and #3 is the parameter to that function.
+Item #4 may be implied by the function, or may be passed as an additional
+parameter to the function.
+
+Generally speaking, the code inside the ~data-bind~ tag is just arbitrary
+JavaScript code.  However, there are a couple of peculiarities.  First, inside
+the ~data-bind~ attribute, the variable ~bd~ holds a special object called the
+/binding environment/.  This object contains several member functions which
+can be used to create HotDrink's built-in bindings.  We discuss three of these
+functions below.
+
+The second peculiarity is that you may refer to properties of the component to
+which you are binding directly by name.  Or, to put this another way, any
+unqualified names in the JavaScript code are first treated as properties of
+the component to which you are binding.  If they are not found in that
+component, then they are treated as global names.  This convenience feature
+means that we can simply write, e.g., ~filter~ instead of ~model.filter~.
+
+** Three common bindings
+
+Here we give three common bindings which we will use in the remainder of this
+document.
+
+
+*** The edit binding
+
+The edit binding applies specifically to a text-edit box.  The value entered
+by the user is used to set the variable, and the value of the variable is used
+to set the value of the text box.  This binding is specified using the
+~bd.edit~ function.  The required parameter of this function is the variable
+to bind to.
+
+#+NAME: editbind
+#+BEGIN_SRC html
+<input type="text" data-bind="bd.edit( emails )" class="long"/>
 #+END_SRC
 
-Note that using a ~hd.fix~ translator only modifies how the value is /seen/ by
-the View; it does not change the value in the View-Model.  For example, if a
-variable was connected to an ~Edit~ adapter using the above translator, the
-user could enter as many digits of precision as he desired; the extra digits
-would be stored in the View-Model, but would not be displayed by the View.
+*** The number binding
 
-We can improve this scheme by changing the value which is given to the
-View-Model using the ~hd.round~ translator.  This translator takes a number
-and rounds it to a certain number of digits of precision.
+The number binding is a variant of the edit binding in which the value of the
+text box is converted to a number before being assigned to the variable.  This
+binding is specified using the ~bd.edit~ function.  The required parameter of
+this function is the variable to bind to.  The first optional parameter is the
+number of digits to keep after decimal point.  Note that numbers are always
+represented as floating point values, and that precision is achieved through
+rounding; we can /not/ guarantee precision.p
 
-#+BEGIN_SRC js
-  // A rounding translator
-  var roundTranslator = hd.round( 2 );
+#+NAME: numbind
+#+BEGIN_SRC html
+<input type="text" data-bind="bd.num( index, 0 )"/>
 #+END_SRC
 
-Note that this translator does /not/ change the data-type of a value; instead
-it modifies the value.  If a change in data-type is required, this translator
-can be used in conjunction with another, such as ~hd.toNum~.  We demonstrate
-this below.
+*** The text binding
 
+The text binding is suitable for any tag that can contain text.  Note that
+this binding replaces the /entire/ contents of the tag with the value of the
+variable.  This binding is specified using the ~bd.text~ function.  The
+required parameter of this function is the variable to bind to.
 
-** Binding descriptions
-
-The function ~hd.bind~ takes a single parameter: an object referred to as the
-/binding description/.  A binding description is any object which has the
-following four properties:
-
-- ~view~ :: observable/observer representing a value of the View
-- ~model~ :: observable/observer representing a value of the View-Model
-- ~toView~ :: translator(s) for going from View-Model to View
-- ~toModel~ :: translator(s) for going from View to View-Model
-
-The ~toView~ and ~toModel~ properties are optional; the only required
-properties are ~view~ and ~model~.  If present, the ~toView~ and ~toModel~
-properties should hold either a single translator, or an array of
-translators.  Consider, for example, the binding description in the following
-call to ~hd.bind~.
-
-#+NAME: binding-description
-#+BEGIN_SRC js
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'subtotalEdit' ) ),
-            model:   context.subtotal,
-            toModel: [hd.toNum(), hd.round( 2 )],
-            toView:  hd.fix( 2 )
-           }
-         );
+#+NAME: textbind
+#+BEGIN_SRC html
+<span data-bind="bd.text( result )"></span>
 #+END_SRC
-
-Here, the /view/ object is an ~Edit~ view adapter, and the /model/ object is
-the =subtotal= variable.  When going from the View to the View-Model, we first
-translate the string to a number, then round the number to two digits.  Going
-the other way, we convert the number to a fixed-point string with two digits
-of precision.
 
 * Multi-way constraints
 
@@ -952,22 +723,22 @@ these values will update others so that they are all consistent.
 
 #+CAPTION: /View/ (show/hide)
 #+BEGIN_SRC html -n :exports code :tangle tangle/multi-constraint.html :padline no
-<table style="text-align: right">
+<table id="ex5" style="text-align: right">
   <tr>
     <td>
-      Left:  <input type="text" id="left"/><br/>
-      Right: <input type="text" id="right"/><br/>
-      Width: <input type="text" id="width"/><br/>
+      Left:  <input type="text" data-bind="bd.num( left )"/><br/>
+      Right: <input type="text" data-bind="bd.num( right )"/><br/>
+      Width: <input type="text" data-bind="bd.num( width )"/><br/>
     </td>
     <td>
-      Top:    <input type="text" id="top"/><br/>
-      Bottom: <input type="text" id="bottom"/><br/>
-      Height: <input type="text" id="height"/><br/>
+      Top:    <input type="text" data-bind="bd.num( top )"/><br/>
+      Bottom: <input type="text" data-bind="bd.num( bottom )"/><br/>
+      Height: <input type="text" data-bind="bd.num( height )"/><br/>
     </td>
   </tr>
   <tr>
     <td colspan="2" style="text-align:center">
-      Aspect Ratio: <input type="text" id="aspect"/>
+      Aspect Ratio: <input type="text" data-bind="bd.num( aspect )"/>
     </td>
   </tr>
 </table>
@@ -981,7 +752,7 @@ function diff( x, y ) { return x - y; }
 function prod( x, y ) { return x * y; }
 function quot( x, y ) { return x / y; }
 
-var context = new hd.ContextBuilder()
+var model = new hd.ComponentBuilder()
 <<variables>>
 
   // Constraint: width == right - left
@@ -1002,50 +773,16 @@ var context = new hd.ContextBuilder()
   .m( 'width, height -> aspect', quot )
   .m( 'width, aspect -> height', quot )
 
-  .context();
+  .component();
 
 var pm = new hd.PropertyModel();
-pm.addComponent( context );
+pm.addComponent( model );
 #+END_SRC
 
 #+CAPTION: /Binding/ (show/hide)
 #+BEGIN_SRC js -n :exports code :tangle tangle/multi-constraint.js :padline no
 window.addEventListener( 'load', function() {
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'left' ) ),
-            model:   context.left,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'right' ) ),
-            model:   context.right,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'width' ) ),
-            model:   context.width,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'top' ) ),
-            model:   context.top,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'bottom' ) ),
-            model:   context.bottom,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'height' ) ),
-            model:   context.height,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'aspect' ) ),
-            model:   context.aspect,
-            toModel: hd.toNum()
-           }
-         );
+  hd.createDeclaredBindings( model, document.getElementById( 'ex5' ) );
 } );
 #+END_SRC
 
@@ -1077,7 +814,7 @@ intent.
 
 ** Declaring multiple variables at once
 
-This example uses the ~variables~ function of the context builder to declare
+This example uses the ~variables~ function of the component builder to declare
 multiple variables at once.  This function takes two parameters.  The first is
 a string containing a comma-delimited list of variables to create.  The second
 is an object used as a map to provide initial values for variables.  If a
@@ -1114,7 +851,7 @@ arguments will come from the variables specified in the signature.
 
 In fact, if your constraints really are trivial equations such as this, there
 is an even easier way to specify them.  We'll discuss that in the section
-"[[* Shortcut: equations][Shortcut: equations]]".
+[[* Shortcut: equations][Shortcut: equations]].
 
 * Input/output variables
 
@@ -1144,15 +881,15 @@ is changed just enough to make it true.
 
 #+CAPTION: /View/ (show/hide)
 #+BEGIN_SRC html -n :exports code :tangle tangle/io-param.html :padline no
-<div style="display:inline-block; text-align:right">
-  Begin: <input type="text" id="begin"/><br/>
-  End:   <input type="text" id="end"/>
+<div id="ex6" style="display:inline-block; text-align:right">
+  Begin: <input type="text" data-bind="bd.num( begin )"/><br/>
+  End:   <input type="text" data-bind="bd.num( end )"/>
 </div>
 #+END_SRC
 
 #+CAPTION: /View-Model/ (show/hide)
 #+BEGIN_SRC js -n :exports code :tangle tangle/io-param.js :padline no :noweb yes
-var context = new hd.ContextBuilder()
+var model = new hd.ComponentBuilder()
   .v( 'begin', 10 ).v( 'end', 20 )
 
    // Constraint: begin < end
@@ -1163,25 +900,16 @@ var context = new hd.ContextBuilder()
         return begin > end - 1 ? end - 1 : begin;
       } )
 
-  .context();
+  .component();
 
 var pm = new hd.PropertyModel;
-pm.addComponent( context );
+pm.addComponent( model );
 #+END_SRC
 
 #+CAPTION: /Binding/ (show/hide)
 #+BEGIN_SRC js -n :exports code :tangle tangle/io-param.js :padline no
 window.addEventListener( 'load', function() {
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'begin' ) ),
-            model:   context.begin,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'end' ) ),
-            model:   context.end,
-            toModel: hd.toNum()
-           }
-         );
+  hd.createDeclaredBindings( model, document.getElementById( 'ex6' ) );
 } );
 #+END_SRC
 
@@ -1198,7 +926,7 @@ value it had before we began solving the constraint system.
 In fact, a method may access the previous value of /any/ variable, not just
 its outputs.  For this reason, when a method wants the previous value of a
 variable as an input, we require that it be indicated in the method's
-signature.  This is done by putting an exclamation point ("!") in front of the
+signature.  This is done by putting an exclamation point (\ldquo{}!\rdquo) in front of the
 variable name.  For example, the following method uses the previous value of
 ~begin~ and the updated value of ~end~ to calculate the updated value of
 ~begin~.
@@ -1270,58 +998,38 @@ among the four quarters, thus satisfying the constraint.
 
 #+CAPTION: /View/ (show/hide)
 #+BEGIN_SRC html -n :exports code :tangle tangle/multi-out.html :padline no
-<div style="display:inline-block; text-align:right">
-  First Quarter:  <input type="text" id="q1"/><br/>
-  Second Quarter: <input type="text" id="q2"/><br/>
-  Third Quarter:  <input type="text" id="q3"/><br/>
-  Fourth Quarter: <input type="text" id="q4"/><br/>
+<div id="ex7" style="display:inline-block; text-align:right">
+  First Quarter:  <input type="text" data-bind="bd.num( q1 )"/><br/>
+  Second Quarter: <input type="text" data-bind="bd.num( q2 )"/><br/>
+  Third Quarter:  <input type="text" data-bind="bd.num( q3 )"/><br/>
+  Fourth Quarter: <input type="text" data-bind="bd.num( q4 )"/><br/>
   <hr/>
-  Full Year:      <input type="text" id="year"/><br/>
+  Full Year:      <input type="text" data-bind="bd.num( year )"/><br/>
 </div>
 #+END_SRC
 
-#+CAPTION: /View/ (show/hide)
+#+CAPTION: /View-Model/ (show/hide)
 #+BEGIN_SRC js -n :exports code :tangle tangle/multi-out.js :padline no :noweb yes
-var context = new hd.ContextBuilder()
+var model = new hd.ComponentBuilder()
   .vs( 'q1, q2, q3, q4, year', {q1: 10, q2: 30, q3: 60, q4: 100} )
 
   .c( 'q1, q2, q3, q4, year' )
+  .m( 'q1, q2, q3, q4 -> year',
+      function( q1, q2, q3, q4 ) {
+        return q1 + q2 + q3 + q4;
+      } )
 <<multiout>>
 
-  .context();
+  .component();
 
 var pm = new hd.PropertyModel();
-pm.addComponent( context );
+pm.addComponent( model );
 #+END_SRC
 
 #+CAPTION: /Binding/ (show/hide)
 #+BEGIN_SRC js -n :exports code :tangle tangle/multi-out.js :padline no
 window.addEventListener( 'load', function() {
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'q1' ) ),
-            model:   context.q1,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'q2' ) ),
-            model:   context.q2,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'q3' ) ),
-            model:   context.q3,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'q4' ) ),
-            model:   context.q4,
-            toModel: hd.toNum()
-           }
-         );
-  hd.bind( {view:    new hd.Edit( document.getElementById( 'year' ) ),
-            model:   context.year,
-            toModel: hd.toNum()
-           }
-         );
+  hd.createDeclaredBindings( model, document.getElementById( "ex7" ) );
 } );
 #+END_SRC
 
@@ -1355,207 +1063,6 @@ example, we could indicate that we wanted to receive the old values of =p1=,
   )
 #+END_SRC
 
-* Declarative binding
-
-We return to the topic of binding, this time to see how we may embed binding
-specifications into tags.  Doing so allows us to iterate over the DOM and
-automatically perform any bindings we encounter.
-
-** The example
-
-This example uses no constraints; it simply illustrates a new binding
-technique.  Editing the text boxes modifies the value displayed to the right.
-
-#+HTML: <div class="results">
-#+INCLUDE: tangle/decl-bind.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-#+INCLUDE: tangle/decl-bind.js html
-#+HTML: })();
-#+HTML: </script>
-
-*Source code*
-
-#+CAPTION: /View/ (show/hide)
-#+BEGIN_SRC html -n :exports code :tangle tangle/decl-bind.html :padline no :noweb yes
-<div id="ex6">
-<<data-bind>>
-           &rArr; <span data-bind="{mkview: hd.Text, model: x}"></span><br/>
-  Y: <input type="text" data-bind="{mkview: hd.Edit, model: y, toModel: hd.toNum()}"/>
-           &rArr; <span data-bind="{mkview: hd.Text, model: y}"></span>
-</div>
-#+END_SRC
-
-#+CAPTION: /View-Model/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/decl-bind.js :padline no
-var context = new hd.ContextBuilder()
-    .v( 'x', 'Hello, again!' ).v( 'y', 3 ).context();
-
-var pm = new hd.PropertyModel();
-pm.addComponent( context );
-#+END_SRC
-
-#+CAPTION: /Binding/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/decl-bind.js :padline no :noweb yes
-window.addEventListener( 'load', function() {
-<<bind>>
-} );
-#+END_SRC
-
-** Automatic binding function
-
-By now you've probably noticed that the binding section tends to be repetitive
-and boring.  HotDrink offers two shortcuts to help alleviate this.  The first,
-shown here, is allowing binding specifications to be embedded in the HTML.
-There are two steps required for this.
-
-*** Add binding specifications
-
-The first step is to add markup in the HTML to describe how elements should be
-bound.  To indicate that you wish to bind a variable to the node for an HTML
-tag, simply add a ~data-bind~ attribute to the tag with the code for the
-binding specification.  At run-time, HotDrink will evaluate this attribute
-string as JavaScript code to take the result as the binding specification
-object.
-
-#+NAME: data-bind
-#+BEGIN_SRC js
-  X: <input type="text" data-bind="{mkview: hd.Edit, model: x}"/>
-#+END_SRC
-
-Note, however, one slight change to this binding specification.  In previous
-examples our view object was a view adapter which encapsulated some DOM node
-in the tree.  When you embed a binding specification in the HTML, HotDrink
-assumes that a view adapter needs to be created for the DOM node.  Thus, it
-looks for an attribute named "~mkview~".  This should be a constructor or
-factory function which takes a single DOM node parameter.  HotDrink will use
-this constructor or factory to create the view object, like so.
-
-#+BEGIN_SRC js
-specification.view = new specification.mkview( domNode );
-#+END_SRC
-
-Also notice that, in the binding specification, you may refer to the variable
-by it's name in the model.  For example, above we simply wrote ~model: x~
-instead of ~model: context.x~.  When evaluating your binding specification,
-HotDrink will first try to find any names in the context you provided to the
-binding function (see below); if it cannot find it in the context, it will
-treat the name as a global identifier.
-
-*** Call the binding function
-
-The second step is to call the HotDrink function to performs the binding.  You
-can do this as follows.
-
-#+NAME: bind
-#+BEGIN_SRC js
-  hd.performDeclaredBindings( context, document.getElementById( 'ex6' ) );
-#+END_SRC
-
-This function takes two parameters: a model to use, and a DOM node at which to
-start searching.  This function will search the DOM node passed to it and any
-DOM nodes under it for elements with a ~data-bind~ attribute.  When it finds
-one, it evaluate the binding specification as described above and then pass it
-to ~hd.bind~.
-
-In the example above, HotDrink would examine all tags contained by the ~<div>~
-tag which has the id ="ex6"=.  It would evaluate the binding specifications
-for each of the four tags with ~data-bind~ attributes.  Then it will attempt
-to bind according to each of those specifications.
-
-The second parameter is optional; it defaults to ~document.body~ so that the
-entire document will be searched.  Note, however, that this could cause
-problems if you are binding different models to different parts of the
-document (for example, as we are in this document).
-
-As with manual binding, you must ensure that the nodes involved have been
-added to the DOM /before/ calling ~performDeclaredBindings~; therefore, it is
-advised to use the ~window.onload~ event or some alternative method of
-executing code after the DOM is fully ready.
-
-* Shortcut: binding specification factories
-
-The binding specifications in a ~data-bind~ attribute are evaluated as JavaScript
-code.  This means it can contain any JavaScript code which produces a binding
-object.  Thus, HotDrink provides several factory functions that create common
-binding specifications.
-
-** The example
-
-This is the same as the previous example, except the binding specification
-objects are created using factory functions.
-
-#+HTML: <div class="results">
-#+INCLUDE: tangle/fact-bind.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-#+INCLUDE: tangle/fact-bind.js html
-#+HTML: })()
-#+HTML: </script>
-
-#+CAPTION: /View/ (show/hide)
-#+BEGIN_SRC html -n :exports code :tangle tangle/fact-bind.html :padline no
-<div id="ex7">
-  X: <input type="text" data-bind="hd.edit( x )"/>
-           &rArr; <span data-bind="hd.text( x )"></span><br/>
-  Y: <input type="text" data-bind="hd.num( y )"/>
-           &rArr; <span data-bind="hd.text( y )"></span>
-</div>
-#+END_SRC
-
-#+CAPTION: /View-Model/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/fact-bind.js :padline no
-var context = new hd.ContextBuilder()
-    .v( 'x', 'Hello, again!' ).v( 'y', 3 ).context();
-
-var pm = new hd.PropertyModel();
-pm.addComponent( context );
-#+END_SRC
-
-#+CAPTION: /Binding/ (show/hide)
-#+BEGIN_SRC js -n :exports code :tangle tangle/fact-bind.js :padline no
-window.addEventListener( 'load', function() {
-  hd.performDeclaredBindings( context, document.getElementById( 'ex7' ) );
-} );
-#+END_SRC
-
-
-** Factory functions
-
-Binding specification objects tend to be lengthy and follow the same basic
-patterns.  Since the ~data-bind~ attribute is simply evaluated as JavaScript
-code, we can use any JavaScript code we want to create these objects---e.g.,
-call a factory function to create the object for us.
-
-HotDrink provides several factory functions for creating these objects.  There
-is nothing special about these factory functions, and you are encouraged to
-make your own.  For example, the function ~hd.edit~ looks basically like the
-following:
-
-#+BEGIN_SRC js
-hd.edit = function( model, toView, toModel ) {
-  return {mkview:  hd.Edit,
-          model:   model,
-          toView:  toView,
-          toModel: toModel
-         };
-}
-#+END_SRC
-
-A full list of the factory functions can be found in the [[file:binding.org][Advanced Binding
-Concepts]] how-to, but for now we point out the following three:
-
-1. The ~hd.edit~ factory creates the binding specification for a text edit
-   box.
-2. The ~hd.num~ factory also creates a specification for a text edit box,
-   but the value is converted to a number before passing it to the model.
-   Note that this factory takes a second optional argument which is used to
-   specify the number of digits after the decimal point.
-3. The ~hd.text~ factory creates the binding specification for replacing the
-   contents of a tag with the value of a variable.
-
 * Shortcut: equations
 
 HotDrink does not inherently know how to solve any type of constraint; it
@@ -1584,27 +1091,27 @@ actual payment made, though it must be higher than the minimum.
 #+BEGIN_SRC html -n :exports code :tangle tangle/eq.html :padline no
 <table style="text-align: right" id="ex8">
   <tr><td>
-    Account Balance: <input type="text" data-bind="hd.num( balance, 2 )"/><br/>
-    Minimum Percentage: <input type="text" data-bind="hd.num( min_rate, 3 )"/><br/>
-    Minimum Payment: <input type="text" data-bind="hd.num( min_pay, 2 )"/><br/>
+    Account Balance: <input type="text" data-bind="bd.num( balance, 2 )"/><br/>
+    Minimum Percentage: <input type="text" data-bind="bd.num( min_rate, 3 )"/><br/>
+    Minimum Payment: <input type="text" data-bind="bd.num( min_pay, 2 )"/><br/>
     <hr/>
-    Payment Made: <input type="text" data-bind="hd.num( pay, 2 )"/>
+    Payment Made: <input type="text" data-bind="bd.num( pay, 2 )"/>
   </td></tr>
 </table>
 #+END_SRC
 
 #+BEGIN_SRC js -n :exports code :tangle tangle/eq.js :padline no
-var context = new hd.ContextBuilder()
+var model = new hd.ComponentBuilder()
   .vs( 'balance, min_rate, min_pay, pay', {balance: 4000, min_rate: 6.125} )
   .equation( "min_pay == balance * min_rate / 100" )
   .equation( "pay >= min_pay" )
-  .context();
+  .component();
 
 var pm = new hd.PropertyModel();
-pm.addComponent( context );
+pm.addComponent( model );
 
 window.addEventListener( 'load', function() {
-  hd.performDeclaredBindings( context, document.getElementById( 'ex8' ) );
+  hd.createDeclaredBindings( model, document.getElementById( 'ex8' ) );
 } );
 #+END_SRC
 

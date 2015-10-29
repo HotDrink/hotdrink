@@ -1,7 +1,7 @@
 #+TITLE: Basic HotDrink Usage
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil
-#+HTML_HEAD_EXTRA: <script type="text/javascript" src="../../../scripts/hotdrink.js"></script>
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="collapse.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 

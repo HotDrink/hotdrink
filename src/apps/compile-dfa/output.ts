@@ -11,7 +11,7 @@ function outputDfa( dfa: d.SoftLinkedDfa,
                     cgraph: g.ReadOnlyConstraintGraph,
                     plandefs: u.Dictionary<u.ArraySet<string>>,
                     wstream: WritableStream                     ) {
-  wstream.writeln( "system = new hd.ConstraintSystem( hd.plan.DfaFnPlanner.bind( null," );
+  wstream.writeln( "pm = new hd.PropertyModel( hd.plan.DfaFnPlanner.bind( null," );
 
   var stayIndexes: u.Dictionary<number> = {};
   var count = 0;

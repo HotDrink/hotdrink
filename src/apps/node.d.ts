@@ -7,7 +7,7 @@ interface WritableStream {
   write( data: string ): void;
   writeln( data: string ): void;
   on( event: string, cb: Function ): void;
-  end(): void;
+  end( callback?: Function ): void;
 }
 
 interface FileSystem {

@@ -33,11 +33,11 @@ function nextCompile() {
   console.error( 'Compiling ' + infile );
   var intext = fs.readFileSync( infile, 'utf8' )
 
-  var model: hd.model.Modelcule;
+  var model: hd.model.Component;
   eval( intext );
 
-  var system = new hd.ConstraintSystem;
-  system.updateOnModelChange = hd.system.Update.None;
+  var system = new hd.PropertyModel;
+  system.scheduleUpdateOnChange = false;
   system.addComponent( model );
 
   var cgraph = system.getCGraph();

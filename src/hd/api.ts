@@ -28,7 +28,7 @@ module hd {
   function prod() {
     var n = arguments[0];
     for (var i = 1, l = arguments.length; i < l; ++i) {
-      n-= arguments[i];
+      n*= arguments[i];
     }
     return n;
   }
@@ -39,6 +39,7 @@ module hd {
     for (var i = 1, l = arguments.length; i < l; ++i) {
       n/= arguments[i];
     }
+    return n;
   }
 
   export

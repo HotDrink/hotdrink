@@ -33,8 +33,7 @@ module hd.reactive {
       }
     }
 
-    private
-    ontimeout() {
+    private ontimeout() {
       this.timeout = null;
       this.settle();
     }

@@ -295,8 +295,7 @@ module hd.system {
 
     //--------------------------------------------
     // Add method
-    private
-    addMethod( cid: string, mm: m.Method ) {
+    private addMethod( cid: string, mm: m.Method ) {
       if (! (mm.id in this.methods)) {
         this.methods[mm.id] = mm;
 
@@ -310,8 +309,7 @@ module hd.system {
 
     //--------------------------------------------
     // Remove method
-    private
-    removeMethod( mm: m.Method ) {
+    private removeMethod( mm: m.Method ) {
       if (mm.id in this.methods) {
         delete this.methods[mm.id];
 
@@ -478,8 +476,7 @@ module hd.system {
 
     //--------------------------------------------
     // Touch variable and all touch dependencies
-    private
-    doPromotions( originalVid: string ) {
+    private doPromotions( originalVid: string ) {
       var planner = this.getPlanner();
       var descending = function( cid1: string, cid2: string ) {
         return planner.compare( cid2, cid1 );
@@ -543,32 +540,28 @@ module hd.system {
 
     //--------------------------------------------
     // Component reference has changed; need to query for adds/drops
-    private
-    recordComponentChange( cmp: m.Component ) {
+    private recordComponentChange( cmp: m.Component ) {
       this.needUpdating.push( cmp );
       this.recordChange();
     }
 
     //--------------------------------------------
     // New or promoted constraint; need to replan so we can enforce
-    private
-    recordConstraintChange( ccid: string ) {
+    private recordConstraintChange( ccid: string ) {
       this.needEnforcing[ccid] = true;
       this.recordChange();
     }
 
     //--------------------------------------------
     // Variable value has changed; need to evaluate downstream
-    private
-    recordVariableChange( stayid: string ) {
+    private recordVariableChange( stayid: string ) {
       this.needEvaluating[stayid] = true;
       this.recordChange();
     }
 
     //--------------------------------------------
     // Record that update needed; schedule if appropriate
-    private
-    recordChange() {
+    private recordChange() {
       this.isUpdateNeeded = true;
       this.solved.set( false );
       if (this.scheduleUpdateOnChange) {
@@ -579,31 +572,27 @@ module hd.system {
     //--------------------------------------------
     // Remove any record of constraint
     //
-    private
-    removeConstraintRecords( ccid: string ) {
+    private removeConstraintRecords( ccid: string ) {
       delete this.needEnforcing[ccid];
       delete this.needEvaluating[ccid];
     }
 
     //--------------------------------------------
     // Remove any record of component
-    private
-    removeComponentRecords( cmp: m.Component ) {
+    private removeComponentRecords( cmp: m.Component ) {
       u.arraySet.remove( this.needUpdating, cmp );
     }
 
     /*----------------------------------------------------------------
      */
-    private
-    scheduleUpdate() {
+    private scheduleUpdate() {
       if (! this.isUpdateScheduled) {
         this.isUpdateScheduled = true;
         u.schedule( SystemUpdatePriority, this.performScheduledUpdate, this );
       }
     }
 
-    private
-    performScheduledUpdate() {
+    private performScheduledUpdate() {
       this.isUpdateScheduled = false;
       this.update();
     }
@@ -682,8 +671,7 @@ module hd.system {
 
 
     // Helper - check for source variables that
-    private
-    reevaluateIfEmergingSource( vid: string ) {
+    private reevaluateIfEmergingSource( vid: string ) {
       var vv = this.variables[vid];
       var stayConstraintId = g.stayConstraint( vid );
 
@@ -698,8 +686,7 @@ module hd.system {
     }
 
     // Helper - set source property based on current solution graph
-    private
-    updateSourceStatus( vid: string ) {
+    private updateSourceStatus( vid: string ) {
       if (this.sgraph.selectedForConstraint( g.stayConstraint( vid ) )) {
         this.variables[vid].source.set( true );
       }

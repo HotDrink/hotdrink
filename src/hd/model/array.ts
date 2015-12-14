@@ -266,16 +266,14 @@ module hd.model {
       }
     }
 
-    private
-    scheduleNext() {
+    private scheduleNext() {
       if (! this.scheduled) {
         this.scheduled = true;
         u.schedule( r.SignalPriority, this.sendNext, this );
       }
     }
 
-    private
-    sendNext() {
+    private sendNext() {
       this.scheduled = false;
       if (this.observers) {
         for (var i = 0, l = this.observers.length; i < l; ++i) {

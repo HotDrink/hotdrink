@@ -48,32 +48,42 @@
         return (hours - 8)*60 + minutes;
       }
 
+      function arraySum( a ) {
+        for (var sum = 0, i = 0, l = a.length; i < l; ++i) {
+          sum += a[i];
+        }
+        return sum;
+      }
+
       /*----------------------------------------------------------------
        * Property model
        */
 
       // Spec for each row
       var EventSpec = new hd.ComponentBuilder()
-          .variables( "title, begin, end, length", {length: 10} )
-          .constraint( "begin, end, length" )
-            .method( "begin, length -> end", hd.sum )
+          .variables( "title, begin, end, duration", {duration: 10} )
+          .constraint( "begin, end, duration" )
+            .method( "begin, duration -> end", hd.sum )
           .spec();
 
       // Root component
       var ScheduleSpec = new hd.ComponentBuilder()
           .variable( "start", 0 )
+          .variable( "total" )
           .nested( "events", hd.arrayOf( EventSpec ) )
           .constraint( "start, events[0].begin" )
             .method( "start -> events[0].begin", hd.id )
           .constraint( "events[i].end, events[i+1].begin" )
-              .method( "events[i].end -> events[i+1].begin", hd.id )
+            .method( "events[i].end -> events[i+1].begin", hd.id )
+          .constraint( "events[*].duration, total" )
+            .method( "events[*].duration -> total", arraySum )
           .spec();
 
       var schedule = new hd.Component( ScheduleSpec );
-      schedule.events.expand( [{title: "Registration", length: 30},
-                               {title: "Keynote", length: 60},
-                               {title: "Break", length: 15},
-                               {title: "Session I", length: 90}] );
+      schedule.events.expand( [{title: "Registration", duration: 30},
+                               {title: "Keynote", duration: 60},
+                               {title: "Break", duration: 15},
+                               {title: "Session I", duration: 90}] );
 
       // Property model
       pm = new hd.PropertyModel();
@@ -158,6 +168,7 @@
       td:last-child { padding-left: 1em; font-size: 70%; vertical-align: middle }
       tr { background-color: white }
       tr.selected { pointer-events: none; outline: 1px solid #abc }
+      #total { text-align:right; padding-right:0.2em; border-top: 1px solid black }
     </style>
   </head>
   <body>
@@ -189,7 +200,7 @@
           <td data-bind="bd.text( e.begin, bd.fn( toTime ) )"></td>
           <td data-bind="bd.text( e.end, bd.fn( toTime ) )"></td>
           <td>
-            <input type="text" class="num" data-bind="bd.numVar( e.length, 0 )"/><small style="margin-left: 0.2ex">min</small>
+            <input type="text" class="num" data-bind="bd.numVar( e.duration, 0 )"/><small style="margin-left: 0.2ex">min</small>
           </td>
           <td>
             <span data-bind="bd.when( events.$length, bd.fn( gt1 ) )"</span>
@@ -199,8 +210,15 @@
         </tr>
       </tbody>
 
-      <tfoot>
-        <tr onmouseup="insertDraggingAtEnd()">
+      <tfoot onmouseup="insertDraggingAtEnd()">
+        <tr>
+          <td colspan="4">
+          <td id="total">
+            <spand data-bind="bd.text( total )"></spand>
+            <small>min</small></td>
+          <td></td>
+        </tr>
+        <tr>
           <td></td>
           <td colspan="4">
             <input type="button" value="Add Event"

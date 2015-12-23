@@ -56,36 +56,8 @@
 
       // Spec for each row
       var EventSpec = new hd.ComponentBuilder()
-          .variables( "title, begin, begin2, end, end2, length", {length: 10} )
-          .touchDep( "begin => begin2" )
-          .touchDep( "end => end2" )
-          .constraint( "begin, begin2, end, end2, length" )
-          .method( "end, !begin -> length, begin",
-                   function( end, begin ) {
-                     if (end - 10 >= begin) {
-                       return [end - begin, begin];
-                     }
-                     else {
-                       return [10, end - 10]
-                     }
-                   } )
-          .method( "!end, begin -> length, end",
-                   function( end, begin ) {
-                     if (end >= begin + 10) {
-                       return [end - begin, end];
-                     }
-                     else {
-                       return [10, begin + 10];
-                     }
-                   } )
-          .method( "end, length -> begin, begin2",
-                   function( end, length ) {
-                     return [end - length, 0];
-                   } )
-          .method( "begin, length -> end, end2",
-                   function( begin, length ) {
-                     return [begin + length, 0]
-                   } )
+          .variables( "title, begin, end, duration", {duration: 10} )
+          .eq( "begin + duration == end" )
           .spec();
 
       // Root component
@@ -97,10 +69,10 @@
           .spec();
 
       var schedule = new hd.Component( ScheduleSpec );
-      schedule.events.expand( [{title: "Registration", begin: 0, length: 30},
-                               {title: "Keynote", length: 60},
-                               {title: "Break", length: 15},
-                               {title: "Session I", length: 90}] );
+      schedule.events.expand( [{title: "Registration", begin: 0, duration: 30},
+                               {title: "Keynote", duration: 60},
+                               {title: "Break", duration: 15},
+                               {title: "Session I", duration: 90}] );
 
       // Property model
       pm = new hd.PropertyModel();
@@ -215,7 +187,7 @@
                    data-bind="bd.editVar( e.end, bd.fn( toTime ), bd.fn( fromTime ) )"/>
           </td>
           <td>
-            <input type="text" class="num" data-bind="bd.numVar( e.length, 0 )"/><small style="margin-left: 0.2ex">min</small>
+            <input type="text" class="num" data-bind="bd.numVar( e.duration, 0 )"/><small style="margin-left: 0.2ex">min</small>
           </td>
           <td>
             <span data-bind="bd.when( events.$length, bd.fn( gt1 ) )"</span>

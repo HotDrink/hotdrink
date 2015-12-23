@@ -160,7 +160,7 @@
        * Property model
        */
 
-      var component = new hd.ComponentBuilder()
+      var model = new hd.ComponentBuilder()
 
           .vs( 'd, c, m, p, v, w, x, y, z',
                {m: 30, d: 1500, x: 25, z: 200}
@@ -184,10 +184,10 @@
           .component();
 
       var pm = new hd.PropertyModel();
-      pm.addComponent( component );
+      pm.addComponent( model );
 
       window.addEventListener( 'load', function() {
-        hd.createDeclaredBindings( component );
+        hd.createDeclaredBindings( model );
       } );
 
     }

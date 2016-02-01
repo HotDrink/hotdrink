@@ -56,15 +56,12 @@ module hd.model {
     changes = new r.BasicObservable<VariableEvent>();
 
     // Promise waiting to be assigned
-    private
-    staged: r.Promise<any> = null;
+    private staged: r.Promise<any> = null;
 
     // Any pending promises made for the variable
-    private
-    ladder: r.PromiseLadder<any>;
+    private ladder: r.PromiseLadder<any>;
 
-    private
-    setCommand: Command;
+    private setCommand: Command;
 
     /*----------------------------------------------------------------
      * Initialize members.  Optional EqualityPredicate is used to

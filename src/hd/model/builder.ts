@@ -20,8 +20,7 @@ module hd.model {
   class ComponentBuilder {
 
     // The spec we are building
-    private
-    target: ComponentSpec = {
+    private target: ComponentSpec = {
       constants:   [],
       variables:   [],
       nesteds:     [],
@@ -455,8 +454,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Test for invalid property name
      */
-    private
-    invalidLoc( loc: string ): boolean {
+    private invalidLoc( loc: string ): boolean {
       if (! loc.match( /^[a-zA-Z][\w$]*$/ )) {
         console.error( 'Invalid component property name: "' + loc + '"' );
         return true;

@@ -1082,8 +1082,7 @@ module hd.model {
   export
   class Component {
 
-    private
-    '#hd_data': ComponentData;
+    private '#hd_data': ComponentData;
 
     [key: string]: any;
 

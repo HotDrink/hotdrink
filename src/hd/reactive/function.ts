@@ -65,8 +65,7 @@ module hd.reactive {
      * Convert input array to parameter array -- i.e., replacing
      * promises with their value.
      */
-    private
-    genParams(
+    private genParams(
       inputs: u.MultiArray<any>,
       mask:   u.MultiArray<boolean>,
       place:  number[]
@@ -110,8 +109,7 @@ module hd.reactive {
      * Inserts the value of a resolved promise into the parameter
      * multi-array.
      */
-    private
-    resolveParam(
+    private resolveParam(
       value: any,
       params: u.MultiArray<any>,
       place: number[],
@@ -163,8 +161,7 @@ module hd.reactive {
 
     /*----------------------------------------------------------------
      */
-    private
-    invoke() {
+    private invoke() {
       try {
         var result = this.fn.apply( null, this.params );
         if (this.pending == 0) {

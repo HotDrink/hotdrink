@@ -571,9 +571,4 @@ module hd.plan {
 
   }
 
-  // For type checking
-  if (false) {
-    var p: Planner = new QuickPlanner( null );
-  }
-
 }

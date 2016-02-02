@@ -187,11 +187,10 @@ module hd.qunit {
             return p2;
 
           } )
-          .then( function( n3: number ) {
+          .then( function( n3: number ): number {
 
             equal( n3, 5, "promise pass-through worked" );
             throw "Ignore: testing promise throwing (1)";
-            return -6;
 
           } )
           .then( function( n4: number ) {
@@ -202,7 +201,6 @@ module hd.qunit {
 
             equal( n4, "Ignore: testing promise throwing (1)", "exception pass-through worked" );
             throw "Ignore: testing promise throwing (2)";
-            return -7;
 
           } )
             .catch<number>( function( n5: number ) {

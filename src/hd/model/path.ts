@@ -308,7 +308,7 @@ module hd.model {
       var leg = this.legs[legi];
       if (typeof leg === 'string' && value != null) {
         // Field lookup
-        return this.getRec( value[leg], legi + 1, pos, limit );
+        return this.getRec( value[<string>leg], legi + 1, pos, limit );
       }
       else if (leg instanceof IndexPattern) {
         if (leg.scale == 0 || leg.index in pos) {
@@ -355,7 +355,7 @@ module hd.model {
               return pobs;
             }
           }
-          value = value[leg]; // continue iteration
+          value = value[<string>leg]; // continue iteration
         }
         // Array access
         else if (leg instanceof IndexPattern &&
@@ -417,7 +417,7 @@ module hd.model {
       var leg = this.legs[legi];
       if (typeof leg === 'string' && value !== null) {
         // Only one possibility for a field
-        return this.beginRec( value[leg], legi + 1, lock );
+        return this.beginRec( value[<string>leg], legi + 1, lock );
       }
       else if (leg instanceof IndexPattern &&
                (value instanceof ArrayComponent || value instanceof Array)) {
@@ -471,7 +471,7 @@ module hd.model {
       var leg = this.legs[legi];
       if (typeof leg === 'string' && value !== null) {
         // A field cannot be changed; we'll have to keep looking
-        return this.nextRec( value[leg], legi + 1, lock, pos );
+        return this.nextRec( value[<string>leg], legi + 1, lock, pos );
       }
       else if (leg instanceof IndexPattern &&
                (value instanceof ArrayComponent || value instanceof Array)) {

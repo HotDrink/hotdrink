@@ -157,8 +157,8 @@ help:
 	@echo "  fn-worker     - Include file for a web worker"
 	@echo "  compile-dfa   - DFA compiler"
 	@echo "  qunit         - QUnit tests"
+	@echo "  all           - All of the above"
 	@echo "  howto         - All how-to documentation"
-	@echo "  all           - all of the above"
 	@echo "  clean         - remove all created files"
 
 .PHONY :
@@ -166,7 +166,7 @@ help:
 $(TARGETS) : % : $(TARGET_DIR)/$$*.js
 
 .PHONY :
-all : $(TARGETS) hotdrink.min hotpdf.min howto
+all : $(TARGETS) hotdrink.min hotpdf.min
 
 .PHONY :
 clean :

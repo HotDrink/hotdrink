@@ -80,8 +80,7 @@ module hd.async {
     /*----------------------------------------------------------------
      * Check to see if any queued tasks can be executed.
      */
-    private
-    checkQueue() {
+    private checkQueue() {
       // Try using available workers
       while (this.queuedTasks.length > 0 && this.availableWorkers.length > 0) {
         this.execute( this.queuedTasks.shift(), this.availableWorkers.shift() );
@@ -105,8 +104,7 @@ module hd.async {
     /*----------------------------------------------------------------
      * Execute a task on a worker.
      */
-    private
-    execute( task: WorkerTask, worker: Worker ) {
+    private execute( task: WorkerTask, worker: Worker ) {
       task.worker = worker;
       this.runningTasks.push( task );
 
@@ -121,8 +119,7 @@ module hd.async {
     /*----------------------------------------------------------------
      * Process normal messages from worker.
      */
-    private
-    onMessage( task: WorkerTask, event: any ) {
+    private onMessage( task: WorkerTask, event: any ) {
       if (event.data.error) {
         // Failure - function failed but worker is still OK
         console.warn( 'Task failed: ' + JSON.stringify( event.data.error ) );
@@ -162,8 +159,7 @@ module hd.async {
      * Process error from worker.  Shouldn't happen -- assume
      * something is wrong with the worker.
      */
-    private
-    onError( task: WorkerTask, event: any ) {
+    private onError( task: WorkerTask, event: any ) {
       console.warn( 'Worker failed: ' + JSON.stringify( event.data ) );
       task.outputs.forEach( function( p ) {
         p.reject( event.data );
@@ -176,8 +172,7 @@ module hd.async {
      * are any tasks waiting on a worker; if not, it is returned to
      * the available state.
      */
-    private
-    returnWorker( worker: Worker ) {
+    private returnWorker( worker: Worker ) {
       if (this.runningTasks.length >= this.max) {
         this.killWorker( worker );
       }
@@ -198,8 +193,7 @@ module hd.async {
     /*----------------------------------------------------------------
      * Terminates worker process; discards worker.
      */
-    private
-    killWorker( worker: Worker ) {
+    private killWorker( worker: Worker ) {
       var i = this.findTaskIndexFor( worker );
       if (i >= 0) {
         this.runningTasks.splice( i, 1 );
@@ -212,8 +206,7 @@ module hd.async {
      * Called when an output promise is dropped.  If all outputs are
      * dropped then it kills the worker.
      */
-    private
-    onPromiseDropped( promise: r.Promise<any>, task: WorkerTask ) {
+    private onPromiseDropped( promise: r.Promise<any>, task: WorkerTask ) {
       if (task.outputs.every( isDropped )) {
         if (task.worker) {
           this.killWorker( task.worker );
@@ -227,8 +220,7 @@ module hd.async {
     /*----------------------------------------------------------------
      * Remove task from queue -- it's output is no longer needed.
      */
-    private
-    dequeue( task: WorkerTask ) {
+    private dequeue( task: WorkerTask ) {
       var i = this.queuedTasks.indexOf( task );
       if (i >= 0) {
         this.queuedTasks.splice( i, 1 );
@@ -238,8 +230,7 @@ module hd.async {
     /*----------------------------------------------------------------
      * Find the task for given worker.
      */
-    private
-    findTaskIndexFor( worker: Worker ) {
+    private findTaskIndexFor( worker: Worker ) {
       for (var i = 0, l = this.runningTasks.length; i < l; ++i) {
         if (this.runningTasks[i].worker === worker) {
           return i;

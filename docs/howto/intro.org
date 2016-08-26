@@ -276,8 +276,8 @@ var model = new hd.ComponentBuilder()
       case '1D':  rate = 80;  break;
       case '1Q':  rate = 95;  break;
       case '1K':  rate = 115; break;
-      case '2!':  rate = 140; break;
-      default:   throw "Invalid room type";
+      case '2Q':  rate = 140; break;
+      default:   throw "Invalid room type: " + type;
       }
       return nights * rate
     } )

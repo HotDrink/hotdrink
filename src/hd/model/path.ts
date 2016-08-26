@@ -298,8 +298,7 @@ module hd.model {
     /*----------------------------------------------------------------
      * Get the result for a position up to the specified depth.
      */
-    private
-    getRec( value: any, legi: number, pos: Position, limit: number ): any {
+    private getRec( value: any, legi: number, pos: Position, limit: number ): any {
       if (value === undefined) { return undefined; }
 
       // If we reach the end, return the value
@@ -309,7 +308,7 @@ module hd.model {
       var leg = this.legs[legi];
       if (typeof leg === 'string' && value != null) {
         // Field lookup
-        return this.getRec( value[leg], legi + 1, pos, limit );
+        return this.getRec( value[<string>leg], legi + 1, pos, limit );
       }
       else if (leg instanceof IndexPattern) {
         if (leg.scale == 0 || leg.index in pos) {
@@ -337,8 +336,7 @@ module hd.model {
      * Examine every possible value for this path, creating observers
      * for any references found along the way.
      */
-    private
-    createObservers( value: any, legi: number, pos: Position ): LegObserver {
+    private createObservers( value: any, legi: number, pos: Position ): LegObserver {
       if (value === undefined) { return; }
 
       // Iterate until we finish or we find a reference to observe.
@@ -357,7 +355,7 @@ module hd.model {
               return pobs;
             }
           }
-          value = value[leg]; // continue iteration
+          value = value[<string>leg]; // continue iteration
         }
         // Array access
         else if (leg instanceof IndexPattern &&
@@ -408,8 +406,7 @@ module hd.model {
       return this.beginRec( this.start, 0, lock );
     }
 
-    private
-    beginRec( value: any, legi: number, lock: Position ): Position {
+    private beginRec( value: any, legi: number, lock: Position ): Position {
       // Undefined means no valid positions
       if (value === undefined) { return null; }
 
@@ -420,7 +417,7 @@ module hd.model {
       var leg = this.legs[legi];
       if (typeof leg === 'string' && value !== null) {
         // Only one possibility for a field
-        return this.beginRec( value[leg], legi + 1, lock );
+        return this.beginRec( value[<string>leg], legi + 1, lock );
       }
       else if (leg instanceof IndexPattern &&
                (value instanceof ArrayComponent || value instanceof Array)) {
@@ -464,8 +461,7 @@ module hd.model {
       return this.nextRec( this.start, 0, lock, pos );
     }
 
-    private
-    nextRec( value: any, legi: number, lock: Position, pos: Position ): Position {
+    private nextRec( value: any, legi: number, lock: Position, pos: Position ): Position {
       // If we run out of values or reach the end, then there's nothing
       //   more that we can do:  there is no next value
       if (value === undefined) { return null; }
@@ -475,7 +471,7 @@ module hd.model {
       var leg = this.legs[legi];
       if (typeof leg === 'string' && value !== null) {
         // A field cannot be changed; we'll have to keep looking
-        return this.nextRec( value[leg], legi + 1, lock, pos );
+        return this.nextRec( value[<string>leg], legi + 1, lock, pos );
       }
       else if (leg instanceof IndexPattern &&
                (value instanceof ArrayComponent || value instanceof Array)) {
@@ -522,8 +518,7 @@ module hd.model {
      * for /all/ values, and (2) is a superposition of lock. (If
      * from is specified, it's next; if not, it's first.)
      */
-    private
-    multiPosition(
+    private multiPosition(
       values: ArrayComponent | Array<any>,
       legi:   number,
       lock:   Position,

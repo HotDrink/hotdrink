@@ -28,8 +28,7 @@ module hd.reactive {
   export
   class PromiseLadder<T> extends BasicObservable<T> {
 
-    private
-    entries: LadderEntry<T>[];
+    private entries: LadderEntry<T>[];
 
     /*----------------------------------------------------------------
      * Initialize
@@ -101,8 +100,7 @@ module hd.reactive {
 
     /*----------------------------------------------------------------
      */
-    private
-    findPromiseIndex( p: Promise<T> ): number {
+    private findPromiseIndex( p: Promise<T> ): number {
       for (var i = 0, l = this.entries.length; i < l; ++i) {
         if (this.entries[i].promise === p) {
           return i;
@@ -116,8 +114,7 @@ module hd.reactive {
      * "Results" means either fulfilled, rejected, or pending with a
      * notification.
      */
-    private
-    getMostRecent(): number {
+    private getMostRecent(): number {
       for (var i = this.entries.length - 1; i >= 0; --i) {
         var entry = this.entries[i];
         var state = entry.state;
@@ -149,8 +146,7 @@ module hd.reactive {
     /*----------------------------------------------------------------
      * Do work for fulfilled promise
      */
-    private
-    onPromiseFulfilled( value: T, promise: Promise<T> ) {
+    private onPromiseFulfilled( value: T, promise: Promise<T> ) {
       var i = this.findPromiseIndex( promise );
       if (i >= 0) {
         this.entries[i].state = 'fulfilled';
@@ -167,8 +163,7 @@ module hd.reactive {
     /*----------------------------------------------------------------
      * Do work for rejected promise
      */
-    private
-    onPromiseRejected( reason: any, promise: Promise<T> ) {
+    private onPromiseRejected( reason: any, promise: Promise<T> ) {
       var i = this.findPromiseIndex( promise );      if (i >= 0) {
         // Differentiate between "rejected" and "failed"
         if (reason === null || reason === undefined) {
@@ -208,8 +203,7 @@ module hd.reactive {
     /*----------------------------------------------------------------
      * Do work for promise notification
      */
-    private
-    onPromiseProgress( value: T, promise: Promise<T> ) {
+    private onPromiseProgress( value: T, promise: Promise<T> ) {
       var i = this.findPromiseIndex( promise );
       if (i >= 0) {
         this.entries[i].value = value;
@@ -225,8 +219,7 @@ module hd.reactive {
     /*----------------------------------------------------------------
      * Forwarded promise no longer needed
      */
-    private
-    onForwardDropped( forward: Promise<T>, promise: Promise<T> ) {
+    private onForwardDropped( forward: Promise<T>, promise: Promise<T> ) {
       var i = this.findPromiseIndex( promise );
       var forwards = this.entries[i].forwards;
       if (i >= 0 && forwards) {
@@ -247,8 +240,7 @@ module hd.reactive {
      * Try to perform all forwards starting at index i and continuing
      * up as long as promises were failed.
      */
-    private
-    updateForwardsStartingFrom( i: number ) {
+    private updateForwardsStartingFrom( i: number ) {
 
         // Try to perform all forwards for this promise
         this.tryToForwardList( i, i );
@@ -267,8 +259,7 @@ module hd.reactive {
      * Try to forward each promise on the list.  Returns list of
      * promises which could /not/ be forwarded.
      */
-    private
-    tryToForwardList( target: number, start: number ) {
+    private tryToForwardList( target: number, start: number ) {
       var forwards = this.entries[target].forwards;
 
       if (forwards) {
@@ -287,8 +278,7 @@ module hd.reactive {
      * Try to settle forward using this.promises[i].  Returns true iff
      * forward was settled.
      */
-    private
-    tryToForward( forward: Promise<T>, i: number ): boolean {
+    private tryToForward( forward: Promise<T>, i: number ): boolean {
       var entry = this.entries[i];
 
       if (entry.state === 'fulfilled') {
@@ -315,8 +305,7 @@ module hd.reactive {
      * Drop all promises which are settled or which can no longer
      * affect the ladder value and have no forwards.
      */
-    private
-    dropUnneededPromises() {
+    private dropUnneededPromises() {
       var last = this.entries.length - 1;
       var removeAnswered = false;
       var removePending = false;

@@ -40,11 +40,9 @@
         .outputs( 'total, value' )
         .constraint( 'favorite => favorite, symbol' )
           .method( 'favorite -> symbol', id )
-          .method( '!favorite -> favorite', id )
 
         .constraint( 'favorite, symbol => symbol, value' )
           .method( 'symbol -> value', fetch_stock_value )
-          .method( '!symbol -> symbol', id )
 
         .constraint( 'value, number, total' )
           .method( 'value, number -> total',

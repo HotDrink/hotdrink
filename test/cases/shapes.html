@@ -1,0 +1,175 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
+    <script type="text/javascript">
+      var pm = new hd.PropertyModel();
+
+      var shapes = {};
+
+      shapes.rect = new hd.ComponentBuilder()
+          .vs( 'length, width, area', {length: 8, width: 5} )
+          .eq( 'area == length * width' )
+          .component();
+      pm.addComponent( shapes.rect );
+
+      shapes.circ = new hd.ComponentBuilder()
+          .vs( 'radius, area', {radius: 4} )
+          .c( 'radius, area' )
+            .m( 'radius -> area', function( radius ) {
+              return Math.PI * radius * radius;
+            } )
+            .m( 'area -> radius', function( area ) {
+              return Math.sqrt( area / Math.PI );
+            } )
+          .component();
+      pm.addComponent( shapes.circ );
+
+      shapes.tri = new hd.ComponentBuilder()
+          .vs( 'side, area', {side: 10} )
+          .c( 'side, area' )
+            .m( 'side -> area', function( side ) {
+              return Math.sqrt( 3 ) / 4 * side * side;
+            } )
+            .m( 'area -> side', function( area ) {
+              return Math.sqrt( area * 4 / Math.sqrt( 3 ) );
+            } )
+          .component();
+      pm.addComponent( shapes.tri );
+
+      shapes.trap = new hd.ComponentBuilder()
+          .vs( 'top, bottom, height, area', {top: 4, bottom: 12, height: 6} )
+          .eq( 'area == (top + bottom)/2 * height' )
+          .component()
+      pm.addComponent( shapes.trap );
+
+      var calc = new hd.ComponentBuilder()
+          .v( 'price', 30 )
+          .r( 'shape' )
+          .constant( 'pricePerSqUnit', 2.5 )
+          .c( 'price, shape.area, pricePerSqUnit' )
+            .m( 'shape.area, pricePerSqUnit -> price', hd.prod )
+            .m( 'price, pricePerSqUnit -> shape.area', hd.quot )
+          .component();
+      pm.addComponent( calc );
+
+      pm.update();
+
+      function pick( pickid ) {
+        ['rect', 'circ', 'tri', 'trap'].forEach( function( id ) {
+          var el = document.getElementById( id );
+          if (pickid == id) {
+            el.style.removeProperty( 'display' );
+          }
+          else {
+            el.style.display = 'none';
+          }
+        } );
+        calc.shape = shapes[pickid];
+        pm.update();
+      }
+
+
+      window.addEventListener( 'load', function() {
+        pick( document.getElementById( 'picker' ).value );
+
+        ['rect', 'circ', 'tri', 'trap'].forEach( function( id ) {
+          hd.createDeclaredBindings( shapes[id], document.getElementById( id ) );
+        } );
+
+        hd.createDeclaredBindings( calc, document.getElementById( 'calc' ) );
+      } );
+    </script>
+    <style type="text/css">
+      #pick {
+        width: 200pt;
+        padding: 0.4em 1em;
+        border: 1px solid #999;
+        border-radius: 4pt;
+      }
+      #calc {
+        margin-top: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <h4>Shapes for sale!</h4>
+    <fieldset id="pick">
+      <legend>Shape:
+        <select id="picker" onchange="pick( this.value )">
+          <option value="rect">Rectangle</option>
+          <option value="circ">Circle</option>
+          <option value="tri">Triangle</option>
+          <option value="trap">Trapezoid</option>
+        </select>
+      </legend>
+      <div id="rect">
+        <table>
+          <tr>
+            <td>Length:</td>
+            <td><input type="text" data-bind="bd.num( length, 4 )"/></td>
+          </tr>
+          <tr>
+            <td>Width:</td>
+            <td><input type="text" data-bind="bd.num( width, 4 )"/></td>
+          </tr>
+          <tr>
+            <td>Area:</td>
+            <td><input type="text" data-bind="bd.num( area, 4 )"></td>
+          </tr>
+        </table>
+      </div>
+      <div id="circ">
+        <table>
+          <tr>
+            <td>Radius:</td>
+            <td><input type="text" data-bind="bd.num( radius, 4 )"/></td>
+          </tr>
+          <tr>
+            <td>Area:</td>
+            <td><input type="text" data-bind="bd.num( area, 4 )"/></td>
+          </tr>
+        </table>
+      </div>
+      <div id="tri">
+        <table>
+          <tr>
+            <td>Side:</td>
+            <td><input type="text" data-bind="bd.num( side, 4 )"/></td>
+          </tr>
+          <tr>
+            <td>Area:</td>
+            <td><input type="text" data-bind="bd.num( area, 4 )"/></td>
+          </tr>
+        </table>
+      </div>
+      <div id="trap">
+        <table>
+          <tr>
+            <td>Top Width:</td>
+            <td><input type="text" data-bind="bd.num( top, 4 )"/></td>
+          </tr>
+          <tr>
+            <td>Bottom Width:</td>
+            <td><input type="text" data-bind="bd.num( bottom, 4 )"/></td>
+          </tr>
+          <tr>
+            <td>Height:</td>
+            <td><input type="text" data-bind="bd.num( height, 4 )"/></td>
+          </tr>
+          <tr>
+            <td>Area:</td>
+            <td><input type="text" data-bind="bd.num( area, 4 )"/></td>
+          </tr>
+        </table>
+      </div>
+    </fieldset>
+    <div id="calc">
+      <table>
+        <tr>
+          <td>Price:</td>
+          <td>$<input type="text" data-bind="bd.num( price, 2 )"/></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

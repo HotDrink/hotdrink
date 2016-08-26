@@ -1,5 +1,6 @@
-(setq load-path (cons "~/Library/Emacs/org-mode/lisp"
-                (cons "~/Library/Emacs/org-mode/contrib/lisp" load-path)))
+(let ((default-directory  "~/.emacs.d/"))
+  (normal-top-level-add-subdirs-to-load-path))
+
 (require 'org)
 
  (custom-set-faces

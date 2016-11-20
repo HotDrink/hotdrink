@@ -1,506 +1,603 @@
 #+TITLE: Introduction to HotDrink
 #+LANGUAGE:  en
-#+OPTIONS: H:2 author:nil creator:nil
-#+HTML_HEAD_EXTRA: <script type="text/javascript" src="../../../scripts/hotdrink.js"></script>
+#+OPTIONS: H:2 author:nil creator:nil toc:nil
+#+HTML_LINK_HOME: http://hotdrink.github.io/hotdrink/
+#+HTML_LINK_UP: file:index.html
+#+HTML_HEAD_EXTRA: <script type="text/javascript" src="../../scripts/hotdrink.js"></script>
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="collapse.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
+#+INCLUDE: setup.org
+#+MACRO: scraplink [[$1][~<<$1>>~]]
 
 * Overview of basic concepts
 
-HotDrink is a JavaScript library that assists with GUI implementation.
-HotDrink allows you to program GUIs /declaratively/---instead of writing event
-handlers that control what should happen in a GUI and when, the programmer
-specifies the relationships between various pieces of data, i.e., how changes
-to one piece of data affect other pieces of data.  From this description,
-HotDrink decides how and when to enforce relationships, and also implements
-several GUI behaviors that can be reused with little effort.
-
-Changes to GUI state are managed through /commands/ written by the programmer.
-HotDrink ensures that (1) commands are initiated only when all relationships
-defined by the programmer have been enforced, and (2) commands will not
-interfere with one another, at least with respect to the GUI state.  This
-means that your program will behave correctly even if a new command is issued
-before the previous command has finished.
+HotDrink is a JavaScript library for implementing GUIs declaratively.
+With HotDrink, the programmer specifies relationships (as sets of
+functions) between pieces of data in the GUI, instead of event
+handlers that control what should happen and when. HotDrink decides
+when to enforce which relationships.
 
 ** Constraint systems
 
-The heart of the HotDrink library is a /constraint system/.  A
-constraint system manages variables and /constraints/ among the variables.  Each
-constraint represents something that should be true concerning some of the
-variables (i.e., a /relation/ over those variables).
-For example, given three variables, $x$, $y$, and $z$, you
-could create a constraint that $x = y + z$, or that $x \le y \le z$, or even that $z$
-is the result of a database query using $x$ and $y$.  When the
-constraint is true, we say it is /satisfied/.  HotDrink /enforces/ a
-constraint by modifying some of its variables so that the constraint is
-satisfied.
+At the heart of a ``HotDrink-powered'' application is a /dataflow
+constraint system/.  A constraint system consists of /variables/ and
+/constraints/, where each constraint represents a relation over some
+of the variables.  For example, given three variables, $A$, $w$, and
+$h$ (for area, width, and height of a rectangle), a constraint could
+represent the relation $A = w h$.  Given one more variable $p$ (for
+perimeter), another constraint could represent the relation $p = w +
+h$. To ease the discussion, we name this example constraint system of
+four variables and two constraints as the /whap/ system.
 
-In HotDrink's constraint system, constraints between variables are expressed
-as sets of functions.  These functions are called /methods/ (short for
-/constraint satisfaction methods/) and are written by the programmer.  Each
-method is responsible for calculating new values for some of the constraint's
-variables so that the constraint will be satisfied.  To enforce all
-constraints, HotDrink executes one method from each constraint.  Together, the
-methods executed define a /dataflow/---a branching path showing which
-variables are used to update which other variables.  HotDrink has a
-/multi-way dataflow constraint system/, meaning there are many possible
-dataflows depending on which methods are executed.  In general, HotDrink
-selects a dataflow that preserves variables the user has edited more recently.
+HotDrink uses the whap system to manage the GUI below.
+If a user edits any of the GUI's fields, HotDrink will 
+recompute values of some of the other fields to enforce
+the /whap/ system's constraints.
 
-In a HotDrink \ldquo{}powered\rdquo user interface, GUI events are translated to changes
-to constraint system variables.  These changes result
-in constraints which are no longer satisfied.  HotDrink
-responds by /solving/ the constraint system---that is, selecting which methods
-to execute, and then executing them so that all constraints are again
-satisfied.  Solving can change the values of the system's variables; the
-changed values are then somehow
-displayed or visualized to the user, as specified by the programmer.
+#+HTML: <div class="whap-gui">
+{{{include-html("tangle/intro.html")}}}
+#+HTML: </div>
+#+HTML: <script type="text/javascript">
+#+HTML: (function() {
+{{{include-html("tangle/intro.js")}}}
+#+HTML: })();
+#+HTML: </script>
 
-** Commands
+In HotDrink, constraints between variables are expressed as sets of
+functions.  These functions are called /methods/ (short for
+/constraint satisfaction methods/). Each method computes new values
+for some of its constraint's variables, so that the constraint is
+enforced (the relation it represents becomes true).  It is up to the
+programmer to decide how to break the relation into
+functions [fn:1]. In modeling the /whap/ system, we chose to represent
+the first constraint with three methods ($m_1 = p \leftarrow 2 (w+h)$,
+$m_2 = h \leftarrow p/2 - w$, and $m_3 = w \leftarrow p/2 - h$) and
+the second constraint with two methods ($n_1 = A \leftarrow wh$ and
+$n_2 = (w, h) \leftarrow (\sqrt A, \sqrt A)$).
 
-Whereas the constraint system runs in the background to automatically enforce
-constraints, a /command/ is code that is run only when triggered by an event.
-A command may be as simple as assigning a new value to a variable, or as
-complex as making a server call using the value of some variables and updating
-the GUI with the result.  After executing a command, HotDrink always solves
-the constraint system to ensure that all relations between variables are
-enforced.
+A constraint system can be viewed as a graph where variables and
+methods are nodes and edges indicate methods' input and output
+variables. Figure [[fig:whap-graph]] shows the graph of the /whap/ system.
 
-HotDrink views the life of a GUI, not as a series of events, but as a sequence
-of commands.  HotDrink manages these commands and coordinates their execution.
-Commands may execute /asynchronously/, meaning that a command does not have to
-wait for all previous commands to finish before it can begin.  HotDrink
-manages the effects of all commands on GUI state so that the end result will
-be the same as if those commands had executed synchronously.
+#+begin_src dot :file area-w-h-perimeter.png :cmd neato :cmdline -Kdot -Tpng 
+  digraph whap {
+    rankdir=LR; ranksep=1;
+    node [shape=box]; A; w; h; p;
+    node [shape=circle,fixedsize=true,width=0.3,label=""]; 
+    A2wh [label="n1"]; wh2A [label="n2"]; ph2w [label="m3"]; pw2h [label="m2"]; wh2p [label="m1"];
 
-** MVVM
+   { rank=same; A }
+   { rank=same; A2wh; wh2A }
+   { rank=same; w; h }
+   { rank=same; ph2w; pw2h }
+   { rank=same; wh2p }
+   { rank=same; p }
 
-Applications written with HotDrink follow the Model-View-ViewModel
-(a.k.a. MVVM) design pattern.  This pattern divides the application as
-follows:
+    A -> A2wh [style=dotted];
+    A2wh -> {w h};
+
+    w -> wh2A [style=dotted]; 
+    h -> wh2A [style=dotted]; 
+    wh2A -> A;
+
+    w -> wh2p [style=dotted];
+    h -> wh2p [style=dotted];
+    wh2p -> p;
+
+    p -> pw2h [style=dotted, constraint=false];
+    w -> pw2h [style=dotted];
+    pw2h -> h [constraint=false];
+
+    p -> ph2w [style=dotted, constraint=false];
+    h -> ph2w [style=dotted];
+    ph2w -> w [constraint=false];
+
+    overlap=false
+    fontsize=12;
+  }
+#+end_src
+
+#+CAPTION: A multi-way dataflow constraint system on variables $A$, $w$, $h$, and $p$. For better readability, methods' inputs are marked with dashed and outputs with solid edges.
+#+LABEL: fig:whap-graph
+#+RESULTS:
+[[file:area-w-h-perimeter.png]]
+
+With HotDrink's syntax, the /whap/ constraint system could be specified
+as follows.  Note that this tutorial names some of
+the source blocks with the syntax @@html:<span
+class="org-src-name">source-block-name</span>@@ .  Using such a
+reference within another source block indicates that the contents of
+the named source block should be expanded at the location of the
+reference.
+
+#+CAPTION: whap-component
+#+NAME: whap-component
+#+BEGIN_SRC javascript
+var cb = new hd.ComponentBuilder();
+var whap = cb.variables('p, w, h, A', { A: 100 })
+  .constraint( 'p, w, h' )
+    .method( 'w, h -> p', (w, h) => 2*(w + h) )
+    .method( 'p, w -> h', (p, w) => p/2 - w )
+    .method( 'p, h -> w', (p, h) => p/2 - h )
+  .constraint( 'A, w, h' )
+    .method( 'w, h -> A', (w, h) => w * h )
+    .method( 'A -> w, h', (A) => [ Math.sqrt(A), Math.sqrt(A) ] )
+  .component();
+#+END_SRC
+
+The ~variables~ method declares the variables of the system and and
+the ~constraint~ method those of a constraint. Each call to ~method~
+defines one method of a constraint.  The first argument to ~method~ is
+a string that specifies the input and output variables of a method,
+the second is the code of the method, here defined using the arrow
+function syntax. The method ~A -> w, h~ returns an array (of two
+elements), because it has two output variables.
+
+In a HotDrink-powered user interface, GUI events are translated to
+requests to modify a constraint system's variables.  Modifications
+result in constraints that are no longer satisfied.  HotDrink responds
+by /solving/ the constraint system: it determines which methods need
+to be executed and in which order, and executes them to re-enforce all
+potentially violated constraints. HotDrink notifies if a variable's
+value changes as the result of solving, so that views can be updated.
+
+Concretely, solving involves selecting one method from each constraint
+such that the selected methods form a directed acyclic graph (DAG) in
+the constraint system graph. This graph defines a /dataflow/: which
+variables are used to update which other variables.  HotDrink's
+constraint system is a /multi-way dataflow constraint system/: there
+may be many dataflows that could solve the system. As a coarse
+approximation, HotDrink selects a dataflow that preserves the values
+of variables that a user has changed most recently. Table
+[[fig:whap-dataflows]] shows all four possible dataflows of the /whap/
+system.
+
+#+NAME: awh-flow-1
+#+begin_src dot :file area-w-h-perimeter-flow-1.png :cmd neato :cmdline -Kdot -Tpng :results none
+  digraph whap {
+    size="3,2";
+    rankdir=LR; ranksep=1;
+    node [shape=box]; A; w; h; p;
+    node [shape=circle,fixedsize=true,width=0.2,label=""]; 
+    A2wh; wh2A [color=lightgray]; ph2w [color=lightgray]; pw2h [color=lightgray]; wh2p;
+
+   { rank=same; A }
+   { rank=same; A2wh; wh2A }
+   { rank=same; w; h }
+   { rank=same; ph2w; pw2h }
+   { rank=same; wh2p }
+   { rank=same; p }
+
+    A -> A2wh [style=solid];
+    A2wh -> {w h};
+
+    w -> wh2A [style=solid, color=lightgrey]; 
+    h -> wh2A [style=solid, color=lightgrey]; 
+    wh2A -> A [color=lightgrey];
+
+    w -> wh2p;
+    h -> wh2p;
+    wh2p -> p;
+
+    edge [color=lightgrey];
+    p -> pw2h [style=solid,constraint=false];
+    w -> pw2h [style=solid];
+    pw2h -> h [constraint=false];
+
+    p -> ph2w [style=solid,constraint=false];
+    h -> ph2w [style=solid];
+    ph2w -> w [constraint=false];
+
+    overlap=false
+    fontsize=12;
+  }
+#+end_src
+
+#+NAME: awh-flow-2
+#+begin_src dot :file area-w-h-perimeter-flow-2.png :cmd neato :cmdline -Kdot -Tpng :results none
+  digraph whap {
+    size="3,2";
+    rankdir=LR; ranksep=1;
+    node [shape=box]; A; w; h; p;
+    node [shape=circle,fixedsize=true,width=0.2,label=""]; 
+    A2wh [color=lightgray]; wh2A; ph2w [color=lightgray]; pw2h; wh2p [color=lightgray];
+
+   { rank=same; A }
+   { rank=same; A2wh; wh2A }
+   { rank=same; w; h }
+   { rank=same; ph2w; pw2h }
+   { rank=same; wh2p }
+   { rank=same; p }
+
+    A -> A2wh [color=lightgrey];
+    A2wh -> {w h} [color=lightgrey];
+
+    w -> wh2A; 
+    h -> wh2A; 
+    wh2A -> A;
+
+    w -> wh2p [color=lightgrey];
+    h -> wh2p [color=lightgrey];
+    wh2p -> p [color=lightgrey];
+
+    p -> pw2h [constraint=false];
+    w -> pw2h;
+    pw2h -> h [constraint=false];
+
+    edge [color=lightgrey];
+    p -> ph2w [constraint=false];
+    h -> ph2w;
+    ph2w -> w [constraint=false];
+
+    overlap=false
+    fontsize=12;
+  }
+#+end_src
+
+#+NAME: awh-flow-3
+#+begin_src dot :file area-w-h-perimeter-flow-3.png :cmd neato :cmdline -Kdot -Tpng :results none
+  digraph whap {
+    size="3,2";
+    rankdir=LR; ranksep=1;
+    node [shape=box]; A; w; h; p;
+    node [shape=circle,fixedsize=true,width=0.2,label=""]; 
+    A2wh [color=lightgray]; wh2A; ph2w [color=lightgray]; pw2h [color=lightgray]; wh2p;
+
+   { rank=same; A }
+   { rank=same; A2wh; wh2A }
+   { rank=same; w; h }
+   { rank=same; ph2w; pw2h }
+   { rank=same; wh2p }
+   { rank=same; p }
+
+    A -> A2wh [color=lightgrey];
+    A2wh -> {w h} [color=lightgrey];
+
+    w -> wh2A; 
+    h -> wh2A; 
+    wh2A -> A;
+
+    w -> wh2p;
+    h -> wh2p;
+    wh2p -> p;
+
+    edge [color=lightgrey];
+    p -> pw2h [constraint=false];
+    w -> pw2h;
+    pw2h -> h [constraint=false];
+
+    p -> ph2w [constraint=false];
+    h -> ph2w;
+    ph2w -> w [constraint=false];
+
+    overlap=false
+    fontsize=12;
+  }
+#+end_src
+
+#+NAME: awh-flow-4
+#+begin_src dot :file area-w-h-perimeter-flow-4.png :cmd neato :cmdline -Kdot -Tpng :results none
+  digraph whap {
+    size="3,2";
+    rankdir=LR; ranksep=1;
+    node [shape=box]; A; w; h; p;
+    node [shape=circle,fixedsize=true,width=0.2,label=""]; 
+    A2wh [color=lightgray]; wh2A; ph2w; pw2h [color=lightgray]; wh2p [color=lightgray];
+
+   { rank=same; A }
+   { rank=same; A2wh; wh2A }
+   { rank=same; w; h }
+   { rank=same; ph2w; pw2h }
+   { rank=same; wh2p }
+   { rank=same; p }
+
+    A -> A2wh [color=lightgrey];
+    A2wh -> {w h} [color=lightgrey];
+
+    w -> wh2A; 
+    h -> wh2A; 
+    wh2A -> A;
+
+    edge [color=lightgrey];
+    w -> wh2p;
+    h -> wh2p;
+    wh2p -> p;
+
+    p -> pw2h [constraint=false];
+    w -> pw2h;
+    pw2h -> h [constraint=false];
+
+    edge [color=black];
+    p -> ph2w [constraint=false];
+    h -> ph2w;
+    ph2w -> w [constraint=false];
+
+    overlap=false
+    fontsize=12;
+  }
+#+end_src
+
+# Results collected here manually to be able to place images inline
+
+#+CAPTION: The dataflows of the /whap/ constraint system.
+#+LABEL: fig:whap-dataflows
+#+ATTR_HTML: :rules none :frame void :style margin-left:auto; margin-right:auto;
+| [[file:area-w-h-perimeter-flow-1.png]] | [[file:area-w-h-perimeter-flow-2.png]] |
+| [[file:area-w-h-perimeter-flow-3.png]] | [[file:area-w-h-perimeter-flow-4.png]] |
+
+
+[fn:1] The decomposition can be arbitrary, except that the output variables of one method cannot be
+a subset of those of another method.
+
+# ** Commands
+
+# /Commands/ are procedures that observe and modify
+# the variable values in HotDrink's constraint system. After
+# executing each command, HotDrink solves the constraint system. Both
+# commands and methods can be asynchronous. HotDrink coordinates their
+# execution so that consistency is preserved.
+
+** Architecture of a HotDrink GUI 
+
+Applications written with HotDrink can be viewed as instances the
+/Model-View-ViewModel/ (a.k.a. MVVM) design pattern.  This pattern
+divides the application as follows:
 
 - The /View/ is responsible for presentation and capturing
-  interactions with the user.  It arranges everything on the screen
-  and provides events that indicate user actions.  For our purposes,
-  the view is specified in HTML, along with JavaScript that
-  generates and modifies the HTML.  This tutorial shows bits and snippets of HTML, with
-  some commentary to help understand the examples, but in general we assume familiarity
-  with HTML, JavaScript, and constructing web pages.
+  interactions with the user.
 
-- The /View-Model/ is responsible for managing the data presented in
-  the view. This means supplying the data to be displayed by the view,
-  as well as responding to user actions.  The purpose of
-  HotDrink is to help in implementing the view-model.
+- The /ViewModel/ is manages the data presented in the view.  HotDrink
+  maintains the view-model as a constraint system.
 
-- Another important part of an MVVM application are the /bindings/.  A
-  binding connects elements in the view with variables in the
-  view-model.  The bindings are sometimes treated as part of the
-  view---that is why there is no \ldquo{}B\rdquo in \ldquo{}MVVM\rdquo---but we treat them as
-  a distinct component of the pattern.  In HotDrink, bindings can be
-  specified in JavaScript, or as annotations in HTML as part of the
-  view specification.
+- The /bindings/ connect elements in the view with variables in the
+  view-model. They (1) user events in the view and generate
+  requests to change the constraint system's variables, and (2) deliver
+  new variable values to the vies after constraints have been solved.
 
-- The /Model/ is responsible for everything else---whatever the
-  application is actually supposed to /do/.  The model does not need to
-  be aware of the user interface; therefore we will not discuss it further in
-  this documentation.
+- The /Model/ is responsible for the ``business-logic''.  It is
+  usually not aware of the user interface, and it is not discussed
+  in this tutorial.
 
-* Including HotDrink in your web page
+* A Simple HotDrink Application
 
-To use HotDrink, your web page should include the file [[file:hotdrink.min.js][=hotdrink.min.js=]] that
-came with this tutorial.  (Alternatively, if you downloaded the source tree,
-follow the build instructions to compile your own =hotdrink.min.js=.)
-More specifically, add the following ~<script>~ tag to the ~<head>~ section of
-your HTML, with the appropriate path in the ~src~ attribute.  In order for the
-examples in this tutorial to work, the file =hotdrink.min.js= must be located
-in the same directory as this HTML file.
+This section shows the implementation of the /whap/ GUI above.
+Playing with the GUI quickly reveals that it is rather rudimentary:
+fields allow negative lengths, non-numeric input is not filtered out,
+etc. In the interest of keeping the discussion foucsed on HotDrink, we
+accept these shortcomings for now.
+
+** Importing HotDrink 
+
+To use HotDrink on a page, import the [[file:hotdrink.min.js][=hotdrink.min.js=]] script (that
+came with this tutorial).  Concretely, add the following to the
+~<head>~ section of your HTML, with the appropriate path in the ~src~
+attribute.
 
 #+BEGIN_SRC html
 <script type="text/javascript" src="hotdrink.min.js"></script>
 #+END_SRC
 
-HotDrink does not rely on any other JavaScript frameworks, but neither should it
-conflict with other frameworks (JQuery, Dojo, MooTools, etc.).
-The only global symbol it exports is ~hd~, and all of its interactions
-with the DOM are via cooperative API functions, e.g.,
-[[https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.addEventListener][~addEventListener~]], etc.
+To avoid conflicts with other libraries, HotDrink exports only one
+global symbol, ~hd~, and all of its interactions with the DOM are via
+cooperative API functions, such as [[https://developer.mozilla.org/en-US/docs/Web/API/EventTarget.addEventListener][~addEventListener~]].
 
-* Important HotDrink objects
+** Primary HotDrink objects
 
-There are three important object types you will need to interact with when
-using HotDrink.
+There are three primary object types that appear in a ``HotDrinked'' application.
 
-*** The ~PropertyModel~ type
+1. A ~PropertyModel~ object represents the view-model.  It manages a
+   constraint system. In the simplest case, an application has a
+   single property model that, in its variables, maintains all data
+   relevant for the view.  
 
-A /property model/ is the View-Model of a HotDrink \ldquo{}powered\rdquo application.
-application.  It contains variables for holding the data used by your GUI, and
-a constraint system for enforcing any constraints you define for those
-variables (as described in Section [[Constraint systems]].)  In general, your
-application will always have a single property model, customized to contain
-the variables and constraints needed for your GUI.  Variables and constraints
-are created separately, then added to the property model.
+2. A ~Component~ object is a collection of property model elements:
+   variables, constraints, commands, and components.  Components are
+   merely a grouping mechanism that allow several elements to be
+   adding to or removed from a property model in one operation.
 
-*** The ~Component~ type
+3. A ~ComponentBuilder~ object with its member functions is a language
+   for constructing components.  By chaining method calls of a
+   ~ComponentBuilder~ object the programmer defines a component's
+   elements.  The constraint system specification in the
+   {{{scraplink(whap-component)}}} source block is written using the
+   component builder's language.
 
-A property model may be viewed as a type of container: it contains and manages
-a set of elements.  The three types of property model elements we have
-discussed so far are variables, constraints, and commands.  While it is
-possible to create these elements individually and add them directly to a
-property model, the recommended approach is to define a property model
-/component/.  A component is also a collection of property model elements;
-however, a component does not manage its elements, it merely holds them.
+** The View 
 
-You, the programmer, are responsible for making sure all the property model
-elements you are using are added to the property model.  By placing related
-elements together in a component, it is easy to add them all to the property
-model at the same time---and to remove them later if they are no longer
-needed.  You can also define your own component types so that you can reuse
-them.
+HotDrink does not dictate how the View of an application 
+is implemented; we use HTML here.
 
-*** The ~ComponentBuilder~ type
+#+CAPTION: whap-view
+#+BEGIN_SRC html -n -r :exports code :tangle tangle/intro.html :padline no :noweb strip-export
+<<whap-css>>
+  <fieldset id="whap-gui">
+    <label for="A">A</label><input id="A" type="text"></input>
 
-The task of building a component is somewhat complex.  To help, HotDrink
-provides an object called the /component builder/.  This factory object
-essentially defines its own language (i.e., an /embedded domain-specific
-language/) for constructing components.  To use this language, create a new
-component builder instance, then call its member functions to add elements to
-the component.
+    <span class="vertical-middle">
+      <label for="w">w</label><input id="w"  type="text"/></br>
+      <label for="h">h</label><input id="h" type="text"/>
+    </span>
 
-* An introductory example
+    <label for="p">p</label><input id="p" type="text"/>
+  </fieldset>
+#+END_SRC
 
-We present here a simple example of using HotDrink.  Note that we will not
-explain all the details of this example, only the most important points.  The
-goal of this example is to define some basic concepts that you will need to
-understand the other HotDrink tutorials; the other tutorials will provide a
-more in-depth explanation of how HotDrink works.
+Adding some styling lines the labels and textboxes nicely.
 
-** The example
-
-Below is an form from a hypothetical hotel reservation web page.  The user may
-edit the check-in date, the check-out date, the number of nights to stay, and
-the number of beds desired.  Notice that, as one text box is edited, other
-elements of the web page are updated to be consistent with the changes.
-
-#+HTML: <div class="results">
-#+INCLUDE: tangle/intro.html html
-#+HTML: </div>
-#+HTML: <script type="text/javascript">
-#+HTML: (function() {
-#+INCLUDE: tangle/intro.js html
-#+HTML: })();
-#+HTML: </script>
-
-*Source Code*
-
-The source code for this form is shown in its entirety below.  (Click the
-"show" links to view the code.)  To clarify, we have broken the code into
-three sections:  the HTML that defines the View, the JavaScript that defines
-the View-Model, and the JavaScript that performs binding.  In the remainder of
-this section we will reproduce and examine snippets of this code.
-
-#+CAPTION: /View/ (show/hide)
-#+BEGIN_SRC html -n -r :exports code :tangle tangle/intro.html :padline no :noweb yes
-<table>
-  <style type="text/css" scoped>
-    th { padding-right: 1ex; text-align: left; font-weight: bold; }
+#+CAPTION: whap-css
+#+NAME: whap-css
+#+BEGIN_SRC html -n -r :exports code 
+  <style type="text/css">
+    fieldset#whap-gui input[type="text"] { width: 8ex; margin-right: 2ex }
+    fieldset#whap-gui label { display:inline-block; width: 1.5ex; } 
+    .vertical-middle { display:inline-block; vertical-align:middle; } 
   </style>
-  <tr>
-    <th>Check-In:</th>
-    <td><<checkin>></td>
-  </tr>
-  <tr>
-    <th>Check-Out:</th>
-    <td><input type="text" data-bind="bd.date( checkout )"/></td>
-  </tr>
-  <tr>
-    <th>Nights:</th>
-    <td><<nights>></td>
-  </tr>
-  <tr>
-    <th>Room Type:</th>
-    <td>
-      <<rate>>
-        <option value="1D">1 Double Bed</option>
-        <option value="1Q">1 Queen Bed</option>
-        <option value="1K">1 King Bed</option>
-        <option value="2Q">2 Queen Beds</option>
-      </select>
-    </td>
-  </tr>
-  <tr>
-    <th>Price:</th>
-    <td>$<<price>></td>
-  </tr>
-  <tr>
-    <td colspan="2" align="right">
-      <input type="button" value="Submit" data-bind="bd.click( reportPrice )"/>
-    </td>
-  </tr>
-</table>
 #+END_SRC
 
-#+CAPTION: /View-Model/ (show/hide)
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/intro.js :padline no :noweb yes
-// Some constants to help us
-var oneDayMs = 24*60*60*1000;
-var today = new Date();
-today.setHours( 0, 0, 0, 0 );
+** ViewModel
 
-// Define variables and constraints in a component
-var model = new hd.ComponentBuilder()
+The view-model is a ~PropertyModel~ object. It keeps any constraints
+that are added to it enforced. A property model accepts constraints as
+grouped into components. The code below adds the ~whap~ component
+(that was defined in the {{{scraplink(whap-component)}}} block) to the
+property model ~pm~.
 
-    // Variables
-    .variable( "checkin", today)
-    .variable( "checkout" )
-    .variable( "nights", 2 )
-    .variable( "type", "1Q" )
-    .variable( "price" )
-
-    // First constraint
-    .constraint( 'checkin, checkout, nights' )
-    .method( 'checkin, checkout -> nights', function( checkin, checkout ) {
-      return (checkout.getTime() - checkin.getTime()) / oneDayMs;
-    } )
-    .method( 'nights, checkin -> checkout', function( nights, checkin ) {
-      return new Date( checkin.getTime() + nights*oneDayMs );
-    } )
-    .method( 'nights, checkout -> checkin', function( nights, checkout ) {
-      return new Date( checkout.getTime() - nights*oneDayMs );
-    } )
-
-    // Second constraint
-    .constraint( 'nights, type, price' )
-    .method( 'nights, type -> price', function( nights, type ) {
-      var rate;
-      switch(type) {
-      case '1D':  rate = 80;  break;
-      case '1Q':  rate = 95;  break;
-      case '1K':  rate = 115; break;
-      case '2Q':  rate = 140; break;
-      default:   throw "Invalid room type: " + type;
-      }
-      return nights * rate
-    } )
-
-<<command>>
-
-    .component();
-
-// Define the property model
-<<propmod>>
-#+END_SRC
-
-#+CAPTION: /Binding/ (show/hide)
-#+BEGIN_SRC js -n -r :exports code :tangle tangle/intro.js :padline no :noweb yes
-window.addEventListener( 'load', function() {
-<<binding>>
-} );
-#+END_SRC
-
-** The View
-
-As mentioned above, the View is defined by the HTML used to construct the web
-page (and any JavaScript used to dynamically generate web page content).  In
-this example, our View is an HTML table containing input elements and their
-labels.  Each input element is bound to a variable in the view-model; the
-value of that variable is displayed by the element, and any changes made to
-the element are propagated to the value of the variable.
-
-In this example we use HotDrink's declarative bindings, in which each tag is
-annotated with JavaScript code indicating how it is to be bound.  We call this
-annotation a /binding specification/.  Binding specifications are found in the
-~data-bind~ attribute of an HTML tag.  For example, the following text input
-tag contains a binding specification indicating that it is to be bound to the
-~checkin~ variable of the view-model, and that it is to be converted to a
-JavaScript ~Date~ object in the view-model.  Thus, after each edit of the text
-input, the string will be converted to a ~Date~ object, and---if
-successfully converted---will be stored in the ~checkin~ variable.
-
-#+NAME: checkin
-#+BEGIN_SRC html
-<input type="text" data-bind="bd.date( checkin )"/>
-#+END_SRC
-
-Similarly, this text input tag contains a binding specification indicating
-that it is to be bound to the ~nights~ variable of the view-model, and that it
-is to be converted to a number in the view-model.  The second parameter to the
-~bd.num~ function indicates that the number is to have zero digits after the
-decimal point---i.e., it is to be an integer.
-
-#+NAME: nights
-#+BEGIN_SRC html
-<input type="text" data-bind="bd.num( nights, 0 )"/>
-#+END_SRC
-
-The ~<select>~ tag for the drop-down list element indicates that it is to use
-the ~type~ variable as the selected value.
-
-#+NAME: rate
-#+BEGIN_SRC html
-<select data-bind="bd.value( type )">
-#+END_SRC
-
-The view contains one other element bound to a variable.  The following
-~<span>~ tag contains a binding specification indicating the ~price~ variable
-is to be the contents of the tag, and that it is to be interpreted simply as
-text---i.e., no HTML tags, etc.  The call to ~bd.fix( 2 )~ indicates that the
-variable is to be converted from a number to a string containing two digits
-after the decimal point.
-
-#+NAME: price
-#+BEGIN_SRC html
-<span data-bind="bd.text( price, bd.fix( 2 ) )"></span>
-#+END_SRC
-
-These binding specifications have no effect until you tell HotDrink to
-automatically perform all bindings according to their specifications.  We do
-that in the Binding section.
-
-As a side-node, you may find this view to be very plain.  Let us emphasize
-that the purpose of HotDrink is /not/ to create a fancy View; it is to create
-a fancy View-Model.  HotDrink focuses on the data underlying your web page,
-enforcing constraints and orchestrating commands.  There are many existing
-JavaScript toolkits which, for example, will help you create calendar widgets
-to help the user select a date.  HotDrink aims to cooperate with those
-toolkits, not replace them.
-
-** The View-Model
-
-As mentioned above, a property model represents the view-model of our
-application.  Your job as the programmer, then, is to construct a property
-model that correctly models your GUI.
-
-The first thing we must do is create the variables and constraints that will
-define our property model.  We create these as members of a component using a
-component builder.  The general strategy for constructing a component is: (1.)
-create a new builder object, (2.) use the builder member functions to create
-variables, constraints, etc., and (3.) call the ~component~ builder member
-function to retrieve the completed component.  The mock code below illustrates
-how this might be done.
-
-#+BEGIN_SRC js
-// Create new builder object
-var builder = new hd.ComponentBuilder();
-
-// Use methods to construct the model
-builder.variable( ... );
-builder.constraint( ... );
-builder.method( ... );
-// ...and so on...
-
-// Retrieve the completed model
-var component = builder.component();
-#+END_SRC
-
-However, most builder member functions return the same builder object with
-which they were invoked.  This allows a succinct programming style known as
-\ldquo{}chaining\rdquo in which the return value of one member function is used to
-immediately invoke the next member function.  You can see this style in the
-mock code below.
-
-#+BEGIN_SRC js
-// Create, use, and discard builder object
-var component = new hd.ComponentBuilder()
-    .variable( ... )
-    .constraint( ... )
-    .method( ... )
-    .component();
-#+END_SRC
-
-First we create a new ~ComponentBuilder~ object.  Rather than storing this
-builder in a variable, we simply begin invoking member functions on it.  Each
-member function invoked returns the same anonymous builder.  This return value
-is used to invoke the next member function, and so on.  This continues until
-the end, where the ~component~ member function is invoked on the still-anonymous
-builder to return the component that was constructed.  It is this component that
-is assigned to the ~component~ variable.  This is the style we use in our
-view-model code.
-
-In general, you may have as many components as you like.  However, for small
-interfaces, like the one in this example, we can represent the entire GUI with
-a single component.  You can name this component whatever you would like, but
-our convention is to name it ~model~, as it represents the entirety of the
-property model.  Once you have a component, you can add it to a property
-model, like so:
-
-#+NAME: propmod
-#+BEGIN_SRC js
+#+NAME: construct-property-model
+#+BEGIN_SRC js :noweb yes
 var pm = new hd.PropertyModel();
-pm.addComponent( model );
+pm.addComponent(whap);
 #+END_SRC
 
-When you add a component to a property model, it automatically adds to the
-property model all the elements contained by the component.  Later, you may
-remove those elements from the property model, like so:
+The property model ~pm~ now manages the view-model's state.  The
+adding of ~whap~ triggers the solver, which enforces the constraints
+$A = w h$ and $p = w + h$ are enforced. They remain enforced, as
+nothing yet modifies the property model's variables.
+
+** Writing to and Reading from Variables
+
+First, the property model object offers no API for accessing
+components that have been added to it. The access to a variables is
+through the component that contains it. For example, the $w$ variable
+is accessed as ~whap.w~.
+
+The ~set~ method writes a new value to a variable.
+There is a ~get~ method too, but it is usually not what
+should be used to read a variable's value. To see why,
+we analyze the ~set~ call in details.
+
+Consider the call ~whap.w.set(9)~. After this call, the property
+model's constraint system is solved.  This will causing some
+variable's value to change, including ~w~'s.  These changes are not,
+however, immediate; when ~set~ returns, no variable has changed its
+value yet.  As a concrete example, the code below writes some prior
+value of ~w~ on the console, not ~9~.
 
 #+BEGIN_SRC js
-pm.removeComponent( model );
+whap.w.set(9); 
+console.log(whap.w.get());
 #+END_SRC
 
-As those function names suggest, the full property model for your application
-can actually consist of several different components, and new components can be
-added or removed at run-time.  For now we assume a single component defines the
-entire property model.
+What ~set~ does do immediately, is to create a /promise/ for each
+variable whose value will change as a result of solving the constraint
+system. This promise's /eventual value/ will be written to the
+variable. Rewriting the above example as below will print ~9~.
 
-** The Binding
-
-As mentioned above, the /bindings/ are the connections between variables of
-the view-model and elements of the View.  We can generate bindings
-programmatically with JavaScript code.  However, in the example we have
-annotated elements of the View with binding specification, indicating how they
-are to be bound.  We can perform all of these bindings in one fell swoop with
-the following line of code.
-
-#+NAME: binding
 #+BEGIN_SRC js
-  hd.createDeclaredBindings( model, document.body );
+whap.w.set(9); 
+whap.w.getStagedPromise().then(v => console.log(v));
 #+END_SRC
 
-The ~createDeclaredBindings~ function causes HotDrink to search a part of the
-Document Object Model (DOM) for HTML elements which have a binding
-specification.  It then performs those bindings according to their
-specification.  The first parameter is a component used to look up any variable
-names encountered in the binding specifications.  The second parameter is a
-DOM node indicating which part of the DOM should be searched for binding
-specifications.  HotDrink will only search the specified node and any of its
-children when looking for binding specifications.  In this case, however,
-we've passed ~document.body~, indicating the entire body of the DOM is to be
-searched.
+The ~getStagedPromise~ function is not the typical way of reading
+variables' values either; its use here was to explain what goes on in
+the property model after a ~set~.  Instead, the typical mechanism of
+obtaining a variable's value is by registering an /observer/ object on
+a variable.  Property model's variables are /observables/ that accept
+such registrations.
 
-There is a catch to performing binding---one web developers should be very
-familiar with.  Elements of the DOM are not available until the entire HTML
-document has been parsed; thus, attempting to call ~performDeclaredBindings~
-in the header of the document will fail because the DOM is not yet ready.
-In this example, we handle this by registering a callback function to be
-executed when the entire document has finished loading; it is here that we
-call ~performDeclaredBindings~.  Many JavaScript toolkits and frameworks
-provide alternative means of running code after the DOM is ready; any such
-means would be suitable for this purpose.
+A variable's observers can define three callback
+members: ~onNext(v)~ to be called whenever the variable receives a new
+value ~v~, ~onError(e)~ if it receives an error value ~e~, and
+~onCompleted()~ when no new values will be received anymore.
+
+We write the above example once more, now using an observer:
+
+#+BEGIN_SRC js
+whap.w.addObserver({onNext: v => console.log(v)});
+whap.w.set(9); 
+#+END_SRC
+
+** Bindings --- Connecting the View and the ViewModel
+
+Bindings observe changes in the view, changes in the view-model, or
+both. HotDrink offers many convenient ways for defining and
+registering observers, but below we show the mechanism in its basic
+form.
+
+We first define the function ~textBinder~ that takes two parameters, a
+DOM element (a textbox) ~box~ and a variable ~v~ in a property model,
+and binds them so that a change in either will be reflected in the
+other. The function thus creates a /two-way/ binding. 
+
+#+NAME: simple-two-way-textbox-binder
+#+BEGIN_SRC js
+  function textBinder(box, v) {
+    v.addObserver({ onNext: val => { box.value = val } });
+    box.addEventListener('input', () => { v.set(box.value); });
+  };
+#+END_SRC
+
+The observing of changes in ~v~ is accomplished by adding an
+observable object to ~v~. The change is reflected in the DOM object
+~box~ by assigning to ~box.value~. This simple observable defines only
+the ~onNext~ method, ignoring any error and completion messages.
+The observing of changes in the DOM object's value is accomplished
+by registering a handler to ~box~'s ~input~ event. 
+The handler calls ~set~ to assign a new value for ~v~.
+
+Calling ~textBinder~ with all four textbox-variable pairs
+creates the desired connections.
+
+#+CAPTION: create-four-binders
+#+NAME: create-four-binders
+#+BEGIN_SRC js
+  textBinder(document.getElementById("A"), whap.A);
+  textBinder(document.getElementById("w"), whap.w);
+  textBinder(document.getElementById("h"), whap.h);
+  textBinder(document.getElementById("p"), whap.p);
+#+END_SRC
+
+
+To point out an obvious issue, the calls to ~textBinder~
+should only be issued after the DOM is available.
+
+#+NAME: on-load
+#+BEGIN_SRC js -n -r :exports code :padline no :noweb tangle
+  window.addEventListener( 'load', function() {
+    <<create-four-binders>>
+  } );
+#+END_SRC
+
+
+#+BEGIN_SRC js -n -r :exports none :padline no :noweb yes :tangle tangle/intro.js
+// Define a constraint system (variables and constraints) as a component
+<<whap-component>>
+
+// Define the property model and add its components
+<<construct-property-model>>
+
+<<simple-two-way-textbox-binder>>
+
+<<on-load>>
+#+END_SRC
 
 ** Commands
 
-In many ways, a command is similar to an event handler.  However, whereas an
-event handler represents something that happened in the View, a command
-represents something that happened in the View-Model.  For example, a
-key-press event is generated when the user presses a key.  That event is
-translated by a binding into a variable-set command.
+MUST WRITE THIS SECTION
 
-Most commands in this example are, in fact, variable-set commands issued by
-bindings.  These commands are created automatically; no extra work is
-required.  If you want to create your own custom commands, however, you may do
-so using the component builder.
+# In many ways, a command is similar to an event handler.  However, whereas an
+# event handler represents something that happened in the View, a command
+# represents something that happened in the View-Model.  For example, a
+# key-press event is generated when the user presses a key.  That event is
+# translated by a binding into a variable-set command.
 
-#+NAME:command
-#+BEGIN_SRC js
-    // Create a custom command named 'reportPrice'
-    .command( 'reportPrice', 'price ->', function( price ) {
-      alert( "The price of your room is $" + price.toFixed( 2 ) );
-    } )
-#+END_SRC
+# Most commands in this example are, in fact, variable-set commands issued by
+# bindings.  These commands are created automatically; no extra work is
+# required.  If you want to create your own custom commands, however, you may do
+# so using the component builder.
 
-This command can be bound to events, like button presses.  Commands can also
-be used to modify variables of the property model, or event modify the
-property model itself, adding or removing variables, constraints, etc.
+# #+NAME: command
+# #+BEGIN_SRC js
+#     // Create a custom command named 'dimensions'
+#     .command( 'dimensions', '!w, !h -> w, h', function(w, h) {
+#       alert( "The dimensions are " + w + " " + h);
+#       var wh = (w+h)/2;
+#       return [wh, wh];
+#     })
+# #+END_SRC
+
+# This command can be bound to events, like button presses.  Commands can also
+# be used to modify variables of the property model, or event modify the
+# property model itself, adding or removing variables, constraints, etc.
 
 #  LocalWords:  HotDrink javascript src js stylesheet css href INFOJS sdepth
 #  LocalWords:  le HotDrink's multi ldquo rdquo MVVM ViewModel html JQuery hd
@@ -508,3 +605,20 @@ property model itself, adding or removing variables, constraints, etc.
 #  LocalWords:  checkin oneDayMs setHours ComponentBuilder propmod num getTime
 #  LocalWords:  ModelBuilder PropertyModel addComponent removeComponent
 #  LocalWords:  performDeclaredBindings
+
+
+# Changes to GUI state are managed through /commands/ written by the programmer.
+# HotDrink ensures that (1) commands are initiated only when all relationships
+# defined by the programmer have been enforced, and (2) commands will not
+# interfere with one another, at least with respect to the GUI state.  This
+# means that your program will behave correctly even if a new command is issued
+# before the previous command has finished.
+
+* File local variables                                     :noexport:
+  
+# Local Variables:
+# mode: org
+# org-html-postamble: nil
+# org-babel-use-quick-and-dirty-noweb-expansion: t
+# org-confirm-babel-evaluate: nil
+# End:

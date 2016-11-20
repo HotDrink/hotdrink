@@ -9,11 +9,11 @@ div.vat {
   padding: 8pt
 }
 
-.results {
-  border: 1px solid #ccc;
-  box-shadow: 3px 3px 3px #eee;
+#whap-gui {
+  float:left;
   padding: 8pt;
-  margin: 1.2em
+  margin-right: 1.5em;
+  margin-bottom: 1em;
 }
 
 .notes {
@@ -28,3 +28,4 @@ div.vat {
 pre.src { padding-top: 8pt }
 
 label.org-src-name { display: block; margin-bottom: -1em; margin-left: 1em; }
+

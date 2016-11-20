@@ -1,6 +1,8 @@
 #+TITLE: How to use HotDrink
 #+LANGUAGE:  en
 #+OPTIONS: H:2 author:nil creator:nil toc:nil
+#+HTML_LINK_HOME: http://hotdrink.github.io/hotdrink/
+#+HTML_LINK_UP: http://hotdrink.github.io/hotdrink/
 #+HTML_HEAD_EXTRA: <script type="text/javascript" src="hotdrink.min.js"></script>
 #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="style.css"/>
 

@@ -1,5 +1,8 @@
 # HotDrink
 
+*This version of HotDrink is not under active development.* A Rust/WebAssembly-based implementation is 
+in the works at the [hotdrink-rs repo](https://github.com/HotDrink/hotdrink-rs).
+
 HotDrink is a JavaScript library for User Interface programming.
 Instead of requiring programmers to write explicit event handlers, HotDrink
 derives user interface behavior from a declarative specification of data
